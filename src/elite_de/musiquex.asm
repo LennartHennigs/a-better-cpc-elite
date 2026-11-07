@@ -6,6 +6,7 @@
 
     jr LAB_ram_6012
     db 0x18,0x00
+; Music start: registers the event at &6167 with the firmware, then sets PSG register 7 (mixer) to &3F
 SUB_ram_6004:
     ld hl,WORD_ram_6167
     call 0xBCDD
@@ -113,6 +114,7 @@ LAB_ram_60d7:
     call SUB_ram_6159
     ld (BYTE_ram_615f),a
     jr LAB_ram_6063
+; Music: sets PSG channel A period/volume (registers 0-1 and 8) from the track data, then the noise/envelope pair
 SUB_ram_60df:
     ld a,0x01
     call SUB_ram_6137
@@ -124,6 +126,7 @@ SUB_ram_60df:
     call SUB_ram_6139
     call SUB_ram_6124
     ret
+; Music: same as 60df for channel B (registers 2-3 and 9)
 SUB_ram_60f6:
     ld a,0x03
     call SUB_ram_6137
@@ -135,6 +138,7 @@ SUB_ram_60f6:
     call SUB_ram_6139
     call SUB_ram_6124
     ret
+; Music: same as 60df for channel C (registers 4-5 and 10)
 SUB_ram_610d:
     ld a,0x05
     call SUB_ram_6137
@@ -146,6 +150,7 @@ SUB_ram_610d:
     call SUB_ram_6139
     call SUB_ram_6124
     ret
+; Music: writes PSG registers 12 and 13 (envelope period and shape) from the track state
 SUB_ram_6124:
     ld a,(BYTE_ram_6165)
     ld c,a
@@ -156,9 +161,11 @@ SUB_ram_6124:
     ld a,0x0D
     call SUB_ram_6139
     ret
+; Music: advances the data pointer and writes the next byte to PSG register A
 SUB_ram_6137:
     inc hl
     ld c,(hl)
+; Writes value C to AY/PSG register A through the PPI ports, interrupts disabled
 SUB_ram_6139:
     di
     ld b,0xF4
@@ -178,6 +185,7 @@ SUB_ram_6139:
     out (c),c
     ei
     ret
+; Music: advances the data pointer HL and returns the next data byte in A
 SUB_ram_6159:
     inc hl
     ld a,(hl)

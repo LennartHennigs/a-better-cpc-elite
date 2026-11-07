@@ -3,12 +3,26 @@
 ; otherwise sub_ (call target), loc_ (jump target), dat_ (data/variable reference).
 
 ; names of addresses in the other binaries
+; Unrolled push run of the filled-circle scanline fill: the preceding self-patched jr jumps into it, so A is
+; pushed as many times as needed; then the stack pointer is saved in ce2stack4 and ld hl,(ce2stack4) / dec hl
+; leaves HL on the last byte written.
+    macro circlePushRun
+    dup 31
+    push af
+    edup
+    ld (ce2stack4),sp
+    ld sp,0xF72E
+    push hl
+    ld hl,(ce2stack4)
+    dec hl
+    endm
 todo_varEscapepod equ 0x1C24
 circleOffsetY equ 0x20C7
 circleOffsetXlo equ 0x20C8
 circleOffsetXhi equ 0x20C9
 drawradius equ 0x20CA
 stack2 equ 0x20D0
+ce2stack4 equ 0x2727
 circlevar3 equ 0x20D6
 CircleEntrypoint2 equ 0x20FB
 ce2func60 equ 0x25A8
@@ -109,6 +123,7 @@ loc_C02D:
     ld (hl),e
     ld l,c
     ld h,e
+; Writes one block to tape/disk through the CAS_OUT firmware calls; the parameters follow the call as inline data
 sub_C058:
     pop hl
     ld e,(hl)
@@ -225,7 +240,10 @@ dat_C083:
     db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
     db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
     db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
-    db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x04
+    db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+; low byte of x*x for x = 0..255
+squareTableLo:
+    db 0x00,0x01,0x04
     db 0x09,0x10,0x19,"$1@Qdy",0x90,0xA9,0xC4,0xE1,0x00
     db "!Di",0x90,0xB9,0xE4,0x11,"@q",0xA4,0xD9,0x10,"I",0x84,0xC1,0x00
     db "A",0x84,0xC9,0x10,"Y",0xA4,0xF1,"@",0x91,0xE4,"9",0x90,0xE9,"D",0xA1,0x00
@@ -241,7 +259,10 @@ dat_C083:
     db 0x81,0x04,0x89,0x10,0x99,"$",0xB1,"@",0xD1,"d",0xF9,0x90,")",0xC4,"a",0x00
     db 0xA1,"D",0xE9,0x90,"9",0xE4,0x91,"@",0xF1,0xA4,"Y",0x10,0xC9,0x84,"A",0x00
     db 0xC1,0x84,"I",0x10,0xD9,0xA4,"q@",0x11,0xE4,0xB9,0x90,"iD!",0x00
-    db 0xE1,0xC4,0xA9,0x90,"ydQ@1$",0x19,0x10,0x09,0x04,0x01,0x00
+    db 0xE1,0xC4,0xA9,0x90,0x79,0x64,0x51,0x40,0x31,0x24,0x19,0x10,0x09,0x04,0x01
+; high byte of x*x for x = 0..255 (x*x div 256)
+squareTableHi:
+    db 0x00
     db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01
     db 0x01,0x01,0x01,0x01,0x01,0x01,0x02,0x02,0x02,0x02,0x02,0x03,0x03,0x03,0x03,0x04
     db 0x04,0x04,0x04,0x05,0x05,0x05,0x05,0x06,0x06,0x06,0x07,0x07,0x07,0x08,0x08,0x09
@@ -413,9 +434,7 @@ LAB_ram_ce85:
     ld sp,hl
 patchJr:
     jr patchJr
-    db 0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5
-    db 0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xED
-    db "s''1.",0xF7,0xE5,"*''+"
+    circlePushRun
 patchmask2:
     ld (hl),0xF0
     dec hl
@@ -535,9 +554,7 @@ LAB_ram_cf44:
     ld sp,hl
 patchJr1:
     jr patchJr1
-    db 0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5
-    db 0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xED
-    db "s''1.",0xF7,0xE5,"*''+"
+    circlePushRun
 patchmask5:
     ld (hl),0xF0
     dec hl
@@ -1085,6 +1102,7 @@ LAB_ram_e65b:
     exx
     call circlecalcDetailsLeftSide
     jr circle_plot_pixel
+; Sets up the fuel-range circle around the present system on the galactic chart from planet X/Y and range
 drawRangeCircle:
     ld b,0x0C
     ld a,(storePresPlanetX)
@@ -1174,6 +1192,7 @@ LAB_ram_e709:
     dec c
     jr nz,LAB_ram_e6df
     ret
+; Draws the range circle with the draw flag set, then clears the flag
 goDrawRangeCircle:
     ld hl,todoDrawCircleFlag
     push hl
@@ -1185,6 +1204,7 @@ goDrawRangeCircle:
     ret
 todoDrawCircleFlag:
     db 0x00
+; Sets up the range circle for the short-range chart: fixed centre, radius from the fuel level
 lcDrawRangeCircle:
     ld a,0x20
     ld (circleOffsetXlo),a
@@ -1198,6 +1218,7 @@ lcDrawRangeCircle:
     ld (circleCutoffFromTop),a
     ld a,0xF7
     ld (todoCircleParHeight),a
+; Sets the draw-target flag and fill mask &0F, then draws the circle through drawFilledCircle
 DrawCircle:
     ld a,0x01
     ld (CirclewheretoDrawFlag),a
@@ -1238,6 +1259,7 @@ cidrawframe:
     dec c
     jr nz,cidrawframe
     ret
+; Draws a circle with fill mask &F0 and the second segment mask (role of this variant unconfirmed)
 todoDrawFilledCircle:
     xor a
     ld (CirclewheretoDrawFlag),a
@@ -1245,12 +1267,14 @@ todoDrawFilledCircle:
     call prepareCircleFillMask
     ld hl,circleOutersegmetsMask2
     jr drawFilledCircle
+; Draws the circle with an empty fill mask, probably to erase an earlier circle
 clearCircle:
     xor a
     ld (CirclewheretoDrawFlag),a
     ld a,0x00
     call prepareCircleFillMask
     ld hl,circleOutersegmetsMask4
+; Copies the 16-byte segment mask to &CE00; skips tiny radii, then enters the circle edge routine
 drawFilledCircle:
     ld de,0xCE00
     ld bc,0x0010
@@ -1262,36 +1286,42 @@ dfcPatchpos:
     xor a
     ld (circlevar3),a
     jp CircleEntrypoint2
+; Circle dispatch stub: checks the circle state with SUB_ram_275e and jumps into one of two circle code paths
 SUB_ram_e7b6:
     push af
     ld a,0x01
     call SUB_ram_275e
     jp nz,LAB_ram_e600
     jp LAB_ram_f600
+; Circle dispatch stub like e7b6 with A=0 for the state check
 SUB_ram_e7c2:
     push af
     xor a
     call SUB_ram_275e
     jp nz,LAB_ram_e600
     jp LAB_ram_f600
+; Circle dispatch stub: state check with A=1, then jumps to one of two paths in the other circle code block
 SUB_ram_e7cd:
     push af
     ld a,0x01
     call SUB_ram_275e
     jp nz,LAB_ram_cf8c
     jp ce2func61
+; Circle dispatch stub like e7cd with A=0 for the state check
 SUB_ram_e7d9:
     push af
     xor a
     call SUB_ram_275e
     jp nz,LAB_ram_cf8c
     jp ce2func61
+; Circle dispatch stub: state check with A=1, then jumps to a fill path or realDrawFilledCircle
 SUB_ram_e7e4:
     push af
     ld a,0x01
     call SUB_ram_275e
     jp nz,LAB_ram_f730
     jp realDrawFilledCircle
+; Circle dispatch stub like e7e4 with A=0 for the state check
 SUB_ram_e7f0:
     push af
     xor a
@@ -1395,6 +1425,7 @@ SUB_ram_e7f0:
     db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
     db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
     db 0x00,0x00,0x00,0x00,0x00
+; Runs the galaxy seed twist (waggle_galaxy) four times
 waggleGalaxy4Times:
     ld b,0x04
 LAB_ram_ee02:
@@ -1433,6 +1464,7 @@ abs_difference:
 LAB_ram_ee2c:
     sub b
     ret
+; Turns the squared chart distance into a distance via a square root, or &FFFF on overflow
 CalculateDistance:
     jr c,finalize_distance
     jr LAB_ram_ee35
@@ -1486,6 +1518,7 @@ clearTempname:
     call AddDigram
     pop af
     jr z,waggle_galaxy
+; Appends a two-letter digram of the system name from the seed, or twists the seed if the index is 0
 AddDigram:
     ld hl,(0x3D2C)
     ld a,h
@@ -1513,6 +1546,7 @@ AddDigram:
     inc hl
 LAB_ram_ee9c:
     ld (0x3D67),hl
+; One step of the galaxy seed twist: shifts the three seed words along and adds the first two
 waggle_galaxy:
     ld hl,(0x3D28)
     ld de,(0x3D2A)
@@ -1526,6 +1560,7 @@ waggle_galaxy:
     add hl,de
     ld (0x3D2C),hl
     ret
+; Copies the 8 bytes of the built planet name from &3D41 to &3D53
 finalizePlanetName:
     ld bc,0x0008
     ld hl,0x3D41
@@ -1596,6 +1631,7 @@ LAB_ram_eef9:
     ld hl,(0x3D2C)
     ld (0x3D26),hl
     ret
+; Prints the distance to the selected system in light years, or nothing when it is zero
 prLYDistance:
     ld hl,(0x3D5C)
     ld a,h
@@ -1611,14 +1647,17 @@ prLYDistance:
     call printStringFollowingByte
     db 0xC3
     jp placeCursor
+; Copies the 6-byte galaxy seed from the saved seed (&3907) into the working seed (&3D28)
 todoGenerateGalaxy:
     ld hl,0x3907
     ld de,0x3D28
     jr LAB_ram_ef77
+; Copies the 6-byte working seed (&3D28) to the spare slot (&3D2E)
 SUB_ram_ef69:
     ld hl,0x3D28
     ld de,0x3D2E
     jr LAB_ram_ef77
+; Copies the 6-byte spare seed (&3D2E) back to the working seed (&3D28)
 SUB_ram_ef71:
     ld hl,0x3D2E
     ld de,0x3D28
@@ -1626,9 +1665,11 @@ LAB_ram_ef77:
     ld bc,0x0006
     ldir
     ret
+; Stores the escape-pod flag in the first market byte, then generates the market prices and stock
 GenPriceAndStockEntry1:
     ld a,(todo_varEscapepod)
     ld (0x38E1),a
+; Builds the market table for the present system: 17 goods, price and quantity from the base table and seed
 GeneratePricesAndStock:
     ld hl,0x3915
     ld de,0x3E2C
@@ -1859,9 +1900,7 @@ LAB_ram_f62b:
     ld sp,hl
 loc_F637:
     jr loc_F637
-    db 0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5
-    db 0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xED
-    db "s''1.",0xF7,0xE5,"*''+"
+    circlePushRun
 patchmask12:
     ld (hl),0xF0
     dec hl
@@ -1969,9 +2008,7 @@ LAB_ram_f6dd:
     ld sp,hl
 loc_F6E9:
     jr loc_F6E9
-    db 0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5
-    db 0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xED
-    db "s''1.",0xF7,0xE5,"*''+"
+    circlePushRun
 patchmask15:
     ld (hl),0xF0
     dec hl
@@ -2250,6 +2287,7 @@ LAB_ram_f7f3:
     db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
     db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
     db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+; Splits a number in HL into decimal digits by repeated subtraction (10, 100, ...) for printing
 todoDigitCalculation:
     ld b,0x01
     jr nc,LAB_ram_fe0e
@@ -2322,11 +2360,13 @@ getMoney:
     ret c
     ld (0x38DF),hl
     ld de,0x0001
+; Adds DE to the cash word at &38DD
 AddDEtoMoney:
     ld hl,(0x38DD)
     add hl,de
     ld (0x38DD),hl
     ret
+; Subtracts DE from the cash word at &38DD; carry set and no change if it would go negative
 SbcDEfromMoney:
     ld hl,(0x38DD)
     sbc hl,de
@@ -2446,6 +2486,7 @@ jpprintCash:
 jpPrintCommanderName:
     ld hl,0x38CB
     jr jpPrintCleartext
+; Entry that loads A=0 and joins the shared tail at &FFBC (chart/flight text helper, role unconfirmed)
 SUB_ram_ff39:
     ld a,0x00
     jr LAB_ram_ffbc
@@ -2489,6 +2530,7 @@ LAB_ram_ff85:
     ld a,0x00
     ld (0x3949),a
     ret
+; Sets the flag byte at &394A to 1
 jptodoSetUnknownFlag:
     ld a,0x01
     ld (0x394A),a

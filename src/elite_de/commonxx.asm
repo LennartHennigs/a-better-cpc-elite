@@ -3,6 +3,20 @@
 ; where tools/map_german.py paired the code or data; otherwise sub_ (call target), loc_ (jump target), dat_ (data/variable reference).
 
 ; names of addresses in the other binaries
+ce2stack4 equ 0x2727
+; Unrolled push run of the filled-circle scanline fill: the preceding self-patched jr jumps into it, so A is
+; pushed as many times as needed; then the stack pointer is saved in ce2stack4 and ld hl,(ce2stack4) / dec hl
+; leaves HL on the last byte written.
+    macro circlePushRun
+    dup 31
+    push af
+    edup
+    ld (ce2stack4),sp
+    ld sp,0xF72E
+    push hl
+    ld hl,(ce2stack4)
+    dec hl
+    endm
 BuyGoods equ 0x0840
 FileMenu equ 0x0D1E
 LAB_ram_0d38 equ 0x0D2E
@@ -220,6 +234,7 @@ flagPausemode:
     db 0x00
 flagDockingComputerOn:
     db 0x00
+; Convert the stored roll and pitch inputs into the dashboard roll/pitch indicator positions (centre 0x13)
 SUB_ram_1c3f:
     ld hl,initialRollnPitch
     ld a,(hl)
@@ -373,11 +388,13 @@ loc_1D3C:
     call CommanderStatus
     call InitVariables
     jr Mainloop
+; Print the ELITE title and the first splash-screen line, then clear the print-screen flag
 printSplashscreen1:
     call printELITE
     ld hl,0x0E01
     ld a,0x06
     jr subPrintSplash1
+; Print the ELITE title and the 'press space' splash line
 printPressSpace:
     call printELITE
     ld hl,0x0E01
@@ -388,6 +405,7 @@ subPrintSplash1:
     set 7,(hl)
     call printStringA
     jr loc_1DA2
+; Print the ELITE title string at text position (1,5) while flagWhichScreenToPrint bit 7 is set
 printELITE:
     ld hl,0x0105
     ld (charXY),hl
@@ -528,12 +546,14 @@ LAB_ram_1e8d:
     ld (GameOverFlag),a
     call loadExtensionsforDockingmode
     jp loc_1CCF
+; Set the gate array border to the hardware colour in A (adds the 0x40 colour base)
 setBorderColor:
     ld bc,0x7F10   ; gate array: select border
     out (c),c
     add a,0x40
     out (c),a
     ret
+; Draw the viewport frame, then copy the off-screen buffer at &A000 to screen memory, line by line
 transferBuffertoScreen:
     call drawViewportFrame
     push af
@@ -640,12 +660,14 @@ tfScrMemNextLine:
     ret
 tbmLoopCounter:
     db "O"
+; Redraw the dashboard if the screen's first byte is not 0x0F, i.e. the dashboard is not yet on screen
 drawDashboard:
     ld de,0xC000
     ld a,(de)
     cp 0x0F
     ret z
     call todoclearCounter
+; Copy the stored dashboard image (&AE00 onwards) into the lower screen rows (&C400-&FFFF)
 transferDashBoardToScreenMem:
     call sub_4622
     ld hl,0xAE00
@@ -667,12 +689,38 @@ transferDashBoardToScreenMem:
     ld de,0xFC00
     call sub_1FCC
     ret
+; Block-copy 0x200 bytes with ldir (one dashboard chunk)
 sub_1FCC:
     ld bc,0x0200
     ldir
     ret
-    db "!",0x00,0xC0,0x11,"=",0x00,0x0E,0x08,">",0x0F,0xE5,0x06,0x10,"w#w"
-    db 0x19,"w#w#",0x10,0xF6,0xE1,"|",0xC6,0x08,"g",0x0D," ",0xE9
+; Probably dead (nothing calls or jumps here): paints the two left and two right bytes of each of the 16 64-byte
+; character rows of the 256x128 view with 0x0F, for 8 scan lines.
+unusedViewBorderFill:
+    ld hl,0xC000
+    ld de,0x003D
+    ld c,8
+unusedViewBorderRow:
+    ld a,0x0F
+    push hl
+    ld b,16
+unusedViewBorderCol:
+    ld (hl),a
+    inc hl
+    ld (hl),a
+    add hl,de
+    ld (hl),a
+    inc hl
+    ld (hl),a
+    inc hl
+    djnz unusedViewBorderCol
+    pop hl
+    ld a,h
+    add a,8
+    ld h,a
+    dec c
+    jr nz,unusedViewBorderRow
+; Clear the whole screen bitmap to 0x0F0F by pushing words down from &C000, keeping SP in clsSP
 ClearBitmap:
     ld (clsSP),sp
     ld sp,0xC000
@@ -702,6 +750,7 @@ clsSP:
     db "O",0xDF
 cloakTick:
     db 0x01
+; Per-frame cloaking-device tick: counts down, and drains energy or switches the cloak off
 chkCloak:
     ld hl,cloakTick
     dec (hl)
@@ -733,7 +782,17 @@ chkCloak:
     xor a
     ld (todoActiveSlots),a
     ret
-    db ":",0xFF,"9",0xA7,0xC9,":",0xCA,"9",0xA7,0xC9
+; Probably dead (no caller): return FlightMode in A, with Z set if it is zero.
+unusedGetFlightMode:
+    ld a,(FlightMode)
+    and a
+    ret
+; Probably dead (no caller): return flagCloakingDeviceActive in A, with Z set if it is zero.
+unusedGetCloakFlag:
+    ld a,(flagCloakingDeviceActive)
+    and a
+    ret
+; Set the byte at &3933 to 1 unless FlightMode is zero (probably a redraw/state flag)
 SUB_ram_2058:
     ld a,(FlightMode)
     and a
@@ -757,6 +816,7 @@ LAB_ram_206a:
     ld a,0xD4
     jr z,goBoardByMessage
     ret
+; If the ship's roll byte has bit 7 clear, show a 'boarded by' message and force game over (anti-cheat)
 punishCheater:
     ld hl,sEntityRoll
     bit 7,(hl)
@@ -768,6 +828,7 @@ goBoardByMessage:
     ld a,0x01
     ld (todoUnknownStatusFlags),a
     jp loc_1CC2
+; Draw the border of the 3D viewport: top and bottom lines filled, then the left and right edge pixels
 drawViewportFrame:
     ld a,0xFF
     ld de,0xA002
@@ -793,6 +854,7 @@ dvwpfloop:
     inc hl
     djnz dvwpfloop
     ret
+; Fill BC bytes starting at DE with A, preserving all registers
 FillmemoryRegionDEwithA:
     push bc
     push de
@@ -1313,6 +1375,7 @@ ce2func38:
     ld e,0x00
     exx
     ret
+; Planet/circle drawing: get the left-hand bitmap address and pixel mask for a point (counterpart of ce2func40)
 ce2func39:
     ld b,c
     ld c,a
@@ -1372,6 +1435,7 @@ ce2func42:
     ld c,0x01
     ld b,0x01
     ret
+; Planet disc fill: fill the whole bytes between the two edge points of a scanline in the bitmap
 ce2func43FillCompleteLinesinBM:
     push de
     push af
@@ -1676,15 +1740,13 @@ ce2func62:
     jr z,ce2func66
     sub 0x21
     cpl
-    ld (0x25D6),a
+    ld (loc_25D5+1),a
     pop af
     push af
     ld sp,hl
 loc_25D5:
     jr loc_25D5
-    db 0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5
-    db 0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xED
-    db "s''1.",0xF7,0xE5,"*''+"
+    circlePushRun
 ce2func64patchmask7:
     ld (hl),0xF0
     dec hl
@@ -1785,15 +1847,13 @@ ce2func73:
     jr z,loc_26BD
     sub 0x21
     cpl
-    ld (0x2688),a
+    ld (loc_2687+1),a
     pop af
     push af
     ld sp,hl
 loc_2687:
     jr loc_2687
-    db 0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5
-    db 0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xED
-    db "s''1.",0xF7,0xE5,"*''+"
+    circlePushRun
 ce2func75patchmask9:
     ld (hl),0xF0
     dec hl
@@ -1877,6 +1937,7 @@ ce2func89:
     ld b,a
     jp cirGetBMAdress
     db "I",0x01
+; Patch the byte in A into all 20 operand addresses listed in CircleParmTable (disc fill colour mask)
 prepareCircleFillMask:
     ld b,0x14
     ld hl,CircleParmTable
@@ -1894,6 +1955,7 @@ CircleParmTable:
     dw 0xCF81,0x2603,0x2606,0x26B5,0x26B8
     dw 0xF62A,0xF665,0xF668,0xF6DC,0xF717
     dw 0xF71A,0xF72E,0xF72F,0x20D8,0x20D9
+; Reset the disc-fill shadow registers, store A in circlevar7 and return with Z set if circlevar3 is 0
 SUB_ram_275e:
     exx
     ld hl,0x0000
@@ -1904,6 +1966,7 @@ SUB_ram_275e:
     ld a,(circlevar3)
     and a
     ret
+; Clip check for the right edge of a disc scanline; pops two return levels when it is off screen
 circlecalcDetailsRightSide:
     ld a,(CirclewheretoDrawFlag)
     and a
@@ -1941,6 +2004,7 @@ cdr3:
     cp 0x02
     jr c,cdr2
     ret
+; Clip check for the left edge of a disc scanline: steps the address back one column and range-checks it
 circlecalcDetailsLeftSide:
     ld a,(CirclewheretoDrawFlag)
     and a
@@ -2168,6 +2232,7 @@ patchSecondInk2:
     ld c,0x47
     out (c),c
     ret
+; Busy-wait loop (250 passes) used to time the split-screen mode/ink changes
 splitDelay:
     ld b,0xFA
 splitdelayloop:
@@ -2240,6 +2305,8 @@ patchAnotherInk1_2:
     ld c,0x58
     out (c),c
     ret
+; Saved SP of myVBL (the word at stack5), then the private interrupt stack that grows down to framecounterNStack.
+; The bytes below are stale stack contents left in the file image (return addresses and register pairs), not code.
 stack5:
     db 0x0B,0x0E,0x07,0x0E,0x07,0x0E,0x0E,0x0F,0x08,0x01,0x0F,0x0E,0x0F,0x0F,0x0F,0x0F
     db 0x0F,0x0E,0x0F,0x0B,0x0F,0x0F,0x0F,0x0E,0x0F,0x0F,0x0F,0x0F,0x0F,0x0E,0xCD,0x9C
@@ -2250,6 +2317,7 @@ stack5:
     db 0xFE,"@0",0xD6,0xDD,"~"
 framecounterNStack:
     db 0x07
+; Clear the scanner area, then redraw the ECM indicator if ECM is active
 cleanScannerUpdateECMIndicator:
     call cleanScanner
     ld a,(ecmActiveFlag)
@@ -2258,6 +2326,7 @@ cleanScannerUpdateECMIndicator:
     call setCommandsCPL
     call drawECMIndicatorEP2
     jp setCommandsNOP
+; Clear the scanner area of the dashboard (when the clean counter reaches 0) and restore its frame graphics
 cleanScanner:
     ld a,(todo_CleanScanCounter)
     dec a
@@ -2332,6 +2401,7 @@ scncls7:
     exx
     jr nz,scncls5
     ret
+; Per-frame view-key handler: reads the view keys (keybFlags3), switches view or departs from the station
 SUB_ram_2a70:
     ld a,(tunnelFlag2)
     and a
@@ -2408,9 +2478,11 @@ execSelectedKeyFunctions:
     inc h
 LAB_ram_2ae6:
     ld (0x2AEA),hl
+; Self-modified call: its operand is patched with the view routine address; then clears the dashboard counter
 CallHL:
     call CallHL
     jp todoclearCounter
+; On a view change, save the dashboard from the screen into the bitmap buffer at &AE00 (and restore it)
 transferDashboardFromScreenToBM:
     ld a,(Viewdirection)
     ld b,a
@@ -2449,11 +2521,13 @@ TransferfromScreentoBMloop:
     ld hl,0xFC00
     call tfsbmDoLDIR
     ret
+; Block-copy 0x200 bytes with ldir (one screen/buffer chunk)
 tfsbmDoLDIR:
     ld bc,0x0200
     ldir
     ret
     db 0x00
+; Pause-mode loop: wait for a key and toggle option flags (B/D/F/R/Y), music on/off, until resumed
 parseInputkey:
     ld a,(keybFlags3)
     and 0x80
@@ -2494,46 +2568,54 @@ todoInputchar1:
     call ClearsomeFlags
     scf
     ret
+; Pause mode, key B: toggle bit 4 of the option byte at (HL)
 todoInputcharB:
     ld a,(hl)
     xor 0x10
     ld (hl),a
     xor a
     ret
+; Pause mode, key D: toggle bit 3 of the option byte at (HL)
 todoInputcharD:
     ld a,(hl)
     xor 0x08
     ld (hl),a
     xor a
     ret
+; Pause mode, key F: toggle bit 6 of the option byte at (HL)
 todoInputcharF:
     ld a,(hl)
     xor 0x40
     ld (hl),a
     xor a
     ret
+; Pause mode, key R: toggle bit 2 of the option byte at (HL)
 todoInputcharR:
     ld a,(hl)
     xor 0x04
     ld (hl),a
     xor a
     ret
+; Pause mode, key Q: switch the music off (flagToggleMusic = 0)
 QuietMusicOff:
     xor a
     ld (flagToggleMusic),a
     ret
+; Switch the music on (flagToggleMusic = 1)
 MusicOn:
     ld a,0x01
     ld (flagToggleMusic),a
     ret
 flagToggleMusic:
     db 0x01
+; Pause mode, key Y: toggle bit 5 of the option byte at (HL)
 todoInputcharY:
     ld a,(hl)
     xor 0x20
     ld (hl),a
     xor a
     ret
+; Set bit 5 of sfxFlags2Bitmap (request a sound effect)
 somethingForSFX:
     ld a,(sfxFlags2Bitmap)
     or 0x20
@@ -2661,6 +2743,7 @@ irds16:
     and a
     jp z,loc_1C7E
     ret
+; Start one sound effect: look up its handler in the SFX table, patch the call, set up the PSG register block
 irds20:
     ld (irds_dat8),bc
     ld (irds_dat9),a
@@ -2694,6 +2777,7 @@ irds20:
     jr z,irds21
 todo_Inspectthis2:
     ld sp,(sfxStack2)
+; Self-modified call to the current effect's handler; saves registers on the SFX stack around it
 irds22:
     call irds22
     ld sp,(sfxStack1)
@@ -2752,9 +2836,11 @@ SendToRegister7PSG:
     ld a,0x07
     call ppiRegAValC
     ret
+; Silence all three PSG channels (mixer register 7 = 0x3F)
 mute:
     ld a,0x3F
     jr SendToRegister7PSG
+; Return in A the byte from tblSFXParameter indexed by A (registers preserved)
 irdsGetSFXParamfromTable:
     push bc
     push hl
@@ -2766,6 +2852,7 @@ irdsGetSFXParamfromTable:
     pop hl
     pop bc
     ret
+; Write C to PSG register A through the PPI (latch register, then write data)
 ppiRegAValC:
     push af
     push bc
@@ -2939,6 +3026,7 @@ dat_2F36:
     db 0x00,0x00,0x00,",",0x01,0x00,0xA0,0x0F,0x00,"p",0x17,0x00,0xA0,0x0F,0x01,0x00
     db 0x00,0x00,0x82,0x14,0x01,0x00,0x00,0x00,"(#",0x01,0x88,0x13,0x01,0x88,0x13
     db 0x05,0x00,0x00,0x06,0x00,0x00,0x00,"@",0x1F
+; If the energy-bomb key is pressed and one is fitted: use it up, flag it activated, start the flash and sound
 chkUseEnergyBomb:
     ld a,(keybFlags4CounterNstringNumber)
     bit 5,a
@@ -2959,6 +3047,7 @@ chkUseEnergyBomb:
     ld a,0x18
     ld (counter_colorsetting),a
     ret
+; Reset flight state on launch: missiles, temperatures, shields, altitude, energy banks full, then set fuel
 sub_2F81:
     call updateMissileIndicators
     call resetInflightMessagesFlags
@@ -3110,6 +3199,7 @@ stringsTable:
     db "---",0x00,0x0C,"V",0x99,"H",0x9B,"D",0x92,0x00,"ACHT"
     db "UNG*",0x09,"    A",0x88,0x95,"UF",0xFB,"V"
     db 0x9F," B",0x8E,"NNSTOFF*",0x00
+; Work out screen address and pixel mask for a dust particle from its coordinates and dust masks
 calcDustParticlePixel:
     ld d,0x40
     ld a,(dustPixelMask)
@@ -3157,6 +3247,7 @@ LAB_ram_33bc:
     ld a,(dustPitch)
     and a
     jr nz,LAB_ram_33f6
+; Set up the dust-drawing code's self-modified masks and constants, then loop over the particles
 SUB_ram_33cf:
     ld a,0xBF
     ld (0x34E8),a
@@ -3335,6 +3426,7 @@ LAB_ram_34e9:
     ld l,a
     djnz LAB_ram_34db
     ret
+; Step the dust pseudo-random generator held in H and L (adc-based shuffle); returns the new H/L
 SUB_ram_34ed:
     ld a,h
     adc a,a
@@ -3351,6 +3443,7 @@ tblDustCoordinates:
     db 0x0C,0x05," ",0xEA,"+fd8",0x05,"i",0x17,0x04,"C8",0xF3,0xE7
 ConditionBlinkFlag:
     db 0x00
+; Set the condition state (docked/green/yellow/red) from the status flag and shields, and blink the indicator
 chkConditionNSetIndicatorColors:
     ld hl,todoUnknownStatusFlags
     ld a,(hl)
@@ -3412,6 +3505,7 @@ isStateGreen:
 condSetInk2toValinD:
     ld a,d
     ld (0x28FE),a
+; Set todoUnknownStatusFlags to 4 (a status/condition value)
 SUB_ram_35a8:
     ld a,0x04
     ld (todoUnknownStatusFlags),a
@@ -3430,6 +3524,7 @@ dashboard_and_special_keys:
     ld a,(hl)
     and 0x91
     ld (hl),a
+; Per-frame damage/energy update: recharge energy, apply shield hits, and flag red alert when hit
 todo_ShipTakingDamage:
     ld hl,todoUnknownStatusFlags
     xor a
@@ -3456,6 +3551,7 @@ LAB_ram_35d9:
 LAB_ram_35f8:
     ld c,a
     ld b,0x04
+; Subtract C from the energy banks in turn; if all banks run out, set GameOverFlag
 drainEnergy:
     ld hl,shipEnergyBank1
     ld d,0x04
@@ -3475,6 +3571,7 @@ LAB_ram_3611:
     ld (hl),a
     djnz LAB_ram_3600
     ret
+; Apply damage in A to the shield at HL: just count down the damage timer if none, otherwise reduce the shield
 ChkShieldsDown:
     ld c,a
     and a
@@ -3511,6 +3608,7 @@ shieldBankEmpty:
     ld (hl),a
     cp 0x0D
     ret c
+; When a hit is strong, probably destroy a piece of equipment or cargo unit chosen from the hit value
 chkDamagingEquipmentnInventory:
     ld a,(tokenToPrint)
     cp 0xFD
@@ -3558,10 +3656,12 @@ destroy_cargo_unit:
     jr prMessageforDestroyedEquipment
 todoSomethingwithDamageTaken:
     db 0x00
+; Recharge energy: runs the extra-energy-unit extra step if fitted, then the normal recharge
 RechargeEnergy:
     ld a,(extraEnergyUnit)
     and a
     call nz,SUB_ram_3693
+; One recharge step: add 1 to the first energy bank below 0xA0, else charge the front and rear shields
 SUB_ram_3693:
     ld hl,shipEnergyBank4
     ld b,0x04
@@ -3578,6 +3678,7 @@ nextEnergyBank:
     ld hl,shipFrontShieldEnergy
     call rechargeShieldenergy
     ld hl,shipRearShieldEnergy
+; Add 1 to the shield at HL unless it is already full (0xA0)
 rechargeShieldenergy:
     ld a,(hl)
     cp 0xA0
@@ -3586,12 +3687,14 @@ rechargeShieldenergy:
     ret
 otherECMActive:
     db 0x00
+; Redraw the alert, ECM and station-near indicators on the dashboard
 updateStatusIndicators:
     call drawAlertStatusIndicator
     call setCommandsCPL
     call checkForActiveECM
     call chkStationIndicator
     jp setCommandsNOP
+; Clear and redraw the alert status indicator graphic at its two screen positions
 drawAlertStatusIndicator:
     ld hl,0xC452
     call todoDrawitwithMask
@@ -3601,6 +3704,7 @@ drawAlertStatusIndicator:
     ld de,0xC452
     call transferALStatGfxToScreen
     ld de,0xC492
+; Copy 8 two-byte rows of alert-indicator graphics from HL to the screen at DE (stepping down lines)
 transferALStatGfxToScreen:
     ld b,0x08
 tfalstloop:
@@ -3620,6 +3724,7 @@ tfalstloop:
 gfxDashboardAlertStatusIndicator:
     db 0x0F,0x0F,0xC3,0x0F,0xF0,0x0F,0xF0,0x87,0xF0,0xC3,0xF0,0xC3,0xF0,0xE1,0xF0,0xE1
     db 0xF0,0xE1,0xF0,0xE1,0xF0,0xE1,0xF0,0xC3,0xF0,0xC3,0xF0,0x87,0xF0,0x0F,0xC3,0x0F
+; Compare ECM state with last frame and draw or erase the ECM indicator only when it changed
 checkForActiveECM:
     ld hl,otherECMActive
     ld a,(hl)
@@ -3640,12 +3745,14 @@ drawECMIndicatorEP1:
     ld a,c
     and a
     ret nz
+; Print the ECM indicator string at its dashboard location
 drawECMIndicatorEP2:
     ld de,strECMIndicator
 locateECMIndicator:
     ld hl,0x1607
 callPriIndicAtLocation:
     call printIndicatorstringAtLocation
+; Set the text cursor to HL, print an indicator string, then step to the next column
 printIndicatorstringAtLocation:
     ld (charXY),hl
     push hl
@@ -3653,8 +3760,10 @@ printIndicatorstringAtLocation:
     pop hl
     inc h
     ret
+; Print an indicator string at DE, twice (via the fall-through into printIndicatorstring)
 CallPrIndicatorString:
     call printIndicatorstring
+; Print one character of the indicator string at DE and advance DE
 printIndicatorstring:
     ld a,(de)
     push de
@@ -3664,6 +3773,7 @@ printIndicatorstring:
     ret
 storeFlagStationNear:
     db 0x00
+; Compare station-near state with last frame and draw or erase the 'S' indicator only on change
 chkStationIndicator:
     ld hl,storeFlagStationNear
     ld a,(hl)
@@ -3696,6 +3806,7 @@ strStationNearIndicator:
     db "[",0x5C,"]^"
 strUndrawSIndicator:
     db " _@+"
+; Clear the four missile slots on the dashboard and redraw the missiles in the hold
 updateMissileIndicators:
     ld b,0x04
     ld hl,0xC5C6
@@ -3732,6 +3843,7 @@ miDrawEmptyPlaces:
     pop bc
     djnz miDrawEmptyPlaces
     jp setCommandsNOP
+; Handle missile arming, target lock and firing keys
 chkLockNFireMissile:
     ld a,(missileCount)
     and a
@@ -3791,6 +3903,7 @@ FireMissile:
     ld hl,msgECMJammer
     set 7,(hl)
     ret
+; Set bit 7 of sfxFlags2Bitmap (play the missile-lock sound)
 playLockSFX:
     ld a,(sfxFlags2Bitmap)
     or 0x80
@@ -3805,6 +3918,7 @@ LaunchSuccessfull:
     jp updateMissileIndicators
 todoCapsuleLoopCounter:
     db 0x00
+; Escape-pod launch countdown: ticks it down each frame, starts the launch at 0, else checks the key
 chkReleaseEscapePod:
     ld hl,todoCapsuleLoopCounter
     ld a,(hl)
@@ -4033,6 +4147,7 @@ informAboutScoopedGood:
     ld (hl),a
     pop af
     ld b,0x01
+; Raises legal status when the scooped/bought good (A) is slaves, narcotics or firearms (B scales it)
 chkForIllegalGoods:
     cp 0x0A
     jr z,gotIllegalGood
@@ -4052,6 +4167,7 @@ gotIllegalGood:
 LAB_ram_39a3:
     ld (hl),a
     ret
+; Adds DE to the 24-bit kill score; a carry into the high byte flags the 'Right On Commander' message
 AddDEtoKillScore:
     ld hl,killScore
     ld a,(hl)
@@ -4066,6 +4182,7 @@ AddDEtoKillScore:
     inc (hl)
     ld hl,msgRightOnCommander
     jr activateFlightMessage
+; Pays the bounty DE (if non-zero): stores it, adds the credits and flags the bounty message
 getBounty:
     ld a,d
     or e
@@ -4086,6 +4203,7 @@ emptyDefaultsave:
     db 0x11,0x0C,0x00,0x00,0x00
 storedPlanet3dcoords:
     db "'",0x08,0x01,"*M",0x8F,0xF2,0x88,0x05
+; Resets flags, save RAM and colours for a new game, then seeds the present system, prices and stock
 setupNewGame:
     call resetInflightMessagesFlags
     call ClearSaveGameRam
@@ -4189,6 +4307,7 @@ LAB_ram_3b12:
 LAB_ram_3b16:
     cp 0x00
     jr nc,LAB_ram_3b1f
+; Target in the hyperspace-range check loop; probably a self-patched call (it calls itself as disassembled)
 SUB_ram_3b1a:
     call SUB_ram_3b1a
     jr LAB_ram_3b22
@@ -4198,6 +4317,7 @@ LAB_ram_3b22:
     pop bc
     djnz todo_lc_checkBoundarys
     ret
+; Converts present-to-target system distance in X/Y into chart pixel coordinates in C/B
 SUB_ram_3b26:
     ld a,(presentSystemX)
     ld b,a
@@ -4297,6 +4417,7 @@ LAB_ram_3bbd:
     ld hl,dat_3B69
     call SUB_ram_3bfd
     jp waggleGalaxy4Times
+; Chart helper: takes a chart text column from a buffer and subtracts a 0-7 offset, then draws the char
 SUB_ram_3bfd:
     ld a,(dat_3B40)
     and 0x07
@@ -4361,6 +4482,7 @@ LAB_ram_3c5a:
     ld a,(hl)
     cp 0x17
     ret nc
+; Prints the temporary name at the current text row once; returns carry set if the row was already used
 SUB_ram_3c63:
     ld a,(txtScreenOffset)
     ld hl,dat_3B73
@@ -4419,6 +4541,7 @@ loc_3CD6:
     db 0x00,0xF9,":",0x0B,">",0x06,0x10,0xD5,0x10,0xFD,"= ",0xF8,"$",0x0D," "
     db 0xF0,0xED,"{",0x0C,">",0xFB,0xC9,0x00
     db 0x00,0x00
+; Converts the target system's X/Y to screen coordinates and plots it on the chart
 plotPlanetsOnChart:
     ld a,(targetSystemY)
     srl a
@@ -4432,9 +4555,11 @@ plotPlanetsOnChart:
     ld b,a
     call chkPlotOnChart
     ret
+; Chart-compare result: returns A = 0
 LC_XoringA:
     xor a
     ret
+; Chart-compare result: returns A = 255
 LC_LDA255:
     ld a,0xFF
     ret
@@ -4480,6 +4605,7 @@ sgSearchCounter:
     db 0x00,0x00,0x00,"!",0xE3,"9~<",0xE6,0x07,"w!",0x0E,":",0xCD,0x87
     db ">!",0x10,":",0xCD,0x87,">!",0x12,":^",0xCB,0x03,"s#V"
     db 0xCB,0x02,"r",0xC9
+; Walks the galaxy's systems comparing each generated name with the typed name (FindPlanet search)
 searchGalaxyforPlanetName:
     call todoGenerateGalaxy
     xor a
@@ -4514,6 +4640,7 @@ markFoundPlanetonChart:
     jp LAB_ram_3e1b
 BYTE_ram_3dc4:
     db 0x00,0x00
+; On chart screens (7-8) redraws the target reticule around a recentre, otherwise just recentres the chart
 SUB_ram_3dc6:
     ld a,(Viewdirection)
     cp 0x07
@@ -4572,6 +4699,7 @@ tableUnitMarketprices:
     db 0xCC,0x01,0xB4,0x02,0xA8,0x00,"9",0x02
 storedByteVariable:
     db 0x00
+; Sets the sound-effect trigger bit when the key-click flag is set
 sfxForKeyInput:
     ld a,(dat_8E23)
     bit 7,a
@@ -4580,6 +4708,7 @@ sfxForKeyInput:
     or 0x80
     ld (sfxFlags1Bitmap),a
     ret
+; Waits for any key: short delay, clears the key buffer, then loops until a key is pressed
 WaitForKeypress:
     call sub_403E
     call clearKeyBuffer
@@ -4588,6 +4717,7 @@ LAB_ram_3e64:
     cp 0xFF
     jr z,LAB_ram_3e64
     ret
+; Clears the four keyboard flag bytes
 clearKeyBuffer:
     ld hl,keybFlags1
     ld b,0x04
@@ -4596,6 +4726,7 @@ LAB_ram_3e71:
     inc hl
     djnz LAB_ram_3e71
     ret
+; Prints the 'buy how many' prompt for the selected market good and its unit and price
 askBuyGood:
     ld a,(storedByteVariable)
     add a,0xD0
@@ -4641,6 +4772,7 @@ LAB_ram_3eb9:
     call placeCursor
     and a
     ret
+; Prints the quantity of the selected good in the hold (three digits), if any
 prQuantityofGoodinCargohold:
     ld hl,(0xEFF6)
     inc hl
@@ -4664,9 +4796,11 @@ prQuantityofGoodinCargohold:
 LAB_ram_3ef5:
     scf
     ret
+; Prints the token A through printStringA, then a ':' (0x3A)
 printwithToken3a:
     call printStringA
     jr jrPrintString3A
+; Prints the token A through printString, then a ':' (0x3A)
 anotherPrintWithToken3A:
     call printString
 jrPrintString3A:
@@ -4679,16 +4813,20 @@ printTokenAndToken0x20:
     ld a,0x20
 jrjpPrintString:
     jp printString
+; Prints A, then falls through to placeCursor
 CallprintString:
     call printString
+; Sets the print flag and moves the cursor to column 0 of the next text row
 placeCursor:
     ld a,0x01
     ld (todoSomePrintFlag),a
     call CursorHome
+; Moves the cursor to the next text row (row + 1), with wrap handled by VerticalPlacement
 GetYlocationofText:
     ld a,(txtScreenOffset)
     inc a
     jr VerticalPlacement
+; Resets the text column (charXY) to 0
 CursorHome:
     xor a
     ld (charXY),a
@@ -4700,11 +4838,13 @@ printFollowingTokenWithSpace:
     ld a,(hl)
     inc hl
     push hl
+; Sets the text column to A and moves to a new line if it is 32 or more; no callers found (probably unused)
 SUB_ram_3f25:
     ld (charXY),a
     cp 0x20
     ret c
     jr placeCursor
+; Sets the text row to A; at row 24 or more it wraps to row 1 and homes the cursor
 VerticalPlacement:
     ld (txtScreenOffset),a
     cp 0x18
@@ -4713,6 +4853,7 @@ VerticalPlacement:
     ld (txtScreenOffset),a
 dat_403F:
     jr CursorHome
+; Backs the cursor up one column and erases the character cell there (input backspace)
 ClearCharAtpos:
     ld a,(txtScreenOffset)
     ld b,0x42
@@ -4730,6 +4871,7 @@ subClearCharAtpos:
     ld (0x405B),a
 LAB_ram_3f53:
     ld hl,0xC500
+; Fills an 8-line, 2-byte-wide screen cell at HL with 0
 DrawBytesMask0:
     ld c,0x00
 drawBytesWithMaskC:
@@ -4746,9 +4888,11 @@ dbloop:
     djnz dbloop
     pop hl
     ret
+; Fills an 8-line, 2-byte-wide screen cell at HL with 0xFF (clears a missile slot)
 CleanMissilePosition:
     ld c,0xFF
     jr drawBytesWithMaskC
+; Clears two adjacent indicator cells, the second 0x40 bytes further along the line
 clearIndicatorArea:
     push hl
     call SUB_ram_3f74
@@ -4756,13 +4900,16 @@ clearIndicatorArea:
     ld a,l
     add a,0x40
     ld l,a
+; Fills the cell at HL with mask 0x0F, then the next cell two bytes along
 SUB_ram_3f74:
     call todoDrawitwithMask
     inc hl
     inc hl
+; Fills the 8-line cell at HL with mask 0x0F
 todoDrawitwithMask:
     ld c,0x0F
     jp drawBytesWithMaskC
+; Prints token A in the header style (byte 6 first) followed by token 8
 SUB_ram_3f7e:
     push af
     call printStringFollowingByte
@@ -4771,11 +4918,13 @@ SUB_ram_3f7e:
     call printString
     ld a,0x08
     jp printString
+; Prints the header title for the current screen with the alert-state icon and a closing 0x77 token
 printPlanetname:
     call SUB_ram_3f7e
     call displayAlertStateinHeader
     ld a,0x77
     jp printString
+; Draws the alert-state graphic in the header on non-flight views when the status flags are set
 displayAlertStateinHeader:
     ld a,(todoUnknownStatusFlags)
     and a
@@ -4829,6 +4978,7 @@ gfxAlertStateinHeaders:
     inc bc
     inc c
     nop
+; Prints the 0-terminated string at HL, uppercase-mapped; carry set at the terminator
 printCleartext:
     ld a,(hl)
     cp 0x00
@@ -4853,6 +5003,7 @@ simplyprintit:
 replacewithminus:
     ld a,0x2D
     jr simplyprintit
+; Prints the token chosen by the stored byte, picking among a few fixed token ranges
 parseStoredToken:
     ld a,0x00
     ld (todoSomePrintFlag),a
@@ -4893,26 +5044,32 @@ todoReturnPressed:
 loc_403C:
     and a
     ret
+; Short delay of 128 frames (halt loop); falls into longDelay's loop with B = 0x80
 sub_403E:
     ld b,0x80
     jr loopDelay
+; Waits 240 frames (halt loop)
 longDelay:
     ld b,0xF0
 loopDelay:
     halt
     djnz loopDelay
     ret
+; Saves the cursor position (charXY) to a buffer; no callers found (probably unused)
 bufferCharXY:
     ld hl,(charXY)
     ld (0xEFFC),hl
     ret
+; Homes the cursor to row 0x15 and clears that text line and the one below
 clrLine0x15:
     ld hl,0x1500
     ld (charXY),hl
     ld de,0xC542
     call SUB_ram_405e
+; Clears the screen bytes of text line 0x16 (and the following line via SUB_ram_405e)
 clrLine0x16:
     ld de,0xC582
+; Clears 60 bytes at DE with zero for each of the 8 scan lines of the text cell
 SUB_ram_405e:
     ld bc,0x003C
     xor a
@@ -4922,6 +5079,7 @@ SUB_ram_405e:
     ld d,a
     jr nc,SUB_ram_405e
     ret
+; Restores the cursor position saved by bufferCharXY; no callers found (probably unused)
 restoreCharXY:
     ld hl,(0xEFFC)
     ld (charXY),hl
@@ -4958,6 +5116,7 @@ InputquestionToken:
     db 0x00
 pointerInputStringAdr:
     db 0x00,0x00
+; Prompts with token A and reads a typed string of up to B characters into the buffer at HL
 InputString:
     ld (InputquestionToken),a
     ld a,b
@@ -5087,6 +5246,7 @@ RecenteronDockedPlanet:
     ld a,(presentSystemY)
     ld (PresentPlanetY),a
     jr goMapDrawCrosshair
+; Prints the framed title-box token 0x96
 DrawFramedTitlebox:
     ld a,0x96
     jp printStringA
@@ -5096,6 +5256,7 @@ SetTableBegintoAofHL:
     ld e,a
     add hl,de
     ret
+; Prints the token A in header style, then the planet name
 printFlightToken:
     push af
     call printFollowingTokenWithSpace
@@ -5115,6 +5276,7 @@ printNumber:
 LAB_ram_41be:
     ld h,0x00
     ld l,a
+; Prints HL as a decimal number from 10000 down to 1, respecting the set digit count
 todo_SomethingwithDigits:
     push af
     push hl
@@ -5156,6 +5318,7 @@ LAB_ram_41f9:
 getMoneyinHLDE:
     ld hl,(creditsHighWord)
     ld de,(creditsLowWord)
+; Prints a credit amount in DE:HL with one decimal place (for the cash display)
 printDeciCredit:
     push de
     ld a,l
@@ -5177,6 +5340,7 @@ LAB_ram_422e:
     pop hl
     scf
     jp todo_SomethingwithDigits
+; Draws the target reticule on the chart, clipped to the chart's X/Y limits per view
 DrawTargetReticule:
     ld a,(Viewdirection)
     cp 0x07
@@ -5245,6 +5409,7 @@ drawReticuleAtXY:
     ld (storePresPlanetY),a
 jpDrawReticule:
     jp drawReticule
+; Divides digitNumber by DE by repeated subtraction and prints one digit, skipping leading zeros
 PrintHowManyOfIt:
     ld hl,(digitNumber)
     xor a
@@ -5263,6 +5428,7 @@ LAB_ram_42a6:
     xor a
     ld (singleDigit),a
     ld a,b
+; Adds 0x30 to A and prints it as an ASCII digit
 goPrintNumber:
     add a,0x30
     jp printString
@@ -5272,6 +5438,7 @@ LAB_ram_42b8:
     jr z,goPrintNumber
     ret
     db ">",0x06,0x18,0x02,">",0x0A,0xC3,"4@"
+; Prints the char at HL unless it is '?' (0x3F)
 printCharofDigram:
     ld a,(hl)
     cp 0x3F
@@ -5350,6 +5517,7 @@ DataonPlanet:
     jr c,printPlanetDescription
     ld a,0xDE
     jp printStringA
+; Prints a space
 printSpace:
     ld a,0x20
     jp printString
@@ -5360,9 +5528,11 @@ printPlanetDescription:
     ld (seedvar2),hl
     ld a,0x05
     jp printStringA
+; Prints A via CallprintString and places the cursor
 anotherPrintwithTokeninA:
     call CallprintString
     jr LAB_ram_43a0
+; Places the cursor twice (new line and home) inside a framed screen
 CurHomeinFrame:
     call placeCursor
 LAB_ram_43a0:
@@ -5391,6 +5561,7 @@ loc_44D0:
     call printStringFollowingByte
     db 0xAD
     jr LAB_ram_43b8
+; Prints the race of the system: alien race string if seed bit 7 is set, else the human token
 printRace:
     ld hl,(qq5)
     ld a,l
@@ -5400,11 +5571,13 @@ printRace:
     jp printRaceString
 BYTE_ram_43d7:
     db 0x01
+; Prints the token held in the byte after the call (return address stepped past it)
 printStringFollowingByte:
     pop hl
     ld a,(hl)
     inc hl
     push hl
+; Prints token or character A: plain ASCII, jump tokens, string-table tokens or two-letter tokens
 printString:
     cp 0x0E
     jp c,useJumpTokens1
@@ -5441,6 +5614,7 @@ printfoundString:
     pop hl
     inc hl
     jr printfoundString
+; Prints the token A into the text buffer; stack and buffer choice depend on the current view
 printStringA:
     ld hl,MainStackNStrings
     push af
@@ -5486,6 +5660,7 @@ LAB_ram_4456:
     pop hl
     inc hl
     jr LAB_ram_4456
+; Prints an ASCII character, upper-casing letters unless the capitals-state flag says otherwise
 DrawASCIIChar:
     cp 0x41
     jr c,LAB_ram_449a
@@ -5526,6 +5701,7 @@ LAB_ram_44a0:
     cp 0x01
     jp z,buffer_justified_char
     pop af
+; Advances charXY and draws the character in A; wraps to the next line past column 32
 printCharAtLocationXY:
     push af
     ld hl,charXY
@@ -5638,9 +5814,11 @@ dcNextPixelline:
 LAB_ram_452e:
     djnz DrawCharLoop
     ret
+; Patches the four commands patch-table bytes to 0x2F (cpl)
 setCommandsCPL:
     ld a,0x2F
     jr LAB_ram_4537
+; Patches the four commands patch-table bytes to 0x00 (nop)
 setCommandsNOP:
     ld a,0x00
 LAB_ram_4537:
@@ -5660,6 +5838,7 @@ commandsPatchTable:
     db 0x8D,0x6F
 flagWhichScreenToPrint:
     db 0x00
+; Copies a colour table at DE into the colour operand bytes patched in the screen code
 setColors:
     ld a,(de)
     inc de
@@ -5801,8 +5980,10 @@ loc_4611:
     ld a,l
     nop
     nop
+; Fills the 0xC600 screen area with the pattern 0x0F0F (default entry of the fill routine)
 sub_4622:
     ld de,0x0F0F
+; Fill the screen from &C600 upwards with the word in DE, using stack pushes with interrupts off
 SUB_ram_4625:
     ld hl,0xC600
     di
@@ -5827,11 +6008,13 @@ LAB_ram_4630:
     ret
 stack1:
     db 0x1A,0xD5
+; Clear the screen, draw the border frame and put the text cursor at column 0, row 1
 drawFrame:
     ld de,0x0000
     call SUB_ram_4625
     ld hl,0x0100
     ld (charXY),hl
+; Draw the frame: top and bottom lines, then the left and right vertical edges (no screen clear)
 drawTitleBoxframe:
     ld de,0xC000
     call drawHorLineofFrame
@@ -5844,6 +6027,7 @@ drawTitleBoxframe:
     ld hl,0xC03F
     ld e,0x10
     ld d,0xFE
+; Draw one vertical frame edge at HL: 24 character rows of 8 lines, OR with E then AND with D
 SUB_ram_466f:
     ld c,0x18
 LAB_ram_4671:
@@ -5871,6 +6055,7 @@ LAB_ram_4686:
 drawHorLineAt0xd880:
     ld hl,0xD880
     ex de,hl
+; Fill 64 bytes at DE with &F0 to draw one horizontal frame line
 drawHorLineofFrame:
     ld bc,0x0040
     ld a,0xF0
@@ -5939,6 +6124,7 @@ LAB_ram_46f7:
     pop af
     dec a
     jr nz,LAB_ram_46f7
+; Print the buffered justified-text word (tempString1, 30 chars) and refill the buffer (probably)
 todoPrintAWord:
     ld hl,tempString1
     ld b,0x1E
@@ -6143,6 +6329,7 @@ LAB_ram_4839:
     ret
 laserDirections:
     db 0x00
+; Show the Commander status page: name, system, fuel, cash, legal state, rank, ship equipment
 CommanderStatus:
     ld a,0x0B
     ld (Viewdirection),a
@@ -6249,6 +6436,7 @@ status_print_equip:
     ret z
     ld a,b
     call printString
+; Place the cursor, then continue into SUB_ram_3f25 with A=5 (tail of the status page)
 SUB_ram_491a:
     call placeCursor
     ld a,0x05
@@ -6280,6 +6468,7 @@ loc_4A45:
     call printString
     pop hl
     jr SUB_ram_491a
+; Print a status label token followed by ':' and then the string whose number is in A
 todo_printlabeledVar:
     ex af,af'
     call printFollowingTokenWithSpace
@@ -6288,6 +6477,7 @@ todo_printlabeledVar:
     db ":"
     ex af,af'
     jp CallprintString
+; Return the commander rank index in A by scanning the rank thresholds against the kill score
 getRank:
     ld hl,killScoreHigh
     ld a,(hl)
@@ -6314,6 +6504,7 @@ Rankingbytes:
     db 0x08,0x10," @",0x80,0xFF
 RankingBytes2:
     db 0x02,0x0A,0x19,0xFF
+; Show the pirates-boarded message box, wait for a key, then restart via ActionsAtEndOfMessage
 printBoardedByMessage:
     push af
     ld a,0x0B
@@ -6353,6 +6544,7 @@ ThargonMissionAccepted:
     ld a,0xE0
     ld de,colorsThargonMissionAccepted
     ld hl,0x010A
+; Draw a mission message box (A message, HL cursor, DE colours), then wait for a key and resume
 printMissionText:
     call drawFlipChart
     jr ActionsAtEndOfMessage
@@ -6373,6 +6565,7 @@ ThargonMissionFinished:
     jr printMissionText
 strFLORENCE:
     db "FLORENCE",0x00
+; Draw the frame, set view 14 and colours from DE, then print message A at cursor HL
 drawFlipChart:
     push af
     push hl
@@ -6443,6 +6636,7 @@ LAB_ram_4a8e:
     cp 0x11
     jr c,LAB_ram_4a8e
     ret
+; Reset the commander save block (&66 bytes) to the default commander
 ClearSaveGameRam:
     ld hl,emptyDefaultsave
     ld de,saveGameRam
@@ -6463,6 +6657,7 @@ bountyforShip:
     db 0x00,0x00
 destroyedEquipmentNumber:
     db 0xF5
+; Print the current view's title (views 0-3) and then run the per-frame message handler
 printViewPortLabel:
     xor a
     ld (todoPrintFlag3948),a
@@ -6521,6 +6716,7 @@ LAB_ram_4b16:
 prinFlightMessage:
     ld a,0x0E
     ld (countdownnumberhypspace2),a
+; Queue an in-flight message: C is its x position, B its token number
 prTokeninBatPosC:
     ld a,c
     ld (msgCoordinateX),a
@@ -6633,6 +6829,7 @@ LAB_ram_4bc6:
     ret
 CountDownNumberForHyperspace:
     db 0x00
+; Handle the hyperspace/galactic jump key: check fuel, set the tunnel flag and start the countdown
 SUB_ram_4bd2:
     ld hl,keybFlags3
     ld a,(hl)
@@ -6697,6 +6894,7 @@ LAB_ram_4c30:
     call longDelay
     call clearKeyBuffer
     jp CommanderStatus
+; Tick the hyperspace countdown, show it at the top of the view and make the jump at zero
 CountDowntoHyperJump:
     ld hl,CountDownNumberForHyperspace
     ld a,(hl)
@@ -6805,6 +7003,7 @@ todoMisJump:
 tableSystemColors:
     db "WCDLJV]LXKG@UC",0x5C,"N"
     db "SULKWBJ^"
+; Patch three colour bytes from tableSystemColors, picked by the low 3 bits of the present system X
 setViewColors:
     ld a,(presentSystemX)
     and 0x07
@@ -7052,6 +7251,7 @@ todo_Missionstage3:
     ld a,0x01
     ld (ThargonMissionVar),a
     jr setShipvarsAtArrival
+; Set the supernova-mission message flag and zero the fuel (does nothing if already empty)
 removeFuel:
     ld a,(fuel)
     and a
@@ -7059,6 +7259,7 @@ removeFuel:
     ld hl,msgSupernovaMission
     set 7,(hl)
     xor a
+; Store A as the fuel level (capped at &46) and update the fuel bar value (about 2.25 x fuel)
 setFuel:
     cp 0x47
     jr c,LAB_ram_4f05
@@ -7074,14 +7275,17 @@ LAB_ram_4f05:
     ld (FuelbarValue),a
     ret
     db 0x01
+; Page the lower ROM in through the gate array (&7F89)
 enableROM:
     ld bc,0x7F89   ; gate array: mode and ROM select value
     out (c),c
     ret
+; Page the lower ROM out through the gate array (&7F8D)
 disableROM:
     ld bc,0x7F8D
     out (c),c
     ret
+; Copy the ROM character set into &D600-&DEFF and patch a few glyphs from the charPatch tables
 copyCharset:
     di
     call enableROM
@@ -7131,6 +7335,7 @@ gcMinY:
     db 0x00
 gcMaxY:
     db 0x00
+; XOR-plot the four arms of the chart cursor crosshair around the stored cursor position
 drawReticule:
     call getCrosshairCoordinates
 LAB_ram_4fe9:
@@ -7161,10 +7366,12 @@ LAB_ram_500b:
     dec a
     jr nz,LAB_ram_500b
     ret
+; Load BC with the stored chart cursor position and A with the crosshair arm length
 getCrosshairCoordinates:
     ld bc,(storePresPlanetX)
     ld a,(txt_hpos)
     ret
+; XOR one pixel at (C,B) into the screen if it is inside the chart area; keeps AF and BC
 chkPlotOnChart:
     push af
     push bc
@@ -7191,6 +7398,7 @@ cppLeave:
     pop bc
     pop af
     ret
+; Return in C the mode 1 pixel mask for pixel number A (0-3) within a byte
 cppSetPixelmask:
     inc a
     ld c,0x88
@@ -7239,6 +7447,7 @@ countShipsLaunchedByStation:
     db 0x00
 missileTargetEntityNr:
     db 0x00,0xDD,"!G",0x04,0xFD,"!TP"
+; Per-frame pass over the entity slots: maybe spawn a station ship, reset damage and target state (probably)
 handleEntitys:
     ld a,(ThargonMissionVar)
     cp 0x04
@@ -7514,6 +7723,7 @@ sqrt_approx_core:
     pop de
     call SUB_ram_52ca
     pop de
+; 16-bit helper: halves HL and DE, divides via div_hl_a_de and adds half the quotient (probably interpolation)
 SUB_ram_52ca:
     rr h
     rr l
@@ -7521,6 +7731,7 @@ SUB_ram_52ca:
     srl h
     rr l
     rra
+; Divide HL by A (div_hl_a_de), halve the quotient and return DE plus that in HL
 SUB_ram_52d4:
     push de
     call div_hl_a_de
@@ -7549,6 +7760,7 @@ todoSomethingwithSine:
     ld b,a
     call SUB_ram_5303
     call SUB_ram_5303
+; Double the coordinate at IX+1, multiply via mult_b_c, store it with its sign and advance IX by 2 (probably)
 SUB_ram_5303:
     ld c,(ix+1)
     sla c
@@ -7564,6 +7776,7 @@ Entityroll:
     db 0x00
 Entitypitch:
     db 0x00
+; Move the entity at IX (MVIT); if lined up near the origin rotate its orientation, else clear its flag
 SUB_ram_531d:
     call MVIT
     bit 2,(ix+38)
@@ -7613,6 +7826,7 @@ LAB_ram_5390:
     bit 6,(ix+30)
     jr z,applyRollandPitch
     add a,0x80
+; Store A as the entity's pitch and rotate its orientation vectors by roll and pitch (probably)
 applyRollandPitch:
     ld (Entitypitch),a
     db 0xDD,0xE5,0xCD,0xD9,"U",0xCD,0xD9,"U",0xCD,0xD9,"U",0xDD,0xE1,0xDD,"~",0x1C
@@ -7675,6 +7889,7 @@ LAB_ram_5429:
     sla c
     rr d
     ret
+; Add a sign-magnitude product in DE to the position word at HL; inner part of move_ship_forward
 todoCalcSpeedtoPositionX:
     ld b,a
     ld c,d
@@ -7948,6 +8163,7 @@ drawIntroShip:
     call todoSomethingwithSine
     ld ix,dat_1B51
     jp SUB_ram_564f
+; For views 0-3, test a ship face normal against the view direction and return early if it is hidden (probably)
 SUB_ram_564f:
     ld a,(Viewdirection)
     ld b,a
@@ -8141,6 +8357,7 @@ LAB_ram_5799:
     dec b
     call putshippixelstoBM
     jp chkEntityFiresLaser
+; OR one mode 1 pixel at (C,B) into the game bitmap; preserves BC
 putshippixelstoBM:
     push bc
     db 0xCD
@@ -8400,6 +8617,7 @@ getEntryfromTable:
     call SUB_ram_5986
     ret nz
     ld a,b
+; Look up entry A in todo_tableforedges; return it in A with Z set if it is zero
 SUB_ram_5986:
     ld hl,todo_tableforedges
     add a,l
@@ -8601,6 +8819,7 @@ LAB_ram_5aa1:
     and a
     sbc hl,de
     ret
+; Add the doubled sign-magnitude value in DE to HL, with the signs in B and C (probably)
 SUB_ram_5ab6:
     ld c,d
     rl e
@@ -8784,6 +9003,7 @@ LAB_ram_5beb:
     ret nc
     ld b,h
     dec c
+; Long-division loop: shifts E into A and builds quotient bits in C for A divided by B
 SUB_ram_5bf2:
     sla e
     rla
@@ -8964,6 +9184,7 @@ todoNextVertice:
     pop ix
     pop iy
     ret
+; Walk the ship's edge list and draw each edge whose face and end vertices are visible (probably)
 todo_parseEdges:
     ld e,(iy+14)
     ld d,(iy+15)
@@ -9165,6 +9386,7 @@ LAB_ram_6098:
     db 0x00,0x00,0x00,0x00,0x00
 LAB_ram_609d:
     db 0x00,0x00,0x00,0x00
+; Redraw each of the 11 dashboard indicator bars whose value changed since the last frame
 UpdateIndicatorBars:
     ld de,tableScreenAdressesofIndicatorbars
     exx
@@ -9216,6 +9438,7 @@ uib4:
     inc de
     inc de
     inc hl
+; Music: sets PSG channel A period/volume (registers 0-1 and 8) from the track data, then the noise/envelope pair
 SUB_ram_60df:
     inc hl
     inc hl
@@ -9231,6 +9454,7 @@ todoIndBarValue:
 tableScreenAdressesofIndicatorbars:
     db "F",0xCC,0x86,0xCC,0xC6,0xCC,0x06,0xCD,"F",0xCD,0x86,0xCD,"p",0xCC,"0",0xCD
     db "p",0xCD,0xB0,0xCD,0xF0,0xCD,0xB0,0xCC,0xF0,0xCC
+; Draw one indicator bar at the screen address from the table: clear its 5 lines, then fill by value
 DrawIndicatorBars:
     ld c,a
     ld a,(de)
@@ -9239,6 +9463,7 @@ DrawIndicatorBars:
     ld a,(de)
     ld h,a
     push hl
+; Music: same as 60df for channel C (registers 4-5 and 10)
 SUB_ram_610d:
     ld d,0x05
 clrNextLineofIndicatorBar:
@@ -9268,6 +9493,7 @@ clrindbarloop:
     ld c,0xFF
     jr z,todoDrawIndBarPixel
     ld c,0x77
+; Music: advances the data pointer and writes the next byte to PSG register A
 SUB_ram_6137:
     dec a
     jr z,todoDrawIndBarPixel
@@ -9578,6 +9804,7 @@ chalt17:
 chalt18:
     ld (todoUnknownStatusFlags),a
     ret
+; Load DE, BC and HL with the x, y and z words of the entity at IX
 todo_getCoordinatesinSpace:
     ld e,(ix+0)
     ld d,(ix+1)
@@ -9586,6 +9813,7 @@ todo_getCoordinatesinSpace:
     ld l,(ix+6)
     ld h,(ix+7)
     ret
+; Load entity coordinates with sign bits cleared and shift them down together until they fit; A counts shifts
 chalt20:
     call todo_getCoordinatesinSpace
     res 7,h
@@ -9593,6 +9821,7 @@ chalt20:
     res 7,b
     ld a,0x01
     jr chalt22
+; Load entity coordinates (signs kept) and shift them down together until they fit; A counts shifts
 chalt21:
     call todo_getCoordinatesinSpace
     ld a,0x01
@@ -9746,6 +9975,7 @@ pti8:
     ex de,hl
     djnz pti8
     ret
+; Step screen address HL down one scan line, wrapping to the next 64-byte character row
 getNextScreenLineAdr:
     ld a,h
     add a,0x08
@@ -9759,6 +9989,7 @@ getNextScreenLineAdr:
     ret nc
     inc h
     ret
+; Step screen address HL up one scan line, wrapping to the previous 64-byte character row
 getPrevScreenLineAdr:
     ld a,h
     sub 0x08
@@ -9773,6 +10004,7 @@ getPrevScreenLineAdr:
     ret nc
     dec h
     ret
+; Copy the 6 x 24 byte compass frame graphic to the screen at &C46A
 drawCompassFrame:
     ld de,0xC46A
     ld hl,gfxCompassFrame
@@ -9824,18 +10056,22 @@ todo_CleanScanCounter:
 BCdiv16:
     srl b
     rr c
+; Divide the unsigned word BC by 8
 BCDiv8:
     srl b
     rr c
+; Divide the unsigned word BC by 4
 BCdiv4:
     srl b
     rr c
+; Divide the unsigned word BC by 2
 BCdiv2:
     srl b
     rr c
     ret
 notinScannerRange:
     jp scnNextShip
+; Redraw the scanner: clear the ECM indicator, then plot each of the 8 ship slots that is in range
 UpdateScanner:
     call cleanScannerUpdateECMIndicator
     ld a,(storeEntityEnergy1)
@@ -10019,10 +10255,12 @@ scnNextShip:
     ld de,0x0027
     add ix,de
     jp scnShipsloop
+; Get the byte address for pixel (C,B): screen layout when the circle flag is set, else the game bitmap
 cirGetBMAdress:
     ld a,(CirclewheretoDrawFlag)
     and a
     jr nz,cirGetScrAddr
+; HL = byte address in the game bitmap for pixel (C,B); A = pixel number within the byte
 getByteAddressinBitmap:
     ld h,0x02
     ld l,b
@@ -10044,6 +10282,7 @@ circgetPixelmaskinBitmap:
     sub 0x03
     neg
     ret
+; HL = screen memory address for pixel (C,B) in CPC layout; adds 24 to Y if todoDrawCircleFlag is set
 cirGetScrAddr:
     ld a,(todoDrawCircleFlag)
     and a
@@ -10087,6 +10326,7 @@ force_loading_busy_state:
     ld a,0x06
     ld (todoUnknownStatusFlags),a
     ret
+; Docking check: enter the station if the orientation flag is set, else test the docking computer
 chkManualDocking:
     ld a,(flagCorrectOrientation)
     and a
@@ -10133,6 +10373,7 @@ nudge_tracked_marker:
     ld ix,sEntityxlo
     call SUB_ram_672c
     call SUB_ram_672c
+; Double the half-difference from half_diff_ship_marker, keep its sign, store at IY+1/+2 and step IX, IY by 3
 SUB_ram_672c:
     call half_diff_ship_marker
     add hl,hl
@@ -10198,6 +10439,7 @@ todo_3dpos_z3:
     db 0x00
 todoSunRadius:
     db 0x00
+; Draw the sun and planet circles, erasing or redrawing the previous circle as needed
 drawPlanetnSun:
     ld hl,posDataSun
     ld de,pos3dX1
@@ -10221,12 +10463,14 @@ LAB_ram_6798:
     call todoDrawFilledCircle
     call RestoreCircleOffsets
     jp clearCircle
+; Save circleOffsetY and circleOffsetXhi to the store copies
 StoreCircleOffsets:
     ld hl,(circleOffsetY)
     ld (storeCircleOffsetY),hl
     ld hl,(circleOffsetXhi)
     ld (storeCircleOffsetX),hl
     ret
+; Restore circleOffsetY and circleOffsetXhi from the store copies
 RestoreCircleOffsets:
     ld hl,(storeCircleOffsetY)
     ld (circleOffsetY),hl
@@ -10252,6 +10496,7 @@ RedrawCircle:
     ld hl,(workstoreCircleOffsetX)
     ld (circleOffsetXhi),hl
     jp todoDrawFilledCircle
+; Copy the planet position into the 3D buffer and compute its screen coordinates; flags left in A
 SUB_ram_6802:
     ld hl,posDataPlanet
     ld de,pos3dX1
@@ -10293,6 +10538,7 @@ workstoreCircleOffsetY:
     db 0x01,0x0C
 workstoreCircleOffsetX:
     db 0x00,0x00
+; Move the sun and the planet entries with MVIT
 moveSunNPlanet:
     ld ix,posDataSun
     call MVIT
@@ -10328,6 +10574,7 @@ LAB_ram_6860:
     ld a,0xF0
     ld (ix+34),a
     ret
+; Draw the explosion cloud for each of the 8 entity slots whose flag bits 4-5 are set
 todoDrawExplosions:
     ld a,(storeEntityEnergy1)
     and a
@@ -10342,6 +10589,7 @@ LAB_ram_688f:
     cp 0x30
     jr nz,LAB_ram_68df
     ld a,(0x28B1)
+; Probably the explosion/flash effect: sets circle mask and sound flag, then draws circles for each ship slot
 sub_689D:
     ld (CirclePixelMask),a
     ld a,0x4E
@@ -10366,6 +10614,7 @@ LAB_ram_68df:
     ret
 CirclePixelMask:
     db 0xFF
+; Projects the sun/planet 3D position into view coordinates for the current view direction
 calcSunPlanetCoordinates:
     exx
     ld bc,0x0003
@@ -10741,8 +10990,10 @@ LAB_ram_6b3c:
 LAB_ram_6b3f:
     ld a,h
     ld b,d
+; Divide setup: clears E and falls into the A/B shift-subtract division (quotient in D, fraction in E)
 SUB_ram_6b41:
     ld e,0x00
+; Shift-and-subtract division of A by B, building the quotient in D (0xFE seed)
 SUB_ram_6b43:
     ld d,0xFE
 LAB_ram_6b45:
@@ -10762,6 +11013,7 @@ LAB_ram_6b52:
     jr LAB_ram_6b45
 togglelcljumpFX:
     db 0x00
+; Handles the local (short) jump key: checks no mass lock or station, then moves dust and ships
 chkLocalJump:
     ld a,(keybFlags3)
     bit 6,a
@@ -10799,6 +11051,7 @@ lcljmp1:
     ld ix,posDataPlanet
     call lcljmp2
     ld ix,sEntityxlo
+; Local jump: shifts one ship coordinate by 0x20 toward the player, wrapping at the range limit
 lcljmp2:
     ld bc,0x0020
     ld h,(ix+8)
@@ -10875,6 +11128,7 @@ dustParticleAdrTable:
     db 0xB3,0x00,0x00,0xFF,0xF6,0x02,0x18,0x00,0x96,0x00,0x86,0xFF,0xF4,0x00,0x00,0x00
     db "j",0xFF,0xF6,0x04,"1",0x01,"-",0x00
     db 0x96,0xFF,0xF4,0x00
+; Draws the space dust for the frame; a pending local jump draws it twice at different speeds
 DrawSpaceDust:
     ld a,(togglelcljumpFX)
     dec a
@@ -10887,6 +11141,7 @@ dust1:
     ld a,0x10
     ld (movementspeed),a
     call dust2
+; Per-pass dust setup (speed, roll, view direction) then loops over all dust particles
 dust2:
     xor a
     ld (numDustParticles),a
@@ -11022,6 +11277,7 @@ dust14:
     ld c,a
     ld a,(dustVar10)
     ld b,0x05
+; Dust particle update: moves the particle by pitch, roll and speed, clipping it on the edges
 sub_6D4E:
     call dust73
     push hl
@@ -11169,6 +11425,7 @@ dust34:
     sub l
     call c,dust71
     jr dust37
+; Multiplies A by C via dust73 and returns the doubled high part in A (dust coordinate scaling)
 dust35:
     ld b,0x04
     call dust73
@@ -11477,6 +11734,7 @@ dust70:
     inc hl
     djnz dust70
     ret
+; Negates A and flips the dust pixel mask bit 6
 dust71:
     neg
     ld b,a
@@ -11485,6 +11743,7 @@ dust71:
     ld (dustPixelMask),a
     ld a,b
     ret
+; Negates A and flips the dust pixel mask bit 7
 dust72:
     neg
     ld b,a
@@ -11493,6 +11752,7 @@ dust72:
     ld (dustPixelMask),a
     ld a,b
     ret
+; Multiplies A by C (B bits, shift-and-add); 16-bit product in HL
 dust73:
     ld d,0x00
     ld hl,0x0000
@@ -11511,6 +11771,7 @@ dust75:
 dust76:
     djnz dust74
     ret
+; Divides a 16-bit value (A:L) by B with shift-and-subtract, quotient scaled in C
 dust77:
     sla l
     rla
@@ -11539,6 +11800,7 @@ dust79:
 dust80:
     and a
     ret z
+; Divides A by B with shift-and-subtract, quotient in D (0xFE seed)
 dust81:
     ld d,0xFE
 dust82:
@@ -11555,12 +11817,14 @@ dust83:
     rl d
     ret nc
     jr dust82
+; Redraws the hyperspace/docking tunnel if its flag is set, after printing the view label
 DrawTunnle:
     call printViewPortLabel
     ld a,(tunnelFlag1)
     and a
     ret z
     jr LAB_ram_7106
+; Witchspace entry: resets variables and ship slots, clears the screen, starts the tunnel effect
 Witchspace:
     ld a,(tunnelFlag2)
     and a
@@ -11710,6 +11974,7 @@ LAB_ram_71c9:
     ld a,0xC3
     ld (LAB_ram_3475),a
     ret
+; Shift-and-subtract division of A by B, quotient in C (tunnel segment scaling, probably)
 todoCalcTunnleSegments:
     ld c,0xFE
 LAB_ram_71e2:
@@ -11733,6 +11998,7 @@ SFXforLeavingHyperspace:
     or 0x04
     ld (sfxFlags2Bitmap),a
     ret
+; Prints the viewport label, draws the laser sights and copies the buffer to the screen
 drawViewPorttoScreen:
     call printViewPortLabel
     call LaserSights
@@ -11747,6 +12013,7 @@ dataLongTunnle:
     db 0x1E,"!#&(+-0257:<?AD"
 dataShortTunnle:
     db 0x10,0x10,0x10,0x18," (08"
+; Sets up the docking (or launch) tunnel animation and, if docking, resets controls and pauses
 DockingSequence:
     ld a,(todoLaunchFlag)
     and a
@@ -11885,14 +12152,17 @@ LAB_ram_7347:
     ld (dfcPatchpos),a
     xor a
     ld (flagPausemode),a
+; Clears five tunnel/input variables and sets the following byte to 0x0C
 InitVariables:
     ld b,0x05
     ld hl,irki2_dat1
     call todo_clearvars
     ld (hl),0x0C
+; Clears five bytes starting at keybFlags1
 todoclearCounter:
     ld b,0x05
     ld hl,keybFlags1
+; Zeroes B bytes at HL
 todo_clearvars:
     xor a
 LAB_ram_7379:
@@ -12285,6 +12555,7 @@ drawLaserVar1:
     db 0x00
 todoLaserVar1:
     db 0x00
+; Checks whether a scooped canister is within range of the ship and not game-over, then picks it up
 TryScoopGood:
     ld a,(GameOverFlag)
     and a
@@ -12417,6 +12688,7 @@ collisionDamagesFronshield:
     ld a,(damageToFrontShield)
     add a,b
     ld (damageToFrontShield),a
+; Flags ships that had this one as missile target; drops the player's lock if it was the target
 chkEntityWasMissiletarget:
     ld a,(missileTargetEntityNr)
     ld h,a
@@ -12464,6 +12736,7 @@ mkKillAllSlotsLoop:
     call spawnCommandParser
     ld a,0x15
     jp spawnCommandParser
+; Laser firing and cooldown: checks the temperature, key flag and fitted laser, then fires
 FiringLaser:
     ld a,(todoLaserVar1)
     ld c,a
@@ -12682,6 +12955,7 @@ emptyShields:
     ld (shipFrontShieldEnergy),a
     ld (shipRearShieldEnergy),a
     ret
+; Per-frame laser and ECM handling: fires the laser if fitted and processes the ECM key
 handleLaser:
     ld a,(GameOverFlag)
     and a
@@ -12729,6 +13003,7 @@ aePlayECMSFX:
     inc a
     ld (todoLaserVar3),a
     ret
+; Draws the four lines of the laser crosshair
 LaserSights:
     ld hl,0x0800
     ld de,0x1000
@@ -12768,9 +13043,11 @@ BYTE_ram_7c3d:
     db 0x00,0x00
 BYTE_ram_7c3f:
     db 0x00,0x00
+; Draws one laser line; sets the draw flag then shares clipping code with SUB_ram_7c45
 drawLaserLine:
     ld a,0x01
     jr LAB_ram_7c46
+; Draws or erases a line with clipping against the view; carry out of the shared line routine
 SUB_ram_7c45:
     xor a
 LAB_ram_7c46:
@@ -12908,6 +13185,7 @@ LAB_ram_7cec:
     cp 0x0E
     jr nc,manipulate_drawroutine2
     cp 0x06
+; Patches the line-drawing code (opcode and address bytes) to suit the line's length and slope
 manipulate_drawroutine1:
     jr nc,LAB_ram_7d06
     cp 0x02
@@ -13228,6 +13506,7 @@ mult_a_c:
     pop hl
     pop de
     ret
+; Calls SUB_ram_5bf2 with C=0xFE, E=0 while preserving DE
 todo_anothersubbeforedraw:
     ld c,0xFE
     push de
@@ -13235,6 +13514,7 @@ todo_anothersubbeforedraw:
     call SUB_ram_5bf2
     pop de
     ret
+; Converts a signed view point (BC, DE) to a bitmap screen address and pixel mask
 CalcPointAdressinBitmap:
     push bc
     push de
@@ -13334,6 +13614,7 @@ LAB_ram_7f7a:
     call todo_anothersubbeforedraw
     ld a,c
     jp todo_drawJumpEntrypoint2
+; Step of the line plot: updates the pixel/error byte and advances the address from the counts in B, D, H
 todo_calculationstuff:
     ld a,b
     srl a
@@ -13572,6 +13853,7 @@ spawnCommandParser:
     dec a
     jp z,loc_83AA
     ret
+; Builds a ship in the slot at IX from blueprint A: copies its data and initial values
 spawnShip:
     ld hl,shipGFXdataTable
     ld b,a
@@ -13629,10 +13911,12 @@ spwnIsNoPirate:
     rr (ix+5)
     xor a
     ret
+; Looks for a free slot and spawns the ship there if one exists (mostly in a db run)
 TrySpawntoFreeSlot:
     ld c,a
     db 0xDD,0xE5,0xCD,0xB2,0x82,0xE1,0xC0,0xE5,"y",0xCD,0x14,0x82,0xE1,0xDD,0xE5,0xD1
     db 0x01,0x1B,0x00,0xED,0xB0,0xAF,0xC9
+; Scans ship slots 1-6 for a free one; returns Z with IX at it, NZ if none
 lookforFreeSlot:
     ld ix,sEntityxlo
     ld de,0x0027
@@ -13652,6 +13936,7 @@ trySpawnAnotherEntity:
     call lookforFreeSlot
     ret nz
     ld a,c
+; Spawns a ship and zeroes its position so it appears at the player
 spawnEntityAtMyPosition:
     call spawnShip
     res 7,(ix+14)
@@ -13806,6 +14091,7 @@ spawnCommand5:
     jr z,spawnAlloyPlates
     call spSecondPlate
     ret nz
+; Spawns blueprint 3 (a plate) drifting with random offsets, speed and spin
 spSecondPlate:
     ld a,0x03
 spawnItDrifting:
@@ -14101,6 +14387,7 @@ listFilecatalog:
     xor a
     ld (BYTE_ram_85b2),a
     jp LAB_ram_0d38
+; Patches the firmware text-draw routines to our own text output handler
 patchFWTextfunctions:
     ld a,0xC9
     ld (TXT_DRAW_CURSOR),a
@@ -14243,6 +14530,7 @@ BYTE_ram_8665:
     db 0x00
 BYTE_ram_8666:
     db 0x00
+; Loads a file via the firmware: name, address and size follow the call; checks for disk errors
 loadFile:
     call setFilemenuColors
     pop hl
@@ -14269,6 +14557,7 @@ loadFile:
     call checkMedia
     call installVBL
     ret
+; Saves a file via the firmware: size, name and address follow the call; checks for disk errors
 SaveSavegame:
     call setFilemenuColors
     pop hl
@@ -14309,6 +14598,7 @@ SavegameFileSize:
     db 0xF6,0x03
 FileOperationFlag:
     db 0x00
+; Checks the file-operation flag after a disk call; on error shows DISK ERROR and returns to the file menu
 checkMedia:
     push af
 loc_86D4:
@@ -14334,6 +14624,7 @@ loc_86D4:
     jp Filemenuloop
 stringDiskerror:
     db "DISK FEHLER",0x00
+; Delay of about 1536 interrupts (256 loops of six halts)
 veryLongDelay:
     ld b,0x00
 LAB_ram_870e:
@@ -14345,6 +14636,7 @@ LAB_ram_870e:
     halt
     djnz LAB_ram_870e
     ret
+; Loads the progress-bar screen then swaps the 0x1A00 bytes of memory between 0x0040 and 0xA600
 loadIndicator:
     call loadFile
     ld b,b
@@ -14364,6 +14656,7 @@ switchMemoryContents:
     or c
     jr nz,switchMemoryContents
     ret
+; Copies the code area to 0xA600 and loads LARGEAXX
 loadLARGEAXX:
     ld hl,0x0040
     ld de,0xA600
@@ -14375,6 +14668,7 @@ loadLARGEAXX:
     ld h,b
     adc a,c
     ret
+; Loads the music file, sets the music-loaded flag and patches the load indicator
 loadMusicnIndicator:
     call loadFile
     nop
@@ -14388,6 +14682,7 @@ loadMusicnIndicator:
     ld (dat_6163_2),hl
     call loadIndicator
     ret
+; Mutes the music and loads LARGEAXX and the non-music replacement file
 loadNotMusique:
     call mute
     call loadLARGEAXX
@@ -14399,6 +14694,7 @@ loadNotMusique:
     ld (hl),b
     adc a,c
     ret
+; Loads LARGEAXX and the music for the docked screens
 loadExtensionsforDockingmode:
     call loadLARGEAXX
     call loadMusicnIndicator
@@ -14409,6 +14705,7 @@ IRSaveBC:
     db "!",0x00
 oldIRHandler:
     db 0x08,0x11
+; Saves the old interrupt vector and installs myVBL (frame interrupt handler)
 installVBL:
     di
     ex af,af'
@@ -14422,6 +14719,7 @@ installVBL:
     ex af,af'
     ei
     ret
+; Restores the old interrupt vector and sets the screen inks for the file menu or view
 setFilemenuColors:
     di
     ex af,af'
@@ -14481,6 +14779,7 @@ allinks_0:
     db 0x00,0x00,0x00,0x00,0x00,0x00
 BYTE_ram_8836:
     db 0x00,0x00
+; Updates a ship's energy-dependent state and the Asp mission state from its hit points
 ActDeponEnergy:
     ld a,(iy+7)
     ld c,(ix+34)
@@ -14653,6 +14952,7 @@ todoSelectShipx24:
     ld a,0x24
 sub_8AC3:
     db 0xFD,0xE5,0xDD,0xE5,0xCD,0xE3,0x81,0xDD,0xE1,0xFD,0xE1,0xC9
+; Checks whether a ship is closer than DE on each axis (carry set if within range)
 todoReduceDistancetome:
     ld h,(ix+1)
     ld l,(ix+0)
@@ -14711,6 +15011,7 @@ loc_8B3C:
 loc_8B58:
     db 0xDD,0xE5,0xCD,"(",0x8C,0x22,"x",0x89,0xCD,"(",0x8C,0x22,"z",0x89,0xCD,"("
     db 0x8C,0x22,"|",0x89,0xDD,0xE1,0xDD,0xCB,"&",0xAE,0xC3,"G",0x8C
+; Handles a missile when ECM is active: destroys it, else tests its target and the ship's state
 MissileDestroyedbyECM:
     ld a,(ecmActiveFlag)
     and a
@@ -14952,6 +15253,7 @@ tblKeyboardmatrix:
     db "09OILKM,87UYHJN "
     db "65RTGFBV43EWSDCX"
     db "12",0xFF,"Q",0xFF,"A",0xFF,"Z",0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFE
+; Keyboard interrupt step: clears flags, reads the PPI keyboard, stores the key, updates controls
 IRKeyboardInput:
     call ClearsomeFlags
     call getPPI_Input
@@ -14959,18 +15261,21 @@ IRKeyboardInput:
     call irki1
     call irki2
     ret
+; Clears the keyboard flag bytes at keybFlags1 onwards
 ClearsomeFlags:
     ld hl,keybFlags1
     xor a
     ld (hl),a
     inc hl
     call csfSetData
+; Stores A twice at HL and advances HL by two
 csfSetData:
     ld (hl),a
     inc hl
     ld (hl),a
     inc hl
     ret
+; Finds the first pressed key in the PPI rows and stores its key code in pressedKey (0xFF if none)
 ReadnStoreKey:
     ld b,0x0A
     ld hl,dataFromPPI
@@ -15006,6 +15311,7 @@ irki5:
     ret
 flagDrawLaserline:
     db 0x00
+; Walks all PPI keyboard rows and sets the matching key flag bits from tblKeyboardMatrix2
 irki1:
     ld iy,dataFromPPI
     ld ix,tblKeyboardMatrix2
@@ -15064,6 +15370,7 @@ keybFlags4CounterNstringNumber:
     db 0x00
 keybFlags5:
     db 0x00
+; Reads all keyboard rows from the PPI into dataFromPPI (with the CPC+ fix)
 getPPI_Input:
     ld hl,dataFromPPI
     ld bc,0xF40E
@@ -15152,6 +15459,7 @@ loc_8E3C:
     pop af
     pop bc
     ret
+; Converts key flags to roll/pitch input values, with ramping, for the flight views
 irki2:
     ld a,(Viewdirection)
     cp 0x04

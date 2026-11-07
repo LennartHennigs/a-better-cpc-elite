@@ -214,12 +214,14 @@ doActionforReturn:
 LAB_ram_095f:
     scf
     ret
+; Prints message token 3 (with space) then token 7, then ends via the error beep/delay tail
 printWithTokens03n07:
     call printFollowingTokenWithSpace
     db 0x03
     call printStringFollowingByte
     db 0x07
     jp SUB_ram_09c4
+; Trampoline: jumps to the address in HL, so `call CallJPHL` acts as an indirect call
 CallJPHL:
     jp (hl)
 ; ZX Spectrum: buy_commodity_row (&E7DB) 0.94
@@ -266,6 +268,7 @@ LAB_ram_099a:
 errorforWrongQuantity:
     ld a,0xB0
     jr bgprintError
+; Trade error: loads message token &C5 and falls into the shared error printer
 errorforNotEnoughCash:
     ld a,0xC5
     jr bgprintError
@@ -280,6 +283,7 @@ bgprintError:
     call printStringFollowingByte
     db "?"
     call restore_trade_state
+; Error/finish tail for the trade screen: key sound, long delay, returns A=1 with carry set
 SUB_ram_09c4:
     call sfxForKeyInput
     call longDelay
@@ -318,6 +322,7 @@ restore_trade_state:
     ld a,(tmpCargoCapacity)
     ld (0x38F3),a
     ret
+; Clears the prompt line and prints the quantity question for the chosen good
 printInputQuestionforQuantity:
     call clrLine0x15
     ld a,0x01
@@ -442,6 +447,7 @@ LAB_ram_0ade:
     djnz LAB_ram_0ade
     and a
     ret
+; Points the trade pointers at the start of the cargo hold and the station inventory, resets the row
 setPointerstoBeginofInventories:
     ld hl,0x38E1
     ld (0xEFF6),hl
@@ -690,6 +696,7 @@ eqErrornotEnoughCash:
 AndsAandReturns:
     and a
     ret
+; Points HL at the 3-byte price entry of the equipment item number in A
 getEquipmentPriceEntry:
     dec a
     ld b,a
@@ -697,6 +704,7 @@ getEquipmentPriceEntry:
     add a,b
     ld hl,0x2F35
     jp SetTableBegintoAofHL
+; Points HL at the ship's equipment slot for the selected item (table at &38F8)
 selectEquipmentOfShip:
     ld hl,0x38F8
     ld a,(todo_storestringnumber)
@@ -746,6 +754,7 @@ filemenuvar:
     db 0x00
 fmTempStack:
     db 0x00,0x00
+; Disk file menu: sets up the screen and patches the text routines, then loops on the load/save choices
 FileMenu:
     ld a,0x0D
     ld (Viewdirection),a
@@ -783,6 +792,7 @@ Filemenuloop:
     db "!w",0x0D,"~/w",0xC3,"8",0x0D
 todo_inputvalue:
     db 0xFF
+; Clears the file-menu input line on screen (30 character cells)
 clsFMInputLine:
     ld b,0x1E
     ld hl,0xC3C2
@@ -909,6 +919,7 @@ saveGame:
     dec a
 SaveGameName:
     db "        "
+; Fills the 8-character save name with spaces, then copies the name string at HL into it
 clearFilename:
     ld a,0x20
     ld de,SaveGameName
@@ -1022,6 +1033,7 @@ loc_0F3B:
     ldir
 loc_0F46:
     jp Filemenuloop
+; Counts the set bits of A and shifts the parity into the byte at dat_0F5B (checksum helper, probably)
 SUB_ram_0f49:
     ld b,0x08
     ld c,0x00
@@ -1043,6 +1055,7 @@ dat_0F5D:
     db 0x00
 dat_0F5E:
     db 0x00
+; XORs the 104-byte commander block at &38CB with the code of EquipShip (save/load key)
 encryptSAV:
     ld de,0x38CB
     ld hl,EquipShip
@@ -1055,6 +1068,7 @@ loc_0F67:
     inc de
     djnz loc_0F67
     ret
+; XOR of 102 bytes of the commander block at &38CB (used as a save integrity check)
 CryptRun1:
     ld hl,0x38CB
     ld b,0x66
@@ -1064,6 +1078,7 @@ loc_0F75:
     inc hl
     djnz loc_0F75
     ret
+; Returns in A the byte-sum of the first 103 bytes of the commander block at &38CB
 getChecksum:
     ld hl,0x38CB
     ld b,0x67
@@ -1086,11 +1101,13 @@ LAB_ram_0f95:
     call SUB_ram_0faf
     call ClearSaveGameRam
     jr loc_0F46
+; Returns HL=&38CB (commander block), DE=104 bytes and A=&16 for the file routines
 getAdrLengthSaveGameRam:
     ld hl,0x38CB
     ld de,0x0068
     ld a,0x16
     ret
+; Reads a file name of up to 8 characters with InputString
 InputFilename:
     ld b,0x0A
     ld a,0x08
