@@ -529,7 +529,7 @@ LAB_ram_1e8d:
     call loadExtensionsforDockingmode
     jp loc_1CCF
 setBorderColor:
-    ld bc,0x7F10
+    ld bc,0x7F10   ; gate array: select border
     out (c),c
     add a,0x40
     out (c),a
@@ -625,7 +625,7 @@ tfScrMemNextLine:
     jp nc,tfloopNextLine
     push bc
     ex de,hl
-    ld bc,0xC040
+    ld bc,0xC040   ; +0x40 and wrap: next character row of the 64-byte-wide view
     add hl,bc
     ex de,hl
     pop bc
@@ -682,7 +682,6 @@ LAB_ram_1ffd:
     push de
     push de
     push de
-dat_2000:
     push de
     push de
     push de
@@ -1596,7 +1595,7 @@ ce2func54FillScreenLineWithFF:
     add a,0x08
     ld h,a
     jr nc,ce2func55
-    ld de,0xC040
+    ld de,0xC040   ; +0x40 and wrap: next character row of the 64-byte-wide view
     add hl,de
 ce2func55:
     ld d,h
@@ -2008,7 +2007,7 @@ cdl5:
     ld h,a
     jr nc,cdl6
     push bc
-    ld bc,0xC040
+    ld bc,0xC040   ; +0x40 and wrap: next character row of the 64-byte-wide view
     add hl,bc
     pop bc
     ld a,e
@@ -2081,7 +2080,7 @@ setNormalDashboardinks:
     ld de,0x5C4C
     ld a,0x4E
 setSplitInks:
-    ld bc,0x7F01
+    ld bc,0x7F01   ; gate array: select pen 1
     out (c),c
     out (c),d
     ld bc,dat_7F00_2
@@ -2092,7 +2091,7 @@ setSplitInks:
     out (c),a
     jr LAB_ram_28b4
 setInks0_1_3:
-    ld bc,0x7F01
+    ld bc,0x7F01   ; gate array: select pen 1
     out (c),c
 patchViewPortInk1:
     ld c,0x44
@@ -2136,7 +2135,7 @@ changeAllInks:
 patchInk0:
     ld c,0x54
     out (c),c
-    ld bc,0x7F01
+    ld bc,0x7F01   ; gate array: select pen 1
     out (c),c
 patchInk1:
     ld c,0x57
@@ -2201,7 +2200,7 @@ setDashboardColor:
     ld a,(Viewdirection)
     cp 0x04
     ret nc
-    ld bc,0x7F01
+    ld bc,0x7F01   ; gate array: select pen 1
     out (c),c
 patchAnotherInk1:
     ld c,0x52
@@ -2235,7 +2234,7 @@ IRSetInk1:
     ld a,(Viewdirection)
     cp 0x04
     ret nc
-    ld bc,0x7F01
+    ld bc,0x7F01   ; gate array: select pen 1
     out (c),c
 patchAnotherInk1_2:
     ld c,0x58
@@ -4806,7 +4805,6 @@ LAB_ram_3fae:
     ret
 gfxAlertStateinHeaders:
     db 0x07,0x0F,0x0F
-dat_3FC0:
     ld c,0x07
     rrca
     rrca
@@ -4854,7 +4852,6 @@ simplyprintit:
     jr printCleartext
 replacewithminus:
     ld a,0x2D
-dat_4000:
     jr simplyprintit
 parseStoredToken:
     ld a,0x00
@@ -7078,7 +7075,7 @@ LAB_ram_4f05:
     ret
     db 0x01
 enableROM:
-    ld bc,0x7F89
+    ld bc,0x7F89   ; gate array: mode and ROM select value
     out (c),c
     ret
 disableROM:
@@ -9311,10 +9308,10 @@ BYTE_ram_615e:
     ld a,h
 BYTE_ram_615f:
     add a,0x08
-dat_6161:
+smcIndicatorPatch1:
     ld h,a
     dec d
-dat_6163:
+smcIndicatorPatch2:
     jr nz,LAB_ram_615b
 BYTE_ram_6165:
     ret
@@ -9326,7 +9323,6 @@ WORD_ram_6167:
     jr z,LAB_ram_6179
     ld c,0x99
     dec a
-dat_6170:
     jr z,LAB_ram_6179
     ld c,0xCC
     dec a
@@ -9416,7 +9412,7 @@ chkAltitude:
     and a
     sbc hl,de
     jp c,crashOnPlanet
-    ld hl,dat_2000
+    ld hl,0x2000
     xor a
     sbc hl,de
     jr nc,chalt1
@@ -9747,7 +9743,6 @@ pti8:
     inc hl
     ex de,hl
     call getNextScreenLineAdr
-dat_640A:
     ex de,hl
     djnz pti8
     ret
@@ -10824,7 +10819,7 @@ lcljmp4:
 lcljmp5:
     ret
 lcljmp6:
-    ld hl,dat_2000
+    ld hl,0x2000
     ld e,(ix+6)
     and a
     sbc hl,de
@@ -12630,7 +12625,6 @@ nothingInCrosshairDrawLaser:
     sub 0x01
     ld d,a
     rlc b
-dat_7B05:
     rlc b
     ld a,b
     and 0x03
@@ -13243,15 +13237,11 @@ todo_anothersubbeforedraw:
     ret
 CalcPointAdressinBitmap:
     push bc
-dat_7EFD:
     push de
     exx
     pop bc
-dat_7F00:
     pop de
-dat_7F01:
     bit 1,d
-dat_7F03:
     jr nz,LAB_ram_7f0a
     ld a,0x7F
     add a,b
@@ -13262,7 +13252,6 @@ LAB_ram_7f0a:
 LAB_ram_7f0d:
     ld b,a
     bit 0,d
-dat_7F10:
     jr z,getPixelAddrrEntrypoint1
     ld a,0x3F
     add a,c
@@ -13352,7 +13341,6 @@ todo_calculationstuff:
     xor b
     add a,a
     add a,a
-dat_7F89:
     add a,a
     add a,a
     or b
@@ -13605,7 +13593,6 @@ loc_80DA:
     ld (ix+35),e
     db 0xDD,0xE5,0xD1,0x01,0x1F,0x00,"!",0xBA,0x81,0xED,0xB0,0xFD,"~",0x07,0xDD,"w"
     db 0x22,0xFD,"~",0x12,"O",0xE6,"o",0xDD
-dat_80FF:
     ld (hl),a
     ld hl,LAB_ram_7db6
     ld a,(bc)
@@ -14396,7 +14383,7 @@ loadMusicnIndicator:
     adc a,c
     ld a,0x01
     ld (flagMusicLoaded),a
-    ld hl,0x6170
+    ld hl,0x6170   ; a number, not an address: its bytes 70 61 are stored over code as instructions
     ld (dat_6161_2),hl
     ld (dat_6163_2),hl
     call loadIndicator

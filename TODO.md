@@ -4,15 +4,15 @@ Open work, most useful first. `CLAUDE.md` keeps the short list; details live in 
 
 ## Disassembly (`src/elite/`)
 - [x] Name the `dat_` variables: 109 of 176 named on 2026-11-07 (`tools/rename_dat.py`, map in `tools/rename_maps/`); `tools/check_src.sh` still byte-exact.
-- [ ] The remaining 58 `dat_` labels (48 `commonxx`, 5 `largeaxx`, 5 `common2x`), of three kinds:
-  - **Address constants, not variables** (about 30): the label sits inside code or data that is only used as an immediate, for
-    example `&2000`, `&4000`, `&3FC0`, `&7F00`/`&7F01`/`&7F03`/`&7F10`/`&7F89` (CRTC/gate-array port values `ld bc,0x7Fxx`),
-    `&640A`, `&7B05`, `&80FF`, `&6161-&6170`. Replace the label by a numeric operand with a comment.
-  - **Variables with an unknown role**: `&1B2A-&1B73` (entity slot workspace), `&38DE`/`&38E1` (credits byte, cargo pad),
-    `&3B3F-&3B69` (galactic chart buffers), `&3D2D` (7 bytes after the target seed), `&5921-&5925` (three words in the ship-edge
-    drawing code), `&1BE3`, `&2016`, `&2F36`, `&8E23`, `&864B`, and `largeaxx` `&0F01-&0F5E` (save menu).
-  - **Data tables**: done (batch 2, 2026-11-07): `charPatch*`, `dustParticleAdrTable`, `tblKeyFlagOffsetMask`; `&5F55` and `&1600` were
-    immediates and are now numeric. Left: `&90A2` (label inside ship data; the end sequence clears 5 bytes from it, role unknown).
+- [ ] The remaining 37 `dat_` labels in `src/elite/` (counted with `grep -c "^dat_"`), checked 2026-11-07. Done: 16 address/message-id immediates
+  (`&2000 &4000 &3FC0 &7F00 &7F01 &7F03 &7F10 &7F89 &640A &7B05 &6170 &7EFD &80FF &C03F &C040 &CE00`) are now numeric operands in
+  `src/elite`, `elite_de` and `elite_fr`; `dat_6161`/`dat_6163` are `smcIndicatorPatch1/2` (patched by `loadMusicnIndicator`).
+  - **Variables with an unknown role**: `&1B2A-&1B73` (entity slot workspace), `&38DE`/`&38E1` (block pointers; `&38E1` is the
+    market byte, see `docs/_missions.md` section 7), `&3B3F-&3B69` (galactic chart buffers), `&3D2D` (7 bytes after the target
+    seed), `&5921-&5925` (three words in the ship-edge drawing code), `&1BE3`, `&2F36`, `&864B`, `&C083`, `&FFFF`, and `largeaxx`
+    `&0F01-&0F5E` (save menu; `&0F01` is a code label whose address is loaded).
+  - **Labels inside or between instructions** (dead code or operand bytes, name or fold into the neighbour): `&2710`, `&3A6C`,
+    `&5860`, `&58C1`, `&5B4E`, `&5C4C`, `&7406`, `&8427`, `&8E23`, `&90A2` (label inside ship data; the end sequence clears 5 bytes from it).
   Method that worked: align the declaration order of Fessor's variable blocks (`extended/source/EliteMasterSource.asm`) with
   the stock block by count of bytes, check one anchor (`work/fessor_to_stock.sym`) and the initial data value, then read the uses.
 - [x] (done 2026-11-07: 8 tables, byte-exact) Turn pointer tables into `dw` and annotate; never rerun `tools/disasm_stock.py` into `src/elite`.
