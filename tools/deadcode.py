@@ -14,31 +14,12 @@ import re
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from lstparse import parse  # noqa: E402
+
 D = Path(sys.argv[1] if len(sys.argv) > 1 else "work/dead")
 BASES = {"largeaxx": 0x0840, "commonxx": 0x1A40, "common2x": 0xC000}
-LINE = re.compile(r"^\s*\d+\+?\s+([0-9A-Fa-f]{4})\s(.*)$")
-LABEL = re.compile(r"^(\w+):\s*(;.*)?$")
 IDENT = re.compile(r"[A-Za-z_]\w*")
-
-
-def parse(name):
-    blocks, cur = [], None
-    for raw in (D / f"{name}.lst").read_text(errors="replace").splitlines():
-        m = LINE.match(raw)
-        if not m:
-            continue
-        rest = m.group(2)
-        hexb, text = rest[:12].split(), rest[13:].split(";")[0].rstrip()   # fixed listing columns
-        if text and not text.startswith((" ", "\t")) and LABEL.match(text.strip()):
-            cur = dict(file=name, name=LABEL.match(text.strip()).group(1), addr=int(m.group(1), 16), size=0, text=[], data=None)
-            blocks.append(cur)
-        elif cur is not None:
-            cur["size"] += len(hexb)
-            if text.strip():
-                cur["text"].append(text.strip())
-                if cur["data"] is None:
-                    cur["data"] = text.strip().split()[0].lower() in ("db", "dw", "ds", "defb", "defw", "defs")
-    return [b for b in blocks if b["text"]]
 
 
 def terminal(b):
@@ -56,7 +37,7 @@ def terminal(b):
 
 
 def main():
-    blocks = sorted((b for n in BASES for b in parse(n)), key=lambda b: (b["file"], b["addr"]))
+    blocks = sorted((b for n in BASES for b in parse(D, n)), key=lambda b: (b["file"], b["addr"]))
     mem = bytearray(0x10000)
     for n, base in BASES.items():
         data = (D / f"{n}.bin").read_bytes()
