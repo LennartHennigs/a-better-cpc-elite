@@ -147,12 +147,47 @@ dat_1B5A:
     db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
 dat_1B73:
     db 0x00,0x00,0x00,0x00,0x00
+; 19 four-byte records indexed by ship type (spawnShip reads bytes +1,+2 as a word): the first byte is an unused
+; `jp` opcode (&C3), then the address of the ship's blueprint data (shipdat...), then a ship class byte. Written as jp + db so the bytes stay identical.
 shipGFXdataTable:
-    db 0xC3,0x98,0x98,0x00,0xC3,0xA1,0x95,0x00,0xC3,"-",0x94,0x01,0xC3,0xA2,0x96,0x01
-    db 0xC3,0xE0,0x91,0x01,0xC3,0xB7,0x99,0x01,0xC3,0x07,0x91,0x01,0xC3,0xF0,0x90,0x02
-    db 0xC3,0xC1,0x9C,0x02,0xC3,0x8B,0x92,0x02,0xC3,0xE1,0x96,0x02,0xC3,0xF8,0x96,0x03
-    db 0xC3,0xA2,0x92,0x03,0xC3,0xC7,0x8F,0x03,0xC3,0x84,0x94,0x03,0xC3,0x0E,0x9A,0x03
-    db 0xC3,0xED,0x97,0x04,0xC3,"-",0x9B,0x04,0xC3,0x16,0x9C,0x04
+    jp shipdatCoriolis
+    db 0x00
+    jp shipdatMissile
+    db 0x00
+    jp shipdatCapsule
+    db 0x01
+    jp shipdatAlloy
+    db 0x01
+    jp shipdatCargo
+    db 0x01
+    jp shipdatSplinter
+    db 0x01
+    jp shipdatAsteroid
+    db 0x01
+    jp shipdatRockHermit
+    db 0x02
+    jp shipdatViper
+    db 0x02
+    jp SHIPDATSINGLETRADER
+    db 0x02
+    jp SHIPDATBIGTRADER
+    db 0x02
+    jp shipdatPythonPirate
+    db 0x03
+    jp shipdatCobraMk3Pirate
+    db 0x03
+    jp shipdatAspMk2
+    db 0x03
+    jp shipdatFerDeLance
+    db 0x03
+    jp shipdatThargoid
+    db 0x03
+    jp SHIPDATPIRATE1
+    db 0x04
+    jp SHIPDATPIRATE2
+    db 0x04
+    jp shipdatThargon
+    db 0x04
 strChar32:
     db " "
 tempString1:
@@ -2816,12 +2851,42 @@ irdsVar6:
     db 0x00
 sfx1Number:
     db 0x06
+; Sound effect function table: 16 words, one routine per effect number (indexed by A*2).
 sfxTableOfFunctions:
-    db 0xDE,"-",0xEE,"-",0xF7,"-",0x01,".",0x0A,".",0x14,".!.+."
-    db "5.I.c.}.",0x8C,".",0x9B,".",0xA5,".",0xBF,"."
+    dw sfxFunc1
+    dw sfxFunc2
+    dw sfxFunc3
+    dw sfxFunc4
+    dw sfxFunc5
+    dw sfxFunc6
+    dw sfxFunc7
+    dw sfxFunc8
+    dw sfxFunc9
+    dw sfxFunc10
+    dw sfxFunc11
+    dw sfxFunc12
+    dw sfxFunc13
+    dw sfxFunc14
+    dw sfxFunc15
+    dw sfxFunc16
+; Sound register-setting function table: 16 words, parallel to sfxTableOfFunctions (soundTableAddress points at one of the two).
 sfxTableRegSettingFunctions:
-    db 0xD6,"-",0xE6,"-",0xEF,"-",0xF9,"-",0x02,".",0x0C,".",0x19,".#."
-    db "-.A.[.u.",0x84,".",0x93,".",0x9D,".",0xB7,"."
+    dw sfxRegFunc1
+    dw sfxRegFunc2
+    dw sfxRegFunc3
+    dw sfxRegFunc4
+    dw sfxRegFunc5
+    dw sfxRegFunc6
+    dw sfxRegFunc7
+    dw sfxRegFunc8
+    dw sfxRegFunc9
+    dw sfxRegFunc10
+    dw sfxRegFunc11
+    dw sfxRegFunc12
+    dw sfxRegFunc13
+    dw sfxRegFunc14
+    dw sfxRegFunc15
+    dw sfxRegFunc16
 sfxFlags1Bitmap:
     db 0x00
 sfxFlags2Bitmap:
@@ -3961,11 +4026,24 @@ mleSetCapacity:
     ld a,(presentSystemY)
     ld (PresentPlanetY),a
     ret
+; Key-function jump table: 16 three-byte `jp` entries; execSelectedKeyFunctions calls entry A (A*3 offset). Entries outside this file are numeric with the target name in a comment.
 DockedFuncJumptable:
     jp BuyGoods
-    db 0xC3,"@",0x0A,0xC3,0xFE,0x0A,0xC3,"}<",0xC3,0x84,":",0xC3,0xCF,"B",0xC3
-    db 0x0B,"H",0xC3,"GH",0xC3,"@J",0xC3,"sA",0xC3,0x83,"A",0xC3,"`"
-    db "A",0xC3,"NA",0xC3,0x94,"A",0xC3,":A",0xC3,"w@"
+    jp 0x0A40  ; largeaxx: SellGoods
+    jp 0x0AFE  ; largeaxx: EquipShip
+    jp GalacticChart
+    jp LocalChart
+    jp DataonPlanet
+    jp MarketPrices
+    jp CommanderStatus
+    jp Inventory
+    jp MapCrossHairLeft
+    jp MapCrossHairRight
+    jp MapCrossHairDown
+    jp MapCrossHairUp
+    jp RecenteronDockedPlanet
+    jp DistanceToPlanet
+    jp FindPlanet
 tunnelFlag1:
     db 0x00
 tunnelFlag2:
@@ -5768,7 +5846,9 @@ LAB_ram_453c:
     djnz LAB_ram_453c
     ret
 commandsPatchTable:
-    db 0x02,"E",0x04,"E",0x12,"E",0x14,"E(",0x9B
+    ; addresses of the 4 operand bytes that setCommandsNOP overwrites (inside code, so numeric)
+    dw 0x4502,0x4504,0x4512,0x4514
+    db 0x28,0x9B
 flagWhichScreenToPrint:
     db 0x00
 setColors:

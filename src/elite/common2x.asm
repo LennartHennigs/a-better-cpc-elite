@@ -2380,14 +2380,55 @@ LAB_ram_feab:
     ld d,(hl)
     ex de,hl
     jp (hl)
+; Handler table for control codes 0-13 inside a token (used by useJumpTokens1): 14 words.
 Jumptokens1:
-    db 0x90,0xFF,"Q",0xFF,"p",0xFF,"x",0xFF,"4",0xFF,"=",0xFF,0xBA,0xFF,"(",0xFF
-    db "9",0xFF,0x0E,"?",0xF1,0xFF,"]",0xFF,0x85,0xFF,0x11,0xFF
+    dw nothing_return
+    dw jpPrintNumberofGalaxy
+    dw jpprintPresentSystem
+    dw jpprintTargetSystem
+    dw jpPrintCommanderName
+    dw jpprintFuelRange
+    dw LAB_ram_ffba
+    dw jpprintCash
+    dw SUB_ram_ff39
+    dw placeCursor
+    dw LAB_ram_fff1
+    dw jpPrintPlanetname
+    dw LAB_ram_ff85
+    dw jpprintCommanderLabel
+; Handler table for control codes in the second token set (used by useJumpTokens2): 30 words, then 4 trailing bytes of unknown use.
 Jumptokens2:
-    db 0x90,0xFF,0xBA,0xFF,"9",0xFF,"x",0xFF,"4",0xFF,0xF1,0xFF,0xF5,0xFF,"O>"
-    db 0x81,0xFF,"FF",0x16,"?",0x8A,"F",0x0E,"?",0xB5,0xFF,"BG^G"
-    db "]",0xFF,0xC0,0xFF,0x91,0xFF,0x8B,0xFF,0x90,0xFF,"O@>@",0xC3,"B"
-    db "B@ ",0xFF,0x85,0xFF,0x90,0xFF,0x16,"?",0xBF,"B",0xFF,0x0C,0x04,0x0D
+    dw nothing_return
+    dw LAB_ram_ffba
+    dw SUB_ram_ff39
+    dw jpprintTargetSystem
+    dw jpPrintCommanderName
+    dw LAB_ram_fff1
+    dw LAB_ram_fff5
+    dw 0x3E4F  ; commonxx: sfxForKeyInput
+    dw LAB_ram_ff81
+    dw 0x4646  ; commonxx: drawFrame
+    dw 0x3F16  ; commonxx: GetYlocationofText
+    dw 0x468A  ; commonxx: drawHorLineAt0xd880
+    dw placeCursor
+    dw LAB_ram_ffb5
+    dw 0x4742  ; commonxx: begin_justified_text
+    dw 0x475E  ; commonxx: LAB_ram_475e
+    dw jpPrintPlanetname
+    dw jpCheckforEndingVowel
+    dw printFlightDigramsReducedRandom
+    dw jptodoSetUnknownFlag
+    dw nothing_return
+    dw 0x404F  ; commonxx: clrLine0x15
+    dw 0x403E  ; commonxx: sub_403E
+    dw 0x42C3  ; commonxx: locateLine10
+    dw longDelay
+    dw LAB_ram_ff20
+    dw LAB_ram_ff85
+    dw nothing_return
+    dw 0x3F16  ; commonxx: GetYlocationofText
+    dw 0x42BF  ; commonxx: locateLine6
+    db 0xFF,0x0C,0x04,0x0D
 jpprintCommanderLabel:
     ld a,0xFC
     ld hl,0x3927

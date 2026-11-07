@@ -2363,14 +2363,55 @@ LAB_ram_feab:
     ld d,(hl)
     ex de,hl
     jp (hl)
+; Handler table for control codes 0-13 inside a token (used by useJumpTokens1): 14 words.
 Jumptokens1:
-    db 0x90,0xFF,"Q",0xFF,"p",0xFF,"x",0xFF,"4",0xFF,"=",0xFF,0xBA,0xFF,"(",0xFF
-    db "9",0xFF,0x15,"@",0xF1,0xFF,"]",0xFF,0x85,0xFF,0x11,0xFF
+    dw nothing_return
+    dw jpPrintNumberofGalaxy
+    dw 0xFF70
+    dw 0xFF78
+    dw 0xFF34
+    dw 0xFF3D
+    dw 0xFFBA
+    dw jpprintCash
+    dw SUB_ram_ff39
+    dw placeCursor
+    dw 0xFFF1
+    dw jpPrintPlanetname
+    dw 0xFF85
+    dw jpprintCommanderLabel
+; Handler table for control codes in the second token set (used by useJumpTokens2): 30 words, then 4 trailing bytes of unknown use.
 Jumptokens2:
-    db 0x90,0xFF,0xBA,0xFF,"9",0xFF,"x",0xFF,"4",0xFF,0xF1,0xFF,0xF5,0xFF,"V?"
-    db 0x81,0xFF,"SG",0x1D,"@",0x97,"G",0x15,"@",0xB5,0xFF,"OHkH"
-    db "]",0xFF,0xC0,0xFF,0x91,0xFF,0x8B,0xFF,0x90,0xFF,"VAEA",0xCA,"C"
-    db "IA ",0xFF,0x85,0xFF,0x90,0xFF,0x1D,"@",0xC6,"C",0x05,0x0D,0x0A,0x0D
+    dw nothing_return
+    dw 0xFFBA
+    dw SUB_ram_ff39
+    dw 0xFF78
+    dw 0xFF34
+    dw 0xFFF1
+    dw 0xFFF5
+    dw 0x3F56  ; commonxx: sfxForKeyInput
+    dw 0xFF81
+    dw 0x4753  ; commonxx: drawFrame
+    dw 0x401D  ; commonxx: GetYlocationofText
+    dw 0x4797  ; commonxx: drawHorLineAt0xd880
+    dw placeCursor
+    dw 0xFFB5
+    dw 0x484F  ; commonxx: begin_justified_text
+    dw 0x486B  ; commonxx: LAB_ram_475e
+    dw jpPrintPlanetname
+    dw jpCheckforEndingVowel
+    dw printFlightDigramsReducedRandom
+    dw jptodoSetUnknownFlag
+    dw nothing_return
+    dw 0x4156  ; commonxx: clrLine0x15
+    dw 0x4145  ; commonxx: sub_403E
+    dw 0x43CA
+    dw 0x4149  ; commonxx: longDelay
+    dw 0xFF20
+    dw 0xFF85
+    dw nothing_return
+    dw 0x401D  ; commonxx: GetYlocationofText
+    dw 0x43C6
+    db 0x05,0x0D,0x0A,0x0D
 jpprintCommanderLabel:
     ld a,0xFC
     ld hl,0x3A2E

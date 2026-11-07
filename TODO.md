@@ -15,7 +15,8 @@ Open work, most useful first. `CLAUDE.md` keeps the short list; details live in 
     immediates and are now numeric. Left: `&90A2` (label inside ship data; the end sequence clears 5 bytes from it, role unknown).
   Method that worked: align the declaration order of Fessor's variable blocks (`extended/source/EliteMasterSource.asm`) with
   the stock block by count of bytes, check one anchor (`work/fessor_to_stock.sym`) and the initial data value, then read the uses.
-- [ ] Turn pointer tables into `dw` and annotate; never rerun `tools/disasm_stock.py` into `src/elite`.
+- [x] (done 2026-11-07: 8 tables, byte-exact) Turn pointer tables into `dw` and annotate; never rerun `tools/disasm_stock.py` into `src/elite`.
+- [ ] Look for more pointer tables hiding behind unlabeled targets (the scan only finds runs of in-range words); apply any new ones to `src/elite_de/` and `src/elite_fr/` too.
 - [x] (done 2026-11-07) Seed names from `work/fessor_to_stock.sym`: 1,471 of 1,581 descriptive names were already in `src/elite/`; the rest are Fessor-only code or weak `delta` matches. Last two (`cloakTick`, `commandsPatchTable`) named from callers. Remaining `LAB_ram_`/`dat_` labels need naming from callers or the Spectrum map.
 - [x] Name the equipment bytes in the commander save (done 2026-11-07, see `docs/_savegame.md`). `&38E1` is the market random byte; the escape pod clears from it and so keeps alien items (`&38F2`): a confirmed off-by-one bug (`docs/_missions.md` section 7), fix not applied.
 - [x] (done 2026-11-07, `src/elite_de/`, `bash tools/check_src.sh de`) Do the German build (`Elite_DE_cracked.dsk`). Open: the 140 generic `sub_`/`loc_`/`dat_` labels there, the German-only routines (system data text, token printing in `COMMON2X`), `dw` tables, and a German text table decoder.

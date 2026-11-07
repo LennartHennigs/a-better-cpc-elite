@@ -18,7 +18,7 @@
 - cpcxray's own source export was not used. I expected trace-based coverage to be unreliable here (overlaid
   files sharing addresses, self-patching plotters, only executed code is classified), but I did not test it.
 - Open: about 430 Fessor labels are unplaced (variables and rewritten code), so many variables are still `dat_XXXX`;
-  `dw` pointer tables are `db`; the German `[G]` build is in `src/elite_de/` (see "German build" below).
+  most `dw` pointer tables are converted (the rest are `db`, see `src/elite/README.md`); the German `[G]` build is in `src/elite_de/` (see "German build" below).
 
 ## Disassembly findings (English build, booted in cpcxray)
 
