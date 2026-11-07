@@ -412,9 +412,12 @@ Each phase ends with `bash tools/check_src.sh` (or its feature-flag variant), a 
 
 ## 7. Open questions and risks
 
-- *To check:* where the CPC places systems named in the BBC chain; the CPC seeds are the BBC seeds
-  (`4A 5A 48 02 53 B7`), so coordinates should match, but run the name generator for the ten systems (Reesdice,
-  Arexe, Cearso, Errius, Inbibe, Ausar, Usleri, Orarra, Ceerdi, Birera) and check each exists in the right galaxy.
+- *Answered (2026-11-07), the ten system names:* generated from the CPC's own digram table (`DockedDigrams`, index 0 skipped,
+  `?` drops the second letter) and the BBC seed twist (`waggle_galaxy`, four twists per name; galaxy hop rotates every seed byte
+  left by one), after checking it reproduces Tibedied (galaxy 1 system 0), Lave (7) and Diso (147). All ten exist exactly once, in
+  the galaxy the chain needs: galaxy 1 Arexe (system 28, x/y 164,89) and Reesdice (36; 149,101); galaxy 2 Ausar (53; 146,102),
+  Cearso (68; 87,109), Inbibe (79; 152,146), Usleri (118; 148,68), Orarra (193; 144,33) and Errius (253; 184,149); galaxy 3 Birera
+  (36; 63,72) and Ceerdi (83; 215,84). Ceerdi and Birera match the BBC coordinates above. Orarra is about 7 LY from Usleri.
 - *Answered (2026-11-07), the spawn rule:* the CPC equivalent of the BBC main-loop spawn is `handleEntitys`: every frame it counts
   down `todoLaserVar2`; when that reaches 0 and no station is near, no launch is running and fewer than 4 station-launched ships exist,
   it calls `spawnCommandParser` with action 0 = `spawnCommand0` (where `todoLaserVar2` is reloaded was not traced). `spawnCommand0`

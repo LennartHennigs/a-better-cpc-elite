@@ -42,7 +42,7 @@ Open work, most useful first. `CLAUDE.md` keeps the short list; details live in 
 - [x] Read the Trumbles code in the C64 source (done, in `docs/_missions.md`). Still unread: `TRIBTA`/`TRIBMA` sprite count, inventory print, escape pod.
 - [ ] Decide whether Trumbles are worth porting: text-only about 150-250 bytes of code plus 100 of text; with software sprites in the off-screen bitmap about 0.6-0.9 KB in total (see `docs/_missions.md`, "Trumbles crowding the screen"). No reward in the original, so decide a purpose first.
 - [x] (done 2026-11-07, `docs/_missions.md` "Colours") Check which of the two-colour sprite pens exist in every view (`setInks`) before drawing anything into the off-screen bitmap: only pen 2 (ink 20, black) is fixed in views 0-3; pens 0/1/3 vary by system, supernova mode and cloak. Confirmed in cpcxray (all 8 systems, supernova mode, cloak, energy-bomb flash); explosion flicker of pen 3 is listing-only.
-- [ ] Check the ten system names of the Constrictor and Plans chains against the CPC name generator.
+- [x] (done 2026-11-07, `docs/_missions.md` section 7) Check the ten system names of the Constrictor and Plans chains against the CPC name generator: all ten exist once, in the right galaxy.
 
 - [ ] Decide the mission order and trigger for new missions: the ST and MSX queue (one per 64 jumps outside the first galaxy) or the CPC
       thresholds (32, 128, 254); see `docs/_missions.md`, "Order and trigger".
