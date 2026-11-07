@@ -15,14 +15,14 @@ extracted with `tools/dskx.py`), after `python3 -I tools/map_french.py` has pair
 `INDICATO.BIN`, `PICTURE.BIN` and `MUSIQUEX.BIN` are byte-identical to the English files.
 
 ```bash
-bash tools/check_src.sh fr     # all four files byte-exact against work/bin_fr
+bash tools/check_src.sh fr     # all four files byte-exact against work/bin_fr (COMMONXX: apart from the CPC+ fix byte at &8F3F)
 ```
 
 ## Findings (2026-11-07)
 
 - The French game is the English program with French text, like the German one. Mapping paired about 81% of the English code bytes
   (26931 of 33349), 4 conflicts, 86 divergences. The key-code table `tblKeyboardMatrix2` differs from the English one.
-- **No CPC+ keyboard fix**: `getPPI_Input` still has two `out (c),a` (the German disk has `out (c),c`; see `docs/_cpcplus.md`).
+- **The French disk has no CPC+ keyboard fix** (`getPPI_Input` had two `out (c),a`; the German disk has `out (c),c`; see `docs/_cpcplus.md`). Our source carries the fix: `src/elite_fr/commonxx.asm` differs from `work/bin_fr/COMMONXX.BIN` in exactly one byte, `&8F3F` (`ED 79` -> `ED 49`), and `check_src.sh fr` expects it.
 - The first disk's loader is the plain `E.BAS` / `EL.BAS` / `SPEED.BAS` set (`SPEED.BAS` pokes a small machine-code stub at `&1000` and runs `elite`),
   with `.BAK` copies of every file and an extra `PICTURE1.SCR` splash. Headers carry load addresses for all binaries; exec addresses are 0.
 - The `[a]` disk is a compacted re-release ("COMPACTE PAR CHANY FROM NUL PART SYSTEM"): `ELITE.` (BASIC plus stub, load `&0140`, exec `&1A60`),

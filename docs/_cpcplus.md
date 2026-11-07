@@ -63,6 +63,15 @@ Plus.dsk`), SHA-256 `09f7e527760b1232400dd70d8302b1753a4259260def9f82c022c165e24
   bytes, no byte shifts anywhere) and changes one instruction in place.
 - Not checked: the German disk (routine at a different address), and whether the one-byte fix passes a Plus-PPI-emulating emulator.
 
+## Test result (2026-11-07)
+
+- Our `src/elite/` now carries the fix (`getPPI_Input`, `&8DA0` `ED 79` -> `ED 49`). The assembled `COMMONXX` differs from stock in exactly that byte and is identical to `work/plus_patch/x/COMMONXX.BIN`; the file length is unchanged, so nothing moves and the `CHEAT.ASC` pokes are unaffected. `tools/check_src.sh` expects the patched byte.
+- `work/elite_plus.dsk` is the Firebird disk with that one byte patched (AMSDOS headers untouched).
+- Tested in Caprice32 v4.6.0 (built by `scripts/install-caprice32.sh`, run as `./cap32 -O system.model=3 DISK.dsk`; `model=2` is the classic 6128, `model=3` the 6128+). At the Plus startup menu press the CPC f1 (BASIC) through the on-screen keyboard (Shift+F1 in the emulator); host F1 opens the emulator's own menu. Then `run"elite`.
+  - Unpatched Firebird disk on the 6128+: the game ran and the keys worked, so **Caprice32 does not reproduce the Plus keyboard bug**. It cannot confirm the fix.
+  - Patched disk (`work/elite_plus.dsk`): works, on the 6128+ and the classic 6128 (regression check passed).
+- Still untested on real Plus hardware or in an emulator that models the ASIC port order (WinAPE with Plus PPI emulation on). The fix rests on Redbox's disk and his test on a real 6128+; ours is byte-identical to it.
+
 ## Plan
 
 1. **Get the disk.** (Done for UK; the forum links are dead, the user supplied the file.) Download Redbox's patch disk (forum attachment or CPC Power #9; the CPC Power link was a `#` placeholder). Ask

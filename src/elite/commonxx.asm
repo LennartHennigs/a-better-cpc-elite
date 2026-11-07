@@ -15339,7 +15339,7 @@ getPPI_Input:
     ld c,a
     or 0xC0
     out (c),a
-    out (c),a
+    out (c),c                ; CPC+ fix: was out (c),a (see docs/_cpcplus.md)
     inc b
     ld a,0x92
     out (c),a
