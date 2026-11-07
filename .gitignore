@@ -1,0 +1,17 @@
+# Fessor's material: he asked that nothing be re-uploaded or published (see extended/CLAUDE.md)
+extended/
+
+# Working files, builds, traces, scratch
+work/
+traces/
+tmp/
+
+# Disk images, scans and photos of other people's work
+*.dsk
+*.DSK
+magazines/*
+!magazines/README.md
+*.jpg
+*.JPG
+
+.DS_Store

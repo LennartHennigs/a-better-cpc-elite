@@ -1,0 +1,11 @@
+# group 3: Fessor placeholders (todo_*) with an exact Spectrum counterpart (ratio 1.00)
+todo_BoughtSomething destroy_cargo_unit
+todo_useDockedDigrams print_two_letter_token
+todo_gen_rnd_number text_rng
+todo_printroutinew status_print_equip
+todoCalcPosXinSpace move_ship_forward
+todoCalcSpeedvector multiply_speed_nosev
+todoCalcTravelDirection rotate_orientation_vector
+todo_launchprocedure seed_starfield
+todoSomethingWithMoneynCapacity snapshot_trade_state
+todoSomethingWithMoneynCapacity2 restore_trade_state

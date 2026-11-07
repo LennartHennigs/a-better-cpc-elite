@@ -1,0 +1,90 @@
+# Changelog
+
+Changes to the project, newest first. The project root is a git repository from 2026-11-07; before that, this
+file is the only history. Dates are ISO.
+
+## 2026-11-07
+
+- Added the French disks (`Elite (1985)(Firebird Software)(fr).dsk` and `[a]`). Extracted to `work/bin_fr/` and `work/bin_fr_a/`. The code is the English program with French text (no encryption); `tools/map_french.py` + `tools/disasm_french.py` (copies of the German tools) produce `src/elite_fr/`, byte-exact (`bash tools/check_src.sh fr`, now supported). Findings in `src/elite_fr/README.md`: no CPC+ fix, `[a]` is a renamed repack with identical payloads.
+- Cleaned `work/`: deleted `ext_EliteSource/`, `ext_EliteMasterSource/`, `ext_ELITE_EXT_DISK/` (each identical to a kept archive: `work/EliteSource.rar`, `work/EliteMasterSource.rar`, `extended/archives/ELITE_EXT_DISK.zip`; `ext_EliteSource` also to `extended/source/`) and `build_fessor_run/` (wiped and rebuilt by `scripts/build-fessor.sh`). Renamed the disk copies in `work/xray/disk/` to the current names (`ELITE.DSK` -> `Elite_UK_original_protected.dsk`, `firebird.dsk` -> `Elite_UK_Firebird_cracked_trainer.dsk`; hashes match the root disks) and updated `CLAUDE.md`, `docs/_cheats.md`, `docs/_missions.md`, `tools/circle_sweep.py`. Snapshots hold no disk name, so they needed no change.
+- Settled the save-format disagreements with the CPC International type-in by launching the game in cpcxray and jumping Lave -> Diso: `&3913` is the present system's tech level minus 1 (renamed `marketRandomByte` -> `presentTechLevel` in `src/elite/` and `src/elite_de/`; the market random byte is `&38E1`), and the game stores y at `&43`, x at `&45` (the type-in's names are swapped). `docs/_savegame.md` updated; `check_src.sh` and `check_src.sh de` byte-exact.
+- Renamed the Asp mission state byte `todoWorkVariable` -> `aspMissionState` and its branch labels (`drawShipDistanceCheck`, `aspGateClearIfBlueprint1E`, `aspGateReset`) in `src/elite/commonxx.asm`, with Spectrum cross-reference comments (`&A7D9`, `&A7E6`, `&9DD6`, `&9DDD`); docs updated. `tools/check_src.sh` byte-exact. Backup: `work/backup_src_pre_asp/`.
+- Answered two mission-plan questions (`docs/_missions.md` section 7): the CPC's main-loop spawn is `handleEntitys` -> `spawnCommand0` (hook point for a 22% Thargoid rule), and the escape-pod clear is off by one (starts at the market byte `&38E1`, keeps alien items `&38F2`). `&38E1` identified as the market random byte in `docs/_savegame.md`.
+- Disassembled the German build into `src/elite_de/` (byte-exact, `tools/check_src.sh de`): `tools/map_german.py` pairs the German code with the English by lockstep walking (81% of English code bytes), `tools/disasm_german.py` transfers names and comments and verifies by assembling. Findings: not relocated code but the same program with German text; the German disk already contains the CPC+ keyboard fix; `NOTMUSIC` is `COMMONXX` `&6000-&6FFF`; `COMMON2X` differs in 270 bytes.
+- Unpacked `work/elite plus/ELITE.EXE` (EXEPACK, a hacked PC Elite Plus) with the new `tools/unexepack.py`; output in `work/elite plus/extracted/` (`ELITE_unpacked.EXE`, raw `ELITE.img`, `strings.txt`). The mission texts (stolen police ship, asteroids) are in the image, so the logic can now be disassembled.
+- Three more passes on the Spectrum map: own comments for the disc/circle code (with a header block for the whole routine), six more unmatched maths routines named and commented (`normalize_position_vector`, `square_position_component`, `rotate_vertex_axis`, `add_sign_mag_bytes`, `de_plus_hl_div_2`, `minus_de_plus_hl_div_2`), ten Fessor `todo_*` placeholders renamed from exact matches, and about 70 comments for text, charts, trade, ship movement and spawning. `tools/gen_spectrum_map_doc.py` regenerates `docs/_spectrum_map.md`. `tools/check_src.sh` byte-exact.
+- Wrote our own comments for the maths routines Fessor had not identified (27 routines: squares-table multiply, the two divides, DVID3B2 projection divide, square root, cross-product helpers, face visibility); renamed three more from the Spectrum map (`div_hl_a_de`, `add_scaled_nosev_to_roofv`, `line_of_sight_vector_component`). `tools/check_src.sh` still byte-exact.
+- Seeded `src/elite/` from the ZX Spectrum disassembly: `tools/spectrum_map.py` (routine matching by instruction skeleton plus call-graph propagation), `tools/spectrum_data_map.py`, `tools/apply_spectrum_names.py`; 43 generic labels renamed, about 140 `; ZX Spectrum: name (&ADDR)` comment lines, `docs/_spectrum_map.md`. `tools/check_src.sh` still byte-exact.
+- Confirmed the UK disk has no Anaconda or Transporter: the ship table and blueprint sizes equal the ZX Spectrum's, and a header scan of the raw disk finds only the 14 known blueprints (`docs/_architecture.md`). Boulder is present.
+- Found Amtix's "infamous bug": the disc fill (`ce2func43FillCompleteLinesinBM`, `&243A`) uses SP as a write pointer and relies on a line-count clamp at `&245B`; without it, big off-centre planets overwrite memory below the bitmap. The stock build survives a 131k-input sweep (`tools/circle_sweep.py`, `docs/_architecture.md`).
+- Matched Amtix's four missions to the code (`docs/_missions.md`): "pirates taking over Space Station 1" is the Thargoid invasion of system 0's station; the jammer is its tool. Gave the probability of the hidden "boarded by pirates" hazard (about 1.8% per arrival).
+- Diffed Redbox's UK CPC+ patch disk (`work/plus_patch/`): the whole fix is one byte in `COMMONXX` (`&8DA0`, second `out (c),a` -> `out (c),c` in `getPPI_Input`), no length change. Documented in `docs/_cpcplus.md`.
+- Compared the Atari ST Cougar mission with the CPC cloak-Asp (`docs/_missions.md`, section 2): the CPC does spawn escorts, `todoWorkVariable` is a 0-3 state byte, the canister is ordinary. Cloned `Rasmus-M/elite-skoolkit` (ZX Spectrum) and `ricbit/elite` (MSX) into `work/ext_msx/`; `elite-msx-skoolkit` does not exist online.
+- Added `docs/_cpcplus.md` (CPC+ keyboard bug from the CPCWiki thread, Redbox's patch, plan for our own fix) and `docs/gamefaqs_player_guide_nemrac.md` (saved GameFAQs guide, third-party).
+- Named the equipment bytes of the commander save: `&38FD`/`&38FE`/`&3905`/`&3906` are unused laser slots (the equipment block is indexed from `&38F8` by shop item number), `&3928-&3930` is the sun position (`savedSunPos{X,Y,Z}`). Named data tables `charPatchD628`..`charPatchD7D8`, `dustParticleAdrTable`, `tblKeyFlagOffsetMask`; turned `dat_5F55` and `dat_1600` (immediates) into numeric operands (`tools/rename_maps/2026-11-07-dat-batch2.txt`). `tools/check_src.sh` still byte-exact.
+- Added `tools/textcomp.py`: optimal re-tokenisation of `stringsTable2` (`&0FCA`, 254 strings) and the in-flight
+  `stringsTable` (`&2FAF`, 145 strings) with the existing refs and digrams, expansion checked identical. Result: the
+  original token choice is already near optimal, only 48 bytes saved (36 + 12, about 1.7%). Not applied to `src/elite/`.
+  Found that `LARGEAXX` ends in 812 zero bytes (`&1714-&1A3F`); whether they are free at runtime is unchecked
+  (see `docs/_missions.md` section 4). Confirmed in cpcxray: reloaded from disk at every docking (zero tail when docked, unused flight-side bytes when flying), so safe for docked-only code and mission text.
+
+### Added
+- `tools/dbcode.py`: finds code-shaped, unreferenced chains in the `db` runs of `COMMONXX`: six routines, about 130-155 bytes; a short trace
+  was inconclusive (`docs/_architecture.md`, point 4).
+- `tools/deadcode.py`: reachability analysis of `src/elite/` (needs sjasmplus listings, see its header). Finds 28 bytes of labelled dead
+  code; most dead code is in `db` runs. Dead-code findings and a failed attempt to locate Fessor's switched-off blocks by byte pattern
+  are in `docs/_architecture.md`.
+- `docs/_missions.md`: a numbered list of the eight missions (1 to 3 in the CPC, 4 to 8 candidates) with the game systems each touches and the
+  changes the CPC needs, and a table now covering BBC, Apple II, C64, NES, Atari ST, MSX, CPC and Elite Plus.
+- Shallow clones of the Atari ST, NES and TI-99/4A-from-MSX sources in `work/ext_st`, `work/ext_nes`, `work/ext_msx` (untracked, read-only).
+- Found the C64 Trumbles source (Mark Moxon's annotated repo) and read its offer, breeding, noise and sun-death code; behaviour table, a CPC hook map and an analysis of drawing crowding Trumbles as software sprites (about 300-450 bytes, no erase needed because the off-screen bitmap is cleared every frame) are in `docs/_missions.md`; links in `docs/_references.md`.
+- `tools/elitekey.py`: reads the save key from a game disk (finds `EquipShip` in `LARGEAXX` by its code signature, same result
+  as the fixed offsets 0x2BE English and 0x2C2 German); `tools/savedec.py SAVE DISK.dsk` uses it, no extracted files needed.
+- `docs/_missions.md`: plan (only) for porting the BBC and Apple II missions to the CPC.
+- `magazines/elite-commander.pdf` (CPC International 3/86 commander type-in) and its extracted text.
+- 109 `dat_` labels in `src/elite/` renamed to real names (save block, equipment, dust, circle, sound, entity workspace, planet data); still byte-exact. `tools/rename_dat.py`, `tools/check_src.sh`, `tools/rename_maps/`.
+- `CHEAT.BAS` (ours, source `src/cheats/CHEAT.ASC`; it replaces the original on `work/firebird_cheat.dsk`), an interactive trainer: asks Y/N per cheat plus start cash, own-cloak and a mission stage; adds pirate-boarding
+  removal, unlimited-hold toggle and mission fast-forward (`tools/build_cheat.sh`, `tools/cheat_tokenise.py`; sources and listings in `src/cheats/`, tracked; see `docs/_cheats.md`).
+- `src/elite/`: reassemblable, byte-exact source of the stock English build (four files; see its README).
+- `tools/savedec.py`: decodes a commander save (XOR with the code at `EquipShip`, plus both checksums).
+- `scripts/build-fessor.sh`: rebuilds Fessor's patched source in `work/build_fessor_run/` and compares it with
+  the beta disk. Run by the user; all five files matched.
+- `extended/source/` (Fessor's source extracted), `extended/FESSOR_VS_STOCK.md` (changes vs stock),
+  `extended/CLAUDE.md` (what each file is and the no-re-upload rule).
+- `magazines/` with the Amstrad Action 3 and Amtix 13 scans, extracted text and an index.
+- `docs/` (notes split by topic), `TODO.md`, this file.
+
+### Found
+- The Atari ST source's reward routines are swapped in their comments: by `dock_check` the Constrictor pays 10,000 Cr and the Thargoid
+  documents give the military energy unit (matches the MSX wiki). `docs/_gameplay.md` had them the other way and is corrected.
+- MSX Elite (Rob Nicholson, Mr. Micro) has the same five missions as the Atari ST, one per 64 jumps outside the first galaxy (read in
+  the TI-99/4A conversion of the MSX code, `Rasmus-M/elite-ti994a`). The mission table in `docs/_missions.md` now covers BBC, Apple II, C64,
+  NES, ST, MSX, CPC and Elite Plus.
+- The Atari ST source (Mr. Micro 1988, adapted from MSX) runs five missions in a fixed order every 64 jumps and contains the supernova,
+  Cougar and Thargon-invasion missions, so those are not CPC-only. The NES source has three missions (Constrictor, Thargoid plans,
+  Trumbles). No source has the Stolen Police Ship (Elite Plus only). Links in `docs/_gameplay.md` and `docs/_references.md`.
+- Commander cash is a word pair, not a 32-bit number: the high word counts 1,000 Cr, the low word the decicredits below
+  10,000 (tested: high 2, low 2500 shows 2250.0 Cr). `tools/savedec.py` and `CHEAT` corrected. Source: the CPC
+  International type-in `magazines/elite-commander.pdf`, which also confirms the laser, equipment and mission-flag bytes
+  (see `docs/_savegame.md`).
+- The 23,835-line `EliteMasterSource.asm` is the beta disk's source: it builds byte-identical `LARGEAXP`,
+  `COMMONXP`, `COMMON2P`, `NOTMUSIP` and `SHIPSETB`. The second, 28,615-line version is an older fork.
+- Commander save format decoded (104 bytes at `&38CB`, field map in `docs/_savegame.md`). `Elite Savegame.dsk` holds
+  **German**-build saves; `1.BIN` is a stock-key save named `1`.
+- `Elite - Gold.dsk` was `ELITE.DSK` plus a stray `TES.BIN`.
+- Amtix 1986: the four special missions, the unused-code statement and the "planet drifts off screen" crash.
+
+### Changed
+- `docs/_gameplay.md`: the BBC Constrictor mission is offered in galaxies 1 and 2 (it said galaxy 1 only); `docs/_missions.md` notes the Trumbles trigger is cash of 5,017.6 Cr in the code, not the figures on the deep-dive page.
+- `docs/_savegame.md` field map rewritten from the code: cargo table starts at `&38E2`, kill score is 24 bits, `&38F3` is free hold space, `&38FB` the large cargo bay, `&390D` the present system's seed, `&3914` market stock. `tools/savedec.py` prints these.
+- Disks renamed: `ELITE.DSK` to `Elite_UK_original_protected.dsk`, `Elite_1985_Firebird_Software.dsk` to
+  `Elite_UK_Firebird_cracked_trainer.dsk`, `Elite - Gold [G].dsk` to `Elite_DE_cracked.dsk`,
+  `Elite Savegame.dsk` to `Elite_DE_savegames.dsk`; `IMG_9858.JPG` to `Elite_DE_controls_card.jpg`.
+- `extended/` reorganised into `archives/`, `forum/`, `reference/`, `source/`.
+- `notes.md` corrected: the beta build is byte-identical to the source (it said "not identical", which came
+  from comparing files with and without the AMSDOS header).
+
+### Removed
+- `Elite - Gold.dsk` (duplicate of the UK original), `extended/archives/EliteSource.rar` (kept extracted in
+  `extended/source/`), `extended/archives/EliteMasterSource.rar` (older fork; extracted copy remains in
+  `work/ext_EliteMasterSource/`).

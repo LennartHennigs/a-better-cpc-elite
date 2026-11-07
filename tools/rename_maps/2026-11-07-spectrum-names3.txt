@@ -1,0 +1,7 @@
+# group 2 (unmatched maths), identified from the Spectrum I/O descriptions and checked against the code
+SUB_ram_5212 normalize_position_vector
+SUB_ram_5237 square_position_component
+SUB_ram_5991 rotate_vertex_axis
+SUB_ram_5a62 add_sign_mag_bytes
+SUB_ram_771b de_plus_hl_div_2
+SUB_ram_7717 minus_de_plus_hl_div_2

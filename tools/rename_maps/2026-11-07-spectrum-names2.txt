@@ -1,0 +1,4 @@
+# verified by hand against the code and the Spectrum I/O description (tools/spectrum_map.py candidates at 0.74-0.77)
+SUB_ram_76f6 div_hl_a_de
+SUB_ram_5df0 add_scaled_nosev_to_roofv
+SUB_ram_782a line_of_sight_vector_component

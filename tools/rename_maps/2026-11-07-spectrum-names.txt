@@ -1,0 +1,7 @@
+# names from the ZX Spectrum SkoolKit disassembly, matched by tools/spectrum_map.py (direct ratio >= 0.90, propagated >= 0.80)
+SUB_ram_20da circle_run_up
+SUB_ram_20e6 circle_run_down
+SUB_ram_561a reshuffle_rate_bits
+SUB_ram_6742 half_diff_ship_marker
+SUB_ram_ee26 abs_difference
+SUB_ram_7670 diff_of_products

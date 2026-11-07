@@ -1,0 +1,169 @@
+# CPC Elite
+
+Goal: disassemble and edit an old abandonware Amstrad CPC game (Elite) from `Elite_UK_original_protected.dsk`, then
+write the modified build back to a DSK image that runs on a CPC emulator.
+
+## Rules
+
+- **Never modify the original disks in the project root** (`Elite_UK_original_protected.dsk`,
+  `Elite_DE_cracked.dsk`, `Elite_UK_Firebird_cracked_trainer.dsk`, `Elite_DE_savegames.dsk`). Work on copies.
+- Keep generated output (extracted binaries, disassembly, snapshots, traces) out of the project root:
+  `work/` for disks, snapshots and extracted files, `src/` for annotated assembly, `traces/` for traces.
+- Target is Z80 on a CPC 464/6128. Write assembly in sjasmplus syntax (cpcxray generates it and uses it for
+  its round-trip check). RASM stays an option for writing DSKs.
+- Keep AMSDOS headers intact when writing binaries back to disk (load address, exec address, length, checksum).
+- Do not re-upload Fessor's material elsewhere; see `extended/CLAUDE.md`.
+- `scripts/build-fessor.sh` builds Fessor's source in `work/build_fessor_run/` and compares with the beta disk (user runs it).
+- Building downloaded source in Bash is blocked by the permission classifier. Put it in a script under
+  `scripts/` and ask the user to run it (`! bash scripts/…`); do not try to work around the block.
+
+## Layout
+
+- `extended/` Fessor's downloaded archives, source, symbols and saved forum pages (read-only, do not re-upload; see `extended/CLAUDE.md`).
+- `tools/` helper scripts; `tools/bin/rasm` is the locally built RASM. `scripts/` installers, run by the user.
+- `work/bin_stock/` stock files from `Elite_UK_original_protected.dsk` (`.raw` keeps the AMSDOS header); `work/stock_bin/` the
+  three code files for `tools/map_labels.py`; `work/bin_ext/` Fessor's beta; `work/build_fessor/` his source
+  plus build output (do not run `rasm` on its other `.asm` files: it overwrites `rasmoutput.sym`); `work/prot/` protection
+  dumps; `work/xray/` the cpcxray project; `work/stock_mem_image.bin` the three code files laid out in a 64K image;
+  `work/musiquex.sym` the music player's labels at stock addresses.
+- `magazines/` period scans plus extracted text (Amstrad Action 3, Amtix 13); `docs/` notes by topic (canonical; `notes.md` is only an index into it); `CHANGELOG.md` and `TODO.md` track changes and open work; the root is a git repo (`.gitignore` keeps `extended/`, `work/`, disks and scans out).
+- `src/cheats/` tracked: `CHEAT.ASC` (source of our interactive trainer), `CHEAT.BAS` (its tokenised file) with its listing `CHEAT.BAS.txt`, and `CHEAT_ORIGINAL.BAS.txt` (listing of the CHEAT.BAS on the Firebird disk); `tools/build_cheat.sh` rebuilds the `.BAS` and `work/firebird_cheat.dsk`.
+- `work/ext_st/`, `work/ext_nes/`, `work/ext_msx/` shallow clones of the Atari ST (`ataribaby42/elite-source-code-atarist`), NES (`markmoxon/nes-elite-beebasm`) and
+  TI-99/4A-from-MSX (`Rasmus-M/elite-ti994a`) sources, plus in `work/ext_msx/` the ZX Spectrum SkoolKit disassembly (`skoolkit/`, the closest annotated relative of the CPC code) and the MSX one (`ricbit/`), read-only references for the missions (links in `docs/_references.md`); copyrighted, do not copy them into the project or build them.
+- `src/elite/` reassemblable source of the stock English build (see its README); `traces/` does not exist yet.
+- `src/elite_de/` reassemblable source of the German build (`bash tools/check_src.sh de`; names and comments transferred from `src/elite` by `tools/map_german.py` + `tools/disasm_german.py`, see its README).
+- `src/elite_fr/` reassemblable source of the French build (`bash tools/check_src.sh fr`; `tools/map_french.py` + `tools/disasm_french.py`, files in `work/bin_fr/`; `[a]` repack in `work/bin_fr_a/`). The two French disks are in the project root next to the others; never modify them.
+- Another localized build (French done): extract the disk with `tools/dskx.py` into `work/bin_X/`, add an entry to `LOCALES` in `tools/map_locale.py` and `tools/disasm_locale.py` (`map_german.py`/`map_french.py` are thin wrappers; copy one), run both, then add a branch to `tools/check_src.sh`. Check `getPPI_Input` for the CPC+ fix (`out (c),c` = fixed).
+- Third-party disk images belong in `work/` (e.g. `work/plus_patch/`), never `tools/` or the root.
+- `work/elite plus/` PC Elite Plus (`ELITE.EXE`, EXEPACK, a hacked build); `extracted/` has the unpacked image and strings. Unpack with `python3 -I tools/unexepack.py IN OUT.EXE OUT.IMG`. Its mission logic is in `docs/_missions.md` section 9 ("Elite Plus code"); no source exists, only this EXE and [rembish/elite-plus-revamp](https://github.com/rembish/elite-plus-revamp) (decompilation in progress).
+
+## Disks (details and hashes in `docs/_disks.md`)
+
+- Disks were renamed 2026-11-07 (old names in `docs/_disks.md`): `Elite_UK_original_protected.dsk`, `Elite_UK_Firebird_cracked_trainer.dsk`, `Elite_DE_cracked.dsk`, `Elite_DE_savegames.dsk`.
+- `Elite_UK_original_protected.dsk` is the UK original ("Version GOLD", CPC Power #1): 41-track extended DSK, all files carry the
+  System attribute so `CAT` shows nothing, with decoy directory entries and a protected `ELITE.BAS`.
+  SHA-256: `e50a6627d98da88f74d3207fc953c3c4d9960b1f190aedc0a5c695d3e9de1b76`.
+- `Elite_UK_Firebird_cracked_trainer.dsk` is the same English game, unprotected, plus `CHEAT.BAS`. Start here.
+  The original `CHEAT.BAS` on this disk has a wrong cloak entry. Our interactive trainer is also called `CHEAT.BAS` (`src/cheats/CHEAT.ASC`); on `work/firebird_cheat.dsk` it replaces the original (`RUN"CHEAT`, see `docs/_cheats.md`). Cloak key is `Y`.
+- `Elite_DE_cracked.dsk` is the German build (same program, German text; already has the CPC+ keyboard fix; source in `src/elite_de/`).
+- `Elite_DE_savegames.dsk` holds four 104-byte commander saves.
+- Tracks 1 and 40 of the 41-track disks use odd sector IDs but hold only `0xE5` filler: not a loader.
+
+## Game facts
+
+- Load sequence (plain `ELITE.BAS`): picture to `&C000`, `largeaxx` to `&840`, `commonxx` to `&1A40`,
+  `common2x` to `&C000`, then `CALL &1C82`. `&1C82` is the entry point.
+- `CHEAT.BAS` gives poke addresses in the English build (see `docs/_cheats.md`); they anchor routine names.
+- The CPC port is a Spectrum port, not a BBC port. Use the annotated 6502 sources only for naming and logic.
+- Fessor's RASM reconstruction of the game and his beta are in `extended/` (downloaded 2026-11-07, do not
+  re-upload). `extended/reference/symbolsEnglishVersion.asm` holds 157 symbols that are correct for the stock game.
+  His source builds the patched game only; switching all patch flags off does not give the stock bytes.
+  The `.rar` files are RAR5: use `bsdtar`, not `7z` (17.05).
+- CPC tokenised BASIC: constants `0x0E–0x18` are 0–10, `0x19` is a byte, `0x1A` an int16, `0x1C` hex,
+  `0x1F` a 5-byte real, `0x01` is `:`, `0xFF` prefixes functions. `CAT` on `Elite_UK_original_protected.dsk` shows only `0K free`
+  (a decoy entry; the real files are System-hidden); use `iDSK x.dsk -l` or `tools/dskx.py` instead.
+- `Elite_UK_original_protected.dsk` is protected by ARMOURLOC v1.1. `LOAD"ELITE.BAS` is wiped by BASIC on return to the prompt
+  (flag `&AE2C`); to read it, stop at `&C06A` and write `0` to `&AE2C`. Details in `docs/_disks.md`. `RUN` is fine.
+
+## Toolchain (macOS, Apple Silicon)
+
+| Purpose | Tool | Status |
+|---|---|---|
+| Analysis emulator | **cpcxray** 0.9.4 (traces, disassembly, sjasmplus output, MCP server) | Installed with `uv tool`; `~/.local/bin/cpcxray` (not on PATH). Project folder `work/xray/`. Headless MCP and GUI both work. |
+| Other emulators | RVM (play and compare), MAME (traces), konCePCja (sector editor) | Not installed |
+| DSK read and write | iDSK | Installed at `~/.local/bin/iDSK` (built by `scripts/install-tools.sh`). `iDSK x.dsk -l` lists, including hidden System files. |
+| Disassembly | cpcxray first; z80dismblr (unmaintained but works); Ghidra if cross-references are needed | z80dismblr and Ghidra not installed |
+| Assembler | **sjasmplus** (needed by cpcxray's `source-verify`), RASM as optional | sjasmplus 1.24.0 installed at `~/.local/bin/sjasmplus` (built by `scripts/install-tools.sh`; not in Homebrew). RASM 3.3.2 is built locally at `tools/bin/rasm` (needed for Fessor's source; not in Homebrew; rebuild with
+`cc -O2 -DNO_3RD_PARTIES -DNOAPI -o rasm rasm.c -lm -lpthread`, the repo's makefile fails to link) |
+| Project scripts | `scripts/` has installers (run by the user); `tools/` has analysis helpers: `tools/dskx.py` (list and extract AMSDOS files from a DSK), `tools/map_labels.py` (map Fessor's labels onto stock), `tools/bastok.py` (detokenize CPC BASIC), `tools/elitetext.py` (expand game text tokens), `tools/savedec.py` (decode a commander save) and `tools/elitekey.py` (save key from a game disk), `tools/build_cheat.sh` (rebuild the interactive trainer), `tools/deadcode.py` (dead-code reachability over `src/elite/`), `tools/circle_sweep.py` (cpcxray sweep of the planet disc routine for out-of-bounds writes), `tools/spectrum_map.py` + `tools/apply_spectrum_names.py` (match CPC routines to the Spectrum disassembly and seed names; map in `docs/_spectrum_map.md`), `tools/map_german.py` + `tools/disasm_german.py` (regenerate `src/elite_de/`), `tools/dbcode.py` (unreferenced code hiding in `db` runs), `tools/z80dis.py` + `tools/disasm_stock.py` (regenerate and verify `src/elite/`) | Plain Python 3, run with `python3 -I` |
+
+```bash
+bash tools/check_src.sh [de]                                 # assemble src/elite (or src/elite_de) and compare with the original binaries
+python3 -I tools/dskx.py Elite_UK_original_protected.dsk work/bin_stock          # list and extract (AMSDOS headers kept in .raw)
+python3 -I tools/map_labels.py work/build_fessor work/build_fessor/rasmoutput.sym work/stock_bin \
+    work/fessor_to_stock.sym extended/reference/symbolsEnglishVersion.asm        # add --eval to score the method
+cd work/build_fessor && ../../tools/bin/rasm EliteMasterSource.asm -s -sq   # patched build + symbols
+python3 -I tools/bastok.py FILE                              # detokenize BASIC (--header if AMSDOS header)
+```
+
+16-bit x86 (Elite Plus): no `ndisasm` or `objdump`; use capstone in a scratch venv (`Cs(CS_ARCH_X86, CS_MODE_16)`). `ELITE.img` has DS base `0xB000` (data offset = file offset - `0xB000`). Mission text is script-like (x/y bytes), so find logic through variables (`DS:83A0` mission, `83A2` state, `83A3` target system, `836B` legal status) by searching for their little-endian bytes.
+
+Shell gotcha (zsh): `echo =====` fails (`= expansion`); use `printf -- '---\n'` for separators, and quote or `${=VAR}` variables you want word-split.
+
+Run cpcxray with `export PATH="$HOME/.local/bin:$PATH"`, then `cd work/xray && cpcxray gui --config
+config/cpc6128.toml` (its MCP server listens on `127.0.0.1:8765`). Mount disks read-only
+(`disk_insert` defaults to read-only).
+
+Scripting cpcxray: use its own interpreter, `~/.local/share/uv/tools/cpcxray/bin/python -I script.py`, with
+`mcp.client.stdio.stdio_client(StdioServerParameters(command="cpcxray", args=["mcp"]))`. Run from
+`work/xray/` (paths like `config/cpc6128.toml` and `disk/x.dsk` are relative). Attaching to the running GUI
+uses `streamable_http_client("http://127.0.0.1:8765/mcp")`, which yields two streams, not three.
+Useful tools: `disk_insert`, `type_text`, `run_until`, `sna_load`/`sna_save`, `memory_save`, `disassemble`.
+Gotchas: `memory_view` and `memory_read` show ROM under the lower ROM, and `view="ram"` returns zeros. Use
+`view="ram:0"` (or `ram:N`) for RAM, or `view="cpu"` after paging. Argument names: `memory_write(address, data="3E 05")`,
+`registers_set(values={"pc": 0x9000})`, `breakpoint_add(address, kind="pc"|"write")`. For boot-time work use
+`type_text(text, wait=False)` then `run(max_us=...)`. Plain stdlib JSON-RPC over `cpcxray mcp --config config/cpc6128.toml` also works.
+Test routines in flight, not from `firebird_at_entry.sna` (its memory is the docked layout: the ISR at `&0038` still jumps into the bitmap); `output/firebird_in_flight.sna` is the game just launched (`docs/_architecture.md`). cpcxray quirks: `bus_trace_read` returns the last 100 records unless `last=` (max 2000); a non-deterministic interrupt phase makes single runs differ, so compare with interrupts off (`registers_set iff1=0`). Driving the game: `disk_insert disk/Elite_UK_Firebird_cracked_trainer.dsk` BEFORE `sna_load output/firebird_at_entry.sna` (else "Drive A: disc missing"),
+run ~8 s, then hold `n` and `space` 1.2 to 1.5 s each (`key_press`, `run`, `key_release`); shorter holds are missed. `run` reports
+`time_limit`, not a breakpoint stop: count hits with `breakpoint_list`. The GUI flickers constantly (draws unsynced to the emulated
+frame); play and test visually in Virtual Retro, use cpcxray for tracing. Label addresses: `sjasmplus --raw=o.bin --lst=x.lst --sym=x.sym
+src/elite/commonxx.asm` into a scratch dir. Key to flag mapping: `tblKeyboardMatrix2` (`&8D37`, line*8+bit; code>>3 is the `&8D87` byte, code&7 == 0 is bit 7).
+
+## Workflow
+
+1. Boot the Firebird disk in cpcxray. Snapshot at `&1C82`: `work/xray/output/firebird_at_entry.sna`
+   (reload with `sna_load`); the image and disassembly of `&0840-&9FFF` are beside it.
+2. Disassembly is done for the stock English build (`src/elite/`, byte-exact). Cheat addresses, missions and known
+   variables are tracked in `docs/_cheats.md` and `docs/_gameplay.md`.
+3. Improve `src/elite/` (names, `dw` tables, comments). Once you hand-edit the `.asm` files, **never rerun
+   `tools/disasm_stock.py` into `src/elite`** (it overwrites them); give it a scratch directory instead
+   (`python3 -I tools/disasm_stock.py /tmp/x`). After every change assemble with sjasmplus and compare with `work/bin_stock/*.BIN` (the README shows how)
+   before changing any behaviour.
+4. Write rebuilt binaries into a copy of the DSK (keep the AMSDOS headers) and test.
+5. Diff against other builds (German `[G]`, CPC+ patch) once the English code is understood.
+6. After a big rename or comment batch in `src/elite/`, regenerate the German names into a scratch dir first (`python3 -I tools/map_german.py && python3 -I tools/disasm_german.py /tmp/de`) and diff against `src/elite_de/`; never write over `src/elite_de/` once it is hand-edited.
+
+Gotchas:
+- Docs: `docs/_*.md` (architecture, cheats, cpcplus, disks, fessor, gameplay, history, missions, references, savegame, spectrum_map) are canonical, split by topic; `notes.md` is only an index. Edit the `docs/` file when you change a fact.
+- Web pages behind Cloudflare (GameFAQs and similar) return 403 to `curl` and WebFetch. Use Claude in Chrome: `navigate`, then `javascript_tool` with `document.querySelector('#faqwrap').innerText` (or `get_page_text`). Save third-party text under `docs/` with its source URL in the header.
+- `rtk` truncates long Bash output ("+N more … see log"). For big greps or counts use the Read tool or a `python3 -I` script. In zsh an unmatched glob such as `--include=*.asm` aborts the command: drop the flag or quote it.
+- Best annotated relative of the CPC code: `work/ext_msx/skoolkit/src/elite.skool` (ZX Spectrum, per-line comments). It uses the same `Missionflag` byte, Asp spawn and shared state byte (`aspMissionState` = Spectrum `$9CB2`). `ricbit/` is the MSX disassembly (one-line comments only). In `work/ext_st/repo`, read `src_orig/` for the original logic; `src_atari/` is a modified build.
+- In docs, cite CPC routines by label (`spawnCommand0`, `targetisKilled`) unless you checked the address in the listing or a trace. Label names in `src/elite/` are stable; guessed `&xxxx` values are not.
+- Spectrum map workflow: `python3 -I tools/spectrum_map.py && python3 -I tools/spectrum_data_map.py && python3 -I tools/gen_spectrum_map_doc.py` regenerates `work/spectrum_map/` and `docs/_spectrum_map.md`; renames go through `tools/rename_dat.py` with a map in `tools/rename_maps/` (it refuses a name already used). From the Spectrum disassembly take only names and addresses; write comments in our own words from the code and mark matches `; ZX Spectrum: name (&ADDR)`.
+- `tools/z80dis.py` cannot decode `push ix`/`pop ix`, so such routines stay `db` runs. Back up `src/elite/` before bulk edits (`work/backup_src_pre_spectrum/` is the pre-Spectrum copy) and run `bash tools/check_src.sh` after each batch.
+- Foreground Bash stops at 2 minutes: run long cpcxray sweeps in the background (`nohup ... &`, one output file each) and check the logs; `tools/circle_sweep.py` takes about 5 ms per call.
+- `MUSIQUEX.BIN` loads at `&6000` over `COMMONXX`'s `&6000-&6FFF` (while the music plays; `NOTMUSIC.BIN` is that slice of `COMMONXX`). Never lay both into one image when decoding or comparing code: use `COMMONXX` alone, as `tools/map_german.py` does.
+- Scans of raw disk images can double-count: `Elite_DE_cracked.dsk` holds `COMMONXX` twice (tracks 7 and 27). Its AMSDOS headers have load address 0 except `COMMONXX.BIN` (`&1A40`); set the others when writing a DSK.
+- To find every use of a variable, grep all of `src/elite/*.asm` for both the label and the number (`0x38E1`): `largeaxx.asm` and `common2x.asm` use raw addresses for variables that `commonxx.asm` labels.
+- Fessor-vs-stock comparisons by label anchors (`work/fessor_to_stock.sym`) give false "changed" reports when an anchor is a few bytes off; read the routine in both builds before reporting a change. `extended/FESSOR_VS_STOCK.md` marks which findings are unverified.
+- zsh does not word-split unquoted variables: `set -- $p` leaves one argument. Use `${=p}` or a plain loop over explicit names.
+- Renames and deletes of ignored files (`work/`, `extended/`, disks) have no undo, since git does not track them. Check each reference first (`grep -rn OLDNAME CLAUDE.md docs src tools scripts extended/*.md`) and update docs in the same step.
+- RASM `SAVE ...,AMSDOS` output has a 128-byte header; strip it (`[128:]`) before comparing with `work/bin_*/*.BIN`.
+- Commander saves: 104 bytes at `&38CB`, XORed with the code at `EquipShip` (`LARGEAXX` file offset `&2BE` stock,
+  `&2C2` German). A save only decodes with its own build's key; the `Elite_DE_savegames.dsk` saves are German.
+  Use `tools/savedec.py SAVE DISK.dsk` (the key is read from the disk by `tools/elitekey.py`); the field map is in `docs/_savegame.md`.
+  Credits are a word pair (high word counts 1,000 Cr, low word the decicredits below 10,000), not a 32-bit number.
+- To find which build a blob belongs to, XOR-scan it against every `work/bin_*/*.BIN` for known plaintext.
+- `Elite - Gold.dsk` was deleted (it was `Elite_UK_original_protected.dsk` plus a stray `TES.BIN`). `extended/` has its own `CLAUDE.md`.
+
+Watch for self-modifying code (the line plotters are self-patched): confirm static results with traces.
+Elite swaps `&0040-&1A3F` with `&A600-&BFFF` at runtime, so the BASIC program at `&170` is destroyed once
+the game runs. Dump it early (a write breakpoint on `&840` fires just after the loader starts).
+
+Poke and patch addresses are often operand bytes. Disassemble from `addr-1` to `addr-4` and keep the start
+that lands on `addr` as a boundary and decodes sensibly; do not trust a decode that begins at `addr`.
+
+## Open items
+
+- Improve `src/elite/`: 57 `dat_` labels left (`TODO.md`), 640 `LAB_ram_`; turn pointer tables into `dw`; annotate the 25 Spectrum matches that still lack a comment (`docs/_spectrum_map.md`). Then do the German `[G]` build.
+- Escape-pod cargo clear is off by one (confirmed: starts at the market byte `&38E1`, keeps alien items `&38F2`; `docs/_missions.md` section 7); fix not applied.
+- Stolen police ship (Elite Plus mission 4): logic documented, build not started. Open: where the marker byte lives in the CPC ship record, keeping the Viper out of the `ix+33 & 0x60` fugitive OR (`commonxx.asm`, after `AddDEtoKillScore`), and how police react when you attack it (`docs/_missions.md` section 9).
+- Apply the CPC+ fix (one byte in `getPPI_Input`, `&8DA0` `ED 79` -> `ED 49`; found by diffing Redbox's disk in `work/plus_patch/`) to `src/elite/` and test; details in `docs/_cpcplus.md`.
+- Spectrum names were seeded 2026-11-07 (`docs/_spectrum_map.md`); `work/fessor_to_stock.sym` is exhausted (its useful names are in `src/elite/` already); the remaining labels need naming from callers.
+  Check each name against callers before trusting it; see `docs/_fessor.md` for how it was made and checked.
+- macOS BSD `sed` has no `\b` and silently changes nothing: for word-boundary renames in `src/` use `perl -pi -e 's/\bold\b/new/g'`, then confirm with a grep count. `tools/rename_dat.py` only handles `dat_` labels. `check_src.sh` also passes on an unchanged tree, so it does not catch a rename that matched nothing.
+- `sjasmplus` is on PATH only inside `tools/check_src.sh`; for listings/symbols run `export PATH="$HOME/.local/bin:$PATH"` first, then `--lst` and grep the `.lst` for the address.
+- Renaming a label in `src/elite/`: apply it to `src/elite_de/` and `src/elite_fr/` too. For many labels, regenerate into a scratch dir (`map_german.py`, then `disasm_german.py work/de_scratch`) and diff with difflib; if only renames/comments differ, copying `commonxx.asm` over is safe. For one label, `perl` on both trees plus `check_src.sh` and `check_src.sh de`.
+- Asp mission state byte is `aspMissionState` (Spectrum `$9CB2`; 0-3, see its comment in `commonxx.asm`); escort pack is `spawnEscortPack` (`$BCAB`). Both builds are named.
+- In-game keys (cpcxray `key_press`, hold 1.2-1.4 s): `5` galactic chart, `6` short range chart, `7` data on present system, `h` hyperspace to the system nearest the chart cursor (needs fuel; keep the cursor within ~7 LY, e.g. a 0.2 s `cursor_left` tap from Lave reaches Diso). `cursor_*` move the chart cursor (`PresentPlanetX/Y` `&3934/&3935`, about 22 steps per second). Load `output/firebird_in_flight.sna` directly; `disk_insert` rejected its arguments and is not needed. Helper pattern: `call_tool(name, dict)` over `stdio_client`, `key_press`, `run(max_us=…)`, `key_release`.
+- The `rtk` hook rewrites Bash commands (`grep`, `ls`, `diff`, `cat`) and auto mode may refuse the first attempt ("a hook changed this call's input"); reissue the call unchanged. `rtk diff` prints nothing useful for file-vs-file diffs, so use `python3 -I` with `difflib`. `rtk grep` can truncate large results.

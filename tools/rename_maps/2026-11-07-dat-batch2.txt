@@ -1,0 +1,8 @@
+# data tables named by use
+dat_4F74 charPatchD628
+dat_4F84 charPatchD650
+dat_4F94 charPatchD6D8
+dat_4FB4 charPatchD700
+dat_4FBC charPatchD7D8
+dat_6BFE dustParticleAdrTable
+dat_8F77 tblKeyFlagOffsetMask
