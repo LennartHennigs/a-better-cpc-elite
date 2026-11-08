@@ -109,8 +109,8 @@ async def main():
                 return kinds
 
             # spawn: (label, state, galaxy, x, y, asteroids expected)
-            for label, st, gal, x, y, want in (("clearing at Ceerdi", 0x1E, 2, 215, 84, True), ("wrong place", 0x1E, 2, 215, 85, False), ("wrong galaxy", 0x1E, 1, 215, 84, False),
-                                               ("not clearing (plans done)", 0x0E, 2, 215, 84, False), ("cleared", 0x2E, 2, 215, 84, False)):
+            for label, st, gal, x, y, want in (("clearing at Ceerdi", 0x3E, 2, 215, 84, True), ("wrong place", 0x3E, 2, 215, 85, False), ("wrong galaxy", 0x3E, 1, 215, 84, False),
+                                               ("waiting (stage 1)", 0x1E, 2, 215, 84, False), ("cleared", 0x4E, 2, 215, 84, False)):
                 await start()
                 await wr(0x38FD, st); await wr(syms["currentGalaxy"], gal); await wr(syms["presentSystemX"], x); await wr(syms["presentSystemY"], y)
                 before = await slots()
@@ -121,8 +121,8 @@ async def main():
                 ok &= good
                 print(f"{'ok  ' if good else 'FAIL'} spawn {label:26s} after 30 checks: {n} new asteroids ({'some' if want else 'none'})")
             # kill hook: (label, state, place ok, blueprint, count before, count after, state after)
-            for label, st, x, bpname, cnt, want_cnt, want_st in (("asteroid, 3 left", 0x1E, 215, "shipdatAsteroid", 3, 2, 0x1E), ("last asteroid", 0x1E, 215, "shipdatAsteroid", 1, 0, 0x2E),
-                                                                  ("other ship", 0x1E, 215, "shipdatViper", 3, 3, 0x1E), ("asteroid elsewhere", 0x1E, 216, "shipdatAsteroid", 3, 3, 0x1E),
+            for label, st, x, bpname, cnt, want_cnt, want_st in (("asteroid, 3 left", 0x3E, 215, "shipdatAsteroid", 3, 2, 0x3E), ("last asteroid", 0x3E, 215, "shipdatAsteroid", 1, 0, 0x4E),
+                                                                  ("other ship", 0x3E, 215, "shipdatViper", 3, 3, 0x3E), ("asteroid elsewhere", 0x3E, 216, "shipdatAsteroid", 3, 3, 0x3E),
                                                                   ("not clearing", 0x0E, 215, "shipdatAsteroid", 3, 3, 0x0E)):
                 await start()
                 await wr(0x38FD, st); await wr(AST, cnt); await wr(syms["currentGalaxy"], 2); await wr(syms["presentSystemX"], x); await wr(syms["presentSystemY"], 84)
@@ -131,10 +131,21 @@ async def main():
                 good = c1 == want_cnt and s1 == want_st
                 ok &= good
                 print(f"{'ok  ' if good else 'FAIL'} kill  {label:20s} count {cnt} -> {c1} (want {want_cnt}), state {st:02X} -> {s1:02X} (want {want_st:02X})")
+            # arrival: (label, state, count before, count after, state after); A = 1 and the flags are kept
+            for label, st, cnt, want_cnt, want_st in (("waiting, 5 left", 0x1E, 5, 4, 0x1E), ("waiting, last jump", 0x1E, 1, 0, 0x2E), ("clearing: jumps do not count", 0x3E, 20, 20, 0x3E),
+                                                      ("plans done, no asteroid stage", 0x0E, 7, 7, 0x0E)):
+                await start()
+                await wr(0x38FD, st); await wr(AST, cnt); await wr(syms["tunnelFlag2"], 0)
+                await call(syms["mxArrive"], af=0x0100)
+                regs = await c("registers_get")
+                c1, s1, tf = (await rd(AST))[0], (await rd(0x38FD))[0], (await rd(syms["tunnelFlag2"]))[0]
+                good = c1 == want_cnt and s1 == want_st and tf == 1 and (regs["af"] >> 8) == 1
+                ok &= good
+                print(f"{'ok  ' if good else 'FAIL'} arrive {label:30s} count {cnt} -> {c1} (want {want_cnt}), state {st:02X} -> {s1:02X} (want {want_st:02X}), tunnelFlag2 {tf}, A {regs['af'] >> 8}")
             # live: the real game loop at Ceerdi for a few seconds: its own spawn check calls the hook; no hang, asteroids appear, screenshot for the eye
             await start()
             hb = (await c("breakpoint_add", {"address": syms["mxSpawnCheck"], "kind": "pc"}))["id"]
-            await wr(0x38FD, 0x1E); await wr(AST, 20); await wr(syms["currentGalaxy"], 2); await wr(syms["presentSystemX"], 215); await wr(syms["presentSystemY"], 84)
+            await wr(0x38FD, 0x3E); await wr(AST, 20); await wr(syms["currentGalaxy"], 2); await wr(syms["presentSystemX"], 215); await wr(syms["presentSystemY"], 84)
             await c("memory_write", {"address": syms["heNotOnThargonMission"] + 12, "data": "00 00"})   # the test snapshot is next to the station: drop the `jr nz` that skips the spawn when it is near
             await wr(syms["todoLaunchFlag"], 0); await wr(syms["todoLaserVar2"], 2)
             rep = await c("run", {"max_us": 40_000_000, "timeout_s": 200})

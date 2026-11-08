@@ -1,13 +1,14 @@
-; Asteroid bombardment flight image (-DFL_A): while Ceerdi is being cleared (missionState bits 2-3 = 3 and bits 4-6 = 1) and the player is at Ceerdi (galaxy 3, x 215, y 84),
+; Asteroid bombardment flight image (-DFL_A). Stage 1 (waiting, missionState bits 2-3 = 3 and bits 4-6 = 1): every hyperspace arrival counts mxAsteroidCount down; at 0 the stage is 2 (ready) and
+; the plans module makes the offer at the next docking. Stage 3 (clearing): while Ceerdi is being cleared and the player is at Ceerdi (galaxy 3, x 215, y 84),
 ; the spawn check adds an asteroid (50% of the checks, the stock asteroid spawn of spawnCommand0) and every asteroid destroyed counts down mxAsteroidCount; at 0 the stage becomes 2
-; (cleared) and the plans module pays 6,000 Cr at the next docking.
+; (4, cleared) and the plans module pays 6,000 Cr at the next docking.
 mxAsteroidCount equ 0x38FE
 
-; Z when the mission is being cleared and the player is at Ceerdi. Changes A only.
+; Z when the mission is in stage 3 (clearing) and the player is at Ceerdi. Changes A only.
 mxAstAtTarget:
     ld a,(mxStateByte)
     and 0x7C
-    cp 0x1C
+    cp 0x3C
     ret nz
     ld a,(currentGalaxy)
     cp 0x02
@@ -66,10 +67,31 @@ mxKillHookImpl:
     jr nz,mxKillDone
     ld hl,mxStateByte
     ld a,(hl)
-    xor 0x30                          ; stage 1 -> 2
+    xor 0x70                          ; stage 3 -> 4
     ld (hl),a
 mxKillDone:
     pop hl
     pop de
+    pop af
+    ret
+
+; Replaces `ld (tunnelFlag2),a` at a hyperspace arrival (A = 1, kept). Stage 1: one jump less to wait; at 0 the stage becomes 2 (add 0x10).
+mxArriveImpl:
+    ld (tunnelFlag2),a
+    push af
+    push hl
+    ld a,(mxStateByte)
+    and 0x7C
+    cp 0x1C
+    jr nz,mxArriveDone
+    ld hl,mxAsteroidCount
+    dec (hl)
+    jr nz,mxArriveDone
+    ld hl,mxStateByte
+    ld a,0x10
+    add a,(hl)
+    ld (hl),a
+mxArriveDone:
+    pop hl
     pop af
     ret

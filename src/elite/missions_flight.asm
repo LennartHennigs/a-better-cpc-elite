@@ -29,6 +29,7 @@ mxTypeConstrictor equ 19            ; ship type after the 19 stock ships (0-18)
     DEFINE FLID "A"
     DEFINE HAS_SPAWN
     DEFINE HAS_KILL
+    DEFINE HAS_ARRIVE
     ENDIF
     IFNDEF FLID
     DEFINE FLID "0"
@@ -58,7 +59,7 @@ mxFlightId:
     db FLID                         ; "0" default, "C", "P": which image is in RAM (the launch hook compares it)
 
 ; Launch hook: replaces the first call of launchSequence (`call loadIndicator`). Makes sure the flight image the state asks for is in this tail, then carries on with
-; loadIndicator. "T" while Trumbles are aboard, "C" while the Constrictor hunt is on (state 1 or 3), "P" while the plans are aboard, "A" while Ceerdi is being cleared, else "0" (this default image).
+; loadIndicator. "T" while Trumbles are aboard, "C" while the Constrictor hunt is on (state 1 or 3), "P" while the plans are aboard, "A" while the asteroid mission waits or Ceerdi is being cleared, else "0" (this default image).
 ; Nothing is loaded when the right image is already there. This code is the same in every image, at the same address, so the load can overwrite it while it waits.
 mxLaunchEntry:
     ld hl,(mxTrCount)
@@ -80,9 +81,13 @@ mxLaunchEntry:
     jr z,mxFlightGo                   ; plans aboard
     ld a,b
     and 0x7C
-    cp 0x1C                           ; plans finished and the asteroid stage is 1
+    cp 0x1C                           ; plans finished and the asteroid stage is 1 (waiting: the image counts the jumps) or 3 (clearing Ceerdi)
+    jr z,mxFlightA
+    cp 0x3C
+    jr nz,mxFlightNone
+mxFlightA:
     ld a,"A"
-    jr z,mxFlightGo
+    jr mxFlightGo
 mxFlightNone:
     ld a,"0"
 mxFlightGo:

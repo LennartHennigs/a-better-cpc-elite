@@ -80,14 +80,17 @@ mxStageRow:                           ; A = row of mxStageTable: load module C o
     cp (hl)
     ret nz
     jr mxLoadC
-mxAfterPlans:                         ; plans finished: the asteroid mission (missionState bits 4-6, set when the plans are delivered) comes before the Trumbles
+mxAfterPlans:                         ; plans finished: the asteroid mission (missionState bits 4-6, scheduled when the plans are delivered) comes before the Trumbles
     ld a,b
     and 0x70
     jr z,mxTrumbles                   ; 0: not part of this chain
-    cp 0x10
-    ret z                             ; 1: the clearing at Ceerdi is a flight matter
+    cp 0x50
+    jr nc,mxTrumbles                  ; 5: paid
     cp 0x20
-    jr z,mxLoadC                      ; 2: cleared, the module (c = "P") pays the reward. 3: paid, on to the Trumbles
+    jr z,mxLoadC                      ; 2: ready, the module (c = "P") makes the offer
+    cp 0x40
+    jr z,mxLoadC                      ; 4: cleared, the module pays. 1 and 3 (waiting, clearing) are flight matters
+    ret
 mxTrumbles:
     bit 7,b
     ret nz                            ; the Trumbles offer was made already
