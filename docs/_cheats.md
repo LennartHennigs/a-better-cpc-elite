@@ -151,3 +151,4 @@ Galaxy cannot be poked (the system seeds define the galaxy): use the "Free gal j
   name, kills, jumps, cash and galaxy. Tested in cpcxray on one save per build.
 - Not tested: loading an edited save through the game's own disk menu (typing the name with `key_press` repeats keys in cpcxray); the checksums verify with the same code as the game.
 
+Screenshots (cpcxray, Mode 1): the trainer prompts `docs/img/trainer_prompts.png`; the save viewer on a UK, a French and a German save `docs/img/showsave_uk.png`, `showsave_fr.png`, `showsave_de.png`.
