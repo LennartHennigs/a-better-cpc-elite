@@ -157,33 +157,20 @@ def write_out(out_spec, data_with_header):
     d = bytearray(disk.read_bytes())
     secs = dskx.sector_offsets(d)
     first = min(r for (t, r) in secs if t == 0)
-    dirdata = b"".join(d[secs[(0, first + i)][0]:secs[(0, first + i)][0] + 512] for i in range(4))
-    want = str(name).upper()
-    extents = []
-    for i in range(64):
-        e = dirdata[i * 32:(i + 1) * 32]
-        if e[0] == 0xE5:
-            continue
-        nm = bytes(x & 0x7F for x in e[1:9]).decode("latin1").strip() + "." + bytes(x & 0x7F for x in e[9:12]).decode("latin1").strip()
-        if nm.upper() == want:
-            extents.append((e[12], i, [x for x in e[16:32] if x]))
+    extents = dskx.find_extents(d, secs, first, str(name))
     if not extents:
         stem, _, ext = str(name).upper().partition(".")
         dskx.add_payload(d, secs, first, stem[:8], (ext or "BIN")[:3], data_with_header, -(-len(data_with_header) // 128))
         disk.write_bytes(d)
         print("added", name, "to", disk)
         return
+    records = -(-len(data_with_header) // 128)          # the directory keeps the size in 128-byte records, at most 128 per extent
     slots = []
-    for _, _i, blocks in sorted(extents):       # in extent order, not directory order
-        for blk in blocks:
-            for half in (0, 1):
-                ls = blk * 2 + half
-                slots.append(secs[(ls // 9, first + ls % 9)][0])
+    for k, (_, off, blocks) in enumerate(extents):
+        d[off + 15] = max(0, min(128, records - 128 * k))
+        slots += [secs[((blk * 2 + half) // 9, first + (blk * 2 + half) % 9)][0] for blk in blocks for half in (0, 1)]
     if len(data_with_header) > len(slots) * 512:
         raise SystemExit("the new file is larger than the old one")
-    records = -(-len(data_with_header) // 128)                    # the directory keeps the file size in 128-byte records, 128 per extent
-    for k, (_, i, _blocks) in enumerate(sorted(extents)):
-        d[secs[(0, first + i // 16)][0] + (i % 16) * 32 + 15] = max(0, min(128, records - 128 * k))
     payload = data_with_header.ljust(len(slots) * 512, b"\xE5")    # the disk's filler byte, as add_payload pads
     for k, off in enumerate(slots):
         d[off:off + 512] = payload[k * 512:(k + 1) * 512]

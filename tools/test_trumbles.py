@@ -113,18 +113,16 @@ async def main():
             await call(syms["mxArrive"], af=0x0100)
             n = await word(COUNT)
             report(n == 0x7FFF, f"arrival, 20480 Trumbles: count {n:#x} (0x7fff)")
-            # cap again: a count at the cap and just below it must stay at 0x7FFF, not wrap
+            # arrival near the cap: new count = 2 * ((count + random 0..15) OR 4), a sum of 0x4000 or more is held at 0x7FFF (one prepared state, only the count is rewritten)
+            await start()
             for cnt in (0x7FFF, 0x7FF0, 0x4000, 0x3FFF):
-                await start()
                 await wr(COUNT, cnt & 255, cnt >> 8)
                 await call(syms["mxArrive"], af=0x0100)
                 n = await word(COUNT)
-                # new count = 2 * ((count + random 0..15) OR 4); a sum of 0x4000 or more is held at 0x7FFF
                 allowed = {0x7FFF if cnt + r >= 0x4000 else 2 * ((cnt + r) | 4) for r in range(16)}
-                want_cap = cnt >= 0x4000
-                good = n in allowed and (n == 0x7FFF or not want_cap)
+                good = n in allowed
                 ok &= good
-                print(f"{'ok  ' if good else 'FAIL'} arrival, {cnt:#06x} Trumbles: count {n:#06x} (one of {sorted(allowed)[:3]}... : {'capped at 0x7fff' if want_cap else 'doubled, no wrap'})")
+                print(f"{'ok  ' if good else 'FAIL'} arrival, {cnt:#06x} Trumbles: count {n:#06x} (allowed {min(allowed):#06x}..{max(allowed):#06x})")
             # sun: halves at cabin temperature 240, A kept, HL = CockpitTemp
             for temp, want in ((240, 50), (239, 100)):
                 await start()

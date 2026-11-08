@@ -75,6 +75,20 @@ def sector_offsets(d):
     return out
 
 
+def find_extents(d, secs, first, name):
+    """Extents of file `name` (NAME.EXT) in the image bytes `d`: [(extent number, directory entry offset, [block numbers])] in extent order."""
+    out = []
+    for i in range(64):
+        off = secs[(0, first + i // 16)][0] + (i % 16) * 32
+        e = d[off:off + 32]
+        if e[0] == 0xE5:
+            continue
+        nm = bytes(x & 0x7F for x in e[1:9]).decode("latin1").strip() + "." + bytes(x & 0x7F for x in e[9:12]).decode("latin1").strip()
+        if nm.upper() == name.upper():
+            out.append((e[12], off, [x for x in e[16:32] if x]))
+    return sorted(out)
+
+
 def make_header(name, ext, load, length, exe=0):
     """128-byte AMSDOS header of a binary file (user 0, type 2)."""
     h = bytearray(128)

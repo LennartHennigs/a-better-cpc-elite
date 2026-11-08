@@ -12,27 +12,22 @@ export PATH="$HOME/.local/bin:$PATH"
 rc=0
 for p in "largeaxx LARGEAXX" "commonxx COMMONXX" "common2x COMMON2X" "musiquex MUSIQUEX"; do
   read -r n f <<<"$p"
-  if ! sjasmplus --raw="$OUT/$n.bin" "$SRC/$n.asm" >"$OUT/$n.log" 2>&1; then echo "$n: assemble FAILED"; tail -5 "$OUT/$n.log"; rc=1; continue; fi
-  REF="$BIN/$f.BIN"
-  # src/elite and src/elite_fr carry the one-byte CPC+ fix (ED 79 -> ED 49 in getPPI_Input, see docs/_cpcplus.md): the stock byte is expected to differ.
-  # Runtime address of the patched byte: English &8DA0, French &8F3F. (German stock disk already has the fix, so it needs no exception.)
-  # All three builds also carry the Escape key patch (ESC_KEYCODE, the key code of ESC in tblKeyboardmatrix: &FF = no key in the stock game, &7F here so that the buy, sell and equipment prompts leave on Escape).
-  # Runtime address of that byte: English &8C98, German &8DE0, French &8E37. It is proved, not patched into the reference: the build with -DESC_KEYCODE=0xFF must equal the original, and the
-  # default build must differ from it at exactly that one byte, with the value &7F.
+  if ! sjasmplus --raw="$OUT/$n.bin" --sym="$OUT/$n.sym" "$SRC/$n.asm" >"$OUT/$n.log" 2>&1; then echo "$n: assemble FAILED"; tail -5 "$OUT/$n.log"; rc=1; continue; fi
   REF="$OUT/$n.ref"; cp "$BIN/$f.BIN" "$REF"
-  if [ "$n" = commonxx ]; then
-    case "$SRC" in
-      "$ROOT/src/elite")    CPCP=$((0x8DA0)); ESCP=$((0x8C98));;
-      "$ROOT/src/elite_fr") CPCP=$((0x8F3F)); ESCP=$((0x8E37));;
-      "$ROOT/src/elite_de") CPCP="";         ESCP=$((0x8DE0));;
-    esac
-    [ -n "$CPCP" ] && printf '\x49' | dd of="$REF" bs=1 seek=$((CPCP-0x1A40)) conv=notrunc 2>/dev/null
-    if ! sjasmplus -DESC_KEYCODE=0xFF --raw="$OUT/$n.stock.bin" "$SRC/$n.asm" >"$OUT/$n.stock.log" 2>&1 || ! cmp -s "$OUT/$n.stock.bin" "$REF"; then echo "$n -DESC_KEYCODE=0xFF: DIFFERS from the original"; rc=1; continue; fi
-    diffs="$(cmp -l "$OUT/$n.bin" "$REF" | awk '{print $1":"$2":"$3}')"      # cmp -l: 1-based offset, octal values
-    if [ "$diffs" = "$((ESCP-0x1A40+1)):177:377" ]; then echo "$n: ok"; else echo "$n: DIFFERS (expected only the ESC byte: $diffs)"; rc=1; fi
+  if [ "$n" != commonxx ]; then
+    if cmp -s "$OUT/$n.bin" "$REF"; then echo "$n: ok"; else echo "$n: DIFFERS"; rc=1; fi
     continue
   fi
-  if cmp -s "$OUT/$n.bin" "$REF"; then echo "$n: ok"; else echo "$n: DIFFERS"; rc=1; fi
+  # COMMONXX carries two one-byte changes to the stock bytes; their runtime addresses come from the symbol table (nothing is hard-coded per build):
+  #  - the CPC+ fix (ED 79 -> ED 49 in getPPI_Input, see docs/_cpcplus.md; the German stock disk already has it): the reference gets that byte;
+  #  - ESC_KEYCODE (the key code of ESC in tblKeyboardmatrix: &FF = no key in the stock game, &7F here so that the buy, sell and equipment prompts leave on Escape).
+  # The ESC change is proved, not patched into the reference: the build with -DESC_KEYCODE=0xFF must equal the reference, and the default build must differ from it in exactly one byte, the ESC byte, with the value &7F.
+  sym() { awk -v k="$1:" '$2 == k || $1 == k { print $NF }' "$OUT/$n.sym"; }
+  ESCP=$(( $(sym tblKeyboardmatrix) + 66 ))                  # row 8 bit 2 of the table
+  [ "$SRC" != "$ROOT/src/elite_de" ] && printf '\x49' | dd of="$REF" bs=1 seek=$(( $(sym getPPI_Input) + 20 - 0x1A40 )) conv=notrunc 2>/dev/null
+  if ! sjasmplus -DESC_KEYCODE=0xFF --raw="$OUT/$n.stock.bin" "$SRC/$n.asm" >/dev/null 2>&1 || ! cmp -s "$OUT/$n.stock.bin" "$REF"; then echo "$n -DESC_KEYCODE=0xFF: DIFFERS from the original"; rc=1
+  elif [ "$(cmp -l "$OUT/$n.bin" "$REF" | awk '{print $1":"$2":"$3}')" = "$((ESCP-0x1A40+1)):177:377" ]; then echo "$n: ok"   # cmp -l: 1-based offset, octal values
+  else echo "$n: DIFFERS (expected only the ESC byte)"; rc=1; fi
 done
 # English only: the -DMISSIONS variant (src/elite/missions_*.asm in the free tails) must keep both files the same length
 if [ "$SRC" = "$ROOT/src/elite" ]; then
@@ -42,5 +37,5 @@ if [ "$SRC" = "$ROOT/src/elite" ]; then
   done
 fi
 # the three source trees must agree on the ESC default
-if [ "$(grep -h '^ESC_KEYCODE equ' "$ROOT"/src/elite/commonxx.asm "$ROOT"/src/elite_de/commonxx.asm "$ROOT"/src/elite_fr/commonxx.asm | awk '{print $3}' | sort -u | wc -l | tr -d ' ')" != 1 ]; then echo "ESC_KEYCODE defaults differ between src/elite, src/elite_de and src/elite_fr"; rc=1; fi
+if [ "$(grep -h '^ESC_KEYCODE equ' "$ROOT"/src/elite/commonxx.asm "$ROOT"/src/elite_de/commonxx.asm "$ROOT"/src/elite_fr/commonxx.asm | awk '{print $3}' | sort -u | wc -l)" -ne 1 ]; then echo "ESC_KEYCODE defaults differ between src/elite, src/elite_de and src/elite_fr"; rc=1; fi
 rm -rf "$OUT"; exit $rc
