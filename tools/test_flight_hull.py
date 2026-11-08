@@ -29,7 +29,8 @@ def built_commonxx():
         subprocess.run([str(Path.home() / ".local/bin/sjasmplus"), "-DMISSIONS", f"--raw={out}", str(ROOT / "src/elite/commonxx.asm")],
                        check=True, capture_output=True)
         return out.read_bytes()
-TYPE = int(sys.argv[1]) if len(sys.argv) > 1 else 19
+TYPE = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].isdigit() else 19
+PRINTCHAR = 0x44A9   # printCharAtLocationXY
 
 
 async def main():
@@ -58,6 +59,13 @@ async def main():
             for lo, hi in ((0x80CD, 0x80D0), (0x9D9E, 0xA000)):   # call site in spawnShip, the flight tail
                 await c("memory_write", {"address": lo, "data": new[lo - base:hi - base].hex()})
             await c("run", {"max_us": 4_000_000, "timeout_s": 60})   # the snapshot is still undocking: let the launch finish
+            # Stop at a safe point before injecting calls: the screen-fill routines use SP as a write pointer inside the bitmap, and a call
+            # pushed there draws stray lines (or crashes the game). handleEntitys (&5066) runs with the normal stack.
+            safe = (await c("breakpoint_add", {"address": 0x5066, "kind": "pc"}))["id"]
+            rep = await c("run", {"max_us": 10_000_000, "timeout_s": 60})
+            assert rep.get("reason") == "breakpoint", rep
+            await c("breakpoint_remove", {"breakpoint_id": safe})
+            saved = await c("registers_get")      # restored after the injected calls: the game must resume where it stopped
             await c("breakpoint_add", {"address": TRAP, "kind": "pc"})
             rep = await call(0x816B)
             ix = (await c("registers_get"))["ix"]
@@ -70,6 +78,43 @@ async def main():
                 await c("memory_write", {"address": ix + off, "data": "%02X" % val})
             await call(0x82B8, ix=ix)                     # setDirectionofEntity: builds the orientation, without it the ship is not drawn
             await c("breakpoint_remove", {"breakpoint_id": 1})
+            await c("registers_set", {"values": {k: saved[k] for k in ("af", "bc", "de", "hl", "ix", "iy", "sp", "pc", "af_", "bc_", "de_", "hl_") if k in saved}})
+            if "--fill" in sys.argv:   # watch the stack loads of the fill routine (ld sp,hl at &F636): HL must stay inside the bitmap &A000-&C000
+                fb = (await c("breakpoint_add", {"address": 0xF636, "kind": "pc"}))["id"]
+                bad, seen = [], 0
+                for _ in range(300):
+                    rep = await c("run", {"max_us": 200_000, "timeout_s": 30})
+                    if rep.get("reason") != "breakpoint":
+                        continue
+                    seen += 1
+                    hl = (await c("registers_get"))["hl"]
+                    if not 0xA000 <= hl <= 0xC000:
+                        bad.append(hl)
+                        if len(bad) > 3:
+                            break
+                print("fill entries seen", seen, "with HL outside the bitmap:", [hex(x) for x in bad])
+                await c("breakpoint_remove", {"breakpoint_id": fb})
+            if "--disc" in sys.argv:   # who calls the disc fill (todoDrawFilledCircle &E787 / clearCircle &E795)?
+                ids = [(await c("breakpoint_add", {"address": a, "kind": "pc"}))["id"] for a in (0xE787, 0xE795)]
+                for _ in range(60):
+                    rep = await c("run", {"max_us": 200_000, "timeout_s": 30})
+                    if rep.get("reason") == "breakpoint":
+                        st = await c("stack_get", {})
+                        print("disc entry", rep.get("pc"), rep.get("registers"))
+                        print("  stack top words:", [w["value"] for w in st["words"][:8]])
+                        print("  params circleOffsetY/Xlo/Xhi/radius &20C7:", (await c("memory_read", {"address": 0x20C7, "length": 4}))["hex"])
+                        break
+                for i in ids:
+                    await c("breakpoint_remove", {"breakpoint_id": i})
+            if "--text" in sys.argv:   # find who prints: break on printCharAtLocationXY and show the stack
+                pcx = (await c("breakpoint_add", {"address": PRINTCHAR, "kind": "pc"}))["id"]
+                for _ in range(40):
+                    rep = await c("run", {"max_us": 250_000, "timeout_s": 30})
+                    if rep.get("reason") == "breakpoint":
+                        print("char print at", rep.get("pc"), rep.get("registers"))
+                        print(await c("stack_get", {}))
+                        break
+                await c("breakpoint_remove", {"breakpoint_id": pcx})
             await c("run", {"max_us": 120_000, "timeout_s": 60})
             print("position bytes ix+0..8 after the run:", (await c("memory_read", {"address": ix, "length": 9}))["hex"])
             alive = (await c("memory_read", {"address": ix + 34, "length": 1}))["hex"]

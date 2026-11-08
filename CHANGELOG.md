@@ -9,8 +9,10 @@ file is the only history. Dates are ISO.
   `Constrictor.asm`, with the owner's permission for that single ship; attribution in the file header) and `mxShipTable` in the COMMONXX tail: `spawnShip`'s
   `ld hl,shipGFXdataTable` becomes a 3-byte `call mxShipTable` in `-DMISSIONS` builds, which serves ship type 19 from a one-entry table, so no stock table moves.
   **Measured: flight tail 280 of 610 bytes used (helper 15, table entry 4, hull 261), 330 free**; COMMONXX changes outside the tail are 3 bytes (`&80CD`) and 2 bytes (`&72A8`).
-  `tools/test_flight_hull.py` (cpcxray) spawns type 19: the slot gets blueprint `&9DB1` and the hull's energy `&FC`; a stock Viper spawns the same way. **Not yet seen on screen**: the harness
-  screenshot stayed unchanged for every spawn (also for a Viper), so the visual check needs a real flight. The snapshot is still undocking at start: run 4 s first.
+  `tools/test_flight_hull.py` (cpcxray) spawns type 19: the slot gets blueprint `&9DB1` and the hull's energy `&FC`; a stock Viper spawns the same way. **Correction (same day):** the broken screens
+  (horizontal lines at the bottom, a field of red text, a runaway stack) came from the test harness, not the game: it injected calls at an arbitrary stop (the fill routines use SP as a write pointer inside the
+  bitmap) and then resumed at the trap address, running the zeroed tail and the bitmap as code. The script now stops at `handleEntitys` (`&5066`) and restores all registers after the calls; the screen is
+  then clean, the Constrictor slot is processed (its position changes) and it is drawn (a red dot in the view and on the scanner, it flies off quickly). The snapshot is still undocking at start: run 4 s first.
 - Constrictor hull size measured: 261 bytes (Fessor's `Constrictor.asm`, CPC layout, read only; not committed because `extended/CLAUDE.md` forbids it). The MSX disassembly has the same geometry decoded (`work/ext_msx/ricbit/shapes.asm`), so our own hull can be generated from that.
 - Constrictor, docked part (in the `-DMISSIONS` build, `src/elite/missions_docked.asm`, text in `missions_text.txt`): offer at docking with 256 kill points
   in galaxy 1 or 2 (galaxy 2 starts the trail at Cearso), seven system hints (Reesdice, Arexe, Cearso, Errius, Inbibe, Ausar, Usleri; table of galaxy/x/y/string),
