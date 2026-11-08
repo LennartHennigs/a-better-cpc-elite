@@ -5,6 +5,7 @@ file is the only history. Dates are ISO.
 
 ## 2026-11-08
 
+- `docs/_gameplay.md` (was empty): the witchspace mis-jump on the CPC compared with the C64 and Spectrum. Found by reading, not traced: the random mis-jump roll looks unreachable (the seed byte is compared with `0x40` then `0x20`); only the bit-6 pause toggle forces it. `work/ext_c64/` (C64 source) and `work/ext_c64_flicker/` cloned as references.
 - Overlays (branch `mission-plans`): the docked modules are now separate files loaded at docking. A 97-byte resident stub in the LARGEAXX tail (`src/elite/missions_docked.asm`:
   it hands over to `chkMissions` while an old mission is pending, returns when `killScoreHigh` is 0 (no disk access under 256 points), picks the module from the state byte, patches the
   last letter of the name `MISSION?`, loads the file with the game's `loadFile` at `mxOverlayBase` (`&1775`) and jumps there; it also holds the shared box printer `missionShow`). Overlay
