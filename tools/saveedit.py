@@ -166,7 +166,7 @@ def write_out(out_spec, data_with_header):
             continue
         nm = bytes(x & 0x7F for x in e[1:9]).decode("latin1").strip() + "." + bytes(x & 0x7F for x in e[9:12]).decode("latin1").strip()
         if nm.upper() == want:
-            extents.append((e[12], [x for x in e[16:32] if x]))
+            extents.append((e[12], i, [x for x in e[16:32] if x]))
     if not extents:
         stem, _, ext = str(name).upper().partition(".")
         dskx.add_payload(d, secs, first, stem[:8], (ext or "BIN")[:3], data_with_header, -(-len(data_with_header) // 128))
@@ -174,13 +174,16 @@ def write_out(out_spec, data_with_header):
         print("added", name, "to", disk)
         return
     slots = []
-    for _, blocks in sorted(extents):           # in extent order, not directory order
+    for _, _i, blocks in sorted(extents):       # in extent order, not directory order
         for blk in blocks:
             for half in (0, 1):
                 ls = blk * 2 + half
                 slots.append(secs[(ls // 9, first + ls % 9)][0])
     if len(data_with_header) > len(slots) * 512:
         raise SystemExit("the new file is larger than the old one")
+    records = -(-len(data_with_header) // 128)                    # the directory keeps the file size in 128-byte records, 128 per extent
+    for k, (_, i, _blocks) in enumerate(sorted(extents)):
+        d[secs[(0, first + i // 16)][0] + (i % 16) * 32 + 15] = max(0, min(128, records - 128 * k))
     payload = data_with_header.ljust(len(slots) * 512, b"\xE5")    # the disk's filler byte, as add_payload pads
     for k, off in enumerate(slots):
         d[off:off + 512] = payload[k * 512:(k + 1) * 512]

@@ -100,5 +100,5 @@ for `0xF4`/`0xF6` port writes in `src/elite/` while doing step 4.
 Besides the CPC+ fix, `src/elite`, `src/elite_de` and `src/elite_fr` carry **one more change to the stock bytes**: the key code of ESC in the ASCII keyboard table (`tblKeyboardmatrix`, row 8 bit 2) is `ESC_KEYCODE` = `&7F` instead of `&FF` ("no key"),
 so the buy, sell and equipment prompts leave on Escape (`getInputForFunctionHL` leaves on any code of `&3A` or more). Runtime address of the byte: English `&8C98`, German `&8DE0`, French `&8E37`; `tools/check_src.sh` expects it, as it expects the CPC+ byte.
 It is unconditional, so it also reaches every other consumer of `pressedKey`: `InputString` (names, planet search) ignores codes above `&5A`, the pause mode compares against specific letters, and on the title screen ESC now counts as "any key" (it starts a new commander like any key other than the load key;
-the "press space" loop still needs space). To get the original bytes back set `ESC_KEYCODE` to `&FF` and drop the ESC patch in `check_src.sh`.
+the "press space" loop still needs space). `ESC_KEYCODE` can be overridden at assembly time: `-DESC_KEYCODE=0xFF` gives the original bytes, which `tools/check_src.sh` verifies for every build.
 

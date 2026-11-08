@@ -119,10 +119,12 @@ async def main():
                 await wr(COUNT, cnt & 255, cnt >> 8)
                 await call(syms["mxArrive"], af=0x0100)
                 n = await word(COUNT)
+                # new count = 2 * ((count + random 0..15) OR 4); a sum of 0x4000 or more is held at 0x7FFF
+                allowed = {0x7FFF if cnt + r >= 0x4000 else 2 * ((cnt + r) | 4) for r in range(16)}
                 want_cap = cnt >= 0x4000
-                good = (n == 0x7FFF) if want_cap else (n == 0x7FFF or n >= 8)      # below 0x4000 the sum is doubled unless it reached 0x4000 by the random part
+                good = n in allowed and (n == 0x7FFF or not want_cap)
                 ok &= good
-                print(f"{'ok  ' if good else 'FAIL'} arrival, {cnt:#06x} Trumbles: count {n:#06x} ({'capped at 0x7fff' if want_cap else 'doubled, no wrap'})")
+                print(f"{'ok  ' if good else 'FAIL'} arrival, {cnt:#06x} Trumbles: count {n:#06x} (one of {sorted(allowed)[:3]}... : {'capped at 0x7fff' if want_cap else 'doubled, no wrap'})")
             # sun: halves at cabin temperature 240, A kept, HL = CockpitTemp
             for temp, want in ((240, 50), (239, 100)):
                 await start()

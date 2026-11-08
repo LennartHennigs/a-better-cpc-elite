@@ -15550,8 +15550,10 @@ LAB_ram_8c52:
     rra
     ret
 ; Key code of ESC in the ASCII keyboard table below (row 8, bit 2). The stock game has 0xFF (= no key), so ESC does nothing; 0x7F is above every code the prompts accept, so
-; getInputForFunctionHL (buy, sell, equipment) leaves on it, and InputString ignores it. Set it back to 0xFF for the original bytes (tools/check_src.sh then needs its ESC patch removed).
-ESC_KEYCODE equ 0x7F
+; getInputForFunctionHL (buy, sell, equipment) leaves on it, and InputString ignores it. Assemble with -DESC_KEYCODE=0xFF for the original bytes.
+    IFNDEF ESC_KEYCODE
+ESC_KEYCODE equ 0x7F                ; tools/check_src.sh also assembles with -DESC_KEYCODE=0xFF and compares that with the original
+    ENDIF
 tblKeyboardmatrix:
     db 0xFF,0xFF,0xFF,"963",0x0D,".",0xFF,0xFF,"785120"
     db 0xFD,"[",0x0D,"]4",0xFF,0x5C,0xFF,"^-@P;:/."

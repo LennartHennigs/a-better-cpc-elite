@@ -2,7 +2,7 @@
 ; Vectors: arrival (breeding, they eat the food and narcotics), spawn check (slow breeding), sun (heat halves them), inventory (a line with the count), draw (sprites).
 
 ; Hyperspace arrival: replaces `ld (tunnelFlag2),a` (A = 1, kept). With Trumbles aboard the hold's food and narcotics are eaten (the tonnes come back as free
-; space) and the count becomes 2 * ((count + 0..15) OR 4), at most &7FFF.
+; space) and the count becomes 2 * ((count + 0..15) OR 4); when the sum before the doubling is 0x4000 or more it is held at 0x7FFF instead (so the count never exceeds 0x7FFF and never wraps).
 mxArriveImpl:
     ld (tunnelFlag2),a
     push af
