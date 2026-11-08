@@ -6,7 +6,8 @@ Open work, most useful first. `CLAUDE.md` keeps the short list; details live in 
 - [ ] can we reduce the flicker in the radar view?
 - [ ] stars and ships are transparent
 - [ ] more than one color for moving stars?
-- [ ] or other color for asteroids? 
+- [ ] or other color for asteroids?
+- [ ] show different ships on load. asrrow keys left right for next
   
 ## Disassembly (`src/elite/`)
 - [x] Name the `dat_` variables: 109 of 176 named on 2026-11-07 (`tools/rename_dat.py`, map in `tools/rename_maps/`); `tools/check_src.sh` still byte-exact.
@@ -70,6 +71,7 @@ Open work, most useful first. `CLAUDE.md` keeps the short list; details live in 
 - [x] (2026-11-08) `-DMISSIONS` scaffold in `src/elite` (tails as conditional includes, `missionOrder` 21 bytes); next: string-table entry point, `chkMissions` dispatch, state-byte accessors, then mirror to `elite_de`/`elite_fr` if the missions are kept.
 - [x] (2026-11-08) Docking hook, string-table entry (`missionShow`) and `missionState` byte `&38FD` working in cpcxray; next: accessors for the other state bytes, a real docked mission (Constrictor briefing), custom-token text measurement.
 - [x] (2026-11-08) Constrictor docked part built and tested (offer, hints, reward; 772 bytes of the 812-byte docked tail). Open: flight part (hull, spawn at Orarra, kill hook setting state 3), shrinking the text (galaxy-1/2 briefings share most words; custom tokens; system names from the seed), Plans/Trumbles.
+- [x] (2026-11-08, branch `mission-constrictor`) Hull in the flight tail (261 bytes) and ship type 19 via `mxShipTable`; flight tail 280/610 used. Open: visual check in a real flight, spawn at Orarra when the hint stage is 7, kill hook setting state 3, the escape/stat checks.
 - [ ] Evaluate the mission overlay scheme (load missions one at a time, random order per commander): loader size, disk space, save-load restore.
 
 ## Space savings (review 2026-11-07)

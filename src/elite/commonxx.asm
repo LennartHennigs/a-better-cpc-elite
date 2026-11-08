@@ -14098,7 +14098,11 @@ spawnCommandParser:
     ret
 ; Builds a ship in the slot at IX from blueprint A: copies its data and initial values
 spawnShip:
+    IFDEF MISSIONS
+    call mxShipTable                ; missions_flight.asm: also serves ship type 19 (Constrictor)
+    ELSE
     ld hl,shipGFXdataTable
+    ENDIF
     ld b,a
     and 0x3F
     add a,a
