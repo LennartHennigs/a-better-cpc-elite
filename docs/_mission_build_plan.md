@@ -67,7 +67,7 @@ still free. Overflow stops the build (assertion in the source), so the figure is
 - `mission-constrictor` (from foundation; docked part BUILT 2026-11-08 and measured: about 772 bytes of the 812-byte `LARGEAXX` tail, i.e. text 552 + code/tables 220; flight part open): hull via `tools/bbc_hull_to_cpc.py` (validate on Viper/Sidewinder), ship table entry 19
   in `shipGFXdataTable`, docked trigger/briefing/hints/debrief in the `LARGEAXX` tail, spawn in `spawnCommand0`/`handleEntitys`,
   kill hook in `targetisKilled`, reward via `getMoney` and `inc killScoreHigh`. Reports exact bytes per region.
-  **Built 2026-11-08: hull in the flight tail, `mxShipTable` (15 bytes) serves type 19; flight tail 280/610 used, 330 free.** Spawn trigger and kill hook still open.
+  **Built 2026-11-08: the whole Constrictor mission. Flight tail 441/610 (helper 15 + entry 4 + spawn check 128 + kill hook 33 + hull 261), 169 free; docked tail about 772/812.** Tested in cpcxray with forced states and direct calls; a real playthrough is still open.
   **Hull size measured 2026-11-08: 261 bytes** (23-byte header, 17 vertices x 6 = 102, 24 edges x 4 = 96, 10 faces x 4 = 40), counted from Fessor's
   `extended/source/Constrictor.asm`, which already has the Constrictor in the CPC layout (the BBC/CPC vertex, edge and face layouts are the same
   apart from the header). **Licensing:** `extended/CLAUDE.md` forbids committing or publishing his files without asking him, so his hull must not go into this repo.

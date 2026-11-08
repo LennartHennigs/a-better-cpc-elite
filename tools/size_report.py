@@ -5,7 +5,7 @@ usage: size_report.py COMMONXX.bin LARGEAXX.bin [STOCK_DIR]       (STOCK_DIR def
 
 Free regions (docs/_architecture.md, "Dynamic labels" and docs/_missions.md section 4):
   COMMONXX tail   &9D9E-&9FFF  610 bytes, flight time. The stack sits at &A000 in some states and pushes at &9FFE-&9FFF, so
-                  the top STACK_RESERVE bytes are counted as not available (default 256, until the depth is measured).
+                  the top STACK_RESERVE bytes are counted as not available (default 32; the worst-case depth is still unmeasured).
   LARGEAXX tail   &1714-&1A3F  812 bytes, docked only (reloaded from disk at every docking).
 Also checks that nothing outside those tails differs from stock except the listed allowed patches, and prints the
 differing ranges so a mission's footprint (hooks in existing code) is visible.
@@ -14,7 +14,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-STACK_RESERVE = 256
+STACK_RESERVE = 32   # placeholder: nothing wrote into &9E00-&9FFF in 2.6 min of random play (2026-11-08); the documented case is one interrupt push of a few bytes at &9FFE
 REGIONS = {"COMMONXX": (0x1A40, 0x9D9E, 0xA000), "LARGEAXX": (0x0840, 0x1714, 0x1A40)}
 
 

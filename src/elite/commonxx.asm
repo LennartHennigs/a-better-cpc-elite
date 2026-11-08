@@ -7776,7 +7776,11 @@ todo_killedsomeone:
     call chkEntityWasMissiletarget
     ld d,(iy+9)
     ld e,(iy+8)
+    IFDEF MISSIONS
+    call mxKillHook                 ; missions_flight.asm: getBounty, then marks the Constrictor as killed
+    ELSE
     call getBounty
+    ENDIF
     ld d,(iy+22)
     ld e,(iy+21)
     srl d
@@ -14448,7 +14452,11 @@ LAB_ram_83e8:
 ; chkSpawnAsteroid: the more contraband, the more likely a hostile). If the gate byte is clear, a random byte is below 30 and Missionflag & &42 == 2, the
 ; marked Asp of the cloaking-device mission is created (see docs/_missions.md).
 spawnCommand0:
+    IFDEF MISSIONS
+    call mxSpawnCheck               ; missions_flight.asm: Constrictor at Orarra; ends with ld a,(cargoSlaves)
+    ELSE
     ld a,(cargoSlaves)
+    ENDIF
     ld c,a
     ld a,(cargoNarcotics)
     add a,c
