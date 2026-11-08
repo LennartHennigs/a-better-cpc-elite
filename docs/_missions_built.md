@@ -102,3 +102,4 @@ Notes. The added-mission presets keep the earlier stages consistent: preset 2 an
 (the seeds define it): reach galaxy 3 by two galactic jumps, with the trainer's free galactic jump, or load a save whose galaxy is already 3. The host save editor does the same presets on a save file (`tools/saveedit.py edit SAVE --kills 256 --added 2 -o ...`),
 and `EDITSAVE.BAS` on the CPC. An added mission runs only with no Trumbles aboard.
 
+Checked 2026-11-08 in cpcxray: for the Constrictor, plans, stolen ship, asteroids and Trumbles rows the trainer answers started the real game with exactly these values in memory (kills 256 or 1280, `&38FD/E` = `0000`, `0200`, `2E00`, `5E00`, `0000`, cash 6 thousand for the Trumbles); the status screen showed the rating Competent for 256 kills. That the offers then appear at a docking is covered by the docked tests with the same state values (`tools/test_mission_hook.py`), not by a real docking in the running game. The stock rows were not run.
