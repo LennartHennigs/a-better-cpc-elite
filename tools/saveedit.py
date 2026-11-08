@@ -83,26 +83,11 @@ def checksums(p):
     p[0x67] = sum(p[:0x67]) & 255
 
 
-def checks_ok(p):
-    return reduce(lambda a, b: a ^ b, p[:0x66]) == p[0x66] and sum(p[:0x67]) & 255 == p[0x67]
+checks_ok = elitekey.checks_ok
 
 
 def encrypt(p, key):
     return bytes(a ^ b for a, b in zip(p, key))
-
-
-def make_header(name, data_len, load=0x39D2, exe=0):
-    h = bytearray(128)
-    stem, _, ext = name.upper().partition(".")
-    h[1:9] = stem[:8].ljust(8).encode()
-    h[9:12] = (ext or "BIN")[:3].ljust(3).encode()
-    h[18] = 2
-    h[21:23] = struct.pack("<H", load)
-    h[24:26] = struct.pack("<H", data_len)
-    h[26:28] = struct.pack("<H", exe)
-    h[64:67] = struct.pack("<I", data_len)[:3]
-    h[67:69] = struct.pack("<H", sum(h[:67]) & 0xFFFF)
-    return bytes(h)
 
 
 def show(p):
@@ -163,14 +148,14 @@ def apply(p, a):
         p[O_MISSIONFLAG] = a.missionflag & 255
 
 
-def write_out(out_spec, data_with_header, src_name):
+def write_out(out_spec, data_with_header):
     disk, name = split_arg(out_spec)
     if not disk:
         Path(name).write_bytes(data_with_header)
         print("wrote", name, f"({len(data_with_header)} bytes with header)")
         return
     d = bytearray(disk.read_bytes())
-    secs = sector_offsets(d)
+    secs = dskx.sector_offsets(d)
     first = min(r for (t, r) in secs if t == 0)
     dirdata = b"".join(d[secs[(0, first + i)][0]:secs[(0, first + i)][0] + 512] for i in range(4))
     want = str(name).upper()
@@ -189,7 +174,8 @@ def write_out(out_spec, data_with_header, src_name):
                     ls = b * 2 + s
                     slots.append(secs[(ls // 9, first + ls % 9)][0])
     if not slots:
-        add_file(d, secs, first, str(name), data_with_header)
+        stem, _, ext = str(name).upper().partition(".")
+        dskx.add_payload(d, secs, first, stem[:8], (ext or "BIN")[:3], data_with_header, -(-len(data_with_header) // 128))
         disk.write_bytes(d)
         print("added", name, "to", disk)
         return
@@ -200,58 +186,6 @@ def write_out(out_spec, data_with_header, src_name):
         d[off:off + 512] = payload[k * 512:(k + 1) * 512]
     disk.write_bytes(d)
     print("replaced", name, "in", disk)
-
-
-def add_file(d, secs, first, name, payload):
-    """Add a new AMSDOS file (header already in payload) to the image: free directory entry, free 1 KB blocks (as tools/build_dsk.py)."""
-    entries = [secs[(0, first + i // 16)][0] + (i % 16) * 32 for i in range(64)]
-    used, free_entry = {0, 1}, None
-    for i, off in enumerate(entries):
-        e = d[off:off + 32]
-        if e[0] == 0xE5:
-            free_entry = i if free_entry is None else free_entry
-        else:
-            used.update(b for b in e[16:32] if b)
-    if free_entry is None:
-        raise SystemExit("no free directory entry")
-    stem, _, ext = name.upper().partition(".")
-    nblocks = -(-len(payload) // 1024)
-    blocks = [b for b in range(2, 180) if b not in used][:nblocks]
-    if len(blocks) < nblocks:
-        raise SystemExit("disk full")
-    payload = payload.ljust(nblocks * 1024, b"\xE5")
-    for k, b in enumerate(blocks):
-        for half in (0, 1):
-            ls = b * 2 + half
-            pos, _size = secs[(ls // 9, first + ls % 9)]
-            d[pos:pos + 512] = payload[k * 1024 + half * 512:k * 1024 + half * 512 + 512]
-    e = bytearray(32)
-    e[1:9] = stem[:8].ljust(8).encode()
-    e[9:12] = (ext or "BIN")[:3].ljust(3).encode()
-    e[15] = -(-len(payload) // 128) if len(payload) <= 16384 else 128
-    e[15] = min(e[15], -(-(128 + LEN) // 128))
-    e[16:16 + len(blocks)] = bytes(blocks)
-    d[entries[free_entry]:entries[free_entry] + 32] = e
-
-
-def sector_offsets(d):
-    """(track, sector id) -> (file offset, size) for a standard or extended DSK (as in tools/build_dsk.py)"""
-    ext = d[:8] == b"EXTENDED"
-    ntr = d[0x30] * d[0x31]
-    sizes = d[0x34:0x34 + ntr] if ext else None
-    out, off = {}, 0x100
-    for t in range(ntr):
-        tlen = sizes[t] * 256 if ext else struct.unpack("<H", d[0x32:0x34])[0]
-        if tlen == 0:
-            continue
-        info, pos = d[off:off + 0x100], off + 0x100
-        for i in range(info[0x15]):
-            r, n = info[0x1A + 8 * i], info[0x1B + 8 * i]
-            size = struct.unpack("<H", info[0x1E + 8 * i:0x20 + 8 * i])[0] or (128 << n)
-            out[(t, r)] = (pos, size)
-            pos += size
-        off += tlen
-    return out
 
 
 def main():
@@ -286,7 +220,8 @@ def main():
     show(p)
     if a.out:
         _, oname = split_arg(a.out)
-        hdr = header if header else make_header(Path(str(oname)).name, LEN)
+        stem, _, ext = Path(str(oname)).name.upper().partition(".")
+        hdr = header if header else dskx.make_header(stem[:8], (ext or "BIN")[:3], 0x39D2, LEN)
         if header:      # keep load/exec/length, but the file name inside the header follows the new name; recompute the header checksum
             stem, _, ext = Path(str(oname)).name.upper().partition(".")
             hb = bytearray(header)
@@ -295,7 +230,7 @@ def main():
             hb[67:69] = struct.pack("<H", sum(hb[:67]) & 0xFFFF)
             hdr = bytes(hb)
         okey = elitekey.key_from_disk(a.to_key_disk)[1] if a.to_key_disk else key
-        write_out(a.out, hdr + encrypt(p, okey), a.save)
+        write_out(a.out, hdr + encrypt(p, okey))
     else:
         print("(nothing written: give -o OUT)")
 

@@ -1,5 +1,5 @@
 ; Stolen police ship flight image (-DFL_S), the first mission after the plans (Elite Plus mission 4). missionState bits 2-3 = 3 and bits 4-6 = stage:
-; 1 waiting: every hyperspace arrival counts mxAsteroidCount (jumps) down, at 0 the stage is 2 (ready: the plans module makes the offer at the next docking);
+; 1 waiting: every hyperspace arrival counts mxMissionByte2 (jumps) down, at 0 the stage is 2 (ready: the plans module makes the offer at the next docking);
 ; 3 hunting: at Birera (galaxy 3, x 63, y 72) the spawn check puts one Viper (ship type 8) there, 22% of the checks, unless the marked one is alive; its kill makes the stage 4
 ; (the plans module pays 4,000 Cr at the next docking, stage 5).
 ; The marker needs no extra byte: a police Viper has bits 1 and 6 set in (ix+33) (blueprint byte 18 and &6F), the stolen one has both cleared, so it is not police: its kill is
@@ -114,7 +114,7 @@ mxArriveImpl:
     and 0x7C
     cp 0x1C
     jr nz,mxArriveDone
-    ld hl,mxAsteroidCount
+    ld hl,mxMissionByte2
     dec (hl)
     jr nz,mxArriveDone
     ld hl,mxStateByte

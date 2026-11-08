@@ -4,7 +4,7 @@
 ; (mxFlightBase to mxFlightEnd) and the launch hook below loads the one the state byte asks for.
 mxTrCount equ 0x3905                ; Trumble count, 16 bit, kept at 0x7FFF or less (save bytes the stock game never uses; docs/_savegame.md)
 mxStateByte equ 0x38FD              ; missionState (see missions_docked.asm): bits 0-1 Constrictor, bits 2-3 Thargoid plans, bits 4-6 hint stage, bit 7 Trumbles
-mxAsteroidCount equ 0x38FE            ; first mission: jumps to wait; second mission (after the first is paid): state in bits 0-1, asteroids to go in bits 2-7
+mxMissionByte2 equ 0x38FE            ; first mission: jumps to wait; second mission (after the first is paid): state in bits 0-1, asteroids to go in bits 2-7
 mxTypeConstrictor equ 19            ; ship type after the 19 stock ships (0-18)
 
     IFDEF FL_C
@@ -94,7 +94,7 @@ mxLaunchEntry:
     and 0x7C
     cp 0x5C                           ; first mission paid: the second one clearing (&38FE bits 0-1 = 1) needs the R image
     jr nz,mxFlightNone
-    ld a,(mxAsteroidCount)
+    ld a,(mxMissionByte2)
     and 0x03
     cp 0x01
     ld a,"R"

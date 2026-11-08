@@ -34,7 +34,6 @@ SCENARIOS = {
     "p_ceerdi_wrong": (0x06, 5, 2, 215, 85, 0x06, 0, 0x00, False, 0),
     "p_birera":      (0x0A, 5, 2, 63, 72, 0x1E, 0, 0xFE, True, 1),
     "p_birera_early": (0x06, 5, 2, 63, 72, 0x06, 0, 0x00, False, 0),
-    "all_done":      (0x0E, 6, 2, 63, 72, 0x0E, 0, 0x00, False, 0),   # (not used any more: 0x0E now offers the Trumbles; see t_* below)
 }
 # Trumbles offer: extra setup per scenario: cash (thousands word, decicredits word), the count before, the key pressed, and the count / cash change expected
 EXTRA = {
@@ -57,25 +56,25 @@ SCENARIOS.update({
     "t_poor":         (0x0E, 6, 2, 10, 10, 0x0E, 0, 0x00, False, 0),
     "t_offered_before": (0x8E, 6, 2, 10, 10, 0x8E, 0, 0x00, False, 0),
     "t_aboard":       (0x0E, 6, 2, 10, 10, 0x0E, 0, 0x00, False, 0),
-    "a_waiting_idle":  (0x1E, 6, 2, 215, 84, 0x1E, 0, 0x00, False, 0),    # waiting for the jumps: a flight matter, no disk access docked
-    "a_ready_offer":   (0x2E, 6, 2, 10, 10, 0x3E, 0, 0x00, True, 0),      # ready: the stolen ship offer
-    "a_clearing_idle": (0x3E, 6, 2, 215, 84, 0x3E, 0, 0x00, False, 0),    # clearing Ceerdi is a flight matter
-    "a_reward":        (0x4E, 6, 2, 10, 10, 0x5E, 4, 0x00, True, 0),      # killed: 4,000 Cr at any docking
-    "v_offer":         (0x5E, 6, 2, 10, 10, 0x5E, 0, 0x00, True, 0),      # first mission paid: the asteroids are offered (&38FE: 0 -> 0x51 = 20 asteroids, state 1)
-    "v_hunt_idle":     (0x5E, 6, 2, 215, 84, 0x5E, 0, 0x00, False, 0),    # clearing Ceerdi is a flight matter
-    "v_reward":        (0x5E, 6, 2, 10, 10, 0x5E, 6, 0x00, True, 0),      # cleared: 6,000 Cr at any docking (2 -> 3)
-    "v_paid":          (0x5E, 6, 2, 10, 10, 0x5E, 0, 0x00, False, 0),     # both paid: nothing
+    "s_waiting_idle":  (0x1E, 6, 2, 215, 84, 0x1E, 0, 0x00, False, 0),    # waiting for the jumps: a flight matter, no disk access docked
+    "s_ready_offer":   (0x2E, 6, 2, 10, 10, 0x3E, 0, 0x00, True, 0),      # ready: the stolen ship offer
+    "s_clearing_idle": (0x3E, 6, 2, 215, 84, 0x3E, 0, 0x00, False, 0),    # clearing Ceerdi is a flight matter
+    "s_reward":        (0x4E, 6, 2, 10, 10, 0x5E, 4, 0x00, True, 0),      # killed: 4,000 Cr at any docking
+    "r_offer":         (0x5E, 6, 2, 10, 10, 0x5E, 0, 0x00, True, 0),      # first mission paid: the asteroids are offered (&38FE: 0 -> 0x51 = 20 asteroids, state 1)
+    "r_hunt_idle":     (0x5E, 6, 2, 215, 84, 0x5E, 0, 0x00, False, 0),    # clearing Ceerdi is a flight matter
+    "r_reward":        (0x5E, 6, 2, 10, 10, 0x5E, 6, 0x00, True, 0),      # cleared: 6,000 Cr at any docking (2 -> 3)
+    "r_paid":          (0x5E, 6, 2, 10, 10, 0x5E, 0, 0x00, False, 0),     # both paid: nothing
     "t_any_time":      (0x01, 6, 0, 10, 10, 0x81, 0, 0x00, True, 0),      # the Trumbles are offered at any docking: here during the Constrictor hunt
     "t_before_rocks":  (0x5E, 6, 2, 10, 10, 0xDE, 0, 0x00, True, 0),      # ... and before the asteroids offer
 })
 EXTRA["t_any_time"] = dict(cash=(6, 0), key="space", count_after=0, cash_delta=0)
 EXTRA["t_before_rocks"] = dict(cash=(6, 0), key="space", count_after=0, cash_delta=0)
-AST0 = {"v_hunt_idle": 0x51, "v_reward": 2, "v_paid": 3}                      # &38FE before
-AST1 = {"p_birera": range(5, 13), "v_offer": [0x51], "v_hunt_idle": [0x51], "v_reward": [3], "v_paid": [3]}   # &38FE after (default 0)
+AST0 = {"r_hunt_idle": 0x51, "r_reward": 2, "r_paid": 3}                      # &38FE before
+AST1 = {"p_birera": range(5, 13), "r_offer": [0x51], "r_hunt_idle": [0x51], "r_reward": [3], "r_paid": [3]}   # &38FE after (default 0)
 
 # Scenarios where the stub must return without touching the disk (no overlay load): they take a few ms, a load takes about 1750 ms.
-FAST = {"v_paid", "v_hunt_idle", "a_waiting_idle", "a_clearing_idle", "c_offer_low", "c_hint_wrong", "c_offer_galaxy3", "c_stage7_idle", "c_hint_stage2_wrong_place", "p_brief_low", "p_brief_g1", "p_ceerdi_wrong", "p_birera_early",
-        "t_cash_short", "t_poor", "t_offered_before", "t_aboard", "all_done"}
+FAST = {"r_paid", "r_hunt_idle", "s_waiting_idle", "s_clearing_idle", "c_offer_low", "c_hint_wrong", "c_offer_galaxy3", "c_stage7_idle", "c_hint_stage2_wrong_place", "p_brief_low", "p_brief_g1", "p_ceerdi_wrong", "p_birera_early",
+        "t_cash_short", "t_poor", "t_offered_before", "t_aboard"}
 
 
 async def main():

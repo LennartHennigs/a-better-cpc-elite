@@ -32,17 +32,10 @@ lines = [
     '160 PRINT"Galaxy: ";p(17)+1:END',
     '200 PRINT"Cannot load ";f$:END',
 ]
-for name, disk in DISKS:
+for i, (name, disk) in enumerate(DISKS):
     off, key = elitekey.key_from_disk(ROOT / disk)
-    lines.append(f"{300 + 10 * len(lines)} DATA {name},{key.hex().upper()}")
-# renumber the DATA lines in order 300, 310, 320
-out = []
-n = 300
-for l in lines:
-    if " DATA " in l.split(":")[0][:12]:
-        l = f"{n} " + l.split(" ", 1)[1]
-        n += 10
-    out.append(l)
+    lines.append(f"{300 + 10 * i} DATA {name},{key.hex().upper()}")
+out = lines
 text = "".join(l + "\r\n" for l in out) + "\x1a"
 (ROOT / "src/cheats/SHOWSAVE.ASC").write_bytes(text.encode("latin-1"))
 print("wrote src/cheats/SHOWSAVE.ASC", len(text), "bytes")

@@ -14,7 +14,8 @@ import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from dskx import amsdos_header  # noqa: E402
+import dskx  # noqa: E402
+from dskx import amsdos_header, sector_offsets  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 BASE = ROOT / "Elite_UK_Firebird_cracked_trainer.dsk"
@@ -25,81 +26,14 @@ SJASM = Path.home() / ".local/bin/sjasmplus"
 FILES = {"LARGEAXX": ["-DFIREBIRD"], "COMMONXX": [], "COMMON2X": [], "MUSIQUEX": []}
 
 
-def sector_offsets(d):
-    """(track, sector id) -> (file offset, size) for a standard or extended DSK."""
-    ext = d[:8] == b"EXTENDED"
-    ntr = d[0x30] * d[0x31]
-    sizes = d[0x34:0x34 + ntr] if ext else None
-    out, off = {}, 0x100
-    for t in range(ntr):
-        tlen = sizes[t] * 256 if ext else struct.unpack("<H", d[0x32:0x34])[0]
-        if tlen == 0:
-            continue
-        info, pos = d[off:off + 0x100], off + 0x100
-        for i in range(info[0x15]):
-            r, n = info[0x1A + 8 * i], info[0x1B + 8 * i]
-            size = struct.unpack("<H", info[0x1E + 8 * i:0x20 + 8 * i])[0] or (128 << n)
-            out[(t, r)] = (pos, size)
-            pos += size
-        off += tlen
-    return out
-
-
-def make_header(name, ext, load, length, exe=0):
-    """128-byte AMSDOS header of a binary file (user 0, type 2)."""
-    h = bytearray(128)
-    h[1:9] = name.ljust(8).encode()
-    h[9:12] = ext.ljust(3).encode()
-    h[18] = 2
-    h[21:23] = struct.pack("<H", load)
-    h[24:26] = struct.pack("<H", length)
-    h[26:28] = struct.pack("<H", exe)
-    h[64:67] = struct.pack("<I", length)[:3]
-    h[67:69] = struct.pack("<H", sum(h[:67]) & 0xFFFF)
-    return bytes(h)
-
-
 def add_file(d, secs, first, name, ext, data, load):
-    """Add a new AMSDOS file (header + data) to the image: free directory entry, free 1 KB blocks, one extent (files up to 16 KB)."""
-    entries = []
-    for i in range(64):
-        off = secs[(0, first + i // 16)][0] + (i % 16) * 32
-        entries.append(off)
-    used, free_entry = {0, 1}, None
-    for i, off in enumerate(entries):
-        e = d[off:off + 32]
-        if e[0] == 0xE5:
-            free_entry = free_entry if free_entry is not None else i
-        else:
-            used.update(b for b in e[16:32] if b)
-    if free_entry is None:
-        sys.exit("no free directory entry")
-    payload = make_header(name, ext, load, len(data)) + data
-    records = -(-len(payload) // 128)
-    if records > 128:
-        sys.exit(f"{name}: more than one extent needed")
-    nblocks = -(-len(payload) // 1024)
-    blocks = [b for b in range(2, 180) if b not in used][:nblocks]
-    if len(blocks) < nblocks:
-        sys.exit("disk full")
-    payload = payload.ljust(nblocks * 1024, b"\xE5")
-    for k, b in enumerate(blocks):
-        for half in (0, 1):
-            ls = b * 2 + half
-            pos, size = secs[(ls // 9, first + ls % 9)]
-            d[pos:pos + 512] = payload[k * 1024 + half * 512:k * 1024 + half * 512 + 512]
-    e = bytearray(32)
-    e[0] = 0
-    e[1:9] = name.ljust(8).encode()
-    e[9:12] = ext.ljust(3).encode()
-    e[15] = records
-    e[16:16 + len(blocks)] = bytes(blocks)
-    d[entries[free_entry]:entries[free_entry] + 32] = e
-    return blocks
+    """Add a new AMSDOS file (header + data); files up to 16 KB (one extent)."""
+    payload = dskx.make_header(name, ext, load, len(data)) + data
+    return dskx.add_payload(d, secs, first, name, ext, payload, -(-len(payload) // 128))
 
 
 def flight_image(tag):
-    """Assemble COMMONXX with -DMISSIONS (-DFL_<tag> for C/P; "0" is the default image) and slice mxFlightBase..mxFlightEnd (the COMMONXX tail)."""
+    """Assemble COMMONXX with -DMISSIONS (-DFL_<tag> for C/P/T/S/R; "0" is the default image) and slice mxFlightBase..mxFlightEnd (the COMMONXX tail)."""
     with tempfile.TemporaryDirectory() as tmp:
         out, sym = Path(tmp) / "c.bin", Path(tmp) / "c.sym"
         flags = ["-DMISSIONS"] + ([f"-DFL_{tag}"] if tag != "0" else [])
@@ -189,4 +123,5 @@ def main():
     print("wrote", OUT)
 
 
-main()
+if __name__ == "__main__":
+    main()

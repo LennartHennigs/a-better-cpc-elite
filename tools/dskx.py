@@ -55,6 +55,72 @@ def read_files(secs):
         out[key] = data[:sum(rc for _, rc, _ in exts) * 128]
     return out
 
+def sector_offsets(d):
+    """(track, sector id) -> (file offset in the image bytes, size) for a standard or extended DSK (for writing)."""
+    ext = d[:8] == b"EXTENDED"
+    ntr = d[0x30] * d[0x31]
+    sizes = d[0x34:0x34 + ntr] if ext else None
+    out, off = {}, 0x100
+    for t in range(ntr):
+        tlen = sizes[t] * 256 if ext else struct.unpack("<H", d[0x32:0x34])[0]
+        if tlen == 0:
+            continue
+        info, pos = d[off:off + 0x100], off + 0x100
+        for i in range(info[0x15]):
+            r, n = info[0x1A + 8 * i], info[0x1B + 8 * i]
+            size = struct.unpack("<H", info[0x1E + 8 * i:0x20 + 8 * i])[0] or (128 << n)
+            out[(t, r)] = (pos, size)
+            pos += size
+        off += tlen
+    return out
+
+
+def make_header(name, ext, load, length, exe=0):
+    """128-byte AMSDOS header of a binary file (user 0, type 2)."""
+    h = bytearray(128)
+    h[1:9] = name.ljust(8).encode()
+    h[9:12] = ext.ljust(3).encode()
+    h[18] = 2
+    h[21:23] = struct.pack("<H", load)
+    h[24:26] = struct.pack("<H", length)
+    h[26:28] = struct.pack("<H", exe)
+    h[64:67] = struct.pack("<I", length)[:3]
+    h[67:69] = struct.pack("<H", sum(h[:67]) & 0xFFFF)
+    return bytes(h)
+
+
+def add_payload(d, secs, first, name, ext, payload, records):
+    """Add a new file whose bytes (header included) are `payload` to the image `d`: free directory entry, free 1 KB blocks, one extent of `records` 128-byte records."""
+    entries = [secs[(0, first + i // 16)][0] + (i % 16) * 32 for i in range(64)]
+    used, free_entry = {0, 1}, None
+    for i, off in enumerate(entries):
+        e = d[off:off + 32]
+        if e[0] == 0xE5:
+            free_entry = i if free_entry is None else free_entry
+        else:
+            used.update(x for x in e[16:32] if x)
+    if free_entry is None:
+        raise SystemExit("no free directory entry")
+    if records > 128:
+        raise SystemExit(f"{name}: more than one extent needed")
+    nblocks = -(-len(payload) // 1024)
+    blocks = [x for x in range(2, 180) if x not in used][:nblocks]
+    if len(blocks) < nblocks:
+        raise SystemExit("disk full")
+    payload = payload.ljust(nblocks * 1024, b"\xE5")
+    for k, blk in enumerate(blocks):
+        for half in (0, 1):
+            ls = blk * 2 + half
+            pos, _size = secs[(ls // 9, first + ls % 9)]
+            d[pos:pos + 512] = payload[k * 1024 + half * 512:k * 1024 + half * 512 + 512]
+    e = bytearray(32)
+    e[1:9] = name.ljust(8).encode()
+    e[9:12] = ext.ljust(3).encode()
+    e[15] = records
+    e[16:16 + len(blocks)] = bytes(blocks)
+    d[entries[free_entry]:entries[free_entry] + 32] = e
+    return blocks
+
 
 def amsdos_header(b):
     if len(b) < 128:

@@ -3,7 +3,7 @@
     jp mxModuleEntry
     dw missionTextTable
 mxModuleEntry:
-    ld hl,mxAsteroidCount
+    ld hl,mxMissionByte2
     ld a,(hl)
     and 0x03
     jr nz,mxRocksReward

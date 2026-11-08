@@ -1,7 +1,7 @@
 ; Resident stub of the LARGEAXX tail (&1714-&1A3F), assembled with -DMISSIONS. It picks the active mission module, loads its overlay file
 ; (MISSIONC.BIN, MISSIONP.BIN, MISSIONT.BIN or MISSIONR.BIN) into the rest of the tail and jumps to it. The tail is reloaded with LARGEAXX at every docking, so the stub is always there.
 ; Overlay layout: +0 jp moduleEntry, +3 dw missionTextTable, then the module. An overlay file is the bytes from mxOverlayBase to mxOverlayEnd of a build with
-; -DOVL_C or -DOVL_P (tools/build_dsk.py slices them by label). A module ends by `jp mxShowEnd` (message box, then back to the docking code) or `ret`.
+; -DOVL_C, -DOVL_P, -DOVL_T or -DOVL_R (tools/build_dsk.py slices them by label). A module ends by `jp mxShowEnd` (message box, then back to the docking code) or `ret`.
     INCLUDE "missions_docked_defs.asm"
 
 missionsDockedEntry:                  ; = &1714, the fixed entry the docking code calls (after loadLARGEAXX, in place of chkMissions)
@@ -94,7 +94,7 @@ mxAfterPlans:                         ; plans finished: the stolen police ship (
     ret nz                            ; 1 and 3 (waiting, hunting) are flight matters
     jr mxLoadC                        ; 2 ready: the module (c = "P") makes the offer; 4 killed: it pays
 mxRocks:                              ; the asteroids: &38FE bits 0-1 0 offer, 1 clearing (flight), 2 reward (module MISSIONR), 3 paid
-    ld a,(mxAsteroidCount)
+    ld a,(mxMissionByte2)
     bit 0,a
     ret nz
     ld a,"R"

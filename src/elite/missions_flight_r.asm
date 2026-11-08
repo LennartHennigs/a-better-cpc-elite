@@ -9,7 +9,7 @@ mxRAtTarget:
     and 0x7C
     cp 0x5C
     ret nz
-    ld a,(mxAsteroidCount)
+    ld a,(mxMissionByte2)
     and 0x03
     cp 0x01
     ret nz
@@ -65,7 +65,7 @@ mxKillHookImpl:
     and a
     sbc hl,de
     jr nz,mxKillDone
-    ld hl,mxAsteroidCount
+    ld hl,mxMissionByte2
     ld a,(hl)
     sub 0x04
     ld (hl),a

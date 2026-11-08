@@ -20,7 +20,6 @@ from mcp.client.stdio import stdio_client
 
 ROOT = Path(__file__).resolve().parent.parent
 TRAP = 0x9F90
-SITES = ((0x72A8, 0x72AB), (0x80CD, 0x80D0), (0x83EF, 0x83F2), (0x518E, 0x5191), (0x7AA2, 0x7AA5), (0x3691, 0x3694), (0x9D9E, 0xA000))
 DOCKED_UNUSED = {   # name: (state, killScoreHigh, galaxy, x, y, state after, message, reward)
     "brief":           (0x02, 5, 2, 10, 10, 0x06, True, False),
     "brief_low_rank":  (0x02, 4, 2, 10, 10, 0x02, False, False),
@@ -47,7 +46,7 @@ def patch_ranges(new, gap=8):
     return [(0x1A40 + lo, 0x1A40 + hi) for lo, hi in ranges]
 
 
-def build(flag="-DFL_P"):
+def build(flag):
     with tempfile.TemporaryDirectory() as d:
         out, sym = Path(d) / "c.bin", Path(d) / "c.sym"
         subprocess.run([str(Path.home() / ".local/bin/sjasmplus"), "-DMISSIONS", flag, f"--raw={out}", f"--sym={sym}", str(ROOT / "src/elite/commonxx.asm")],
