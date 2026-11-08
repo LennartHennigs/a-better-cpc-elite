@@ -23,7 +23,7 @@ MISSIONS = "--missions" in sys.argv   # assemble LARGEAXX and COMMONXX with -DMI
 args = [a for a in sys.argv[1:] if a != "--missions"]
 OUT = Path(args[0]) if args else ROOT / "work" / ("elite_missions.dsk" if MISSIONS else "elite_rebuilt.dsk")
 SJASM = Path.home() / ".local/bin/sjasmplus"
-FILES = {"LARGEAXX": ["-DFIREBIRD"], "COMMONXX": [], "COMMON2X": [], "MUSIQUEX": []}
+FILES = {"LARGEAXX": ["-DFIREBIRD"], "COMMONXX": ["-DTITLESEL"], "COMMON2X": [], "MUSIQUEX": ["-DTITLESEL"]}   # TITLESEL: cursor keys change the title ship
 
 
 def add_file(d, secs, first, name, ext, data, load):
