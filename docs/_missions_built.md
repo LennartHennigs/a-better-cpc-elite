@@ -80,3 +80,25 @@ All run in cpcxray (`work/xray`, `~/.local/share/uv/tools/cpcxray/bin/python -I 
 A real playthrough of the whole chain with save and load; listening to the squeak (other effects: flags2 bit 7 the lock blip, flags1 bit 7 the key click); tuning (20 asteroids, 50% and 22% spawn rates, Birera as the police target); a Trumbles end condition other than a sun;
 the Cobra Mk III that Elite Plus adds to the asteroid mission; a random per-commander order (not built: the two last missions are encoded differently and the stub plus Constrictor overlay has no room); optionally a Trumbles gate after a stock mission or outside galaxy 1;
 the Constrictor's ECM and missiles come from the hull header and were not checked; merging `addon-missions` into `master` (the repo still has `master`, not `main`).
+
+## 7. Pokes to start each mission (for testing)
+
+Two ways to set the state. **Trainer:** `RUN"CHEAT.BAS` on `work/missions_cheat.dsk` has the prompts Kills, Jumps and Added mission 1-4 (and Mission 0-3 for the stock missions); the table gives the answers. **Raw pokes:** the same values as plain `POKE`s in a loader
+(lines between the `LOAD` of `common2x` and `CALL &1C82`, as `CHEAT.ASC` does): while the loader runs the save block sits `&FC` higher than in the running game, so the runtime address `&38FD` is `&39F9` there. The runtime addresses
+are for `memory_write` in an emulator, or a monitor on a running game. Kill points are the BBC-style count at `&38D8/&38D9` (`&39D4/&39D5` in the loader): `POKE &39D5,n` sets `n x 256`. All presets leave the other save bytes alone.
+
+| Mission | Trainer answers | Loader pokes | Runtime (running game) | Then |
+|---|---|---|---|---|
+| Constrictor | Kills 256 | `POKE &39D5,1` | `&38D9` = 1 | start in galaxy 1 (Lave), launch and dock again: the offer comes at the docking. For the Orarra fight: state `&39F9` = `&71` (hunting, all hints given) and go to Orarra in galaxy 2 |
+| Thargoid plans | Kills 1280, Added mission 1 | `POKE &39D5,5:POKE &39F9,2` | `&38D9` = 5, `&38FD` = `&02` | needs a galaxy 3 docking (use "Free gal jump" in the trainer and a galactic hyperdrive); the offer comes at the docking there, then Ceerdi and Birera |
+| Stolen police ship | Kills 256, Added mission 2 | `POKE &39D5,1:POKE &39F9,&2E` | `&38D9` = 1, `&38FD` = `&2E` | the offer comes at the next docking in any galaxy; the hunt is at Birera in galaxy 3. To test the jump wait instead: `POKE &39F9,&1E:POKE &39FA,5` (five hyperspace arrivals, then the next docking offers it) |
+| Asteroid bombardment | Kills 256, Added mission 3 | `POKE &39D5,1:POKE &39F9,&5E:POKE &39FA,0` | `&38D9` = 1, `&38FD` = `&5E`, `&38FE` = 0 | the offer comes at the next docking in any galaxy; the rocks are at Ceerdi in galaxy 3. To start already clearing: `POKE &39FA,&51` (20 to go) |
+| Trumbles | Kills 256, Cash 6000 | `POKE &39D5,1:POKE &39D9,6:POKE &39DA,0` | `&38D9` = 1, `&38DD/&38DE` = 6 (thousands) | the offer comes at the first docking (also during any of the missions above if the state allows). To have them aboard at once: `POKE &3A01,3:POKE &3A02,0` (runtime `&3905/&3906` = 3) |
+| Supernova (stock) | Mission 1 | `POKE &4E5D,0:POKE &39D6,31` | `&38DA` = 31 | the next hyperspace arrival starts it (the `&4E5D` patch makes jumps count in galaxy 1) |
+| Cloaking device (stock) | Mission 2 | `POKE &4E5D,0:POKE &39D6,127:POKE &3A23,1` | `&38DA` = 127, `&3927` = 1 | the next arrival starts it |
+| Thargon invasion (stock) | Mission 3 | `POKE &4E5D,0:POKE &39D6,253:POKE &3A23,3` | `&38DA` = 253, `&3927` = 3 | the next arrival starts it |
+
+Notes. The added-mission presets keep the earlier stages consistent: preset 2 and up also fit the Navy energy unit (`&3902` / loader `&39FE` = `&FE`), which `saveedit.py --added` and `EDITSAVE.BAS` write (the trainer presets do not); with raw pokes add `POKE &39FE,&FE` if you care. Galaxy cannot be poked
+(the seeds define it): reach galaxy 3 by two galactic jumps, with the trainer's free galactic jump, or load a save whose galaxy is already 3. The host save editor does the same presets on a save file (`tools/saveedit.py edit SAVE --kills 256 --added 2 -o ...`),
+and `EDITSAVE.BAS` on the CPC. An added mission runs only with no Trumbles aboard.
+
