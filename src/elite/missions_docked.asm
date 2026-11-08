@@ -4,7 +4,11 @@
 ; -DOVL_C or -DOVL_P (tools/build_dsk.py slices them by label). A module ends by `jp mxShowEnd` (message box, then back to the docking code) or `ret`.
     INCLUDE "missions_docked_defs.asm"
 
-missionsDockedEntry:                  ; = &1714, the fixed entry the docking code calls
+    jp mxDockEntry                    ; &1714: the docking code calls here (after loadLARGEAXX, in place of chkMissions)
+    jp mxLaunchEntry                  ; &1717: the launch sequence calls here (in place of its first call, loadIndicator)
+
+missionsDockedEntry:
+mxDockEntry:
     ld a,(mxThargonMissionVar)
     and a
     jp nz,mxChkMissions               ; an existing mission offer or reward is pending: its turn, returns to the docking code
@@ -32,6 +36,36 @@ mxLoadModule:
 mxOverlayName:
     db "MISSION?"
 
+; Launch: make sure the flight image the state asks for is in the COMMONXX tail (&9D9E: vector table, id byte at &9DAD, code), then carry on with loadIndicator.
+; "C" while the Constrictor hunt is on (state 1 or 3), "P" while the plans are aboard, else "0" (the default image). Nothing is loaded when the right image is there.
+mxLaunchEntry:
+    ld a,(missionState)
+    ld b,a
+    and 0x03
+    jr z,mxFlightNone                 ; Constrictor not offered
+    cp 0x02
+    ld a,"C"
+    jr nz,mxFlightGo                  ; hunting or killed
+    ld a,b
+    and 0x0C
+    cp 0x08
+    ld a,"P"
+    jr z,mxFlightGo                   ; plans aboard
+mxFlightNone:
+    ld a,"0"
+mxFlightGo:
+    ld hl,mxFlightLoaded
+    cp (hl)
+    jp z,mxLoadIndicator              ; already in RAM
+    ld (mxFlightName+7),a
+    call mxLoadFile
+    dw mxFlightBase
+    dw mxFlightName
+    jp mxLoadIndicator
+
+mxFlightName:
+    db "MFLIGHT?"
+
 ; Message box for string A of the module's text table (word at overlay +3): frame, view 14, colours, cursor, key, back to the docking code.
 mxShowEnd:
     ld de,mxColorsMessage
@@ -54,6 +88,7 @@ missionShow:
     pop hl
     ld (mxCharXY),hl
     pop af
+missionPrint:                          ; A = string number: print it at the cursor (no box); returns
     ld d,a
     ld hl,(mxOverlayBase+3)           ; the module's missionTextTable
     jp mxPrintStringScan

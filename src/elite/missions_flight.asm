@@ -1,196 +1,74 @@
-; Mission code that must be resident in flight (COMMONXX tail, &9D9E-&9FFF). Assembled only with -DMISSIONS.
-
+; Flight tail of COMMONXX (&9D9E-&9FFF), assembled with -DMISSIONS. The tail holds a vector table at fixed addresses, an id byte and the code of at most one
+; mission image. Without a flight flag it is the default image (no mission): every vector points at a stub that does what the hooked stock instruction did.
+; With -DFL_C / -DFL_P the same layout carries that mission's code; tools/build_dsk.py cuts those images out as FLIGHTC.BIN / FLIGHTP.BIN (mxFlightBase to
+; mxFlightEnd) and the launch hook in the docked stub loads the one the state byte asks for.
+mxStateByte equ 0x38FD              ; missionState (see missions_docked.asm): bits 0-1 Constrictor, bits 2-3 Thargoid plans, bits 4-6 hint stage, bit 7 Trumbles
 mxTypeConstrictor equ 19            ; ship type after the 19 stock ships (0-18)
 
-; spawnShip's table lookup (it replaces `ld hl,shipGFXdataTable`, same 3 bytes): A = ship type (kept), returns HL so that
-; HL + 4 * (type & &3F) points at the record. Type 19 is served from the one-entry table below, so nothing in the stock table moves.
-mxShipTable:
+    IFDEF FL_C
+    DEFINE FLID "C"
+    DEFINE HAS_SHIP
+    DEFINE HAS_SPAWN
+    DEFINE HAS_KILL
+    DEFINE HAS_LASER
+    ENDIF
+    IFDEF FL_P
+    DEFINE FLID "P"
+    DEFINE HAS_SPAWN
+    ENDIF
+    IFNDEF FLID
+    DEFINE FLID "0"
+    ENDIF
+
+mxFlightBase:
+; Vector table: the hook sites in commonxx.asm call these fixed addresses (3 bytes each).
+mxShipTable:                        ; replaces `ld hl,shipGFXdataTable` in spawnShip: A = ship type (kept), HL = table base
+    jp mxShipTableImpl
+mxSpawnCheck:                       ; replaces `ld a,(cargoSlaves)` at the start of spawnCommand0 and must end with it
+    jp mxSpawnCheckImpl
+mxKillHook:                         ; replaces `call getBounty` in todo_killedsomeone (IY = the dead ship's blueprint)
+    jp mxKillHookImpl
+mxLaserHook:                        ; replaces `ld (ix+34),a` after `sub c` in applyLaserDamagetoEntity (flags from the sub must survive)
+    jp mxLaserHookImpl
+mxRecharge:                         ; replaces `call nz,SUB_ram_3693` in RechargeEnergy
+    jp mxRechargeImpl
+mxFlightId:
+    db FLID                         ; "0" default, "C", "P": which image is in RAM (the launch hook compares it)
+
+; Defaults for the vectors the image does not use.
+    IFNDEF HAS_SHIP
+mxShipTableImpl:
     ld hl,shipGFXdataTable
-    push af
-    and 0x3F
-    cp mxTypeConstrictor
-    jr nz,mxShipTableDone
-    ld hl,mxConstrictorEntry-mxTypeConstrictor*4
-mxShipTableDone:
-    pop af
     ret
-mxConstrictorEntry:
-    jp shipdatConstrictor            ; spawnShip reads bytes +1 and +2 (the blueprint address)
-    db 0x04                          ; the unused tag byte of the stock records
-
-mxStateByte equ 0x38FD              ; missionState (see missions_docked.asm): bits 0-1 Constrictor, bits 4-6 hint stage
-
-; Replaces the first instruction of spawnCommand0 (`ld a,(cargoSlaves)`, same 3 bytes) and ends with it. While the Constrictor hunt is on, all seven hints are
-; given (stage 7) and the player is in Orarra (galaxy 2, x 144, y 33), it spawns the Constrictor unless one is already alive. All registers are kept
-; (spawnCommand0 can be entered with IX/IY in use). The spawn follows spawnCommand1's pattern: hostile flag, far z, then setDirectionofEntity.
-mxSpawnCheck:
-    push bc
-    push de
-    push hl
-    push ix
-    push iy
-    ld a,(mxStateByte)                ; Thargoid plans aboard (bits 2-3 = 2): about 22% of the checks (a roll of 200 or more) add a Thargoid and a Thargon
-    and 0x0C
-    cp 0x08
-    jr nz,mxNoPlansSpawn
-    call getRandomNumber
-    cp 200
-    jr c,mxNoPlansSpawn
-    call mxSpawnThargoidPair
-    jr mxSpawnDone
-mxNoPlansSpawn:
-    ld a,(mxStateByte)
-    ld b,a
-    and 0x03
-    cp 0x01
-    jr nz,mxSpawnDone                 ; not hunting
-    ld a,b
-    and 0x70
-    cp 0x70
-    jr nz,mxSpawnDone                 ; hints not finished
-    ld a,(currentGalaxy)
-    cp 0x01
-    jr nz,mxSpawnDone
-    ld a,(presentSystemX)
-    cp 144
-    jr nz,mxSpawnDone
-    ld a,(presentSystemY)
-    cp 33
-    jr nz,mxSpawnDone                 ; not Orarra
-    ld ix,sEntityxlo
-    ld de,0x0027
-    ld b,0x06
-mxSpawnScan:
-    add ix,de
-    ld a,(ix+34)
-    and a
-    jr z,mxSpawnNext
-    ld a,(ix+35)
-    cp shipdatConstrictor & 0xFF
-    jr nz,mxSpawnNext
-    ld a,(ix+36)
-    cp shipdatConstrictor >> 8
-    jr z,mxSpawnDone                  ; already there
-mxSpawnNext:
-    djnz mxSpawnScan
-    call lookforFreeSlot
-    jr nz,mxSpawnDone
-    ld a,mxTypeConstrictor
-    call spawnShip
-    set 0,(ix+37)
-    call getRandomNumber
-    and 0x0F
-    or 0x04
-    ld (ix+7),a
-    rra
-    rra
-    rra
-    and 0x01
-    ld (ix+1),a
-    xor a
-    ld (ix+4),a
-    call setDirectionofEntity
-mxSpawnDone:
-    pop iy
-    pop ix
-    pop hl
-    pop de
-    pop bc
-    ld a,(cargoSlaves)                ; the instruction this call replaced
+    ENDIF
+    IFNDEF HAS_SPAWN
+mxSpawnCheckImpl:
+    ld a,(cargoSlaves)
     ret
-
-; Replaces `call getBounty` where a destroyed ship is paid (todo_killedsomeone, IY = its blueprint). Does the original call, then, if the dead ship
-; is the Constrictor and the hunt is on, sets state 3 (killed); the reward is paid at the next docking. Keeps all registers.
-mxKillHook:
-    call getBounty
-    push af
-    push de
-    push hl
-    push iy
-    pop de
-    ld hl,shipdatConstrictor
-    and a
-    sbc hl,de
-    jr nz,mxKillDone
-    ld hl,mxStateByte
-    ld a,(hl)
-    and 0x03
-    cp 0x01
-    jr nz,mxKillDone
-    set 1,(hl)                        ; 01 -> 11
-mxKillDone:
-    pop hl
-    pop de
-    pop af
-    ret
-
-; Replaces `ld (ix+34),a` in applyLaserDamagetoEntity (same 3 bytes; A = energy minus the hit, C = laser power: pulse and beam 15, military 23, mining 50,
-; flags from the `sub c`). Like the BBC Constrictor, the Constrictor only takes damage from a military laser or better (C >= 23). A weaker hit leaves the energy
-; unchanged and returns NZ/NC, so the caller neither kills nor counts it. Every other ship gets the original store, flags untouched.
-mxLaserHook:
-    push af
-    push hl
-    ld l,(ix+35)
-    ld h,(ix+36)
-    ld a,shipdatConstrictor & 0xFF
-    cp l
-    jr nz,mxLaserNormal
-    ld a,shipdatConstrictor >> 8
-    cp h
-    jr nz,mxLaserNormal
-    ld a,c
-    cp 0x17
-    jr nc,mxLaserNormal
-    pop hl
-    pop af
-    ld a,(ix+34)                      ; weak laser: no damage
-    or a                              ; NC, and NZ because a live ship has energy
-    ret
-mxLaserNormal:
-    pop hl
-    pop af
+    ENDIF
+    IFNDEF HAS_KILL
+mxKillHookImpl:
+    jp getBounty
+    ENDIF
+    IFNDEF HAS_LASER
+mxLaserHookImpl:
     ld (ix+34),a
     ret
+    ENDIF
 
-; A Thargoid (type 15) placed like spawnCommand1 places one, and a Thargon (type 18) on top of it. Stops quietly when no slot is free.
-mxSpawnThargoidPair:
-    call lookforFreeSlot
-    ret nz
-    ld a,0x0F
-    call spawnShip
-    set 0,(ix+37)
-    call getRandomNumber
-    and 0x0F
-    or 0x04
-    ld (ix+7),a
-    rra
-    rra
-    rra
-    and 0x01
-    ld (ix+1),a
-    xor a
-    ld (ix+4),a
-    call setDirectionofEntity
-    push ix
-    pop hl                            ; the Thargoid's position
-    call lookforFreeSlot
-    ret nz
-    ld a,0x12
-    call spawnShip
-    push ix
-    pop de
-    ld bc,0x0009
-    ldir                              ; same x, y, z as the mother ship
-    set 0,(ix+37)
-    jp setDirectionofEntity
-
-; Replaces `call nz,SUB_ram_3693` in RechargeEnergy (an extra energy unit is fitted): one extra recharge step, and a second one for the Navy unit
-; (extraEnergyUnit = &FE, the Thargoid plans reward), so the Navy unit gives 3 steps per call, the ordinary unit 2 and none 1.
-mxRecharge:
+; Navy energy unit (extraEnergyUnit = &FE, the Thargoid plans reward): it stays fitted after the mission, so this is in every image. One extra recharge step
+; for an extra energy unit, and a second one for the Navy unit: 3 steps per call (ordinary unit 2, none 1).
+mxRechargeImpl:
     call SUB_ram_3693
     ld a,(extraEnergyUnit)
     cp 0xFE
     ret nz
     jp SUB_ram_3693
 
-    INCLUDE "missions_hull.asm"
+    IFDEF FL_C
+    INCLUDE "missions_flight_c.asm"
+    ENDIF
+    IFDEF FL_P
+    INCLUDE "missions_flight_p.asm"
+    ENDIF
+mxFlightEnd:

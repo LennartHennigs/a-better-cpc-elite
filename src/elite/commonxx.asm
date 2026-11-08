@@ -12263,7 +12263,11 @@ todoDockingProcedure:
     ld a,0x07
     jp execSelectedKeyFunctions
 launchSequence:
+    IFDEF MISSIONS
+    call 0x1717                     ; missions_docked.asm (LARGEAXX tail): loads the flight image the mission state asks for, then loadIndicator
+    ELSE
     call loadIndicator
+    ENDIF
     ld a,0x04
     ld (todoUnknownStatusFlags),a
     ld a,(sfxFlags2Bitmap)

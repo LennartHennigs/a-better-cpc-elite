@@ -34,10 +34,23 @@ DOCKED = {   # name: (state, killScoreHigh, galaxy, x, y, state after, message, 
 }
 
 
-def build():
+def patch_ranges(new, gap=8):
+    """byte ranges where the built COMMONXX differs from the stock one (call sites, the tail, the CPC+ byte): written into the snapshot's RAM"""
+    old = (ROOT / "work/bin_stock/COMMONXX.BIN").read_bytes()
+    ranges = []
+    for i, (a, b) in enumerate(zip(new, old)):
+        if a != b:
+            if ranges and i - ranges[-1][1] <= gap:
+                ranges[-1][1] = i + 1
+            else:
+                ranges.append([i, i + 1])
+    return [(0x1A40 + lo, 0x1A40 + hi) for lo, hi in ranges]
+
+
+def build(flag="-DFL_P"):
     with tempfile.TemporaryDirectory() as d:
         out, sym = Path(d) / "c.bin", Path(d) / "c.sym"
-        subprocess.run([str(Path.home() / ".local/bin/sjasmplus"), "-DMISSIONS", f"--raw={out}", f"--sym={sym}", str(ROOT / "src/elite/commonxx.asm")],
+        subprocess.run([str(Path.home() / ".local/bin/sjasmplus"), "-DMISSIONS", flag, f"--raw={out}", f"--sym={sym}", str(ROOT / "src/elite/commonxx.asm")],
                        check=True, capture_output=True)
         syms = {m.group(1): int(m.group(2), 16) for m in re.finditer(r"^(\w+):\s+EQU\s+0x([0-9A-Fa-f]+)", sym.read_text(), re.M)}
         return out.read_bytes(), syms
@@ -45,6 +58,7 @@ def build():
 
 async def main():
     new, syms = build()
+    SITES = patch_ranges(new)
     params = StdioServerParameters(command="cpcxray", args=["mcp", "--config", "config/cpc6128.toml"])
     async with stdio_client(params) as (r, w):
         async with ClientSession(r, w) as s:

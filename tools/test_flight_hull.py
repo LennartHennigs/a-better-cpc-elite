@@ -22,11 +22,24 @@ TRAP = 0x9F00
 ROOT = Path(__file__).resolve().parent.parent
 
 
+def patch_ranges(new, gap=8):
+    """byte ranges where the built COMMONXX differs from the stock one (call sites, the tail, the CPC+ byte): written into the snapshot's RAM"""
+    old = (ROOT / "work/bin_stock/COMMONXX.BIN").read_bytes()
+    ranges = []
+    for i, (a, b) in enumerate(zip(new, old)):
+        if a != b:
+            if ranges and i - ranges[-1][1] <= gap:
+                ranges[-1][1] = i + 1
+            else:
+                ranges.append([i, i + 1])
+    return [(0x1A40 + lo, 0x1A40 + hi) for lo, hi in ranges]
+
+
 def built_commonxx():
     """assemble COMMONXX with -DMISSIONS (the snapshot holds the stock code; only LARGEAXX comes from the disk)"""
     with tempfile.TemporaryDirectory() as d:
         out = Path(d) / "c.bin"
-        subprocess.run([str(Path.home() / ".local/bin/sjasmplus"), "-DMISSIONS", f"--raw={out}", str(ROOT / "src/elite/commonxx.asm")],
+        subprocess.run([str(Path.home() / ".local/bin/sjasmplus"), "-DMISSIONS", "-DFL_C", f"--raw={out}", str(ROOT / "src/elite/commonxx.asm")],
                        check=True, capture_output=True)
         return out.read_bytes()
 TYPE = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].isdigit() else 19
@@ -56,7 +69,7 @@ async def main():
             await c("disk_insert", {"drive": "A", "path": "disk/elite_missions.dsk"})
             await c("sna_load", {"path": "output/firebird_in_flight.sna"})
             new, base = built_commonxx(), 0x1A40
-            for lo, hi in ((0x80CD, 0x80D0), (0x9D9E, 0xA000)):   # call site in spawnShip, the flight tail
+            for lo, hi in patch_ranges(new):   # every call site and the flight tail
                 await c("memory_write", {"address": lo, "data": new[lo - base:hi - base].hex()})
             await c("run", {"max_us": 4_000_000, "timeout_s": 60})   # the snapshot is still undocking: let the launch finish
             # Stop at a safe point before injecting calls: the screen-fill routines use SP as a write pointer inside the bitmap, and a call

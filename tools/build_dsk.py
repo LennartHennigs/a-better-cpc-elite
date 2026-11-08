@@ -98,6 +98,22 @@ def add_file(d, secs, first, name, ext, data, load):
     return blocks
 
 
+def flight_image(tag):
+    """Assemble COMMONXX with -DMISSIONS (-DFL_<tag> for C/P; "0" is the default image) and slice mxFlightBase..mxFlightEnd (the COMMONXX tail)."""
+    with tempfile.TemporaryDirectory() as tmp:
+        out, sym = Path(tmp) / "c.bin", Path(tmp) / "c.sym"
+        flags = ["-DMISSIONS"] + ([f"-DFL_{tag}"] if tag != "0" else [])
+        r = subprocess.run([str(SJASM), *flags, f"--raw={out}", f"--sym={sym}", str(ROOT / "src/elite/commonxx.asm")], capture_output=True, text=True)
+        if r.returncode:
+            sys.exit(f"flight image {tag}: assemble failed\n{r.stdout[-400:]}")
+        labels = {}
+        for line in sym.read_text().splitlines():
+            parts = line.split()
+            if len(parts) >= 3 and parts[0] in ("mxFlightBase:", "mxFlightEnd:"):
+                labels[parts[0][:-1]] = int(parts[2], 16)
+        return labels["mxFlightBase"], out.read_bytes()[labels["mxFlightBase"] - 0x1A40:labels["mxFlightEnd"] - 0x1A40]
+
+
 def overlay(tag):
     """Assemble LARGEAXX with -DMISSIONS -DOVL_<tag> and slice mxOverlayBase..mxOverlayEnd (labels from the symbol file)."""
     with tempfile.TemporaryDirectory() as tmp:
@@ -165,6 +181,10 @@ def main():
             base, data = overlay(tag)
             blocks = add_file(d, secs, first, f"MISSION{tag}", "BIN", data, base)
             print(f"MISSION{tag}.BIN: {len(data)} bytes at &{base:04X}, blocks {blocks}")
+        for tag in ("0", "C", "P"):
+            base, data = flight_image(tag)
+            blocks = add_file(d, secs, first, f"MFLIGHT{tag}", "BIN", data, base)
+            print(f"MFLIGHT{tag}.BIN: {len(data)} bytes at &{base:04X}, blocks {blocks}")
     OUT.write_bytes(d)
     print("wrote", OUT)
 

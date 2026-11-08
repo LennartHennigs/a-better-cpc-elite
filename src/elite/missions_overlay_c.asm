@@ -64,9 +64,18 @@ mxBriefing:
 mxBriefing2:
     or b
     ld (missionState),a
-    ld a,0x01
-    add a,c                           ; string 1 (galaxy 1) or 2 (galaxy 2)
-    jp mxShowEnd
+    ld a,0x02
+    add a,c                           ; middle part: string 2 (galaxy 1) or 3 (galaxy 2)
+    push af
+    ld a,0x01                         ; head, then the middle, then the common tail (string 4), all in one box
+    ld de,mxColorsMessage
+    ld hl,0x0200
+    call missionShow
+    pop af
+    call missionPrint
+    ld a,0x04
+    call missionPrint
+    jp mxActionsAtEndOfMessage
 
 ; Reward: 5,000 Cr and one rank step, like the stock rewards (inc killScoreHigh).
 mxDebrief:
@@ -78,17 +87,17 @@ mxDebrief:
     inc (hl)
     ld de,0x0005
     call mxAddDEtoMoney
-    ld a,0x0A                         ; string 10
+    ld a,0x0C                         ; string 12
     jp mxShowEnd
 ; Hint stages: galaxy (0-7), system x, system y, string number. Coordinates from the CPC name generator (docs/_missions.md section 7).
 missionHintTable:
-    db 0x00,149,101,0x03              ; Reesdice -> Arexe
-    db 0x00,164, 89,0x04              ; Arexe -> galactic jump, Cearso
-    db 0x01, 87,109,0x05              ; Cearso -> Errius
-    db 0x01,184,149,0x06              ; Errius -> Inbibe
-    db 0x01,152,146,0x07              ; Inbibe -> Ausar
-    db 0x01,146,102,0x08              ; Ausar -> Usleri
-    db 0x01,148, 68,0x09              ; Usleri -> Orarra
+    db 0x00,149,101,0x05              ; Reesdice -> Arexe
+    db 0x00,164, 89,0x06              ; Arexe -> galactic jump, Cearso
+    db 0x01, 87,109,0x07              ; Cearso -> Errius
+    db 0x01,184,149,0x08              ; Errius -> Inbibe
+    db 0x01,152,146,0x09              ; Inbibe -> Ausar
+    db 0x01,146,102,0x0A              ; Ausar -> Usleri
+    db 0x01,148, 68,0x0B              ; Usleri -> Orarra
 
 ; Strings (source missions_text.txt; regenerate with python3 -I tools/textenc.py --asm src/elite/missions_text.txt > src/elite/missions_text.asm)
 missionTextTable:
