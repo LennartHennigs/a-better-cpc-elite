@@ -95,7 +95,7 @@ with 1 t free and the large-cargo-bay byte `0xFF` in `LEN.BIN`). A `ld hl,dat_XX
 
 ## Dead code and free space (analysis 2026-11-07)
 
-Goal: find bytes a mission port can reclaim (the plan in `docs/_missions.md`, section 4, needs the dead code). Three views.
+Goal: find bytes a mission port can reclaim (the plan in `docs/_missions.md`, section 3, needed the dead code). Three views.
 
 **1. Fessor's switches** (`extended/source/EliteMasterSource.asm`, read only). The `defdeactivate`, `defdeactivate1` to
 `defdeactivate13`, `defdeactivatereal` and `defdeactivatechar` flags (all on in the beta) switch off 17 blocks of code. Assembling each
@@ -113,7 +113,7 @@ neighbours (`&7198-&71AE`, 23 bytes) and `LAB_ram_8aaa` (`&8AAA-&8AAE`, 5 bytes)
 not in the labelled code. It sits in the `db` runs, because `tools/disasm_stock.py` only follows reachable code and writes the rest as
 bytes.
 
-**3. Known free space** (from `docs/_missions.md`, section 4): 610 zero bytes at the end of `COMMONXX` (`&9D9E-&9FFF`); 812 zero bytes at the end of
+**3. Known free space** (from `docs/_missions.md`, section 3): 610 zero bytes at the end of `COMMONXX` (`&9D9E-&9FFF`); 812 zero bytes at the end of
 `LARGEAXX` (`&1714-&1A3F`, whether free at runtime is unchecked, but the file is reloaded from disk at every docking); the firmware copy
 area `&0040-&083F` while docked.
 

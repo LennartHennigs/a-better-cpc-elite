@@ -22,7 +22,7 @@ Open work, most useful first. `CLAUDE.md` keeps the short list; details live in 
   (`&2000 &4000 &3FC0 &7F00 &7F01 &7F03 &7F10 &7F89 &640A &7B05 &6170 &7EFD &80FF &C03F &C040 &CE00`) are now numeric operands in
   `src/elite`, `elite_de` and `elite_fr`; `dat_6161`/`dat_6163` are `smcIndicatorPatch1/2` (patched by `loadMusicnIndicator`).
   - **Variables with an unknown role**: `&1B2A-&1B73` (entity slot workspace), `&38DE`/`&38E1` (block pointers; `&38E1` is the
-    market byte, see `docs/_missions.md` section 7), `&3B3F-&3B69` (galactic chart buffers), `&3D2D` (7 bytes after the target
+    market byte, see `docs/_missions.md` section 3), `&3B3F-&3B69` (galactic chart buffers), `&3D2D` (7 bytes after the target
     seed), `&5921-&5925` (three words in the ship-edge drawing code), `&1BE3`, `&2F36`, `&864B`, `&C083`, `&FFFF`, and `largeaxx`
     `&0F01-&0F5E` (save menu; `&0F01` is a code label whose address is loaded).
   - **Labels inside or between instructions** (dead code or operand bytes, name or fold into the neighbour): `&2710`, `&3A6C`,
@@ -56,7 +56,7 @@ Open work, most useful first. `CLAUDE.md` keeps the short list; details live in 
 - [x] Read the Trumbles code in the C64 source (done, in `docs/_missions.md`). Still unread: `TRIBTA`/`TRIBMA` sprite count, inventory print, escape pod.
 - [ ] Decide whether Trumbles are worth porting: text-only about 150-250 bytes of code plus 100 of text; with software sprites in the off-screen bitmap about 0.6-0.9 KB in total (see `docs/_missions.md`, "Trumbles crowding the screen"). No reward in the original, so decide a purpose first.
 - [x] (done 2026-11-07, `docs/_missions.md` "Colours") Check which of the two-colour sprite pens exist in every view (`setInks`) before drawing anything into the off-screen bitmap: only pen 2 (ink 20, black) is fixed in views 0-3; pens 0/1/3 vary by system, supernova mode and cloak. Confirmed in cpcxray (all 8 systems, supernova mode, cloak, energy-bomb flash); explosion flicker of pen 3 is listing-only.
-- [x] (done 2026-11-07, `docs/_missions.md` section 7) Check the ten system names of the Constrictor and Plans chains against the CPC name generator: all ten exist once, in the right galaxy.
+- [x] (done 2026-11-07, `docs/_missions.md` section 3) Check the ten system names of the Constrictor and Plans chains against the CPC name generator: all ten exist once, in the right galaxy.
 
 - [ ] Decide the mission order and trigger for new missions: the ST and MSX queue (one per 64 jumps outside the first galaxy) or the CPC
       thresholds (32, 128, 254); see `docs/_missions.md`, "Order and trigger".
@@ -64,7 +64,7 @@ Open work, most useful first. `CLAUDE.md` keeps the short list; details live in 
       "elite-msx-skoolkit" does not exist online; `elite-skoolkit` is the Spectrum one and `ricbit/elite` the MSX one (cloned, `docs/_references.md`).
 - [x] Read the CPC's laser-only Asp draw test and the non-laser gate reset (done 2026-11-07, source only, not yet traced in cpcxray): `todoWorkVariable` -> `aspMissionState`, `LAB_ram_5755` -> `drawShipDistanceCheck`, `LAB_ram_5175` -> `aspGateClearIfBlueprint1E`, `LAB_ram_517c` -> `aspGateReset`. 
 - [x] (first pass done 2026-11-07, `docs/_spectrum_map.md`) Mine `work/ext_msx/skoolkit/src/elite.skool` (Spectrum) to seed `src/elite/`: 43 names, ~140 cross-reference comments. Maths, circle, text, chart, trade, movement and spawn routines now commented (about 170); open: the 25 matched routines still without a comment, the unmatched rest; match the rest (routines the CPC splits differently); label `sqr_table` (`&C600`) and the default commander (`&39D1`).
-- [ ] Stolen police ship: Elite Plus logic is now documented from the EXE (`docs/_missions.md`, section 9, "Elite Plus code"); decide whether to build it on the CPC.
+- [ ] Stolen police ship: Elite Plus logic is now documented from the EXE (`docs/_missions.md`, section 4, "Elite Plus code"); decide whether to build it on the CPC.
 - [x] Settled the two save-format disagreements with the type-in (2026-11-07, in-game jump): `&48` is the tech level minus 1 (`presentTechLevel`), and y is at `&43`, x at `&45`; see `docs/_savegame.md`.
 - [ ] Test `CHEAT` mission stages 2 and 3, the pirate-boarding poke and the unlimited-hold toggle in play.
 

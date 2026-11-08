@@ -1,11 +1,9 @@
-# Plan: adding the BBC, Apple II and MSX/ST missions to the CPC game
+# Missions: research notes
 
-**Status: plan only (2026-11-07). Nothing here is implemented.** The build plan with the measurement branches is in `docs/_mission_build_plan.md`. It says what the other versions do, what the CPC
-already has, what is missing, and a phased way to port the missions with a test at every step. Facts about the
-CPC come from `docs/_gameplay.md`, `docs/_savegame.md` and `src/elite/`; facts about the 6502 versions come from
-Mark Moxon's annotated BBC code (https://elite.bbcelite.com/deep_dives/, pages "The Constrictor mission", "The
-Thargoid Plans mission", "The Trumbles mission", fetched 2026-11-07) and Andy McFadden's Apple II disassembly
-(https://6502disassembly.com/a2-elite/Elite.html). Anything marked *estimate* or *to check* is not verified.
+**Status (2026-11-08):** the Constrictor, the Thargoid plans, the Trumbles and the two Elite Plus missions (stolen police ship, asteroid bombardment) are implemented; what was built, its order, triggers, sizes and tests are in `docs/_missions_built.md`.
+This file keeps the research behind them: what the other versions do, what the CPC already had, source readings (BBC, C64, Apple II, Atari ST, MSX, Elite Plus), findings from the planning and the open questions that were answered. Facts about the
+CPC come from `docs/_gameplay.md`, `docs/_savegame.md` and `src/elite/`; facts about the 6502 versions come from Mark Moxon's annotated BBC code (https://elite.bbcelite.com/deep_dives/, pages "The Constrictor mission", "The Thargoid Plans mission",
+"The Trumbles mission", fetched 2026-11-07) and Andy McFadden's Apple II disassembly (https://6502disassembly.com/a2-elite/Elite.html). Anything marked *estimate* or *to check* is not verified.
 
 ## 1. What the other versions have
 
@@ -42,7 +40,7 @@ different game and out of scope.
 
 ### The missions, numbered, with systems and changes
 
-Eight missions exist across the versions. 1 to 3 are already in the CPC; 4 to 8 are candidates. "Systems" are the parts of the
+Eight missions exist across the versions. 1 to 3 were already in the CPC; 4 to 8 were candidates and are all built now except where noted (`docs/_missions_built.md`). "Systems" are the parts of the
 game a mission touches (CPC names and addresses from `docs/_gameplay.md`, `docs/_savegame.md` and `src/elite/`); "Changes" is what
 the CPC code or data needs. Byte counts are *estimates* unless stated. The subsections after this list hold the source reading.
 
@@ -150,21 +148,20 @@ Why the station takeover is the invasion and not a fifth mission:
 - *Changes:* about 150-250 bytes of code and 100 bytes of text for the text-only version; sprites add 300-450 bytes (see the Trumbles
   analysis below). No reward, so it is a joke mission.
 
-**7. Stolen police ship** (Elite Plus only; **not** in the CPC, ST, MSX or NES source)
+**7. Stolen police ship** (Elite Plus only; built)
 - *Systems:* offer at docking (`chkMissions`); `Missionflag` bit 4 (unused) as the state; a target system chosen by seed compare (as
   the Thargon target); a spawn on arrival of one hostile Viper (the Viper is in the ship table; police AI replaced by hostile AI); kill
   hook; reward 4,000 Cr (add 4 to the high credits word); strings from index `&E1`; the legal-status code and `punishCheater`.
 - *Changes:* a new spawn command, the state bit and a done-flag, the offer and reward text, and a trigger that the CPC thresholds do not
-  provide (a separate counter or the ST queue). Reports on how Elite Plus does it are thin (idea in section 9).
+  provide (a separate counter or the ST queue). The Elite Plus code is in section 4 below.
 
-**8. Asteroid bombardment** (Elite Plus only; **not** in the CPC, ST, MSX or NES source)
+**8. Asteroid bombardment** (Elite Plus only; built)
 - *Systems:* offer at docking; a named system; asteroid spawning (CPC `spawnCommand0` already spawns asteroids); some rule for a
   "threat" to a planet; reward 6,000 Cr.
-- *Changes:* unknown. No source or description beyond "stop an asteroid shower threatening a planet" was found, so it would be designed
-  from scratch. Not planned.
+- *Changes:* the Elite Plus EXE shows how it works (section 4 below); built.
 
 **Order and trigger.** The ST and MSX start one mission per 64 jumps from a queue (1 to 5). The CPC fires its three at counter
-thresholds 32, 128, 254. Adding missions 4 and 5 means choosing between the two schemes; see section 5.
+thresholds 32, 128, 254. Adding missions 4 and 5 means choosing between the two schemes; see `docs/_missions_built.md`.
 
 ### Constrictor (BBC disc; Apple II the same logic)
 - State is `TP` bits 0-1: `%00` not started, `%01` in progress (set by `BRIEF`), `%11` Constrictor killed (set by
@@ -207,9 +204,9 @@ thresholds 32, 128, 254. Adding missions 4 and 5 means choosing between the two 
   - `TRIBTA` converts the count in the hold to a sprite count (0-6) and `TRIBMA` to the VIC sprite-enable mask; `spritp`
     holds the sprite shapes (laser sights, explosion, two Trumbles).
   - Port cost estimate for the CPC: see "Trumbles, read from the C64 source" below.
-- Not a candidate for a first port: it adds no reward and needs a 16-bit save variable, an arrival hook, a main-loop hook and a
+- (Planning note, now built: it adds no reward and needs a 16-bit save variable, an arrival hook, a main-loop hook and a
   sun hook; with no sprites on the CPC it would be text-only (the NES shows none on screen). Parked as optional (phase 5),
-  but it is the smallest of the three.
+  but it is the smallest of the three.)
 
 ### Trumbles, read from the C64 source (2026-11-07)
 
@@ -323,131 +320,29 @@ Problems to solve:
 | Special ship with a marker flag | the cloaking-device Asp is spawned this way (`&8404`) | `docs/_gameplay.md` |
 | Equipment flag for the reward | `extraEnergyUnit` (`&3902`), `RechargeEnergy` (`&3608`) | `commonxx.asm` |
 
-## 3. What is missing
+## 3. Findings kept from the planning
 
-1. **Constrictor model.** The CPC ship table has 19 entries, none a Constrictor; each is `jp blueprint` plus a tag byte
-   (`shipGFXdataTable`, `&1B78`, 4 bytes per ship). A blueprint is about 250-475 bytes (the CPC models in Fessor's
-   reconstruction run 161 to 475 bytes of `db`; a Constrictor is about 250). BBC hull data cannot be pasted: the CPC
-   is a Spectrum port with its own blueprint layout (22-byte header, 6-byte vertices, 4-byte edges and faces, see
-   `extended/reference/COMMON2X.BIN.txt`). Plan a converter, validated on a ship that exists in both families (Viper
-   or Sidewinder).
-2. **Mission state.** `Missionflag` bit 4 is free, but a Constrictor/Plans chain needs about 4 bits plus the
-   hint index, and `ThargonMissionVar` is reset by every galactic jump and uses 0-5 (12 by a code quirk), so it cannot
-   hold them. Candidate: one new byte in the save block. Free or unknown save bytes: `&38E1`, `&38FD`, `&38FE`,
-   `&3905`, `&3906` (to check: whether any loop indexes through them; `&38E1` is touched by the escape-pod clear).
-3. **Text.** About ten new strings (briefings, five-plus hints, debriefs). `stringsTable2` is token-compressed
-   and indexed by position, so adding entries means re-tokenising and shifting everything after it. `tools/elitetext.py`
-   expands strings; a matching compressor does not exist yet.
-4. **Code.** Briefing, hint chain, kill hook, spawn hook, debrief, the 22% Thargoid spawn change, the naval energy
-   unit (a rate of 3 where `RechargeEnergy` adds 1 per call). *Estimate* 600-900 bytes of Z80 plus 500-700 bytes of
-   text plus a 250-byte hull: about 1.4-1.8 KB for both missions, about 0.8-1.1 KB for the Constrictor alone.
-5. **Save compatibility.** Saves are XORed with the game's own code at `EquipShip`, so any code change invalidates
-   every existing save; a new save byte changes the 104-byte block as well. Fessor re-keyed his build against a fixed
-   table (`stringsTable2`); do the same, or the first test of any change will be an unreadable save.
+- **Free space (measured 2026-11-07, cpcxray):** `loadLARGEAXX` (called at every docking just before `chkMissions`) parks `&0040-&1A3F` at `&A600` and reloads `LARGEAXX.BIN` (`&0840`, `&1200` bytes) from disk, so the zero tail
+  `&1714-&1A3F` (812 bytes) is fresh at each docking and nothing in the sources addresses it. Docked, `LARGEAXX` is resident and the tail is all zero; in flight `LARGEAXX` is parked and the range holds flight-side content with 0 reads and 0 writes in 30 s
+  of flight. At the title screen `LARGEAXX` is already parked, so docked-only code is only valid after `loadLARGEAXX`. `chkMissions` has a single call site, the docking sequence. The tail is usable for docked-only code and data; flight-time parts
+  need the 610 bytes at the end of `COMMONXX`. New strings can sit in a table of their own: `printStringA` takes an 8-bit index and `stringsTable2` already has 254 strings, so a small entry point sets `HL` to the new table and reuses the token loop;
+  tokens may still reference `stringsTable2` strings `&81-&D6` and the digrams. Re-encoding both stock string tables optimally saves only 48 bytes of 2,822 (`tools/textcomp.py`), so recompressing old text is not a space source.
+- **Dead code (2026-11-08):** the code-shaped chains in `db` runs are live (tails of `push ix` routines), `altJrPoint*` are self-patched jump targets; only `unusedGetFlightMode` and `unusedGetCloakFlag` are unreferenced, about 10 bytes. Fessor's "450-735 bytes" could not be placed in stock
+  (`docs/_architecture.md`, "Dead code and free space"). The flight-time budget is the 610-byte tail only (its top bytes also carry stack pushes at `&A000`). `&A000-&A5FF` is the off-screen buffer in flight, not free.
+- **Gating and slots.** CPC missions run on `jumpCounter`, counted only from galaxy 2 on; the BBC Constrictor is offered in galaxy 1 or 2 at a docking and the plans need galaxy 3. The invasion is offered at jump 254 in any galaxy 2-8, so the stub lets the stock
+  offers go first. The supernova and invasion react to galactic jumps, so the added state stays out of `ThargonMissionVar`. The CPC has 6 entity slots (3 reserved): spawn the special ships alone. The invasion gives rank +1 and the title ARCHANGEL
+  (`Missionflag` bit 3); new rewards use `inc (killScoreHigh)` and need no title. Saves are XORed with the game's own code at `EquipShip`, so any change to that code invalidates old saves; the added missions only use unused save bytes and keep the code.
+- **The ten system names (answered 2026-11-07):** generated from the CPC's own digram table (`DockedDigrams`, index 0 skipped, `?` drops the second letter) and the BBC seed twist (`waggle_galaxy`, four twists per name; a galaxy hop rotates every seed byte left by one),
+  after checking it reproduces Tibedied (galaxy 1 system 0), Lave (7) and Diso (147). All ten exist exactly once, in the galaxy the chain needs: galaxy 1 Arexe (system 28, x/y 164,89) and Reesdice (36; 149,101); galaxy 2 Ausar (53; 146,102), Cearso (68; 87,109),
+  Inbibe (79; 152,146), Usleri (118; 148,68), Orarra (193; 144,33) and Errius (253; 184,149); galaxy 3 Birera (36; 63,72) and Ceerdi (83; 215,84). Ceerdi and Birera match the BBC coordinates. Orarra is about 7 LY from Usleri.
+- **The spawn rule (answered 2026-11-07):** the CPC equivalent of the BBC main-loop spawn is `handleEntitys`: every frame it counts down `todoLaserVar2`; when that reaches 0 and no station is near, no launch is running and fewer than 4 station-launched ships exist,
+  it calls `spawnCommandParser` with action 0 = `spawnCommand0`. `spawnCommand0` rolls a random byte minus the contraband weight C: below zero picks a hostile (`cmd0ChkSendHostileAfterUs`), `&50-&59` an asteroid, `&5A` and up nothing. The mission spawn checks hook in at the top
+  of `spawnCommand0`. The existing invasion already forces a Thargoid there when `ThargonMissionVar` is 4.
+- **The escape pod (answered 2026-11-07):** a bug, but it affects no reward. `cargoHold` is `&38E2-&38F2` (17 goods), but the pod clear (`mleCleanInvLoop`) clears 17 bytes from `&38E1`, so it wipes `&38E1` (the market random byte) and goods 0-15 and **keeps alien items (good 16, `&38F2`)**;
+  `cargoSpaceFree` is reset to the full capacity, so a pilot who ejects with alien items can hold more than the capacity. Fix: start the loop at `&38E2` (`ld hl,cargoHold`); not applied.
+- Not planned: Elite-A delivery missions, the Apple II's graphics, music. The BBC code is under Mark Moxon's annotations: behaviour only, the Z80 is written fresh. The disc `Elite_UK_original_protected.dsk` carries ARMOURLOC and decoys, so builds start from the Firebird or German cracked disks.
 
-## 4. Space
-
-| Region | Free | Notes |
-|---|---|---|
-| End of `COMMONXX` (`&9D9E-&9FFF`) | 610 bytes | zero fill at the end of the file |
-| `&A000-&A5FF` | 1,536 bytes | Fessor's table calls it unused when docked, but it is the off-screen buffer in flight: not free |
-| `&0040-&083F` | about 2 KB | the firmware copy lives here while flying; usable for docked-only code if `LARGEAXX` is changed to load there (to check) |
-| Dead code | about 10 bytes | corrected 2026-11-07/08: only `unusedGetFlightMode` and `unusedGetCloakFlag` are unreferenced; Fessor's 735 (450 measured) could not be placed in stock, and the db-run candidates are live (`docs/_architecture.md`) |
-
-Text compression (measured 2026-11-07 with `tools/textcomp.py`): re-encoding both string tables optimally with the existing tokens saves
-only 48 bytes of 2,822, so recompressing old text is not a space source. Re-picking the token and digram set, or Huffman, is
-not measured. `LARGEAXX` has an 812-byte zero tail (`&1714-&1A3F`) that may be free; check how the `&0040-&1A3F` swap treats it.
-
-Free space in `LARGEAXX` (traced statically, then confirmed in cpcxray 2026-11-07): `loadLARGEAXX` (`commonxx.asm`, called
-at every docking just before `chkMissions`) parks `&0040-&1A3F` at `&A600` and reloads `LARGEAXX.BIN` (`&0840`, `&1200` bytes) from
-disk, so the zero tail `&1714-&1A3F` (812 bytes) is reloaded with the file each time you dock and nothing in the sources addresses it.
-Emulator check on the Firebird disk (`Elite_UK_Firebird_cracked_trainer.dsk`) (new commander at Lave, launch, 30 s of flight, then a forced `loadLARGEAXX`): docked,
-`LARGEAXX` is resident (3,795 of 3,796 bytes equal the file; the one byte is the trainer patch at `&0998`) and the tail is all zero;
-in flight `LARGEAXX` is gone (parked at `&A600`) and `&1714-&1A3F` holds 401 non-zero bytes of the flight-side content, with **0 reads and 0 writes**
-on it in 30 s of flight (no combat tested); calling `loadLARGEAXX` from flight (`&8732`) with a marker in the tail restored `LARGEAXX` and
-zeroed the tail. At the title screen `LARGEAXX` is already parked (swapped out about 4 s after the entry snapshot, after `INDICATO` loads), so
-docked-only code is only valid after `loadLARGEAXX`. (Correction 2026-11-08: `chkMissions` has a single call site, the docking sequence, so it runs only at a real docking, not at a new commander or load.)
-It is therefore usable for **docked-only** code and data (briefing, hint text, debrief). Flight-time parts (Constrictor spawn,
-kill flag) must stay in `COMMONXX` (610 free bytes at the end). Mission text can sit in the tail as its own string table:
-`printStringA` takes an 8-bit index and `stringsTable2` already has 254 strings, so appended strings are not reachable by index;
-add a small entry point that sets `HL` to the new table and reuses the token loop (about 15 bytes). Tokens in the new strings may
-still reference `stringsTable2` strings `&81-&D6` and the digrams, which keeps them short.
-
-Dead code measured and corrected (`docs/_architecture.md`, "Dead code and free space", 2026-11-08): the code-shaped chains in `db` runs are live
-(tails of `push ix` routines), `altJrPoint*` are self-patched jump targets, so about 10 bytes remain. Fessor's blocks stay unplaced.
-The flight-time budget is therefore the 610-byte tail only (its top bytes also carry stack pushes at `&A000`).
-
-**Overlay idea (user, 2026-11-08).** Missions run one after another, so load one overlay file per mission into the tails and replace it
-when the mission is done; RAM need is then the largest mission, not the sum. The order can be drawn per commander from bytes that exist
-(name letters, a name checksum). Open points: the swap loader (reuse `loadLARGEAXX`), disk space for extra files, persistent missions
-(Trumbles), Plans after Constrictor, restoring the overlay after a save load. See the build plan.
-
-Conclusion (revised 2026-11-08): there is no dead code to reclaim, so the 610 flight-time bytes decide. The Constrictor's hull alone is
-about 250 of them; fitting two missions needs the overlay scheme or a smaller flight part. The docked-only parts go in the `LARGEAXX` tail. Work out exactly which routines Fessor removed (his switches are listed in
-`extended/CLAUDE.md`; his source is reference only, so redo the analysis on our `src/elite/` rather than copy).
-
-## 5. Conflicts to resolve
-
-- **Gating.** CPC missions run on `jumpCounter`, counted only from galaxy 2 on; the BBC Constrictor is offered in
-  galaxy 1 or 2 at a docking; Plans needs galaxy 3. They overlap in galaxies 2 and 3. Decide an order: for example
-  the Constrictor first (galaxy 1-2), Plans in galaxy 3, and the CPC nova/cloak/invasion keep their jump-count gates.
-  The invasion is offered at jump 254 in any galaxy 2-8; make sure a Plans briefing and an invasion offer cannot arrive
-  on the same docking (priority rule in `chkMissions`).
-- **Galactic jump.** The supernova and invasion code both react to galactic jumps; the Constrictor chain needs a galactic
-  jump on purpose. Keep its state out of `ThargonMissionVar`.
-- **Rank titles.** The invasion gives rank +1 and the title ARCHANGEL through `Missionflag` bit 3. New rewards use
-  the same `inc (killScoreHigh)` and need no title.
-- **Ship slots.** The CPC has 6 entity slots (3 reserved); a Constrictor plus escorts competes with the station and
-  missiles. Spawn it alone.
-- **Disc.** `Elite_UK_original_protected.dsk` carries ARMOURLOC and the decoy files; build on the Firebird or German
-  cracked disks (`Elite_UK_Firebird_cracked_trainer.dsk`) and write the three code files back with their AMSDOS
-  headers (open item: the DSK writer).
-
-## 6. Phases, each with a test
-
-| Phase | Work | Test |
-|---|---|---|
-| 0 Foundations | Fixed-table save key (`encryptSAV`); make `tools/check_src.sh` also check a build with the feature flags; free the dead code; add the DSK writer script | stock behaviour unchanged: boot, new game, save and load, fly 5 minutes |
-| 1 State and text | New mission byte; string table growth with a compressor; a `chkMissions` branch that shows a test message when the byte is set | set the byte with `memory_write` in cpcxray, dock, read the message |
-| 2 Constrictor ship | BBC-to-CPC hull converter; ship table entry 19; spawn command that creates it with the cloak-style marker | `memory_write` the spawn, fly to it, check the shape, shields and ECM |
-| 3 Constrictor mission | Trigger (`killScoreHigh > 0`, galaxy 1-2), hint chain over the eight hint systems, kill hook, 5,000 credits and +1 `killScoreHigh` | play the chain, or force each stage; `tools/savedec.py` reads the byte |
-| 4 Thargoid plans | Trigger, Ceerdi and Birera, 22% spawn, naval energy unit | same, plus energy recharge rate measured in the emulator |
-| 5 Optional | Text-only Trumbles (NES style), or a CPC-original mission built on the same state machine | |
-
-Each phase ends with `bash tools/check_src.sh` (or its feature-flag variant), a changelog entry, and a note here.
-
-## 7. Open questions and risks
-
-- *Answered (2026-11-07), the ten system names:* generated from the CPC's own digram table (`DockedDigrams`, index 0 skipped,
-  `?` drops the second letter) and the BBC seed twist (`waggle_galaxy`, four twists per name; galaxy hop rotates every seed byte
-  left by one), after checking it reproduces Tibedied (galaxy 1 system 0), Lave (7) and Diso (147). All ten exist exactly once, in
-  the galaxy the chain needs: galaxy 1 Arexe (system 28, x/y 164,89) and Reesdice (36; 149,101); galaxy 2 Ausar (53; 146,102),
-  Cearso (68; 87,109), Inbibe (79; 152,146), Usleri (118; 148,68), Orarra (193; 144,33) and Errius (253; 184,149); galaxy 3 Birera
-  (36; 63,72) and Ceerdi (83; 215,84). Ceerdi and Birera match the BBC coordinates above. Orarra is about 7 LY from Usleri.
-- *Answered (2026-11-07), the spawn rule:* the CPC equivalent of the BBC main-loop spawn is `handleEntitys`: every frame it counts
-  down `todoLaserVar2`; when that reaches 0 and no station is near, no launch is running and fewer than 4 station-launched ships exist,
-  it calls `spawnCommandParser` with action 0 = `spawnCommand0` (where `todoLaserVar2` is reloaded was not traced). `spawnCommand0`
-  rolls a random byte minus the contraband weight C: below zero picks a hostile (`cmd0ChkSendHostileAfterUs`), `&50-&59` an asteroid,
-  `&5A` and up nothing. A "22% adds a Thargoid and a Thargon" rule belongs at the top of `spawnCommand0`: test the mission flag, roll
-  `>= 200` (56/256), create ship `&0F` then the Thargon with the pattern of the marked-Asp spawn (`dat_8427` tail, `lookforFreeSlot`).
-  The existing invasion already forces a Thargoid there when `ThargonMissionVar` is 4.
-- *Answered (2026-11-07), the escape pod:* a bug, but it affects no reward today. `cargoHold` is `&38E2-&38F2` (17 goods; the inventory
-  pre-increments from `&38E1`, the supernova offer clears from `&38E2`), but the pod clear (`mleCleanInvLoop`) clears 17 bytes from `&38E1`,
-  so it wipes `&38E1` (the market random byte, re-seeded at the next price generation) and goods 0-15 and **keeps alien items (good 16,
-  `&38F2`)**. Since `cargoSpaceFree` is reset to the full capacity, a pilot who ejects with alien items can hold more than the capacity.
-  A mission that carries its item in slot 16 would survive an ejection; fix by starting the loop at `&38E2` (`ld hl,cargoHold`).
-- Risk: space. Mitigation: do the Constrictor first and measure.
-- Risk: the BBC code is under Mark Moxon's annotations; take the behaviour, not the text, and write the Z80 fresh.
-- Risk: the text is token-compressed; wording must fit the CPC's 40 columns and token table.
-- Not planned: Elite-A delivery missions, sprites for Trumbles, the Apple II's graphics, music.
-
-## 8. Definition of done (for the Constrictor, the first deliverable)
-
-A new game on the cracked disk reaches Competent, is briefed at a docking, follows hints through two galaxies, meets
-and kills the Constrictor, is paid, and can save and load at every stage; stock behaviour is otherwise unchanged;
-`src/elite/` assembles; the changes are one commit with a note in `CHANGELOG.md`.
-
-## 9. More missions, and an idea for the stolen police ship
+## 4. More missions: Elite Plus
 
 What exists elsewhere (details and links in `docs/_gameplay.md`, "Atari ST source and the NES source"): the Atari ST source
 (adapted from the MSX version, which shares the Torus lineage) has five missions in a fixed order triggered every 64 jumps:
@@ -528,75 +423,10 @@ Notes: (a) so "the two Elite Plus missions" that are not in any other port are 4
 (d) blueprint rows identified (2026-11-08): each row is 10 bytes, byte 0 is the ship type and indexes the name list at `DS:80E9` (0 Dodo, 1 Coriolis, 2 Boa, 3 Anaconda, 4 Cobra Mk I, 5 Asteroid, 6 Boulder, 7 Thargon, 8 Shuttle, ... `0x11` Cargo Canister, `0x12` Constrictor, `0x13` Cougar, `0x14` Missile, `0x15` Escape Pod, `0x16` Thargoid, `0x17` Fer-de-lance, `0x18` Asp, `0x19` Sidewinder, `0x1A` Cobra Mk III, `0x1B` Krait, `0x1C` Viper, `0x1D` Python). So the **stolen ship is a Viper** (row `0x87C5`, the police Viper row, type `0x1C`; the mission only changes aggression 5, energy `0xC8` and the marker), the **asteroid mission's rocks are type 5 Asteroid** (row `0x876B`) with an occasional Cobra Mk III, and mission 5's ambush is a **Thargoid**; the CPC build can therefore count asteroid kills with no marker (as built on `addon-missions`); (e) the `[+0x25]` marker byte
 is a ship-record byte the CPC does not have; built (2026-11-08) without one: a police Viper has bits 1 and 6 of `(ix+33)` set (from blueprint byte 18), the stolen one has both cleared, which also answers the legal-status question (the CPC kill code only tests bits 5 and 6 of `ix+33`).
 
-CPC consequence: the plan above holds, with these corrections. Use a state byte (0-3), not a `Missionflag` bit; copy the police spawn with
-the changes above and a marker byte; drop the Y/N offer; the trigger needs only a saturating jump counter. Still open: where in the CPC ship
-slot the marker byte can live, and the legal-status check.
+CPC consequence (built, `docs/_missions_built.md`): a state byte instead of a `Missionflag` bit, no Y/N prompt, a flag-pattern marker for the Viper, the jump wait before the offer; the asteroid mission counts asteroid kills at the target with no marker.
 
-An idea that fits the CPC code (not started, untested), reusing what the Thargon mission already does:
-- **State:** `Missionflag` bit 4 is never touched (checked in the code), so it can mean "police ship hunt in progress"; bit 5 is the
-  refugees. A done-flag is needed too, e.g. a spare bit in the save's unnamed equipment bytes, or reuse `ThargonMissionVar` values
-  above 5 (it only takes 0-5 and 12).
-- **Offer:** in `chkMissions` (`&2063`, run at every docking) with the "N" path like the Thargon offer; text in `stringsTable2`
-  (index `&E1` and up are free, the last used is `&E0`).
-- **Target system:** pick it like the Thargon target (compare `&390D` with a seed byte of your choice), so no new data is needed.
-- **Spawn:** on arrival in that system call `spawnCommandParser` with a new command that spawns one Viper (it is in the ship table;
-  look up its type number there) with hostile AI instead of police AI; the Thargoid arrival code is the template.
-- **Reward:** when it is destroyed set a flag, and at the next docking add 4,000 Cr to the cash words (hi word counts 1,000 Cr, see
-  `docs/_savegame.md`, so add 4 to the high word).
-- **Trigger:** the ST rule (one mission every 64 jumps, in a queue) is simpler than the CPC thresholds; a fourth stage after the
-  Thargon one would need a counter beyond 254 and the low-byte compare would wrap, so a separate counter or the ST style queue is
-  needed.
-- **Risks:** RAM is tight (see sections 4 and 5), one more ship hostile to police means checking the legal-status code, and
-  "boarded by pirates" (`punishCheater`) must not fire in that system.
+## 5. What the C64 does for its Trumble sprites
 
-
-## 10. Built missions: measured sizes (2026-11-08, branches `missions-foundation` -> `mission-constrictor` -> `mission-plans` -> `mission-trumbles`)
-
-Three missions are built and tested in cpcxray with forced states and direct calls (no real playthrough yet): the Constrictor hunt, the Thargoid plans and text-only Trumbles. Everything is in
-`-DMISSIONS` builds (`src/elite/missions_*.asm`, `tools/build_dsk.py --missions`); the stock build stays byte-exact. All numbers are bytes, taken from the assembled files.
-
-**Design.** Missions run one at a time, so their code is loaded when needed. Docked code lives in the LARGEAXX tail (`&1714-&1A3F`, 812 bytes), flight code in the COMMONXX tail (`&9D9E-&9FFF`, 610 bytes).
-The docked tail holds a resident stub that picks the module from the state byte `&38FD` and loads an overlay file with the game's own `loadFile`; the flight tail holds a vector table, an id byte and the launch hook, which
-loads the flight image for the state at every launch where it differs from the one in RAM. Hooks in stock code are 3-byte `call` replacements, so no stock routine moves.
-
-| Part | Constrictor | Thargoid plans | Trumbles | Shared |
-|---|---|---|---|---|
-| Docked overlay (file) | `MISSIONC.BIN` 565 | `MISSIONP.BIN` 326 | `MISSIONT.BIN` 178 | stub 242 (resident in the tail; holds the trigger tests and the 9-row system table) |
-| Flight image (file) | `MFLIGHTC.BIN` 587 | `MFLIGHTP.BIN` 223 | `MFLIGHTT.BIN` 286 | default image `MFLIGHT0.BIN` 125 (also what COMMONXX.BIN carries) |
-| Text (inside the overlay) | 450 | 248 | 133 | |
-| Own flight code beyond the default | 462 (hull 261, spawn check 128, laser rule 36, kill hook 33, ship table 4 + helper 19) | 98 | 161 | recharge hook 13 and launch hook 58 are in every image |
-
-- **Worst case in RAM:** docked 242 + 565 = 807 of 812 bytes (5 spare); flight 587 of 610 (23 spare, the Constrictor image). Without overlays the three docked modules would need about 1,300 bytes and the flight code about 700.
-- **Disk:** seven new files on the DSK (`MISSIONC/P/T.BIN`, `MFLIGHT0/C/P/T.BIN`), about 2.4 KB in 1 KB blocks. The DSK writer in `tools/build_dsk.py` adds them (header, directory entry, blocks).
-- **Time (emulated):** the stub tests the trigger first, so a docking with nothing to do costs nothing extra; a docking that loads a module (right system for the stage, an offer, a reward) takes about 1.9-2.1 s more; a launch with a flight-image swap about 1.9 s more (3.9 s against 2.0 s for `loadIndicator` alone). Nothing extra when nothing is active or the right image is in RAM.
-- **Save bytes used** (all four were unused by the stock game): `&38FD` state (bits 0-1 Constrictor, 2-3 plans, 4-6 hint stage, 7 Trumbles offered), `&3905-&3906` Trumble count; `&38FE` is free. No change to the save key.
-- **Rewards:** Constrictor 5,000 Cr and +1 `killScoreHigh`; plans the Navy energy unit (`extraEnergyUnit` `&FE`, 3 recharge steps per call) and +1 `killScoreHigh`; Trumbles none (sun and the hold are the game).
-- **Behaviour added to stock code:** type 19 (Constrictor, hull from Fessor's `Constrictor.asm`), the military-laser rule, the Orarra spawn, a Thargoid plus Thargon on 22% of the spawn checks while the plans are aboard, Trumble breeding on arrival and in flight, heat death in a sun, an inventory line.
-- **Not done / open:** a real playthrough; sound for Trumbles; the name-hash order (code in `docs/_mission_build_plan.md`, would only move Trumbles); mission text is in the engine's default capitalised-words style (the stock mission screens use the `{0D}`
-  lowercase mode and `{13}` capital marks instead, which would cost about 38 docked bytes in the Constrictor overlay); ECM and missiles of the Constrictor come from the hull header and were not checked.
-- **Tests:** `tools/test_mission_hook.py` 25 (nine of them assert that no overlay is loaded), `test_launch.py` 12, `test_mission_flight.py` 14, `test_plans.py` 5, `test_trumbles.py` 7 scenarios, all passing; `bash tools/check_src.sh` keeps the stock build byte-exact and the `-DMISSIONS` files the same length.
-
-## 11. Trumble sprites on top of the built Trumbles: space estimate (2026-11-08, estimate, nothing built)
-
-Sprites need flight code only, so the cost falls on the Trumbles flight image (`MFLIGHTT.BIN`, 286 of 610 bytes today, 324 free, 292 after a 32-byte stack reserve); the docked side and the other images are untouched.
-Method as in the analysis above ("Trumbles crowding the screen"): software sprites drawn into the off-screen bitmap `&A000-&BFFF` (64 bytes per line, Mode 1, 4 pixels per byte) just before the copy to the screen.
-
-- **Hook (corrected 2026-11-08, see the next paragraph for what was built):** the `call transferBuffertoScreen` in `Spaceflight` (`&1E4D`; `drawViewPorttoScreen`, which ends in a `jp`, is only the hyperspace tunnel path) becomes `call mxFlightDraw`: one more
-  vector, **+3 bytes in the table and +3 for a default stub in every image** (the Constrictor image goes from 587 to 593 of 610).
-- **Cost of the sprite part in the Trumbles image:**
-
-| Design | Data | Code and state | Image after | Fits in 610? |
-|---|---|---|---|---|
-| A: one shape 16 x 12 px (4 x 12 bytes), OR-blitted, up to 6 sprites, one sprite moved per pass | 48 | draw 70, movement 45, count to sprite number 15, seeding 12, state 18 (6 x x/y/direction) = 160 | about 500 | yes, about 110 free |
-| B1: two animation frames, no mask | 96 | 160 + 10 for the frame toggle | about 555 | yes, about 55 free |
-| B2: two frames with masks (the 0.6-0.9 KB figure in the older analysis) | 192 | 160 + 35 (masked blit, toggle) | about 680 | **no, about 70 over**; would need the inventory line (56) and the slow breeding (29) dropped, or the shapes moved elsewhere |
-
-- **RAM:** the 18 bytes of sprite state sit in the image (zero-filled in the file), so they are counted above; they reset at every flight-image load, which is fine since positions are cosmetic.
-- **Time:** six 16 x 12 blits are about 290 byte operations, roughly 10,000 T-states per frame; the game already spends more than a frame on the copy to the screen, so a few percent at most.
-- **Open points (unchanged from the older analysis):** only pen 2 (black) is fixed in views 0-3, so a two-pen design is a black body with an eye in pen 1 or 3 whose colour depends on the system; pen 3 flickers orange during explosions; sprites show only in views 0-3.
-- **Verdict:** A or B1 fit with room to spare (about 0.2 KB and 0.27 KB); masked animation does not fit without cutting other Trumbles features. Nothing needs more docked space.
-
-### What the C64 does for its Trumble sprites (read in `work/ext_c64`, 2026-11-08; behaviour only, copyrighted, not copied)
 
 Files read: `elite-source.asm` (`MVTRIBS`, `TRIBDIR`, `TRIBDIRH`, `SPMASK`, `TRIBTA`, `TRIBMA`, the `TRIBCT`/`TRIBVX`/`TRIBVXH`/`TRIBXH` workspace, the count-to-sprites code in the sight routine) and `elite-loader.asm` (VIC setup, sprite pointers).
 - **Shapes:** `SPRITE.bin` is 448 bytes = seven 64-byte hardware sprites (24 x 21 px, 3 bytes per row): four laser sights, one explosion and **two Trumble shapes** (one looks right, one looks left). Sprites 2, 4, 6 use the right-facing
@@ -613,33 +443,4 @@ Files read: `elite-source.asm` (`MVTRIBS`, `TRIBDIR`, `TRIBDIRH`, `SPMASK`, `TRI
 Movement is simpler on the CPC (x in 4-pixel byte units, 0-63, plain 8-bit wrap), so the 45 bytes stand; the draw routine (about 70 bytes) is the part the C64 gets for free. Expected Trumbles image with the two facing shapes: about
 560 of 610 bytes (about 50 free). A C64-sized sprite (a third of the flight view) is out of reach: 38 x 27 px would be about 270 bytes per shape.
 
-**Built (draft, 2026-11-08):** one 16 x 14 shape (single, no eyes, irregular stubby spikes, pen 3) instead of the two facing shapes of design B1, so the cost is 270 bytes (code about 210, shape 56, state 28), Trumbles image 562 of 610 bytes.
-See `CHANGELOG.md` for the hook site, the register bug that was found live and the tests.
-
-## 11. The combined build: missions, order, triggers (2026-11-08)
-
-One branch holds everything: `addon-missions` (renamed from `mission-asteroids`; it contains `missions-foundation`, `mission-constrictor`, `mission-plans`, `mission-trumbles` and `escape-menus`; `master` is its ancestor).
-`python3 -I tools/build_dsk.py --missions` writes `work/elite_missions.dsk`: the four code files plus `MISSIONC/P/T/R.BIN` (docked modules) and `MFLIGHT0/C/P/T/S/R.BIN` (flight images). Booted from the DSK with `RUN"ELITE` in
-cpcxray; the missions were tested with forced states and direct calls, not played through.
-
-**Order.** The three stock missions (S1 to S3 in the table: supernova rescue, cloaking device, Thargon invasion) run first and unchanged (the stub hands over to `chkMissions` whenever `ThargonMissionVar` is not 0). The added chain is fixed:
-Constrictor -> Thargoid plans -> stolen police ship -> asteroid bombardment. The Trumbles are independent: offered at any docking.
-
-**Global prerequisites for every added mission:** the MISSION*.BIN and MFLIGHT*.BIN files on the disk; at least 256 kill points (`killScoreHigh` >= 1; below that the stub returns without touching the disk); no Trumbles aboard
-(while they are aboard nothing else is offered and the Trumbles flight image replaces the others, so a running mission pauses until they die); no stock mission offer or reward pending.
-
-| # | Mission | Prerequisites | Offer trigger | Hunt / flight part | Completion and reward | State | Code |
-|---|---|---|---|---|---|---|---|
-| S1 | Supernova rescue (stock) | none; counted from galaxy 2 on | arrival hook: low byte of `jumpCounter` reaches 32 (stage 1, `Missionflag` bit 0); the briefing replaces the Buy Cargo screen at a docking | the sun goes nova (`FlightMode` 1), every hyperspace key is a free galactic jump, "MAYDAY! CORIOLIS IN DANGER!" | refugees sold at `SellGoods`: rank +1 and gems | `Missionflag` bits 0 and 5 | stock |
-| S2 | Cloaking device / Cougar (stock) | supernova stage done (bit 0) | arrival hook: `jumpCounter` reaches 128 (stage 2, bit 1) | random encounters (30/256 per spawn check) spawn a marked Asp Mk II with 2-3 escorts | kill it with a laser, scoop the canister: cloak (`Y` key, `Missionflag` bit 6), rank +1 | `Missionflag` bits 1 and 6, `aspMissionState` | stock |
-| S3 | Thargon invasion (stock) | cloak stage reached (bit 1) | arrival hook: `jumpCounter` reaches 254 (stage 3, sets bit 2 and `ThargonMissionVar` 1) | the Thargons take the station of system 0 of the galaxy, it launches Thargoids; docking there in state 4 is game over | kill the station: rank +1, ECM jammer (bit 7), name overwritten with FLORENCE (`ThargonMissionFinished`) | `Missionflag` bits 2, 3, 7, `ThargonMissionVar` 0-5 | stock |
-| T | Trumbles | none from the chain; 5,000 Cr or more (thousands word >= 5); offer not made before (`missionState` bit 7) | the first docking, in any galaxy (galaxy 1 included: the stub tests no galaxy), when the prerequisites hold; made once whatever the answer (bit 7), so a "no" is final | breeds on every arrival (and eats food, narcotics), slow breeding with 256 or more, squeak, sprites, heat halves them | none; Y pays 5,000 Cr for one Trumble; the sun is the only cure | `&3905` count, bit 7 | MISSIONT, MFLIGHTT |
-| 1 | Constrictor | none | docking in galaxy 1 or 2 (256 kill points) | seven hints, each shown only when docked at that stage's system (Reesdice, Arexe, Cearso, Errius, Inbibe, Ausar, Usleri; galaxy 2 starts at Cearso); then the Constrictor spawns at Orarra (galaxy 2, 144/33); only a military laser hurts it | kill it; next docking pays 5,000 Cr and one rank step | bits 0-1 (0 none, 1 hunting, 3 killed, 2 paid) and 4-6 (hint stage) | MISSIONC, MFLIGHTC |
-| 2 | Thargoid plans | Constrictor paid; 1280 kill points (`killScoreHigh` >= 5) | docking in galaxy 3 | collect the plans at Ceerdi (215/84), deliver them at Birera (63/72); 22% of spawn checks add a Thargoid and a Thargon while they are aboard | delivery at Birera: Navy energy unit (3 recharge steps) and one rank step | bits 2-3 (0 none, 1 briefed, 2 aboard, 3 done) | MISSIONP, MFLIGHTP |
-| 3 | Stolen police ship (Elite Plus 4) | plans delivered | stage 1: waits 5 to 12 hyperspace arrivals; stage 2: offered at the next docking, anywhere | at Birera (galaxy 3, 63/72) one non-police, hostile Viper (energy `&C8`) on 22% of spawn checks, never two | kill it: next docking anywhere pays 4,000 Cr; the kill is no offence | bits 4-6 (1 waiting, 2 ready, 3 hunting, 4 killed, 5 paid); `&38FE` counts the jumps | MISSIONP, MFLIGHTS |
-| 4 | Asteroid bombardment (Elite Plus 6) | stolen ship paid (stage 5) | the next docking, anywhere | at Ceerdi (galaxy 3, 215/84) an asteroid on 50% of spawn checks; each asteroid destroyed there counts down from 20 | at 0 the next docking anywhere pays 6,000 Cr; no failure path | `&38FE`: asteroids to go in bits 2-7, state in bits 0-1 (0 none, 1 clearing, 2 cleared, 3 paid) | MISSIONR, MFLIGHTR |
-
-Notes. Galaxy numbers here are 1-based game galaxies (code index 0-7). A mission's overlay is loaded from disk only at the dockings where something can happen (about 2 s, emulated); the flight image of the
-active mission is loaded at launch when it differs from the one in RAM. Size limits: the Constrictor overlay and the Constrictor flight image have 2 and 1 bytes spare, so more changes there need trimming first.
-A per-commander random order is not built: the two last missions are encoded differently (state bits plus jump counter versus the `&38FE` byte), so a random order needs both symmetric and one more state bit,
-and there is no room for that in the stub plus Constrictor overlay.
+**Built (2026-11-08):** one 16 x 14 shape instead of the two facing shapes, 270 bytes in the Trumbles image; see `docs/_missions_built.md` section 3.

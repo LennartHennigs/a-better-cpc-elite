@@ -137,7 +137,7 @@ BASIC pitfalls met while writing it (Locomotive BASIC 1.1):
 
 `src/cheats/CHEAT.ASC` (`RUN"CHEAT`, build with `bash tools/build_cheat.sh`) has three more prompts after Cash and Mission: **Kills** (0-32767, pokes the BBC-style kill count at `&38D8/&38D9`; 256 is the gate of
 the Constrictor and plans missions), **Jumps** (0-255, pokes the low byte of `jumpCounter`; also patches `&4E5D` so jumps are counted in galaxy 1) and **Added mission 1-4** (presets for the chain of
-`docs/_missions.md` section 11: 1 plans next, 2 stolen police ship next, 3 asteroids next, 4 Trumbles open). All addresses are the save-block addresses plus `&FC` (the block sits there while the loader pokes:
+`docs/_missions_built.md` section 1: 1 plans next, 2 stolen police ship next, 3 asteroids next, 4 Trumbles open). All addresses are the save-block addresses plus `&FC` (the block sits there while the loader pokes:
 `&39D4` kills, `&39D6` jumps, `&39F9/&39FA` the two mission bytes). The program must stay under about 1.7 KB (BASIC memory below `&840`): it is 1,536 bytes, so
 new prompts need shortening elsewhere. `build_cheat.sh` also writes `work/missions_cheat.dsk`: the combined mission build plus `CHEAT.BAS` and `SHOWSAVE.BAS`.
 Galaxy cannot be poked (the system seeds define the galaxy): use the "Free gal jump" cheat and the galactic hyperdrive.

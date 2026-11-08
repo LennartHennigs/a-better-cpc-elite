@@ -37,7 +37,7 @@ with the Firebird disk.
 3. Also check the 812-byte `LARGEAXX` tail (`&1714-&1A3F`) with write and read breakpoints across dock/undock cycles, and
    `&0040-&083F` while docked, to confirm they are free.
 4. Record results in `docs/_architecture.md` (replace the "130-155 bytes" paragraph and the "does not exercise" note), correct
-   the budget in `docs/_missions.md` section 4 and in `TODO.md`. Correct `CLAUDE.md` Open items if numbers change.
+   the budget in `docs/_missions.md` section 3 and in `TODO.md`. Correct `CLAUDE.md` Open items if numbers change.
 Outcome: a measured list of safe-to-reuse bytes. If a candidate fires, it is live and is removed from the list.
 
 ### Step 1b: list of dynamic labels (DONE, `docs/_architecture.md` "Dynamic labels")

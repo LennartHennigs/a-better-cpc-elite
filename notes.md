@@ -12,7 +12,8 @@ Rules, toolchain and workflow are in `CLAUDE.md`, open work in `TODO.md`, dated 
 | `CHEAT.BAS` poke targets, instruction-level analysis, the cloaking cheat and its fix, the interactive `CHEAT.BAS` | `docs/_cheats.md` |
 | Commander save format, encryption, checksums, field map, the CPC International type-in cross-check | `docs/_savegame.md` |
 | The three CPC missions, when they fire, hyperspace/mis-jump, missions in other versions (ST and NES source), keycard and keys | `docs/_gameplay.md` |
-| Missions across versions (table, MSX/ST/NES findings), the numbered list of 8 missions with systems and changes, plan for porting them (Constrictor, Thargoid plans, Trumbles, police ship) | `docs/_missions.md` |
+| Missions research: table across versions, MSX/ST/NES/C64/Elite Plus source readings, planning findings (system names, spawn rule, free space) | `docs/_missions.md` |
+| The implemented missions: order, triggers and prerequisites, architecture (stub, overlays, flight images), sizes, tests | `docs/_missions_built.md` |
 | CPC+ keyboard bug, Redbox's patch, plan for our own fix | `docs/_cpcplus.md` |
 | CPC routines mapped to the ZX Spectrum disassembly (names, addresses, method) | `docs/_spectrum_map.md` |
 | 6502 references, links, tools | `docs/_references.md` |
