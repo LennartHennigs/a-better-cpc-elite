@@ -123,15 +123,61 @@ filter, so the result is a lower bound. 17 chains (846 bytes) pass; reading them
 - *Not code:* `&1A40-&1B7A` is the zero-filled entity area (zeros decode as `nop`), `&38C1-&3929` and `&392A-&3937` are variables, `&1B81-&1B9A`
   and `&939D-&93A8` are tables (`01 C3 lo hi` jump-table rows, 4-byte rows). `&2997`, `&3D7B`, `&522A`, `&6BEB` and `&838B` are pointed at by
   other words, so they are tails of live routines.
-- *Code-shaped and unreferenced:* `&53D7-&53E7` (17 bytes), `&5DD2-&5DEF` (30), `&8243-&825B` (25), `&8365-&8381` (29), `&89F5-&8A0F` (27)
-  and `&6C0A-&6C23` (26, starts mid-routine). They look like real entity-slot routines (push/pop `ix`/`iy`, `bit n,(ix+d)`, `ret`). About
-  **130 to 155 bytes** in all. `&9751-&97A0` (80 bytes) is filler.
-- *Trace:* execute breakpoints on the first five and on two routines they call (`&8153`, `&8AE7`) over a short flight (launch, a few
-  keys, about a minute of emulated time) got **zero hits on all of them, the called routines too**, so the run did not exercise that
-  area and proves nothing. A real check needs a longer session (docking, combat, missiles, hyperspace).
+- *Code-shaped chains: all LIVE (checked 2026-11-08, static and in cpcxray).* The earlier reading ("130 to 155 bytes of unreferenced
+  code") was wrong. Each chain is the tail of a live routine that starts with `push ix`/`push iy`, which `tools/z80dis.py` cannot decode,
+  so the routine stayed `db` and its inner entry points looked unreferenced: `&53D7` is inside `LAB_ram_53cf` (reached by fall-through
+  from `LAB_ram_53cc`: `move_ship_forward` three times), `&5DD2` inside `SUB_ram_5dcf` (called from `&51CC` and `&563C`), `&8243` inside
+  `execSpawncmd4` (`&8242`, `jr z` targets), `&8365` inside `spawnAtEntityCoordinates` (`&8364`, `jr z`), `&89F5` inside `LAB_ram_89f4`
+  and `LAB_ram_8a10` (`jr` targets); `&6C0A` is inside `dustParticleAdrTable`, a runtime buffer. `&9751-&97A0` (80 bytes) is filler.
+- *Trace (2026-11-08, `tools/dead_trace.py`, two runs of 700 random key presses of 1.3 s each from `firebird_in_flight.sna`, docking and
+  the cloak/Thargoid-variable states forced every 25 presses; results in `traces/dead_run1.json` and `dead_run2.json`):* positive controls
+  `LAB_ram_53cf`, `SUB_ram_5dcf`, `execSpawncmd4` (`&8242`), `LAB_ram_89f4`, `LAB_ram_8a10`, `chkCloak`, `handleEntitys`, and
+  `spawnCommand0` or `loadLARGEAXX` (one run each) all fired; `spawnAtEntityCoordinates` (`&8364`) did not (rare spawn command). Candidates:
+  `alt_animated_effect_reset` (`&719D`) fired (hyperspace tunnel, key `e`); `altJrPoint3` (`&7198`) did not, but it is one of three
+  targets of the self-patched `jr` at `PatchJRat715e`/`PatchJRZat714b` (see "Dynamic labels"), so it is live by design; `LAB_ram_8aaa`
+  (`&8AAA`) did not fire, but three `jr` instructions inside the `&89F4` chain target it (`&8A70`, `&8A78`, `&8A80`). Only
+  `unusedGetFlightMode` (`&204E`) and `unusedGetCloakFlag` (`&2053`) (10 bytes, no references of any kind) never fired.
+  A write breakpoint on the free tail showed the stack at `&A000` pushing an interrupt return at `&9FFE-&9FFF` (as described below);
+  the other tail writes in the harness were the BASIC ROM's memory clear (`ldir` at `&C154`) after a key sequence left the game.
+  The `LARGEAXX` tail `&1714-&1A3F` was written 952 times by `loadLARGEAXX` (file reload), nothing else.
 
-Conclusion: dead code is a small source of space, roughly 0.15 KB found by pattern plus the 28 labelled bytes, against Fessor's
-450 bytes of switched-off blocks (which we could not place in stock). The reliable free space stays the 610-byte tail of `COMMONXX`.
+Conclusion (corrected 2026-11-08): **there is no reclaimable dead code in the `db` runs.** The reliable free space is the 610-byte
+tail of `COMMONXX` (minus the few top bytes the stack uses at `&A000`; the ISR's worst-case depth is still unmeasured) plus about 10 bytes
+of `unusedGet*`. Fessor's 450 bytes of switched-off blocks could not be placed in stock and stay unverified.
+
+## Dynamic labels (found 2026-11-08, for later reference)
+
+Labels whose bytes change at runtime, or that sit inside an instruction. Static dead-code and free-space claims must not touch them.
+Sources: the `equ` aliases at the end of `src/elite/*.asm`, the patch-named labels, and a diff of `&1A40-&9FFF` after 700 random key
+presses in cpcxray (`changed_ranges` in `traces/dead_run*.json`; the diff shows only bytes that changed in that run, so rarely used
+patches are missing from the "seen" lists).
+- **Labels inside instructions** (`equ` aliases, patched or jumped into): `ce2func63` `&25D6`, `ce2func74` `&2688`, `loc_3A88`,
+  `loc_5958`, `sub_61B5`, `sub_6953`, `sub_71CB`, `loc_7873`, `loc_86F7` in `commonxx`; `LAB_ram_f638`, `LAB_ram_f6ea` in `common2x`.
+- **Self-modified operands seen changing in flight:** circle-drawing masks `ce2func64patchmask7` `&2603`, `ce2func65patchmask8`
+  `&2606`, `ce2func75patchmask9` `&26B5`, `ce2func76patchmask10` `&26B8`; viewport inks `patchInk0` `&28E3`, `patchInk1` `&28EC`,
+  `patchInk3` `&28F5`, `patchInk2` `&28FE`, `patchSecondInk3` `&2911`, `patchAnotherInk1` `&2953`, `patchAnotherInk1_2` `&2993`;
+  line plotters `PatchAND_1` `&33E1`, `PatchAND_2` `&33E8`, `PatchOR_2` `&3469`, `PatchOR_4` `&34AD`; `isPatchStrlen` `&40F2`, `patch1`
+  `&4AAA`, `smcIndicatorPatch1` `&6161`; `dvRotatePixmask` `&8018`, `dh2RotatePixmask` `&804B`, `dh1nextPixelline` `&8030` and the
+  other `dh*`/`dv*` operands `&801B-&806B`; `LAB_ram_3b07 .. SUB_ram_3b1a` operands `&3B08-&3B1C`; `LAB_ram_3bae` `&3BAF`; `CallHL` `&2AEA`;
+  `irds22` `&2CCD`, `irds_dat7/9` `&2DB4/&2DB7`.
+- **Self-modified, not seen changing in 700 presses (patch-named, listing only):** `PatchA_1`, `PatchAND_3`, `PatchOR_1`, `PatchOR_3`,
+  `dcPatchAdr1..4`, `commandsPatchTable` targets, `patch3`, `charPatchD628/D650/D6D8/D700/D7D8`, `smcIndicatorPatch2`, `md1_patchcommands`,
+  `md2_patchcommands`, `dvpatchadr5/7`, `dhpatchadr6`, `patchFWTextfunctions`, `patchmask1..6`, `patchmask11..16`, `patchJr`, `patchJr1`,
+  `dfcPatchpos` (`common2x`), `cpatchloop`, `patchViewPortInk0/1`, `patchviewPortInk3`.
+- **Self-patched jumps:** `PatchJRZat714b` and `PatchJRat715e` (hyperspace tunnel) choose among `altJrPoint1`, `altJrPoint2`, `altJrPoint3`
+  and `LAB_ram_7192`; `PatchORat7159` patches the compare value. So `altJrPoint*` look unreferenced statically but are live.
+- **Runtime buffers inside the code image:** entity slots `&1A40-&1B01` (and the zero area to `&1B7A`), `&1C02-&1C39` flight state,
+  `tblDustCoordinates` `&34F4-&3544`, `dat_3A6C` `&3A6C-&3A83` (24), `dat_3B3F/3B49/3B61` chart buffers, `qq3`..`travelDistance`
+  `&3D22-&3D63`, `dat_5860` `&5860-&589B` (60 bytes; written at runtime, so it is a buffer, not the dead block the TODO suspected),
+  `todo_tableforedges`/`tableUnkownFacedata` `&58EA-&592D`, dust tables `&6BED-&6C2D`, `dataShortTunnle` `&721D-&7224`, `dat_7406`
+  `&7407-&7496` (about 140 bytes, `loc_745B`), `LAB_ram_7734+10` `&773E-&7749`, sound tables `&2D6C-&2DC9`, `FilenameNOTMUSIC` `&8830`,
+  `dataFromPPI`/`keybFlags*` `&8D34-&8D8B`, `irki2_dat2/3` `&8F5C`, private stacks `ce2stack4` `&2727`, `stack5` `&2997-&29FD`, `stack1`
+  `&4644`, and the variable block `&38C1-&3949`.
+- **Stack in the free tail:** with SP at `&A000` an interrupt pushes at `&9FFE-&9FFF` (seen at the first interrupt after key `4`, PC `&0038`,
+  SP `&9FFE`). The top bytes of the `&9D9E-&9FFF` tail are therefore not free; a mission patch must stay clear of at least `&9F00-&9FFF`
+  until the depth is measured.
+- Method for finding more: assemble `src/elite` into a scratch dir with `--lst`, run `tools/dead_trace.py` (it diffs the code image), map
+  each changed range to the nearest label with the `.sym` file.
 
 ## The disc-drawing routine and Amtix's "infamous bug" (investigated 2026-11-07)
 

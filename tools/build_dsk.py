@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Assemble src/elite and write the four code files into a copy of the Firebird DSK, keeping the AMSDOS headers.
 
-usage: python3 -I tools/build_dsk.py [OUT.dsk]      (default work/elite_rebuilt.dsk; base is Elite_UK_Firebird_cracked_trainer.dsk)
+usage: python3 -I tools/build_dsk.py [--missions] [OUT.dsk]      (default work/elite_rebuilt.dsk; base is Elite_UK_Firebird_cracked_trainer.dsk)
 
 The base disk is never modified. Each file keeps its 128-byte AMSDOS header and its size: the new bytes must have the
 same length as the old ones (the build is byte-exact apart from the CPC+ fix), otherwise the script stops.
@@ -18,7 +18,9 @@ from dskx import amsdos_header  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 BASE = ROOT / "Elite_UK_Firebird_cracked_trainer.dsk"
-OUT = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "work" / "elite_rebuilt.dsk"
+MISSIONS = "--missions" in sys.argv   # assemble LARGEAXX and COMMONXX with -DMISSIONS (src/elite/missions_*.asm in the free tails)
+args = [a for a in sys.argv[1:] if a != "--missions"]
+OUT = Path(args[0]) if args else ROOT / "work" / ("elite_missions.dsk" if MISSIONS else "elite_rebuilt.dsk")
 SJASM = Path.home() / ".local/bin/sjasmplus"
 FILES = {"LARGEAXX": ["-DFIREBIRD"], "COMMONXX": [], "COMMON2X": [], "MUSIQUEX": []}
 
@@ -70,7 +72,8 @@ def main():
     with tempfile.TemporaryDirectory() as tmp:
         for n, defs in FILES.items():
             out = Path(tmp) / f"{n}.bin"
-            r = subprocess.run([str(SJASM), *defs, f"--raw={out}", str(ROOT / "src/elite" / f"{n.lower()}.asm")],
+            extra = ["-DMISSIONS"] if MISSIONS and n in ("LARGEAXX", "COMMONXX") else []
+            r = subprocess.run([str(SJASM), *defs, *extra, f"--raw={out}", str(ROOT / "src/elite" / f"{n.lower()}.asm")],
                                capture_output=True, text=True)
             if r.returncode:
                 sys.exit(f"{n}: assemble failed\n{r.stdout[-400:]}{r.stderr[-400:]}")

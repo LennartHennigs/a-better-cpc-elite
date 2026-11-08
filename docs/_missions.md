@@ -1,6 +1,6 @@
 # Plan: adding the BBC, Apple II and MSX/ST missions to the CPC game
 
-**Status: plan only (2026-11-07). Nothing here is implemented.** It says what the other versions do, what the CPC
+**Status: plan only (2026-11-07). Nothing here is implemented.** The build plan with the measurement branches is in `docs/_mission_build_plan.md`. It says what the other versions do, what the CPC
 already has, what is missing, and a phased way to port the missions with a test at every step. Facts about the
 CPC come from `docs/_gameplay.md`, `docs/_savegame.md` and `src/elite/`; facts about the 6502 versions come from
 Mark Moxon's annotated BBC code (https://elite.bbcelite.com/deep_dives/, pages "The Constrictor mission", "The
@@ -352,7 +352,7 @@ Problems to solve:
 | End of `COMMONXX` (`&9D9E-&9FFF`) | 610 bytes | zero fill at the end of the file |
 | `&A000-&A5FF` | 1,536 bytes | Fessor's table calls it unused when docked, but it is the off-screen buffer in flight: not free |
 | `&0040-&083F` | about 2 KB | the firmware copy lives here while flying; usable for docked-only code if `LARGEAXX` is changed to load there (to check) |
-| Dead code | 735 bytes | what Fessor's `defdeactivate*` switches remove (the build reports 735 saved, 1,034 left) |
+| Dead code | about 10 bytes | corrected 2026-11-07/08: only `unusedGetFlightMode` and `unusedGetCloakFlag` are unreferenced; Fessor's 735 (450 measured) could not be placed in stock, and the db-run candidates are live (`docs/_architecture.md`) |
 
 Text compression (measured 2026-11-07 with `tools/textcomp.py`): re-encoding both string tables optimally with the existing tokens saves
 only 48 bytes of 2,822, so recompressing old text is not a space source. Re-picking the token and digram set, or Huffman, is
@@ -366,18 +366,24 @@ Emulator check on the Firebird disk (`Elite_UK_Firebird_cracked_trainer.dsk`) (n
 in flight `LARGEAXX` is gone (parked at `&A600`) and `&1714-&1A3F` holds 401 non-zero bytes of the flight-side content, with **0 reads and 0 writes**
 on it in 30 s of flight (no combat tested); calling `loadLARGEAXX` from flight (`&8732`) with a marker in the tail restored `LARGEAXX` and
 zeroed the tail. At the title screen `LARGEAXX` is already parked (swapped out about 4 s after the entry snapshot, after `INDICATO` loads), so
-docked-only code is only valid after a new commander or load, which is when `chkMissions` runs anyway.
+docked-only code is only valid after `loadLARGEAXX`. (Correction 2026-11-08: `chkMissions` has a single call site, the docking sequence, so it runs only at a real docking, not at a new commander or load.)
 It is therefore usable for **docked-only** code and data (briefing, hint text, debrief). Flight-time parts (Constrictor spawn,
 kill flag) must stay in `COMMONXX` (610 free bytes at the end). Mission text can sit in the tail as its own string table:
 `printStringA` takes an 8-bit index and `stringsTable2` already has 254 strings, so appended strings are not reachable by index;
 add a small entry point that sets `HL` to the new table and reuses the token loop (about 15 bytes). Tokens in the new strings may
 still reference `stringsTable2` strings `&81-&D6` and the digrams, which keeps them short.
 
-Dead code measured (`docs/_architecture.md`, "Dead code and free space"): Fessor's switched-off blocks come to about 450 bytes, and a
-reachability pass over our source finds only 28 bytes of labelled dead code; the rest hides in `db` runs and is still unsized.
+Dead code measured and corrected (`docs/_architecture.md`, "Dead code and free space", 2026-11-08): the code-shaped chains in `db` runs are live
+(tails of `push ix` routines), `altJrPoint*` are self-patched jump targets, so about 10 bytes remain. Fessor's blocks stay unplaced.
+The flight-time budget is therefore the 610-byte tail only (its top bytes also carry stack pushes at `&A000`).
 
-Conclusion: the Constrictor alone fits in the 610 free bytes plus a few hundred of reclaimed dead code. Both missions
-need the dead-code removal first. Work out exactly which routines Fessor removed (his switches are listed in
+**Overlay idea (user, 2026-11-08).** Missions run one after another, so load one overlay file per mission into the tails and replace it
+when the mission is done; RAM need is then the largest mission, not the sum. The order can be drawn per commander from bytes that exist
+(name letters, a name checksum). Open points: the swap loader (reuse `loadLARGEAXX`), disk space for extra files, persistent missions
+(Trumbles), Plans after Constrictor, restoring the overlay after a save load. See the build plan.
+
+Conclusion (revised 2026-11-08): there is no dead code to reclaim, so the 610 flight-time bytes decide. The Constrictor's hull alone is
+about 250 of them; fitting two missions needs the overlay scheme or a smaller flight part. The docked-only parts go in the `LARGEAXX` tail. Work out exactly which routines Fessor removed (his switches are listed in
 `extended/CLAUDE.md`; his source is reference only, so redo the analysis on our `src/elite/` rather than copy).
 
 ## 5. Conflicts to resolve

@@ -2,6 +2,12 @@
 
 Open work, most useful first. `CLAUDE.md` keeps the short list; details live in `docs/` (`notes.md` is an index).
 
+- [ ] allow Escape to exit the buy menu (goods)
+- [ ] can we reduce the flicker in the radar view?
+- [ ] stars and ships are transparent
+- [ ] more than one color for moving stars?
+- [ ] or other color for asteroids? 
+  
 ## Disassembly (`src/elite/`)
 - [x] Name the `dat_` variables: 109 of 176 named on 2026-11-07 (`tools/rename_dat.py`, map in `tools/rename_maps/`); `tools/check_src.sh` still byte-exact.
 - [ ] The remaining 37 `dat_` labels in `src/elite/` (counted with `grep -c "^dat_"`), checked 2026-11-07. Done: 16 address/message-id immediates
@@ -36,7 +42,7 @@ Open work, most useful first. `CLAUDE.md` keeps the short list; details live in 
 - [x] (done 2026-11-07, `docs/_architecture.md`) Check whether `Elite_UK_original_protected.dsk` ships the Anaconda and Transporter after all: it does not. The German disk's second set of 14 blueprints is a second copy of `COMMONXX` in the raw image (tracks 7 and 27; all 17 sampled windows occur twice), not a new ship set; why the copy is there is unknown (`iDSK -l` lists only one `COMMONXX.BIN`).
 
 ## Missions (plan in `docs/_missions.md`)
-- [ ] Phase 0: fixed-table save key, free the dead code (about 735 bytes), DSK writer.
+- [ ] Phase 0: fixed-table save key, DSK writer (the dead-code reclaim is cancelled: there is none).
 - [ ] Phase 1-3: mission state byte, text compressor, BBC-to-CPC hull converter, Constrictor mission.
 - [ ] Phase 4: Thargoid plans and the naval energy unit.
 - [x] Read the Trumbles code in the C64 source (done, in `docs/_missions.md`). Still unread: `TRIBTA`/`TRIBMA` sprite count, inventory print, escape pod.
@@ -56,8 +62,15 @@ Open work, most useful first. `CLAUDE.md` keeps the short list; details live in 
 
 - [x] Scan the `db` runs of `COMMONXX` for unreferenced code (`tools/dbcode.py`): about 130-155 bytes in six routines, plus 28 bytes of labelled
       dead code (`tools/deadcode.py`). See `docs/_architecture.md`.
-- [ ] Confirm those routines with a long execute trace in cpcxray (`&53D7`, `&5DD2`, `&8243`, `&8365`, `&89F5`, `&6C0A`): dock, fight, fire
-      missiles, jump. A first short run hit nothing, including the routines they call, so it proved nothing.
+- [x] (done 2026-11-08, `tools/dead_trace.py`, two 700-key runs; static check too) Those six chains are live code or a buffer, not dead (`docs/_architecture.md`). Free space is the 610-byte tail only.
+- [ ] Measure the ISR's worst-case stack depth at `&A000` (the top of the free tail), then fix the safe size of the tail.
+- [ ] Name the dynamic labels in `src/elite/` with a common prefix? (list in `docs/_architecture.md`, "Dynamic labels"): `dat_5860` is a runtime buffer, not dead.
+- [x] (2026-11-08, branch `missions-foundation`) `tools/textenc.py` and `tools/size_report.py`; open there: fixed-table save key, state bytes in `&38FD/&38FE/&3905/&3906`, string-table entry point, `chkMissions` dispatch, `-DMISSIONS` variant.
+- [x] (2026-11-08) No fixed-table save key needed while the `EquipShip` window stays unchanged (`tools/size_report.py` checks it).
+- [x] (2026-11-08) `-DMISSIONS` scaffold in `src/elite` (tails as conditional includes, `missionOrder` 21 bytes); next: string-table entry point, `chkMissions` dispatch, state-byte accessors, then mirror to `elite_de`/`elite_fr` if the missions are kept.
+- [x] (2026-11-08) Docking hook, string-table entry (`missionShow`) and `missionState` byte `&38FD` working in cpcxray; next: accessors for the other state bytes, a real docked mission (Constrictor briefing), custom-token text measurement.
+- [x] (2026-11-08) Constrictor docked part built and tested (offer, hints, reward; 772 bytes of the 812-byte docked tail). Open: flight part (hull, spawn at Orarra, kill hook setting state 3), shrinking the text (galaxy-1/2 briefings share most words; custom tokens; system names from the seed), Plans/Trumbles.
+- [ ] Evaluate the mission overlay scheme (load missions one at a time, random order per commander): loader size, disk space, save-load restore.
 
 ## Space savings (review 2026-11-07)
 - [ ] Peephole pass in a separate variant build, not in the byte-exact `src/elite/`: in `commonxx` 28 unconditional and 28 conditional `jp` within

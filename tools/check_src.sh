@@ -25,4 +25,11 @@ for p in "largeaxx LARGEAXX" "commonxx COMMONXX" "common2x COMMON2X" "musiquex M
   fi
   if cmp -s "$OUT/$n.bin" "$REF"; then echo "$n: ok"; else echo "$n: DIFFERS"; rc=1; fi
 done
+# English only: the -DMISSIONS variant (src/elite/missions_*.asm in the free tails) must keep both files the same length
+if [ "$SRC" = "$ROOT/src/elite" ]; then
+  for p in "largeaxx LARGEAXX" "commonxx COMMONXX"; do
+    read -r n f <<<"$p"
+    if sjasmplus -DMISSIONS --raw="$OUT/$n.m.bin" "$SRC/$n.asm" >"$OUT/$n.m.log" 2>&1 && [ "$(wc -c <"$OUT/$n.m.bin")" -eq "$(wc -c <"$BIN/$f.BIN")" ]; then echo "$n -DMISSIONS: ok (same length)"; else echo "$n -DMISSIONS: FAILED"; tail -3 "$OUT/$n.m.log"; rc=1; fi
+  done
+fi
 rm -rf "$OUT"; exit $rc

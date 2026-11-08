@@ -3,6 +3,34 @@
 Changes to the project, newest first. The project root is a git repository from 2026-11-07; before that, this
 file is the only history. Dates are ISO.
 
+## 2026-11-08
+
+- Constrictor, docked part (in the `-DMISSIONS` build, `src/elite/missions_docked.asm`, text in `missions_text.txt`): offer at docking with 256 kill points
+  in galaxy 1 or 2 (galaxy 2 starts the trail at Cearso), seven system hints (Reesdice, Arexe, Cearso, Errius, Inbibe, Ausar, Usleri; table of galaxy/x/y/string),
+  reward of 5,000 Cr and +1 `killScoreHigh` when the state is "killed", all in the state byte `&38FD` (bits 0-1 Constrictor, 4-6 stage). The flight part (hull,
+  spawn at Orarra, kill hook that sets state 3) is not built. **Measured: the docked tail is 802 of 812 bytes used, of which 30 are the test string and 21 the
+  order routine, so the Constrictor's docked part is about 772 bytes (text 552, code and tables 220).** Plans' docked part will not fit beside it, which is the case for
+  overlays. `tools/test_mission_hook.py` runs eight scenarios in cpcxray (all pass, screenshots in `work/xray/output/missions_*.png`). `tools/textenc.py` takes `{0C}` byte escapes.
+- Branch `missions-foundation`: docking hook and string table. In `-DMISSIONS` builds the docking sequence calls `missionsDockedEntry` (`&1714`, first byte of
+  the LARGEAXX tail) instead of `chkMissions`; it tail-calls `chkMissions` while `ThargonMissionVar` is non-zero, otherwise looks at `missionState` (`&38FD`,
+  a save byte the stock game never uses). `missionShow` draws the mission box like `drawFlipChart` but prints from `missionTextTable`, reusing the scan
+  loop inside `printStringA` (`&442C`). Measured: the docked tail uses 112 bytes (entry, `missionShow`, `missionOrder` 21, one test string 30) and the
+  COMMONXX change is 2 bytes (the call operand at `&72A8`); the flight tail is untouched. Tested in cpcxray (`tools/test_mission_hook.py`,
+  screenshot shows the box). `tools/build_dsk.py --missions` writes `work/elite_missions.dsk`; `tools/textenc.py --asm` emits string tables.
+- Branch `missions-foundation`: both free tails are now `IFDEF MISSIONS` includes (`src/elite/missions_flight.asm`, `missions_docked.asm`)
+  followed by `DS` padding, so stock stays byte-exact and `-DMISSIONS` keeps the file lengths (checked by `tools/check_src.sh`). The first
+  content is `missionOrder` (21 bytes, rotate-xor hash of the commander name, mod 3). Only `src/elite` has the scaffold so far; `elite_de` and
+  `elite_fr` do not.
+- Branch `missions-foundation`: `tools/textenc.py` (optimal encoder for new docked-table text with the existing 214 string refs and digrams;
+  `--selftest` round-trips all 254 existing strings; prose compresses only about 26% with the existing tokens: 163 characters -> 121
+  bytes, so a mission-specific dictionary is worth measuring) and `tools/size_report.py` (tail usage and footprint of a build against
+  stock: COMMONXX tail 610 free, 354 after a 256-byte stack reserve; LARGEAXX tail 812 free).
+- Checked the dead-code claims statically and in cpcxray (`tools/dead_trace.py`, new; two runs of 700 random key presses, results in
+  `traces/`). The six code-shaped chains in `db` runs are live (tails of `push ix` routines, or a runtime buffer); `altJrPoint*` are
+  self-patched jump targets; only `unusedGetFlightMode` and `unusedGetCloakFlag` (10 bytes) are unreferenced. `docs/_architecture.md`
+  corrected and gained a "Dynamic labels" section; `docs/_missions.md`, `TODO.md` and `CLAUDE.md` updated (free flight space is the
+  610-byte tail only; overlay idea recorded).
+
 ## 2026-11-07
 
 - Applied the CPC+ fix to `src/elite_fr/commonxx.asm` too (`getPPI_Input` at `&8F2B`, patched byte `&8F3F`, `ED 79` -> `ED 49`): the assembled `COMMONXX` differs from `work/bin_fr` in exactly that byte. `tools/check_src.sh` expects the patched byte for `src/elite` (`&8DA0`) and `src/elite_fr` (`&8F3F`); German (disk already patched) needs no exception. All three checks pass. Not tested in an emulator (Caprice32 does not reproduce the Plus bug anyway); a patched French disk is not built.
