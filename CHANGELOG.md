@@ -1,5 +1,7 @@
 # Changelog
 
+- **Edited saves load in the game.** Tested in cpcxray on the combined mission disk: a save written by `tools/saveedit.py` and one written by `EDITSAVE.BAS` (header load `&6000`) are both found by the disk menu and load correctly (kills, cash, mission byte, name). Key timing for the test is in `docs/_cheats.md`.
+
 - **`EDITSAVE.BAS`, a save editor on the CPC** (generator `tools/mk_editsave.py`, key lines shared with `tools/mk_showsave.py`, which is now a module with a `__main__` guard): detects the build by key, edits kills, jumps, cash, legal status, cloak and the added-mission preset, fixes the checksums, writes with `SAVE`; tested on a UK and a French save. `tools/build_cheat.sh` builds three programs now. See `docs/_cheats.md`.
 
 - **Trainer and save tools for testing the added missions.** `CHEAT.BAS` has prompts for kills, jumps and the added-mission presets (1,536 bytes, close to the BASIC memory limit); `tools/build_cheat.sh` builds `CHEAT.BAS` and the new `SHOWSAVE.BAS` and writes `work/firebird_cheat.dsk` and `work/missions_cheat.dsk`; `tools/saveedit.py` edits saves on the host (UK, French, German keys, checksums, disk copies, build conversion); `tools/mk_showsave.py` generates the on-CPC save viewer (origin, name, kills, jumps, cash, galaxy). Docs: `docs/_cheats.md`.
