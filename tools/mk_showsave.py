@@ -14,7 +14,7 @@ import elitekey  # noqa: E402
 ROOT = Path(__file__).resolve().parent.parent
 DISKS = [("UK", "Elite_UK_Firebird_cracked_trainer.dsk"), ("FRENCH", "Elite (1985)(Firebird Software)(fr).dsk"), ("GERMAN", "Elite_DE_cracked.dsk")]
 
-lines = [
+HEADER_LINES = [
     '10 MODE 1:PRINT"SHOW SAVE: kills, jumps, origin":PRINT',
     '20 INPUT"Save file (e.g. PETER.BIN)";f$',
     '30 MEMORY &5FFF:DIM p(103):ON ERROR GOTO 200',
@@ -32,10 +32,22 @@ lines = [
     '160 PRINT"Galaxy: ";p(17)+1:END',
     '200 PRINT"Cannot load ";f$:END',
 ]
-for i, (name, disk) in enumerate(DISKS):
-    off, key = elitekey.key_from_disk(ROOT / disk)
-    lines.append(f"{300 + 10 * i} DATA {name},{key.hex().upper()}")
-out = lines
-text = "".join(l + "\r\n" for l in out) + "\x1a"
-(ROOT / "src/cheats/SHOWSAVE.ASC").write_bytes(text.encode("latin-1"))
-print("wrote src/cheats/SHOWSAVE.ASC", len(text), "bytes")
+
+
+def key_data_lines(first=300):
+    """DATA lines with the three build keys (UK, French, German) as hex strings, numbered from `first`."""
+    out = []
+    for i, (name, disk) in enumerate(DISKS):
+        off, key = elitekey.key_from_disk(ROOT / disk)
+        out.append(f"{first + 10 * i} DATA {name},{key.hex().upper()}")
+    return out
+
+
+def write_asc(name, lines):
+    text = "".join(l + "\r\n" for l in lines) + "\x1a"
+    (ROOT / "src/cheats" / f"{name}.ASC").write_bytes(text.encode("latin-1"))
+    print(f"wrote src/cheats/{name}.ASC", len(text), "bytes")
+
+
+if __name__ == "__main__":
+    write_asc("SHOWSAVE", HEADER_LINES + key_data_lines())
