@@ -15,35 +15,17 @@ mxModuleEntry:
     jr z,mxPlansBrief
     cp 0x0C
     ret z                             ; plans delivered
-    ld c,a                            ; 4 = go to Ceerdi, 8 = go to Birera
-    ld a,(mxCurrentGalaxy)
-    cp 0x02
-    ret nz
-    ld a,c
-    rrca
-    rrca
-    dec a                             ; row 0 or 1
-    ld e,a
-    add a,a
-    add a,e                           ; times 3
-    ld e,a
-    ld d,0
-    ld hl,mxPlansTable
-    add hl,de
-    ld a,(mxPresentSystemX)
-    cp (hl)
-    ret nz
-    inc hl
-    ld a,(mxPresentSystemY)
-    cp (hl)
-    ret nz
-    inc hl
-    ld a,(missionState)
+    ld a,b                            ; stage 1 or 2: the stub loaded this module only at Ceerdi or Birera respectively
     add a,0x04                        ; next stage
     ld (missionState),a
     and 0x0C
+    ld c,a
+    rrca
+    rrca                              ; the string number: 2 (the plans) or 3 (delivered)
+    ld b,a
+    ld a,c
     cp 0x0C
-    ld a,(hl)                         ; string number; the flags of the CP survive
+    ld a,b
     jp nz,mxShowEnd
     push af                           ; delivered: the Navy energy unit and one rank step
     ld a,0xFE
@@ -66,11 +48,6 @@ mxPlansBrief:
     ld (missionState),a
     ld a,0x01
     jp mxShowEnd
-
-; Stage rows: system x, system y, string number.
-mxPlansTable:
-    db 215,84,0x02                    ; Ceerdi: the agent hands over the plans
-    db 63,72,0x03                     ; Birera: delivery
 
 ; Strings of the mission table (source missions_text_plans.txt; python3 -I tools/textenc.py --asm src/elite/missions_text_plans.txt > src/elite/missions_text_plans.asm)
 missionTextTable:

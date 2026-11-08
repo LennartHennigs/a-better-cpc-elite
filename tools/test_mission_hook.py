@@ -47,6 +47,9 @@ EXTRA = {
     "t_aboard":       dict(cash=(9, 0), key="space", count=5, count_after=5, cash_delta=0),
 }
 SCENARIOS.update({
+    "c_offer_galaxy3": (0x00, 1, 2, 10, 10, 0x00, 0, 0x00, False, 0),    # the Constrictor is offered in galaxy 1 and 2 only
+    "c_stage7_idle":   (0x71, 1, 1, 148, 68, 0x71, 0, 0x00, False, 0),   # all hints given: nothing to do docked
+    "c_hint_stage2_wrong_place": (0x21, 1, 0, 149, 101, 0x21, 0, 0x00, False, 0),   # stage 2 wants Cearso, Reesdice is stage 0
     "t_offer_yes":    (0x0E, 6, 2, 10, 10, 0x8E, 0, 0x00, True, 0),
     "t_offer_no":     (0x0E, 6, 2, 10, 10, 0x8E, 0, 0x00, True, 0),
     "t_cash_exact":   (0x0E, 6, 2, 10, 10, 0x8E, 0, 0x00, True, 0),
@@ -55,6 +58,10 @@ SCENARIOS.update({
     "t_offered_before": (0x8E, 6, 2, 10, 10, 0x8E, 0, 0x00, False, 0),
     "t_aboard":       (0x0E, 6, 2, 10, 10, 0x0E, 0, 0x00, False, 0),
 })
+
+# Scenarios where the stub must return without touching the disk (no overlay load): they take a few ms, a load takes about 1750 ms.
+FAST = {"c_offer_low", "c_hint_wrong", "c_offer_galaxy3", "c_stage7_idle", "c_hint_stage2_wrong_place", "p_brief_low", "p_brief_g1", "p_ceerdi_wrong", "p_birera_early",
+        "t_cash_short", "t_poor", "t_offered_before", "t_aboard", "all_done"}
 
 
 async def main():
@@ -126,7 +133,8 @@ async def main():
                 ksh1 = (await rd(0x38D9))[0]
                 count1 = int.from_bytes(await rd(0x3905, 2), "little")
                 want_cr = ex.get("cash_delta", want_cr)
-                good = shown == msg and back and st1 == want and cr1 - cr0 == want_cr and unit == want_unit and ksh1 - ksh == want_ksh and count1 == ex.get("count_after", 0)
+                fast_ok = (ms < 300) if name in FAST else True
+                good = fast_ok and shown == msg and back and st1 == want and cr1 - cr0 == want_cr and unit == want_unit and ksh1 - ksh == want_ksh and count1 == ex.get("count_after", 0)
                 ok &= good
                 print(f"{'ok  ' if good else 'FAIL'} {name:15s} message={shown} returned={back} state {st:02X}->{st1:02X} (want {want:02X}) credits +{cr1 - cr0} count {count1} unit {unit:02X} killScoreHigh +{ksh1 - ksh}  [{ms:.0f} ms to the message or return]")
             print("ALL OK" if ok else "FAILURES")

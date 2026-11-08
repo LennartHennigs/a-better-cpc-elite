@@ -540,17 +540,17 @@ loads the flight image for the state at every launch where it differs from the o
 
 | Part | Constrictor | Thargoid plans | Trumbles | Shared |
 |---|---|---|---|---|
-| Docked overlay (file) | `MISSIONC.BIN` 652 | `MISSIONP.BIN` 362 | `MISSIONT.BIN` 178 | stub 135 (resident in the tail) |
+| Docked overlay (file) | `MISSIONC.BIN` 565 | `MISSIONP.BIN` 326 | `MISSIONT.BIN` 178 | stub 242 (resident in the tail; holds the trigger tests and the 9-row system table) |
 | Flight image (file) | `MFLIGHTC.BIN` 587 | `MFLIGHTP.BIN` 223 | `MFLIGHTT.BIN` 286 | default image `MFLIGHT0.BIN` 125 (also what COMMONXX.BIN carries) |
-| Text (inside the overlay) | 472 | 248 | 133 | |
+| Text (inside the overlay) | 450 | 248 | 133 | |
 | Own flight code beyond the default | 462 (hull 261, spawn check 128, laser rule 36, kill hook 33, ship table 4 + helper 19) | 98 | 161 | recharge hook 13 and launch hook 58 are in every image |
 
-- **Worst case in RAM:** docked 135 + 652 = 787 of 812 bytes (25 spare); flight 587 of 610 (23 spare, the Constrictor image). Without overlays the three docked modules would need about 1,300 bytes and the flight code about 700.
+- **Worst case in RAM:** docked 242 + 565 = 807 of 812 bytes (5 spare); flight 587 of 610 (23 spare, the Constrictor image). Without overlays the three docked modules would need about 1,300 bytes and the flight code about 700.
 - **Disk:** seven new files on the DSK (`MISSIONC/P/T.BIN`, `MFLIGHT0/C/P/T.BIN`), about 2.4 KB in 1 KB blocks. The DSK writer in `tools/build_dsk.py` adds them (header, directory entry, blocks).
-- **Time (emulated):** a docking that loads a module takes about 1.75 s more; a launch with a flight-image swap about 1.9 s more (3.9 s against 2.0 s for `loadIndicator` alone). Nothing extra when nothing is active or the right image is in RAM.
+- **Time (emulated):** the stub tests the trigger first, so a docking with nothing to do costs nothing extra; a docking that loads a module (right system for the stage, an offer, a reward) takes about 1.9-2.1 s more; a launch with a flight-image swap about 1.9 s more (3.9 s against 2.0 s for `loadIndicator` alone). Nothing extra when nothing is active or the right image is in RAM.
 - **Save bytes used** (all four were unused by the stock game): `&38FD` state (bits 0-1 Constrictor, 2-3 plans, 4-6 hint stage, 7 Trumbles offered), `&3905-&3906` Trumble count; `&38FE` is free. No change to the save key.
 - **Rewards:** Constrictor 5,000 Cr and +1 `killScoreHigh`; plans the Navy energy unit (`extraEnergyUnit` `&FE`, 3 recharge steps per call) and +1 `killScoreHigh`; Trumbles none (sun and the hold are the game).
 - **Behaviour added to stock code:** type 19 (Constrictor, hull from Fessor's `Constrictor.asm`), the military-laser rule, the Orarra spawn, a Thargoid plus Thargon on 22% of the spawn checks while the plans are aboard, Trumble breeding on arrival and in flight, heat death in a sun, an inventory line.
 - **Not done / open:** a real playthrough; sound for Trumbles; the name-hash order (code in `docs/_mission_build_plan.md`, would only move Trumbles); mission text is in the engine's default capitalised-words style (the stock mission screens use the `{0D}`
   lowercase mode and `{13}` capital marks instead, which would cost about 38 docked bytes in the Constrictor overlay); ECM and missiles of the Constrictor come from the hull header and were not checked.
-- **Tests:** `tools/test_mission_hook.py` 22, `test_launch.py` 12, `test_mission_flight.py` 14, `test_plans.py` 5, `test_trumbles.py` 7 scenarios, all passing; `bash tools/check_src.sh` keeps the stock build byte-exact and the `-DMISSIONS` files the same length.
+- **Tests:** `tools/test_mission_hook.py` 25 (nine of them assert that no overlay is loaded), `test_launch.py` 12, `test_mission_flight.py` 14, `test_plans.py` 5, `test_trumbles.py` 7 scenarios, all passing; `bash tools/check_src.sh` keeps the stock build byte-exact and the `-DMISSIONS` files the same length.

@@ -19,13 +19,70 @@ missionsDockedEntry:                  ; = &1714, the fixed entry the docking cod
     ld b,a
     and 0x03
     cp 0x02
-    ld a,"C"                          ; Constrictor not finished: its module
-    jr nz,mxLoadModule
+    jr z,mxPlansPart
+    ld c,"C"                          ; Constrictor not finished
+    and a
+    jr z,mxCOffer                     ; 0: not offered yet
+    cp 0x03
+    jr z,mxLoadC                      ; 3: killed, the reward is paid by the module
+    ld a,b                            ; 1: hunting. The module is only needed at the system of the current hint stage
+    rrca
+    rrca
+    rrca
+    rrca
+    and 0x07
+    cp 0x07
+    ret nc                            ; stage 7: all hints given, the Orarra spawn is a flight matter
+    jr mxStageRow
+mxCOffer:
+    ld a,(mxCurrentGalaxy)
+    cp 0x02
+    ret nc                            ; offered in galaxy 1 and 2 only
+mxLoadC:
+    ld a,c
+    jr mxLoadModule
+mxPlansPart:
+    ld c,"P"
     ld a,b
     and 0x0C
     cp 0x0C
-    ld a,"P"                          ; Thargoid plans not finished: its module
-    jr nz,mxLoadModule
+    jr z,mxTrumbles
+    and a
+    jr nz,mxPlansRow
+    ld a,(mxKillScoreHigh)            ; plans not offered yet: 1280 kill points and galaxy 3
+    cp 0x05
+    ret c
+    ld a,(mxCurrentGalaxy)
+    cp 0x02
+    ret nz
+    ld a,c
+    jr mxLoadModule
+mxPlansRow:
+    rrca
+    rrca                              ; 1 (go to Ceerdi) or 2 (go to Birera)
+    add a,0x06                        ; rows 7 and 8
+mxStageRow:                           ; A = row of mxStageTable: load module C only when the player is at that system
+    ld e,a
+    add a,a
+    add a,e
+    ld e,a
+    ld d,0
+    ld hl,mxStageTable
+    add hl,de
+    ld a,(mxCurrentGalaxy)
+    cp (hl)
+    ret nz
+    inc hl
+    ld a,(mxPresentSystemX)
+    cp (hl)
+    ret nz
+    inc hl
+    ld a,(mxPresentSystemY)
+    cp (hl)
+    ret nz
+    ld a,c
+    jr mxLoadModule
+mxTrumbles:
     bit 7,b
     ret nz                            ; the Trumbles offer was made already
     ld hl,(mxCredits)                 ; both finished: offer Trumbles at 5,017.6 Cr (whole thousands word, then the decicredits word)
@@ -55,6 +112,20 @@ mxLoadModule:
 
 mxOverlayName:
     db "MISSION?"
+
+; Where the stage-bound modules have something to do: galaxy (0-7), system x, system y. Rows 0-6 are the Constrictor hint stages (Reesdice, Arexe, Cearso, Errius,
+; Inbibe, Ausar, Usleri), rows 7 and 8 the plans (Ceerdi, Birera). Coordinates from the CPC name generator (docs/_missions.md section 7). The stub loads the overlay
+; only at the system the current stage asks for, so the 1.75 s disk load is not paid at every docking of a hunt.
+mxStageTable:
+    db 0,149,101
+    db 0,164,89
+    db 1,87,109
+    db 1,184,149
+    db 1,152,146
+    db 1,146,102
+    db 1,148,68
+    db 2,215,84
+    db 2,63,72
 
 
 ; Message box for string A of the module's text table (word at overlay +3): frame, view 14, colours, cursor, key, back to the docking code.

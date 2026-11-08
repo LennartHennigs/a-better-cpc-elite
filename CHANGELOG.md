@@ -6,6 +6,12 @@ file is the only history. Dates are ISO.
 ## 2026-11-08
 
 - `docs/_gameplay.md` (was empty): the witchspace mis-jump on the CPC compared with the C64 and Spectrum. Found by reading, not traced: the random mis-jump roll looks unreachable (the seed byte is compared with `0x40` then `0x20`); only the bit-6 pause toggle forces it. `work/ext_c64/` (C64 source) and `work/ext_c64_flicker/` cloned as references.
+- No needless overlay loads (branch `mission-trumbles`): the docked stub now tests the trigger before it touches the disk. A 9-row system table (`mxStageTable`, galaxy/x/y: the seven
+  Constrictor hint systems, Ceerdi, Birera) and the stage in the state byte tell it whether the player is at the system the current stage wants; the offers need galaxy 1-2 (Constrictor), rank 5 and
+  galaxy 3 (plans), cash (Trumbles). The overlays dropped their own tables and place checks (they only advance the stage and show the text). **Result: a docking that has nothing to do takes 0 ms
+  extra (was about 1,750 ms for every docking during a hunt or while the plans are aboard); only a docking at the right system, an offer or a reward loads a module (about 1,900-2,100 ms).**
+  Sizes now: stub 242, `MISSIONC.BIN` 565, `MISSIONP.BIN` 326, `MISSIONT.BIN` 178; **largest docked need 242 + 565 = 807 of 812 bytes (5 spare)**. Two Constrictor hints were shortened to fit.
+  `tools/test_mission_hook.py`: 25 scenarios, nine of them assert the load is skipped (under 300 ms), all pass.
 - Trumbles, flight overlays, final layout (branch `mission-trumbles`). **Flight tail** (COMMONXX `&9D9E-&9FFF`) is now a vector table (8 jp entries at fixed addresses: ship table, spawn check, kill, laser,
   recharge, arrival, sun, inventory), an id byte (`mxFlightId` `&9DB6`), the launch hook `mxLaunchEntry` and one mission image. The image files `MFLIGHT0/C/P/T.BIN` are cut from builds with
   `-DFL_C/-DFL_P/-DFL_T` (the default image `0` is what COMMONXX.BIN carries). `mxLaunchEntry` replaces the first call of `launchSequence`; it loads the image the state asks for ("T" Trumbles aboard,

@@ -10,38 +10,17 @@ mxModuleEntry:
     cp 0x01
     ret nz                            ; 2: finished
                                       ; 1: hunting, fall through to the hints
-; Hint chain: at the system of the current stage (table below) show its text and advance the stage.
+; Hint chain: the stub only loads this module at the system of the current stage (mxStageTable), so here the stage just advances and its text is shown.
 mxHint:
     ld a,(missionState)
+    add a,0x10                        ; next stage
+    ld (missionState),a
     rrca
     rrca
     rrca
     rrca
     and 0x07
-    cp 0x07
-    ret nc                            ; stage 7: all hints given
-    add a,a
-    add a,a
-    ld e,a                            ; 4 bytes per row
-    ld d,0
-    ld hl,missionHintTable
-    add hl,de
-    ld a,(mxCurrentGalaxy)
-    cp (hl)
-    ret nz
-    inc hl
-    ld a,(mxPresentSystemX)
-    cp (hl)
-    ret nz
-    inc hl
-    ld a,(mxPresentSystemY)
-    cp (hl)
-    ret nz
-    inc hl
-    ld a,(missionState)
-    add a,0x10                        ; next stage
-    ld (missionState),a
-    ld a,(hl)                         ; string number
+    add a,0x04                        ; string 5 + old stage = 4 + new stage
     jp mxShowEnd
 
 ; Offer: needs 256 kill points and galaxy 1 or 2. Galaxy 2 skips the first two hints and starts at Cearso (stage 2).
@@ -89,16 +68,6 @@ mxDebrief:
     call mxAddDEtoMoney
     ld a,0x0C                         ; string 12
     jp mxShowEnd
-; Hint stages: galaxy (0-7), system x, system y, string number. Coordinates from the CPC name generator (docs/_missions.md section 7).
-missionHintTable:
-    db 0x00,149,101,0x05              ; Reesdice -> Arexe
-    db 0x00,164, 89,0x06              ; Arexe -> galactic jump, Cearso
-    db 0x01, 87,109,0x07              ; Cearso -> Errius
-    db 0x01,184,149,0x08              ; Errius -> Inbibe
-    db 0x01,152,146,0x09              ; Inbibe -> Ausar
-    db 0x01,146,102,0x0A              ; Ausar -> Usleri
-    db 0x01,148, 68,0x0B              ; Usleri -> Orarra
-
 ; Strings (source missions_text.txt; regenerate with python3 -I tools/textenc.py --asm src/elite/missions_text.txt > src/elite/missions_text.asm)
 missionTextTable:
     INCLUDE "missions_text.asm"
