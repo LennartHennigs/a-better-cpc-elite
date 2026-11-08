@@ -471,8 +471,9 @@ from static reading. The mission code looks original, but the hack is unexamined
 - **Variables:** `DS:83A0` mission number (0 none, 1-6), `83A2` mission state, `83A3` target system (seed byte, compared with `8329` = current
   system), `839E` jump counter (saturates at 255), `83B0`/`83B1` offer-pending flags, `836B` legal status, `836C` kill counter.
 - **Trigger (`0x7595`):** every jump increments `839E`; when it reaches `0x20, 0x38, 0x50, 0x6E, 0x8C, 0xA0` (32, 56, 80, 110, 140, 160) the
-  mission number becomes 1 to 6 and the state is cleared, but only while no mission is running. **Stolen police ship is number 4 (110 jumps),
-  asteroids 5, kill-count invasion 6.** This is the ST rule with a one-byte counter, so the CPC Thargon thresholds are not needed.
+  mission number becomes 1 to 6 and the state is cleared, but only while no mission is running. **Stolen police ship is number 4 (110 jumps).
+  Corrected 2026-11-08: number 5 (140 jumps) is the Thargoid plans (a debrief pays 5,000 Cr) and number 6 (160 jumps) is the asteroid
+  bombardment (pays 6,000 Cr); see "Elite Plus missions 4, 5 and 6" below.** This is the ST rule with a one-byte counter, so the CPC Thargon thresholds are not needed.
 - **Offer (`0x99DC`, run at docking):** twists the galaxy seed (`0x205-0x20B`) until the system byte differs from the current one, stores it in
   `83A3`, sets state 1 and prints the text with the system name. Mission 4 has **no Y/N prompt**, only "press any key".
 - **Arrival (`0x7543`):** states 1/2 are re-evaluated at each jump: state 2 if the new system's byte equals `83A3`, else 1.
@@ -506,6 +507,26 @@ from static reading. The mission code looks original, but the hack is unexamined
   one that fits a useful patch is `0x7455`, the galactic jump: after the counter reaches galaxy 8 (the ninth) a 300/65536 roll keeps it, otherwise it wraps
   to galaxy 0; `stc` makes `jb` always taken, so the ninth galaxy is guaranteed. The Frontier post does not say which occurrence, so this is a likely match, not
   proven. The other two are the mission-6 Viper spawn roll (`0x7B51`) and a per-tick Cobra-class roll (`0x82DF`). The savegame flag and the Base mission are not checked.
+
+### Elite Plus missions 4, 5 and 6, read again (2026-11-08, static, nothing run)
+
+Method: capstone on `work/elite plus/extracted/ELITE.img`, every `cmp byte [0x83A0],n` site, offer (`0x98EB`), debrief (`0x9AC4`), spawn (`0x7A66-0x7C8F`) and kill (`0xAD4F`).
+The offer pointers give the texts: 4 -> "stolen by Thargoid infiltrators", 5 -> "plans for a new Thargoid invasion ship", 6 -> "bombarded by large rocks and asteroids".
+Common to all: `83B0` = 1 once the offer is shown (the offer runs when `83B0` is 0 at docking, `0x8C17-0x8C1E`); `83B0` goes back to 0 with `83A0` when the debrief is paid.
+
+| | 4 Stolen police ship | 5 Thargoid plans | 6 Asteroid bombardment |
+|---|---|---|---|
+| Jump counter | 110 | 140 | 160 |
+| Target `83A3` | seed twist, must differ from here | same | same |
+| State `83A2` | 1 hunting, 2 in target system, 3 killed | not used | counter, set to `0x32` (50) at the offer |
+| In flight | one marked police Viper (above) | `0x7A66`: `83B0` = 1, 60/65536 per check, only with no hostile around (`0x8736` = 0), spawns the 27th blueprint row with aggression 5, an ambush (not tied to a system) | `0x7B32`: only in the target system, state above 1: 5000/65536 per check spawns blueprint row 5 (aggression 3, marker `[+0x25]` = 2, placed by `0x7E32`); with a roll of 300 or less one more ship of row `0x8815` (aggression 5, `0x7C59`) |
+| Kill (`0xAD4F`) | marked ship: state 3, flash "Stolen Viper Destroyed!" | none | marked ship (`[+0x25]` = 2): state minus 1, down to 1 |
+| End | dock anywhere: 4,000 Cr | dock **in the target system**: 5,000 Cr (`0xC350` decicredits) | state equals 1, dock anywhere: 6,000 Cr (`0xEA60`) |
+
+Notes: (a) so "the two Elite Plus missions" that are not in any other port are 4 and 6; 5 is the BBC plans mission with an ambush; (b) no failure path was found for 6
+(the asteroids never "reach the planet"; leaving the system just stops the spawning, the counter stays); (c) the mask mission texts belong to the 2/3 slots and are not examined;
+(d) which blueprint rows are the asteroid and boulder is unchecked (row index times 10 into `0x8739`; the row numbers do not match the name list order); (e) the `[+0x25]` marker byte
+is a ship-record byte the CPC does not have: it needs a different marker (see the plan below).
 
 CPC consequence: the plan above holds, with these corrections. Use a state byte (0-3), not a `Missionflag` bit; copy the police spawn with
 the changes above and a marker byte; drop the Y/N offer; the trigger needs only a saturating jump counter. Still open: where in the CPC ship

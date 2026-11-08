@@ -9,6 +9,12 @@ Open work, most useful first. `CLAUDE.md` keeps the short list; details live in 
 - [ ] or other color for asteroids?
 - [ ] show different ships on load. asrrow keys left right for next
   
+## Missions (branch `mission-trumbles`)
+- [ ] Listen to the Trumble squeak; pick the effect (bit 5 now; alternatives flags2 bit 7, flags1 bit 7); decide the Trumble end condition and sprite thresholds.
+- [ ] Real playthrough of Constrictor -> plans -> Trumbles with save/load; text case decision; Constrictor image 593/610.
+- [ ] Elite Plus mission 4 (stolen police ship) and 6 (asteroid bombardment): see `docs/_missions.md` "Elite Plus missions 4, 5 and 6" and the numbered list in the plan.
+- [ ] Merge `mission-trumbles` into `main`; check `check_src.sh de` and `fr`.
+
 ## Disassembly (`src/elite/`)
 - [x] Name the `dat_` variables: 109 of 176 named on 2026-11-07 (`tools/rename_dat.py`, map in `tools/rename_maps/`); `tools/check_src.sh` still byte-exact.
 - [ ] The remaining 37 `dat_` labels in `src/elite/` (counted with `grep -c "^dat_"`), checked 2026-11-07. Done: 16 address/message-id immediates
