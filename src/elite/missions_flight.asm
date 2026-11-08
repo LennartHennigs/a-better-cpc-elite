@@ -4,6 +4,7 @@
 ; (mxFlightBase to mxFlightEnd) and the launch hook below loads the one the state byte asks for.
 mxTrCount equ 0x3905                ; Trumble count, 16 bit, kept at 0x7FFF or less (save bytes the stock game never uses; docs/_savegame.md)
 mxStateByte equ 0x38FD              ; missionState (see missions_docked.asm): bits 0-1 Constrictor, bits 2-3 Thargoid plans, bits 4-6 hint stage, bit 7 Trumbles
+mxAsteroidCount equ 0x38FE            ; asteroid counter, then (asteroids paid) the stolen police ship state in bits 0-1
 mxTypeConstrictor equ 19            ; ship type after the 19 stock ships (0-18)
 
     IFDEF FL_C
@@ -30,6 +31,11 @@ mxTypeConstrictor equ 19            ; ship type after the 19 stock ships (0-18)
     DEFINE HAS_SPAWN
     DEFINE HAS_KILL
     DEFINE HAS_ARRIVE
+    ENDIF
+    IFDEF FL_V
+    DEFINE FLID "V"
+    DEFINE HAS_SPAWN
+    DEFINE HAS_KILL
     ENDIF
     IFNDEF FLID
     DEFINE FLID "0"
@@ -83,6 +89,15 @@ mxLaunchEntry:
     and 0x5C
     cp 0x1C                           ; plans finished and the asteroid stage is 1 (waiting: the image counts the jumps) or 3 (clearing Ceerdi); bit 5 tells them apart
     ld a,"A"
+    jr z,mxFlightGo
+    ld a,b
+    and 0x7C
+    cp 0x5C                           ; asteroids paid: the police ship hunt (&38FE bits 0-1 = 1) needs the V image
+    jr nz,mxFlightNone
+    ld a,(mxAsteroidCount)
+    and 0x03
+    cp 0x01
+    ld a,"V"
     jr z,mxFlightGo
 mxFlightNone:
     ld a,"0"
@@ -158,5 +173,8 @@ mxRechargeImpl:
     ENDIF
     IFDEF FL_A
     INCLUDE "missions_flight_a.asm"
+    ENDIF
+    IFDEF FL_V
+    INCLUDE "missions_flight_v.asm"
     ENDIF
 mxFlightEnd:

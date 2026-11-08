@@ -13,7 +13,7 @@ Open work, most useful first. `CLAUDE.md` keeps the short list; details live in 
 - [ ] Listen to the Trumble squeak; pick the effect (bit 5 now; alternatives flags2 bit 7, flags1 bit 7); decide the Trumble end condition and sprite thresholds.
 - [ ] Real playthrough of Constrictor -> plans -> Trumbles with save/load; text case decision; Constrictor image 593/610.
 - [ ] Asteroid mission built on branch `mission-asteroids` (needs a real playthrough, tune 20 asteroids / spawn rate, failure path if any).
-- [ ] Elite Plus mission 4 (stolen police ship), and 6 only if more is wanted: see `docs/_missions.md` "Elite Plus missions 4, 5 and 6" and the numbered list in the plan.
+- [x] Elite Plus mission 4 (stolen police ship) built on `mission-asteroids` (see CHANGELOG), needs a real playthrough; the Constrictor overlay and flight image have 1 byte spare each, so the next change there needs more trimming. Mission 6 extras (Cobra Mk III) only if wanted: see `docs/_missions.md` "Elite Plus missions 4, 5 and 6" and the numbered list in the plan.
 - [ ] Merge `mission-trumbles` into `main`; check `check_src.sh de` and `fr`.
 
 ## Disassembly (`src/elite/`)

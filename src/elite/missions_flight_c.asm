@@ -4,13 +4,9 @@
 ; HL + 4 * (type & &3F) points at the record. Type 19 is served from the one-entry table below, so nothing in the stock table moves.
 mxShipTableImpl:
     ld hl,shipGFXdataTable
-    push af
-    and 0x3F
-    cp mxTypeConstrictor
-    jr nz,mxShipTableDone
+    cp mxTypeConstrictor              ; only our own spawn passes 19, with no flag bits
+    ret nz
     ld hl,mxConstrictorEntry-mxTypeConstrictor*4
-mxShipTableDone:
-    pop af
     ret
 mxConstrictorEntry:
     jp shipdatConstrictor            ; spawnShip reads bytes +1 and +2 (the blueprint address)

@@ -44,7 +44,12 @@ SCENARIOS = {
     "trumbles_aboard":         (0x0E, "0", "T"),
     "trumbles_from_C":         (0x01, "C", "T"),
     "trumbles_gone":           (0x8E, "T", "0"),
+    "police_hunting":          (0x5E, "0", "V"),
+    "police_hunting_from_A":   (0x5E, "A", "V"),
+    "police_killed":           (0x5E, "V", "0"),
+    "police_paid":             (0x5E, "V", "0"),
 }
+POLICE = {"police_hunting": 1, "police_hunting_from_A": 1, "police_killed": 2, "police_paid": 3}   # &38FE (stolen police ship state, bits 0-1)
 TRUMBLES = {"trumbles_aboard", "trumbles_from_C"}   # these run with a non-zero count in &3905
 FLIGHT_ID = 0x9DB6   # mxFlightId: the id byte after the 8-entry vector table
 
@@ -70,7 +75,7 @@ def patches():
 async def main():
     files = dskx.read_files(dskx.load_sectors(ROOT / "work/elite_missions.dsk"))
     images = {}
-    for t in "0CPTA":
+    for t in "0CPTAV":
         raw = files[(0, f"MFLIGHT{t}.BIN")]
         images[t] = raw[128:128 + dskx.amsdos_header(raw)["length"]]   # the file is padded to whole records after the real length
     params = StdioServerParameters(command="cpcxray", args=["mcp", "--config", "config/cpc6128.toml"])
@@ -112,6 +117,7 @@ async def main():
             for name, (st, have, want) in SCENARIOS.items():
                 await c("sna_load", {"path": "output/_launch_after_load.sna"})
                 await c("memory_write", {"address": 0x38FD, "data": "%02X" % st})
+                await c("memory_write", {"address": 0x38FE, "data": "%02X" % POLICE.get(name, 0)})
                 await c("memory_write", {"address": 0x3905, "data": "03 00" if name in TRUMBLES else "00 00"})
                 if have != "0":     # pretend the tail holds that image already
                     img = images[have]

@@ -61,12 +61,17 @@ SCENARIOS.update({
     "a_ready_offer":   (0x2E, 6, 2, 10, 10, 0x3E, 0, 0x00, True, 0),      # ready: the offer, counter 20
     "a_clearing_idle": (0x3E, 6, 2, 215, 84, 0x3E, 0, 0x00, False, 0),    # clearing Ceerdi is a flight matter
     "a_reward":        (0x4E, 6, 2, 10, 10, 0x5E, 6, 0x00, True, 0),      # cleared: 6,000 Cr at any docking
-    "a_paid_trumbles": (0x5E, 6, 2, 10, 10, 0xDE, 0, 0x00, True, 0),      # paid: on to the Trumbles offer
+    "v_offer":         (0x5E, 6, 2, 10, 10, 0x5E, 0, 0x00, True, 0),      # asteroids paid: the stolen police ship is offered (&38FE bits 0-1: 0 -> 1)
+    "v_hunt_idle":     (0x5E, 6, 2, 63, 72, 0x5E, 0, 0x00, False, 0),     # hunting at Birera is a flight matter
+    "v_reward":        (0x5E, 6, 2, 10, 10, 0x5E, 4, 0x00, True, 0),      # killed: 4,000 Cr at any docking (2 -> 3)
+    "v_paid_trumbles": (0x5E, 6, 2, 10, 10, 0xDE, 0, 0x00, True, 0),      # police ship paid: on to the Trumbles offer
 })
-EXTRA["a_paid_trumbles"] = dict(cash=(6, 0), key="space", count_after=0, cash_delta=0)
+EXTRA["v_paid_trumbles"] = dict(cash=(6, 0), key="space", count_after=0, cash_delta=0)
+AST0 = {"v_hunt_idle": 1, "v_reward": 2, "v_paid_trumbles": 3}                      # &38FE before
+AST1 = {"p_birera": range(5, 13), "a_ready_offer": [20], "v_offer": [1], "v_hunt_idle": [1], "v_reward": [3], "v_paid_trumbles": [3]}   # &38FE after (default 0)
 
 # Scenarios where the stub must return without touching the disk (no overlay load): they take a few ms, a load takes about 1750 ms.
-FAST = {"a_waiting_idle", "a_clearing_idle", "c_offer_low", "c_hint_wrong", "c_offer_galaxy3", "c_stage7_idle", "c_hint_stage2_wrong_place", "p_brief_low", "p_brief_g1", "p_ceerdi_wrong", "p_birera_early",
+FAST = {"v_hunt_idle", "a_waiting_idle", "a_clearing_idle", "c_offer_low", "c_hint_wrong", "c_offer_galaxy3", "c_stage7_idle", "c_hint_stage2_wrong_place", "p_brief_low", "p_brief_g1", "p_ceerdi_wrong", "p_birera_early",
         "t_cash_short", "t_poor", "t_offered_before", "t_aboard", "all_done"}
 
 
@@ -112,7 +117,7 @@ async def main():
             for name, (st, ksh, gal, x, y, want, want_cr, want_unit, msg, want_ksh) in SCENARIOS.items():
                 await c("sna_load", {"path": "output/_missions_after_load.sna"})
                 await wr(0x38FD, st); await wr(0x38D9, ksh); await wr(0x38DC, gal); await wr(0x3910, x); await wr(0x390E, y)
-                await wr(0x3926, 0); await wr(0x1C23, 0); await wr(0x3902, 0)
+                await wr(0x3926, 0); await wr(0x1C23, 0); await wr(0x3902, 0); await wr(0x38FE, AST0.get(name, 0))
                 ex = EXTRA.get(name, {})
                 if "cash" in ex:
                     await c("memory_write", {"address": 0x38DD, "data": "%02X %02X %02X %02X" % (ex["cash"][0] & 255, ex["cash"][0] >> 8, ex["cash"][1] & 255, ex["cash"][1] >> 8)})
@@ -141,7 +146,7 @@ async def main():
                 ast = (await rd(0x38FE))[0]
                 want_cr = ex.get("cash_delta", want_cr)
                 fast_ok = (ms < 300) if name in FAST else True
-                good = fast_ok and shown == msg and back and st1 == want and cr1 - cr0 == want_cr and unit == want_unit and ksh1 - ksh == want_ksh and count1 == ex.get("count_after", 0) and (5 <= ast <= 12 if name == "p_birera" else ast == (20 if name == "a_ready_offer" else 0))
+                good = fast_ok and shown == msg and back and st1 == want and cr1 - cr0 == want_cr and unit == want_unit and ksh1 - ksh == want_ksh and count1 == ex.get("count_after", 0) and ast in AST1.get(name, [0])
                 ok &= good
                 print(f"{'ok  ' if good else 'FAIL'} {name:15s} message={shown} returned={back} state {st:02X}->{st1:02X} (want {want:02X}) credits +{cr1 - cr0} count {count1} asteroids {ast} unit {unit:02X} killScoreHigh +{ksh1 - ksh}  [{ms:.0f} ms to the message or return]")
             print("ALL OK" if ok else "FAILURES")

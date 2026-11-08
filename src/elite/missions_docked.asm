@@ -85,10 +85,18 @@ mxAfterPlans:                         ; plans finished: the asteroid mission (mi
     and 0x70
     jr z,mxTrumbles                   ; 0: not part of this chain
     cp 0x50
-    jr nc,mxTrumbles                  ; 5: paid
+    jr nc,mxPolice                    ; 5: paid
     bit 4,a
     ret nz                            ; 1 and 3 (waiting, clearing) are flight matters
     jr mxLoadC                        ; 2 ready: the module (c = "P") makes the offer; 4 cleared: it pays
+mxPolice:                             ; asteroids paid: the stolen police ship (&38FE bits 0-1; the module is MISSIONT) comes before the Trumbles
+    ld a,(mxAsteroidCount)
+    and 0x03
+    cp 0x03
+    jr z,mxTrumbles                   ; 3: paid
+    cp 0x01
+    ret z                             ; 1: the hunt at Birera is a flight matter
+    jr mxCashOk                       ; 0: offer, 2: reward (a module load, "T")
 mxTrumbles:
     bit 7,b
     ret nz                            ; the Trumbles offer was made already

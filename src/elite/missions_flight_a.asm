@@ -2,7 +2,6 @@
 ; the plans module makes the offer at the next docking. Stage 3 (clearing): while Ceerdi is being cleared and the player is at Ceerdi (galaxy 3, x 215, y 84),
 ; the spawn check adds an asteroid (50% of the checks, the stock asteroid spawn of spawnCommand0) and every asteroid destroyed counts down mxAsteroidCount; at 0 the stage becomes 2
 ; (4, cleared) and the plans module pays 6,000 Cr at the next docking.
-mxAsteroidCount equ 0x38FE
 
 ; Z when the mission is in stage 3 (clearing) and the player is at Ceerdi. Changes A only.
 mxAstAtTarget:
