@@ -111,6 +111,10 @@ mo2:           sub 3 / jr nc,mo2 / add a,3 / ret
 ```
 Checked 2026-11-08 on `work/saves/` (German build, key offset `&2C2`; checksums ok): names are plain uppercase ASCII ending in a NUL, and the bytes after the NUL are stale (`LEN` is followed by `SON`, left over from JAMESON), so the hash must stop at the NUL, as the routine does. The routine reads the name from RAM at `&38CB`, where it is not encrypted. LEN, PETE and PETER decode to 2, 2 and 1, as predicted. The UK key does not decode these saves.
 
+## Trumbles and flight overlays: BUILT (2026-11-08, branch `mission-trumbles`)
+Flight code is overlaid too: 8-entry vector table + id byte + launch hook + one image (`MFLIGHT0/C/P/T.BIN`: 125 / 587 / 223 / 286 bytes). Docked: stub 135, overlays 652 / 362 / 178; largest need 787 of 812.
+Trumbles (text only) cost 178 docked + 161 flight bytes beyond the default image. Details in `CHANGELOG.md`.
+
 ## Overlays: BUILT (2026-11-08)
 Resident stub (97 bytes) + one overlay file per mission, loaded into the LARGEAXX tail at docking by the game's own `loadFile` (`MISSIONC.BIN` 711 bytes, `MISSIONP.BIN` 362 bytes). Docked
 tail 808 of 812 bytes; about 1.75 s of emulated time per docking that loads a module; the flight code of both missions stays resident (575 of 610 bytes). Details and tests in `CHANGELOG.md`.

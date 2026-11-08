@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Test the launch hook (missionsLaunchEntry, &1717) in cpcxray: the right flight image must be in the COMMONXX tail after it.
+"""Test the launch hook (mxLaunchEntry in the flight tail) in cpcxray: the right flight image must be in the COMMONXX tail after it.
 
 Build first:  python3 -I tools/build_dsk.py --missions ; cp work/elite_missions.dsk work/xray/disk/
 usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_launch.py
 
 Method as in tools/test_mission_hook.py: stop at handleEntitys (&5066), write the built COMMONXX patches (default image, -DMISSIONS), call loadLARGEAXX so the stub is in
-RAM, then for each scenario set missionState (&38FD) and the flight id byte (&9DAD, the image "already loaded"), call &1717 with a trap return address and compare
+RAM, then for each scenario set missionState (&38FD), the Trumble count (&3905) and the flight id byte (&9DB6, the image "already loaded"), call mxLaunchEntry with a trap return address and compare
 the tail (&9D9E..) with the MFLIGHTx.BIN file on the disk. The stub loads the file with the game's loadFile, then continues with loadIndicator.
 """
 import asyncio
@@ -35,14 +35,21 @@ SCENARIOS = {
     "plans_aboard":            (0x0A, "0", "P"),
     "plans_aboard_from_C":     (0x0A, "C", "P"),
     "plans_done":              (0x0E, "P", "0"),
+    "trumbles_aboard":         (0x0E, "0", "T"),
+    "trumbles_from_C":         (0x01, "C", "T"),
+    "trumbles_gone":           (0x8E, "T", "0"),
 }
+TRUMBLES = {"trumbles_aboard", "trumbles_from_C"}   # these run with a non-zero count in &3905
+FLIGHT_ID = 0x9DB6   # mxFlightId: the id byte after the 8-entry vector table
 
 
 def patches():
     with tempfile.TemporaryDirectory() as d:
-        out = Path(d) / "c.bin"
-        subprocess.run([str(Path.home() / ".local/bin/sjasmplus"), "-DMISSIONS", f"--raw={out}", str(ROOT / "src/elite/commonxx.asm")], check=True, capture_output=True)
+        out, sym = Path(d) / "c.bin", Path(d) / "c.sym"
+        subprocess.run([str(Path.home() / ".local/bin/sjasmplus"), "-DMISSIONS", f"--raw={out}", f"--sym={sym}", str(ROOT / "src/elite/commonxx.asm")], check=True, capture_output=True)
         new = out.read_bytes()
+        import re
+        syms = {m.group(1): int(m.group(2), 16) for m in re.finditer(r"^(\w+):\s+EQU\s+0x([0-9A-Fa-f]+)", sym.read_text(), re.M)}
     old = (ROOT / "work/bin_stock/COMMONXX.BIN").read_bytes()
     ranges = []
     for i, (a, b) in enumerate(zip(new, old)):
@@ -51,13 +58,13 @@ def patches():
                 ranges[-1][1] = i + 1
             else:
                 ranges.append([i, i + 1])
-    return [(0x1A40 + lo, new[lo:hi]) for lo, hi in ranges]
+    return [(0x1A40 + lo, new[lo:hi]) for lo, hi in ranges], syms
 
 
 async def main():
     files = dskx.read_files(dskx.load_sectors(ROOT / "work/elite_missions.dsk"))
     images = {}
-    for t in "0CP":
+    for t in "0CPT":
         raw = files[(0, f"MFLIGHT{t}.BIN")]
         images[t] = raw[128:128 + dskx.amsdos_header(raw)["length"]]   # the file is padded to whole records after the real length
     params = StdioServerParameters(command="cpcxray", args=["mcp", "--config", "config/cpc6128.toml"])
@@ -86,7 +93,8 @@ async def main():
             rep = await c("run", {"max_us": 10_000_000, "timeout_s": 60})
             assert rep.get("reason") == "breakpoint", rep
             await c("breakpoint_remove", {"breakpoint_id": bp})
-            for addr, data in patches():
+            ranges, syms = patches()
+            for addr, data in ranges:
                 await c("memory_write", {"address": addr, "data": data.hex()})
             await c("breakpoint_add", {"address": TRAP, "kind": "pc"})
             rep = await call(0x8732, 20_000_000)            # loadLARGEAXX: the stub appears in the LARGEAXX tail
@@ -96,13 +104,14 @@ async def main():
             for name, (st, have, want) in SCENARIOS.items():
                 await c("sna_load", {"path": "output/_launch_after_load.sna"})
                 await c("memory_write", {"address": 0x38FD, "data": "%02X" % st})
+                await c("memory_write", {"address": 0x3905, "data": "03 00" if name in TRUMBLES else "00 00"})
                 if have != "0":     # pretend the tail holds that image already
                     img = images[have]
                     await c("memory_write", {"address": BASE, "data": img.hex()})
-                rep = await call(0x1717, 80_000_000)
+                rep = await call(syms["mxLaunchEntry"], 80_000_000)
                 ms = rep.get("emulated_us", 0) / 1000
                 back = rep.get("pc") == "%04X" % TRAP
-                ident = chr((await c("memory_read", {"address": 0x9DAD, "length": 1}))["hex"] and int((await c("memory_read", {"address": 0x9DAD, "length": 1}))["hex"], 16))
+                ident = chr(int((await c("memory_read", {"address": FLIGHT_ID, "length": 1}))["hex"], 16))
                 img = images[want]
                 ram = bytes.fromhex((await c("memory_read", {"address": BASE, "length": len(img)}))["hex"])
                 good = back and ident == want and ram == img

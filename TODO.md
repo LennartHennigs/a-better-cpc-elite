@@ -74,7 +74,11 @@ Open work, most useful first. `CLAUDE.md` keeps the short list; details live in 
 - [x] (2026-11-08, branch `mission-constrictor`) Hull in the flight tail (261 bytes) and ship type 19 via `mxShipTable`; flight tail 280/610 used. Wireframe close-up done (`work/xray/output/missions_constrictor_closeup.png`). Spawn at Orarra and the kill hook are built and tested (flight tail 441/610). Special behaviour built (only military lasers or better hurt it; flight tail 477/610). Open: play the whole chain through once in a real game (galaxy change, Orarra spawn, real kill, reward); check its ECM and missiles from the hull header; then Plans.
 - [x] (2026-11-08, branch `mission-plans`) Thargoid plans built and tested: docked 402 bytes, flight +98 (575/610 with the Constrictor). Constrictor + Plans docked do not fit together (802 + 402 > 812): overlay or shared code/text needed. Open: real playthrough, Trumbles branch.
 - [x] (2026-11-08) Overlay scheme built and tested (stub 97 + MISSIONC 711 / MISSIONP 362; docked tail 808/812; flight tail 575/610 with both missions). Open: the flight side is still resident (Trumbles needs room: shrink or overlay the flight code), name-hash order when Trumbles exists, shrinking the Constrictor text (the two briefings share most words), a real playthrough.
-- [ ] (superseded by the line above) Evaluate the mission overlay scheme (load missions one at a time, random order per commander): loader size, disk space, save-load restore.
+- [x] (2026-11-08, branch `mission-trumbles`) Trumbles built and tested; flight code is now overlaid too (images 125/587/223/286 bytes, vectors + launch hook); docked max 787/812.
+- [ ] Constrictor flight image is 587 of 610 bytes (23 free): shrink it (its spawn check is 128 bytes) before adding anything else to it.
+- [ ] Trumbles: sound, a real end condition other than the sun, interplay with the escape pod and with selling; name-hash order (`docs/_mission_build_plan.md` has the 21-byte routine) now only moves Trumbles.
+- [ ] Play the whole chain in a real game; merge order: foundation -> constrictor -> plans -> trumbles (they are stacked, so only `mission-trumbles` needs merging).
+- [ ] (superseded) Evaluate the mission overlay scheme (load missions one at a time, random order per commander): loader size, disk space, save-load restore.
 
 ## Space savings (review 2026-11-07)
 - [ ] Peephole pass in a separate variant build, not in the byte-exact `src/elite/`: in `commonxx` 28 unconditional and 28 conditional `jp` within

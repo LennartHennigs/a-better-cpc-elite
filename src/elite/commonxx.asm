@@ -6822,7 +6822,11 @@ LAB_ram_4a84:
     ld hl,dat_38E1
     ld (0xEFF6),hl
 LAB_ram_4a8e:
+    IFDEF MISSIONS
+    call mxInvHook                  ; missions_flight.asm: a Trumbles line before the first good
+    ELSE
     call prQuantityofGoodinCargohold
+    ENDIF
     call nc,placeCursor
     ld hl,storedByteVariable
     inc (hl)
@@ -7404,7 +7408,11 @@ chkEnemyStation:
     res 7,(hl)
 setShipvarsAtArrival:
     ld a,0x01
+    IFDEF MISSIONS
+    call mxArrive                   ; missions_flight.asm: Trumbles breed (replaces ld (tunnelFlag2),a)
+    ELSE
     ld (tunnelFlag2),a
+    ENDIF
     xor a
     ld (Viewdirection),a
     ld (CockpitTemp),a
@@ -10696,7 +10704,11 @@ todoOverheating:
     jr nz,LAB_ram_6820
     ld a,(drawradius)
 LAB_ram_6820:
+    IFDEF MISSIONS
+    call mxSun                      ; missions_flight.asm: Trumbles die in the heat (replaces ld hl,CockpitTemp)
+    ELSE
     ld hl,CockpitTemp
+    ENDIF
     inc (hl)
     add a,0x02
     jr z,killmebyoverheating
@@ -12264,7 +12276,7 @@ todoDockingProcedure:
     jp execSelectedKeyFunctions
 launchSequence:
     IFDEF MISSIONS
-    call 0x1717                     ; missions_docked.asm (LARGEAXX tail): loads the flight image the mission state asks for, then loadIndicator
+    call mxLaunchEntry              ; missions_flight.asm: loads the flight image the mission state asks for, then loadIndicator
     ELSE
     call loadIndicator
     ENDIF

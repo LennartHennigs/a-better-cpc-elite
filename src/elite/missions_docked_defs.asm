@@ -21,7 +21,8 @@ mxPresentSystemY       equ 0x390E
 mxPresentSystemX       equ 0x3910
 mxAddDEtoMoney         equ 0xFE6A     ; DE thousands of credits (COMMON2X)
 mxLoadFile             equ 0x8667
-mxLoadIndicator        equ 0x8717   ; loadIndicator (commonxx): the launch sequence's first call, which the stub takes over
-mxFlightBase           equ 0x9D9E     ; the flight tail of COMMONXX: vector table, id byte, image
-mxFlightLoaded         equ 0x9DAD     ; its id byte: "0" default, "C" Constrictor, "P" plans     ; loadFile: the call is followed by the load address and the file name pointer
+mxTrCount              equ 0x3905     ; Trumble count (16 bit), 0 = none aboard
+mxCredits              equ 0x38DD     ; cash: thousands word, then decicredits word (0-9999)
+mxSbcDEfromMoney       equ 0xFE72     ; subtract DE thousands of Cr; carry if not enough
+mxWaitForKeypress      equ 0x3E5E     ; returns the key in A
 mxExtraEnergyUnit      equ 0x3902     ; 0 none, 0xFF extra energy unit, 0xFE Navy unit (Thargoid plans reward; recharges 3 steps per call)

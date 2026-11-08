@@ -36,6 +36,25 @@ SCENARIOS = {
     "p_birera_early": (0x06, 5, 2, 63, 72, 0x06, 0, 0x00, False, 0),
     "all_done":      (0x0E, 6, 2, 63, 72, 0x0E, 0, 0x00, False, 0),
 }
+# Trumbles offer: extra setup per scenario: cash (thousands word, decicredits word), the count before, the key pressed, and the count / cash change expected
+EXTRA = {
+    "t_offer_yes":    dict(cash=(6, 0), key="y", count_after=1, cash_delta=-5),
+    "t_offer_no":     dict(cash=(6, 0), key="space", count_after=0, cash_delta=0),
+    "t_cash_exact":   dict(cash=(5, 176), key="space", count_after=0, cash_delta=0),
+    "t_cash_short":   dict(cash=(5, 175), key="space", count_after=0, cash_delta=0),
+    "t_poor":         dict(cash=(4, 9999), key="space", count_after=0, cash_delta=0),
+    "t_offered_before": dict(cash=(9, 0), key="space", count_after=0, cash_delta=0),
+    "t_aboard":       dict(cash=(9, 0), key="space", count=5, count_after=5, cash_delta=0),
+}
+SCENARIOS.update({
+    "t_offer_yes":    (0x0E, 6, 2, 10, 10, 0x8E, 0, 0x00, True, 0),
+    "t_offer_no":     (0x0E, 6, 2, 10, 10, 0x8E, 0, 0x00, True, 0),
+    "t_cash_exact":   (0x0E, 6, 2, 10, 10, 0x8E, 0, 0x00, True, 0),
+    "t_cash_short":   (0x0E, 6, 2, 10, 10, 0x0E, 0, 0x00, False, 0),
+    "t_poor":         (0x0E, 6, 2, 10, 10, 0x0E, 0, 0x00, False, 0),
+    "t_offered_before": (0x8E, 6, 2, 10, 10, 0x8E, 0, 0x00, False, 0),
+    "t_aboard":       (0x0E, 6, 2, 10, 10, 0x0E, 0, 0x00, False, 0),
+})
 
 
 async def main():
@@ -81,23 +100,35 @@ async def main():
                 await c("sna_load", {"path": "output/_missions_after_load.sna"})
                 await wr(0x38FD, st); await wr(0x38D9, ksh); await wr(0x38DC, gal); await wr(0x3910, x); await wr(0x390E, y)
                 await wr(0x3926, 0); await wr(0x1C23, 0); await wr(0x3902, 0)
+                ex = EXTRA.get(name, {})
+                if "cash" in ex:
+                    await c("memory_write", {"address": 0x38DD, "data": "%02X %02X %02X %02X" % (ex["cash"][0] & 255, ex["cash"][0] >> 8, ex["cash"][1] & 255, ex["cash"][1] >> 8)})
+                await c("memory_write", {"address": 0x3905, "data": "%02X 00" % ex.get("count", 0)})
                 cr0 = int.from_bytes(await rd(0x38DD, 2), "little")
                 rep = await call(0x1714, 60_000_000)
                 ms = rep.get("emulated_us", 0) / 1000   # includes the overlay load from disk (none when the stub returns early)
                 shown = rep.get("pc") == "%04X" % WAITKEY
                 if shown:
                     await c("screen_image", {"path": f"output/missions_{name}.png"})
-                    await c("key_press", {"key": "space"})
+                    await c("key_press", {"key": ex.get("key", "space")})
                     rep = await c("run", {"max_us": 30_000_000, "timeout_s": 200})
-                    await c("key_release", {"key": "space"})
+                    await c("key_release", {"key": ex.get("key", "space")})
+                    for _ in range(3):      # a second message (the Trumbles purchase) waits for one more key
+                        if rep.get("pc") != "%04X" % WAITKEY:
+                            break
+                        await c("key_press", {"key": "space"})
+                        rep = await c("run", {"max_us": 30_000_000, "timeout_s": 200})
+                        await c("key_release", {"key": "space"})
                 back = rep.get("pc") == "%04X" % TRAP
                 st1 = (await rd(0x38FD))[0]
                 cr1 = int.from_bytes(await rd(0x38DD, 2), "little")
                 unit = (await rd(0x3902))[0]
                 ksh1 = (await rd(0x38D9))[0]
-                good = shown == msg and back and st1 == want and cr1 - cr0 == want_cr and unit == want_unit and ksh1 - ksh == want_ksh
+                count1 = int.from_bytes(await rd(0x3905, 2), "little")
+                want_cr = ex.get("cash_delta", want_cr)
+                good = shown == msg and back and st1 == want and cr1 - cr0 == want_cr and unit == want_unit and ksh1 - ksh == want_ksh and count1 == ex.get("count_after", 0)
                 ok &= good
-                print(f"{'ok  ' if good else 'FAIL'} {name:15s} message={shown} returned={back} state {st:02X}->{st1:02X} (want {want:02X}) credits +{cr1 - cr0} unit {unit:02X} killScoreHigh +{ksh1 - ksh}  [{ms:.0f} ms to the message or return]")
+                print(f"{'ok  ' if good else 'FAIL'} {name:15s} message={shown} returned={back} state {st:02X}->{st1:02X} (want {want:02X}) credits +{cr1 - cr0} count {count1} unit {unit:02X} killScoreHigh +{ksh1 - ksh}  [{ms:.0f} ms to the message or return]")
             print("ALL OK" if ok else "FAILURES")
 
 

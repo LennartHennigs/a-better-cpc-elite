@@ -6,6 +6,19 @@ file is the only history. Dates are ISO.
 ## 2026-11-08
 
 - `docs/_gameplay.md` (was empty): the witchspace mis-jump on the CPC compared with the C64 and Spectrum. Found by reading, not traced: the random mis-jump roll looks unreachable (the seed byte is compared with `0x40` then `0x20`); only the bit-6 pause toggle forces it. `work/ext_c64/` (C64 source) and `work/ext_c64_flicker/` cloned as references.
+- Trumbles, flight overlays, final layout (branch `mission-trumbles`). **Flight tail** (COMMONXX `&9D9E-&9FFF`) is now a vector table (8 jp entries at fixed addresses: ship table, spawn check, kill, laser,
+  recharge, arrival, sun, inventory), an id byte (`mxFlightId` `&9DB6`), the launch hook `mxLaunchEntry` and one mission image. The image files `MFLIGHT0/C/P/T.BIN` are cut from builds with
+  `-DFL_C/-DFL_P/-DFL_T` (the default image `0` is what COMMONXX.BIN carries). `mxLaunchEntry` replaces the first call of `launchSequence`; it loads the image the state asks for ("T" Trumbles aboard,
+  "C" Constrictor state 1 or 3, "P" plans aboard, else "0") unless it is already there, then `loadIndicator`. It lives in the base part that is identical in every image, so the load can overwrite
+  it while it waits. **Measured image sizes: default 125 bytes, Constrictor 587 (23 free, tight), plans 223, Trumbles 286 (161 beyond the default).** Cost: a launch with an image swap takes
+  about 3.9 s of emulated time against 2.0 s without (`loadIndicator` alone).
+  **Docked:** the stub is 135 bytes (it no longer holds the launch code; it picks C, then P, then T, blocks everything while Trumbles are aboard, and checks the cash for the offer); overlays
+  `MISSIONC.BIN` 652 (the two briefings now share a head and tail: 472 bytes of text instead of 552), `MISSIONP.BIN` 362, `MISSIONT.BIN` 178. **Largest docked need: 135 + 652 = 787 of 812 bytes.**
+  **Trumbles** (text only): offer once the Constrictor and the plans are finished and cash is 5,017.6 Cr or more (state bit 7 records it, whatever the answer; Y pays 5,000 Cr and gives one Trumble);
+  count = word at `&3905` (at most `&7FFF`); on every arrival with Trumbles the food and narcotics are eaten (the tonnes return to the free hold) and count = 2 * ((count + 0..15) OR 4);
+  with 256 or more, 14% of the spawn checks add one; at cabin temperature 240 or more the sun halves the count each call; the inventory shows a "Trumbles n" line before the goods. While Trumbles are aboard no
+  other mission is offered. No sound, no sprites, no name-hash order (Trumbles are simply last). Tests (cpcxray, all pass): `test_mission_hook.py` 22 docked scenarios (through the real overlay load,
+  including offer Y/N, cash 5,017.6 and 5,017.5, Trumbles aboard), `test_launch.py` 12, `test_mission_flight.py` 14, `test_plans.py` 5, `test_trumbles.py` 7 plus a screenshot of the inventory line.
 - Overlays (branch `mission-plans`): the docked modules are now separate files loaded at docking. A 97-byte resident stub in the LARGEAXX tail (`src/elite/missions_docked.asm`:
   it hands over to `chkMissions` while an old mission is pending, returns when `killScoreHigh` is 0 (no disk access under 256 points), picks the module from the state byte, patches the
   last letter of the name `MISSION?`, loads the file with the game's `loadFile` at `mxOverlayBase` (`&1775`) and jumps there; it also holds the shared box printer `missionShow`). Overlay
