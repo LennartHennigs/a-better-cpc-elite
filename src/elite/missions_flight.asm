@@ -29,6 +29,18 @@ mxSpawnCheck:
     push hl
     push ix
     push iy
+    IFDEF PLANS
+    ld a,(mxStateByte)                ; Thargoid plans aboard (bits 2-3 = 2): about 22% of the checks (a roll of 200 or more) add a Thargoid and a Thargon
+    and 0x0C
+    cp 0x08
+    jr nz,mxNoPlansSpawn
+    call getRandomNumber
+    cp 200
+    jr c,mxNoPlansSpawn
+    call mxSpawnThargoidPair
+    jr mxSpawnDone
+mxNoPlansSpawn:
+    ENDIF
     ld a,(mxStateByte)
     ld b,a
     and 0x03
@@ -141,5 +153,48 @@ mxLaserNormal:
     pop af
     ld (ix+34),a
     ret
+
+    IFDEF PLANS
+; A Thargoid (type 15) placed like spawnCommand1 places one, and a Thargon (type 18) on top of it. Stops quietly when no slot is free.
+mxSpawnThargoidPair:
+    call lookforFreeSlot
+    ret nz
+    ld a,0x0F
+    call spawnShip
+    set 0,(ix+37)
+    call getRandomNumber
+    and 0x0F
+    or 0x04
+    ld (ix+7),a
+    rra
+    rra
+    rra
+    and 0x01
+    ld (ix+1),a
+    xor a
+    ld (ix+4),a
+    call setDirectionofEntity
+    push ix
+    pop hl                            ; the Thargoid's position
+    call lookforFreeSlot
+    ret nz
+    ld a,0x12
+    call spawnShip
+    push ix
+    pop de
+    ld bc,0x0009
+    ldir                              ; same x, y, z as the mother ship
+    set 0,(ix+37)
+    jp setDirectionofEntity
+
+; Replaces `call nz,SUB_ram_3693` in RechargeEnergy (an extra energy unit is fitted): one extra recharge step, and a second one for the Navy unit
+; (extraEnergyUnit = &FE, the Thargoid plans reward), so the Navy unit gives 3 steps per call, the ordinary unit 2 and none 1.
+mxRecharge:
+    call SUB_ram_3693
+    ld a,(extraEnergyUnit)
+    cp 0xFE
+    ret nz
+    jp SUB_ram_3693
+    ENDIF
 
     INCLUDE "missions_hull.asm"

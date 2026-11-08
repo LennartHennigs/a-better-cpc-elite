@@ -74,7 +74,7 @@ still free. Overflow stops the build (assertion in the source), so the figure is
   Plan: generate our own hull bytes from the decoded MSX data (`work/ext_msx/ricbit/shapes.asm`: 18 vertices incl. one duplicate, 24 edges, 10 face
   normals and edge lists) with a script, and compare with his file locally only; or ask him (CPCWiki profile u=1495) for permission. Free flight tail after the hull: 610 - 261 = 349 bytes
   for the table entry (4), spawn and kill hooks. The ship table `shipGFXdataTable` (`&1B78`, 4 bytes per ship) needs a free slot after entry 19: check what follows it.
-- `mission-plans` (from constrictor): trigger, 22% Thargoid+Thargon spawn at the top of `spawnCommand0`, Navy energy unit
+- `mission-plans` (from constrictor; BUILT 2026-11-08: docked module 402 bytes, flight +98, tests pass; see CHANGELOG): trigger, 22% Thargoid+Thargon spawn at the top of `spawnCommand0`, Navy energy unit
   (`extraEnergyUnit`, `RechargeEnergy`). Reports incremental bytes and whether it still fits with the Constrictor.
 - `mission-trumbles` (from foundation, text only): offer at cash >= 5,017.6 Cr, count byte(s), arrival hook (`&4E58`), sun death,
   inventory text. Reports incremental bytes and whether it fits alone and on top of Constrictor + Plans.

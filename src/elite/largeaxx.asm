@@ -1327,7 +1327,11 @@ StringTable4:
 ; Free tail of LARGEAXX (&1714-&1A3F, 812 bytes, docked only: the file is reloaded at every docking). Build with -DMISSIONS to add mission code.
 missionsDockedTail:
     IFDEF MISSIONS
-    INCLUDE "missions_docked.asm"
+    IFDEF PLANS
+    INCLUDE "missions_docked_plans.asm"        ; Thargoid plans module (a separate overlay candidate: -DMISSIONS -DPLANS)
+    ELSE
+    INCLUDE "missions_docked.asm"              ; Constrictor module
+    ENDIF
     ENDIF
     ASSERT $ <= 0x1A40
     DS 0x1A40-$

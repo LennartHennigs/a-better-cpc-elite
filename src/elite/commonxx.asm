@@ -3829,7 +3829,11 @@ todoSomethingwithDamageTaken:
 RechargeEnergy:
     ld a,(extraEnergyUnit)
     and a
+    IFDEF PLANS
+    call nz,mxRecharge              ; missions_flight.asm: the Navy unit adds a further step
+    ELSE
     call nz,SUB_ram_3693
+    ENDIF
 ; One recharge step: add 1 to the first energy bank below 0xA0, else charge the front and rear shields
 SUB_ram_3693:
     ld hl,shipEnergyBank4

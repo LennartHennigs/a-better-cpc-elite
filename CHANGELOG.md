@@ -5,6 +5,13 @@ file is the only history. Dates are ISO.
 
 ## 2026-11-08
 
+- Thargoid plans (branch `mission-plans`, built with `-DMISSIONS -DPLANS`, `tools/build_dsk.py --plans`): docked module `missions_docked_plans.asm` (shared definitions and
+  the box printer moved to `missions_docked_defs.asm` and `missions_docked_show.asm`): offer with the Constrictor finished, `killScoreHigh >= 5`, galaxy 3 (bits 2-3 of `&38FD` = 1);
+  Ceerdi (215,84) hands over the plans (2); Birera (63,72) pays the Navy energy unit (`extraEnergyUnit` = `&FE`) and +1 rank (3). Flight: while the plans are aboard `mxSpawnCheck` adds a
+  Thargoid plus a Thargon on a roll of 200 or more (22%) via `mxSpawnThargoidPair`; `mxRecharge` (replaces `call nz,SUB_ram_3693` in `RechargeEnergy`) gives the Navy unit 3 recharge steps
+  per call (ordinary unit 2, none 1). **Measured: docked module 402 of 812 bytes (text 248, code and table 154); flight tail +98 bytes (spawn branch, pair routine, recharge hook), 575 of 610
+  used, 35 free.** The Constrictor docked module is 802, so both together (about 1,170) do not fit the 812-byte tail: they need overlays or shared text and code. `tools/test_plans.py`
+  (cpcxray, 14 scenarios) passes: docked stages and rewards, spawn pairs only while the plans are aboard, recharge 1/2/3 steps.
 - Constrictor special behaviour: `mxLaserHook` (replaces the `ld (ix+34),a` after `sub c` in `applyLaserDamagetoEntity`, same 3 bytes) makes the Constrictor ignore lasers weaker than
   military: the laser power per hit is in C (pulse and beam 15, military 23, mining 50, as in the BBC), a hit below 23 leaves the energy unchanged and returns NZ/NC so nothing counts. Other ships keep the
   original store. **Measured: 36 bytes; flight tail now 477 of 610 (133 free).** `tools/test_mission_flight.py` has five laser scenarios (all 14 pass). Missiles and collisions still hurt it; its ECM and
