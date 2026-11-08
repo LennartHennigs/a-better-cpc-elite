@@ -554,3 +554,23 @@ loads the flight image for the state at every launch where it differs from the o
 - **Not done / open:** a real playthrough; sound for Trumbles; the name-hash order (code in `docs/_mission_build_plan.md`, would only move Trumbles); mission text is in the engine's default capitalised-words style (the stock mission screens use the `{0D}`
   lowercase mode and `{13}` capital marks instead, which would cost about 38 docked bytes in the Constrictor overlay); ECM and missiles of the Constrictor come from the hull header and were not checked.
 - **Tests:** `tools/test_mission_hook.py` 25 (nine of them assert that no overlay is loaded), `test_launch.py` 12, `test_mission_flight.py` 14, `test_plans.py` 5, `test_trumbles.py` 7 scenarios, all passing; `bash tools/check_src.sh` keeps the stock build byte-exact and the `-DMISSIONS` files the same length.
+
+## 11. Trumble sprites on top of the built Trumbles: space estimate (2026-11-08, estimate, nothing built)
+
+Sprites need flight code only, so the cost falls on the Trumbles flight image (`MFLIGHTT.BIN`, 286 of 610 bytes today, 324 free, 292 after a 32-byte stack reserve); the docked side and the other images are untouched.
+Method as in the analysis above ("Trumbles crowding the screen"): software sprites drawn into the off-screen bitmap `&A000-&BFFF` (64 bytes per line, Mode 1, 4 pixels per byte) just before the copy to the screen.
+
+- **Hook:** the single `jp transferBuffertoScreen` at the end of the flight loop (`commonxx.asm`, after `LaserSights`/`DrawTunnle`; the docking and hyperspace tunnels use `call` sites and stay untouched) becomes `jp mxFlightDraw`: one more
+  vector, **+3 bytes in the table and +3 for a default stub in every image** (the Constrictor image goes from 587 to 593 of 610).
+- **Cost of the sprite part in the Trumbles image:**
+
+| Design | Data | Code and state | Image after | Fits in 610? |
+|---|---|---|---|---|
+| A: one shape 16 x 12 px (4 x 12 bytes), OR-blitted, up to 6 sprites, one sprite moved per pass | 48 | draw 70, movement 45, count to sprite number 15, seeding 12, state 18 (6 x x/y/direction) = 160 | about 500 | yes, about 110 free |
+| B1: two animation frames, no mask | 96 | 160 + 10 for the frame toggle | about 555 | yes, about 55 free |
+| B2: two frames with masks (the 0.6-0.9 KB figure in the older analysis) | 192 | 160 + 35 (masked blit, toggle) | about 680 | **no, about 70 over**; would need the inventory line (56) and the slow breeding (29) dropped, or the shapes moved elsewhere |
+
+- **RAM:** the 18 bytes of sprite state sit in the image (zero-filled in the file), so they are counted above; they reset at every flight-image load, which is fine since positions are cosmetic.
+- **Time:** six 16 x 12 blits are about 290 byte operations, roughly 10,000 T-states per frame; the game already spends more than a frame on the copy to the screen, so a few percent at most.
+- **Open points (unchanged from the older analysis):** only pen 2 (black) is fixed in views 0-3, so a two-pen design is a black body with an eye in pen 1 or 3 whose colour depends on the system; pen 3 flickers orange during explosions; sprites show only in views 0-3.
+- **Verdict:** A or B1 fit with room to spare (about 0.2 KB and 0.27 KB); masked animation does not fit without cutting other Trumbles features. Nothing needs more docked space.
