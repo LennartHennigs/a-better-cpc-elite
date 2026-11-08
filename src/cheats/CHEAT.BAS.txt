@@ -9,6 +9,7 @@
 100 PRINT"Own cloak? ";:GOSUB 400:m=64*a
 110 INPUT"Cash Cr (100)";c$:c=VAL(c$):IF c<=0 THEN c=100
 120 INPUT"Mission 0-3 (0)";s$:s=INT(VAL(s$)):IF s<0 OR s>3 THEN s=0
+125 INPUT"Kills (<32768)";k$:INPUT"Jumps";w$:INPUT"Added mission 1-4";z$
 130 INK 1,0:ON ERROR GOTO 160
 140 LOAD"largeaxx",&840:LOAD"commonxx",&1A40
 150 MEMORY &A000
@@ -17,14 +18,14 @@
 180 FOR i=1 TO k:READ x,y:IF f(j) THEN POKE x,y
 190 NEXT:NEXT
 200 POKE &998,h
-210 c=INT(MIN(c,65000000.0)*10):u=INT(c/10000):v=c-u*10000:p=INT(u/256):q=INT(v/256)
-220 POKE &39D9,u-256*p:POKE &39DA,p:POKE &39DB,v-256*q:POKE &39DC,q
+210 c=INT(MIN(c,65000000.0)*10):u=INT(c/10000):v=c-u*10000.0
+220 POKE &39D9,u MOD 256:POKE &39DA,u\256:POKE &39DB,v MOD 256:POKE &39DC,v\256
 230 n=31:IF s=2 THEN n=127 :ELSE IF s=3 THEN n=253
 240 IF s>0 THEN POKE &4E5D,0:POKE &39D6,n:m=m-(s>1)-2*(s>2)
+242 w=VAL(w$):IF w>0 THEN POKE &4E5D,0:POKE &39D6,w
+244 k=MIN(INT(VAL(k$)),32767):POKE &39D4,k MOD 256:POKE &39D5,k\256
+246 z=VAL(z$):IF z>0 THEN POKE &39F9,2-44*(z>1)-48*(z>2):IF z>3 THEN POKE &39FA,3
 250 POKE &3A23,m:CALL &1C82
-400 a$=UPPER$(INKEY$):IF a$="" THEN 400
-410 IF a$="N" THEN PRINT"N":a=0:RETURN
-420 IF a$="Y" OR a$=CHR$(13) THEN PRINT"Y":a=1:RETURN
-430 GOTO 400
-500 DATA Inf shield+fuel,Inf missiles,Free hyperjump,Missile v station,No laser heat,Free gal jump,One-hit kills,Inf energy bomb,No pirate board,*
+400 a$=UPPER$(INKEY$):IF a$="" THEN 400 :ELSE a=-(a$<>"N"):PRINT a$:RETURN
+500 DATA Shield+fuel,Missiles,Hyperjump,Missile v stn,Laser heat,Gal jump,One-hit,Energy bomb,Pirate board,*
 600 DATA 2,&4F02,0,&35CB,0,1,&382D,0,2,&4C08,0,&4C12,0,1,&8A8F,0,1,&7A4F,0,1,&4BFA,0,1,&7AA8,0,1,&2F6A,0,1,&207D,&C9
