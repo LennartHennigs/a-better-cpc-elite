@@ -1,5 +1,7 @@
 # Changelog
 
+- **Trumble squeak.** With 256 or more Trumbles aboard, `mxSpawnCheckImpl` sets bit 5 of `sfxFlags2Bitmap` (the game's own short decaying tone, the engine plays it) with chance high byte / 64 per check, as the C64 scales its noise with the count. Trumbles flight image 562 -> 579 of 610 bytes (31 free). Test added to `tools/test_trumbles.py` (flag set / silent). Not listened to yet; which effect sounds best is a taste choice (other candidates: flags2 bit 7 the missile-lock blip, flags1 bit 7 the key click).
+
 Changes to the project, newest first. The project root is a git repository from 2026-11-07; before that, this
 file is the only history. Dates are ISO.
 

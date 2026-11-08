@@ -128,6 +128,15 @@ async def main():
                     await call(syms["mxSpawnCheck"])
                 n = await word(COUNT)
                 report((start_count < n <= start_count + 100) if expect_growth else n == start_count, f"100 spawn checks from {start_count} Trumbles: count {n} ({'grows by a few' if expect_growth else 'unchanged'})")
+            # squeak: sound bit 5 of sfxFlags2Bitmap, chance high byte / 64 per check (never below 256 Trumbles)
+            for start_count, expect_sound in ((2560, True), (100, False)):
+                await start()
+                await wr(COUNT, start_count & 255, start_count >> 8)
+                await wr(syms["sfxFlags2Bitmap"], 0)
+                for _ in range(100):
+                    await call(syms["mxSpawnCheck"])
+                f = (await rd(syms["sfxFlags2Bitmap"]))[0]
+                report(bool(f & 0x20) == expect_sound and (f & ~0x20) == 0, f"100 spawn checks from {start_count} Trumbles: sfxFlags2Bitmap {f:#04x} ({'squeak bit set' if expect_sound else 'silent'}, nothing else touched)")
             # inventory line: screenshot of the real Inventory screen with 42 Trumbles
             await start()
             await wr(COUNT, 42, 0); await wr(FOOD, 3); await wr(0x1C23, 0)

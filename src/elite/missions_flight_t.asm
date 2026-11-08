@@ -44,13 +44,22 @@ mxArriveDone:
     pop af
     ret
 
-; Spawn check (the first instruction of spawnCommand0, which this must end with): with 256 or more Trumbles about 14% of the checks (a roll of 220 or more) add one.
+; Spawn check (the first instruction of spawnCommand0, which this must end with): with 256 or more Trumbles they squeak now and then, and about 14% of the checks (a roll of 220 or more) add one.
 mxSpawnCheckImpl:
     push af
     push hl
     ld a,(mxTrCount+1)
     and a
     jr z,mxSpawnDone
+    ld h,a                            ; noise: a squeak (sound effect bit 5 of sfxFlags2Bitmap, a short decaying tone) with a chance of high byte / 64
+    call getRandomNumber
+    and 0x3F
+    cp h
+    jr nc,mxSpawnQuiet
+    ld a,(sfxFlags2Bitmap)
+    or 0x20
+    ld (sfxFlags2Bitmap),a
+mxSpawnQuiet:
     call getRandomNumber
     cp 220
     jr c,mxSpawnDone
