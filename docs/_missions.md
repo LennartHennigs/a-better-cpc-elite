@@ -615,3 +615,19 @@ Movement is simpler on the CPC (x in 4-pixel byte units, 0-63, plain 8-bit wrap)
 
 **Built (draft, 2026-11-08):** one 16 x 14 shape (single, no eyes, irregular stubby spikes, pen 3) instead of the two facing shapes of design B1, so the cost is 270 bytes (code about 210, shape 56, state 28), Trumbles image 562 of 610 bytes.
 See `CHANGELOG.md` for the hook site, the register bug that was found live and the tests.
+
+## 11. The combined build: missions and their order (2026-11-08)
+
+One branch holds everything: `mission-asteroids` (it contains `missions-foundation`, `mission-constrictor`, `mission-plans`, `mission-trumbles` and `escape-menus`; `master` is its ancestor). `python3 -I tools/build_dsk.py --missions` writes `work/elite_missions.dsk`: the four code files plus `MISSIONC/P/T.BIN` and `MFLIGHT0/C/P/T/A/V.BIN`. Booted from the DSK with `RUN"ELITE` in cpcxray (docked at Lave, Escape leaves the buy menu); the missions themselves were tested with forced states, not played.
+
+| # | Mission | Starts when | What you do | Reward | Code |
+|---|---|---|---|---|---|
+| (stock) | Thargon, supernova, cloak/Cougar, invasion | stock rules, take priority (the stub runs `chkMissions` first) | as before | as before | stock |
+| 1 | Constrictor | 256 kill points, docked in galaxy 1 or 2 | seven hint systems, then the Constrictor at Orarra (military laser) | 5,000 Cr + rank | MISSIONC, MFLIGHTC |
+| 2 | Thargoid plans | Constrictor paid, 1280 kill points, galaxy 3 | Ceerdi (get plans), Birera (deliver), Thargoid ambushes | Navy energy unit + rank | MISSIONP, MFLIGHTP |
+| 3 | Asteroid bombardment (Plus 6) | plans delivered, then 5-12 jumps | 20 asteroids at Ceerdi | 6,000 Cr | MISSIONP, MFLIGHTA |
+| 4 | Stolen police ship (Plus 4) | asteroids paid, next docking | kill the non-police Viper at Birera | 4,000 Cr | MISSIONT, MFLIGHTV |
+| 5 | Trumbles | police ship paid, 5,000 Cr | buy a Trumble; breeding, squeak, sprites; no end except a sun | none | MISSIONT, MFLIGHTT |
+
+The order is fixed by the state bits (`&38FD` bits 0-1 Constrictor, 2-3 plans, 4-6 asteroids, 7 Trumbles offered; `&38FE` police ship after the asteroids, asteroid counter before). Only one mission runs at a time; the Trumbles end the chain. Cheap variations: swap 3 and 4 (needs the asteroid and police state tests exchanged in the stub and the picker); offer the Trumbles at any time (drop the chain test). A per-commander random order (idea in section 10's plan) is not built.
+
