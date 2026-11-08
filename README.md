@@ -26,6 +26,14 @@ The repository contains no game binaries, disk images or third-party source: the
 | `tools/` | Python helpers: disassembler and verifier, disk reader and writer, text compressor, sprite converter, savegame decoder and editor, emulator tests |
 | `docs/` | notes by topic: architecture, game facts, save format, cheats, the other versions' missions (research), and the implemented missions |
 
+## Small improvements
+
+Besides the missions, the build has a few changes that make the game nicer to play. None of them touches the stock bytes: each is a switch in the source, and `tools/check_src.sh` proves that with the switch off the original comes back.
+
+- **Escape leaves the buy, sell and equipment prompts.** Escape now backs out of them (switch `ESC_KEYCODE`; the stock game ignores that key there).
+- **Stars stay behind the planet and sun.** The stars used to be drawn over the planet and sun discs, so they shone through them. Now they only appear against empty space (switch `STAR_OCCLUDE`, in all three languages). Ships are still wireframes, so you see stars between their edges, as in the original.
+- **Choose the ship on the title screen.** Cursor left and right, or the joystick, step the demo ship through eight hulls (Viper, Asp, Cobra Mk III, Fer-de-Lance, Sidewinder, Krait, Rock Hermit, Thargoid), so you can look at all of them (switch `TITLESEL`, English and German; the disks from `tools/build_dsk.py` include it).
+
 ## The commented code
 
 `src/elite/` is not a raw disassembly dump. It was built in steps and every step is checked against the original bytes:
