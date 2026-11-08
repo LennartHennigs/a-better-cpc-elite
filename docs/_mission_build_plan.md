@@ -1,5 +1,7 @@
 # Plan (stored copy; status notes in the headings): dead-code check, then measurement branches for Constrictor, Thargoid plans, Trumbles
 
+**Status (2026-11-08): executed.** This was the plan for the measurement branches; what was built, with sizes, order, triggers and tests, is in `docs/_missions_built.md`. The overlay and name-hash ideas below are history (the hash order was dropped).
+
 ## Context
 Goal of the branches (user, 2026-11-08): **get a precise size measurement** of each mission, not (yet) a polished
 release. So each branch is a measurement prototype: implement the mission's real code and text, assemble, and report

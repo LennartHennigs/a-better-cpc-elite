@@ -2,19 +2,22 @@
 
 Open work, most useful first. `CLAUDE.md` keeps the short list; details live in `docs/` (`notes.md` is an index).
 
-- [ ] allow Escape to exit the buy menu (goods)
+- [x] allow Escape to exit the buy menu (goods): done (one byte, `CHANGELOG.md`)
 - [ ] can we reduce the flicker in the radar view?
 - [ ] stars and ships are transparent
 - [ ] more than one color for moving stars?
 - [ ] or other color for asteroids?
 - [ ] show different ships on load. asrrow keys left right for next
   
-## Missions (branch `mission-trumbles`)
-- [ ] Listen to the Trumble squeak; pick the effect (bit 5 now; alternatives flags2 bit 7, flags1 bit 7); decide the Trumble end condition and sprite thresholds.
-- [ ] Real playthrough of Constrictor -> plans -> Trumbles with save/load; text case decision; Constrictor image 593/610.
-- [ ] Asteroid mission built on branch `addon-missions` (needs a real playthrough, tune 20 asteroids / spawn rate, failure path if any).
-- [x] Elite Plus mission 4 (stolen police ship) built on `addon-missions` (see CHANGELOG), needs a real playthrough; the Constrictor overlay and flight image have 1 byte spare each, so the next change there needs more trimming. Mission 6 extras (Cobra Mk III) only if wanted: see `docs/_missions.md` "Elite Plus missions 4, 5 and 6" and the numbered list in the plan.
-- [ ] Merge `mission-trumbles` into `main`; check `check_src.sh de` and `fr`.
+## Missions (branch `addon-missions`, overview in `docs/_missions_built.md`)
+- [ ] Real playthrough of the whole chain with save and load (so far only forced states, direct calls, the trainer pokes and a booted disk). A real docking triggering each offer has not been seen in the running game.
+- [ ] Listen to the Trumble squeak and pick the effect (bit 5 now; alternatives flags2 bit 7, flags1 bit 7); decide a Trumble end condition other than a sun and the sprite-count thresholds.
+- [ ] Tune the added missions (20 asteroids, 50% and 22% spawn rates, Birera as the police target); optionally the Cobra Mk III that Elite Plus adds to the asteroid mission.
+- [ ] Optional: gate the Trumbles offer behind a stock mission or outside galaxy 1; a per-commander random order (not built, no room in the stub plus Constrictor overlay).
+- [ ] Space: the Constrictor overlay (2 spare) and flight image (1 spare) need trimming before any further change there.
+- [ ] Merge `addon-missions` into `master` (the repo has no `main` yet); check `check_src.sh de` and `fr`.
+- [ ] Cleanups skipped in the /simplify pass: one shared cpcxray test harness (`tools/test_*.py` copy about 500 lines), shared test snapshots, deriving the per-build patch addresses in `check_src.sh` from symbols, state-mask equates shared by the stub, picker and images.
+- [x] Built: Constrictor, Thargoid plans, stolen police ship (Elite Plus 4), asteroid bombardment (Elite Plus 6), Trumbles with sprites and squeak; trainer prompts, `saveedit.py`, `SHOWSAVE.BAS`, `EDITSAVE.BAS`; README and hidden files on the mission disk.
 
 ## Disassembly (`src/elite/`)
 - [x] Name the `dat_` variables: 109 of 176 named on 2026-11-07 (`tools/rename_dat.py`, map in `tools/rename_maps/`); `tools/check_src.sh` still byte-exact.
