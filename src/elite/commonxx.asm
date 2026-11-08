@@ -13092,7 +13092,11 @@ applyLaserDamagetoEntity:
     cp 0xFF
     jr z,nothingInCrosshairDrawLaser
     sub c
+    IFDEF MISSIONS
+    call mxLaserHook                ; missions_flight.asm: the Constrictor ignores weak lasers
+    ELSE
     ld (ix+34),a
+    ENDIF
     jr z,targetisKilled
     jr nc,nothingInCrosshairDrawLaser
 targetisKilled:

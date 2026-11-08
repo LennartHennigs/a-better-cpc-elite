@@ -20,7 +20,7 @@ from mcp.client.stdio import stdio_client
 
 ROOT = Path(__file__).resolve().parent.parent
 TRAP = 0x9F80
-SITES = ((0x72A8, 0x72AB), (0x80CD, 0x80D0), (0x83EF, 0x83F2), (0x518E, 0x5191), (0x9D9E, 0xA000))   # call sites and the tail (see size_report output)
+SITES = ((0x72A8, 0x72AB), (0x80CD, 0x80D0), (0x83EF, 0x83F2), (0x518E, 0x5191), (0x7AA2, 0x7AA5), (0x9D9E, 0xA000))   # call sites and the tail (see size_report output)
 HULL = None
 
 
@@ -46,6 +46,15 @@ KILL = {   # name: (state, iy is the Constrictor, state after)
     "kill_other":    (0x71, False, 0x71),
     "kill_notbegun": (0x00, True, 0x00),
     "kill_done":     (0x02, True, 0x02),
+}
+
+
+LASER = {   # name: (constrictor?, laser power C, energy before, energy expected after)   A passed in = energy - C, flags from that subtraction
+    "pulse_vs_constrictor":    (True, 0x0F, 100, 100),   # no damage
+    "beam_vs_constrictor":     (True, 0x0F, 100, 100),
+    "military_vs_constrictor": (True, 0x17, 100, 77),    # damaged
+    "mining_vs_constrictor":   (True, 0x32, 100, 50),
+    "pulse_vs_viper":          (False, 0x0F, 100, 85),   # other ships unchanged
 }
 
 
@@ -118,6 +127,19 @@ async def main():
                 good = st1 == want_st
                 ok &= good
                 print(f"{'ok  ' if good else 'FAIL'} kill  {name:14s} state {st:02X} -> {st1:02X} (want {want_st:02X})")
+            for name, (is_c, power, e0, want) in LASER.items():
+                await start()
+                ix = 0x1A40 + 0x27       # slot 1 (free in this snapshot)
+                bp = hull if is_c else syms["shipdatViper"]
+                await c("memory_write", {"address": ix + 34, "data": "%02X %02X %02X" % (e0, bp & 255, bp >> 8)})
+                a = (e0 - power) & 255
+                await call(syms["mxLaserHook"], ix=ix, bc=power, af=(a << 8) | 0x00)   # flags: NZ, NC like a normal hit that does not kill
+                e1 = bytes.fromhex((await c("memory_read", {"address": ix + 34, "length": 1}))["hex"])[0]
+                af = (await c("registers_get"))["af"]
+                z, cy = bool(af & 0x40), bool(af & 0x01)
+                good = e1 == want and not z and not cy
+                ok &= good
+                print(f"{'ok  ' if good else 'FAIL'} laser {name:24s} energy {e0} -> {e1} (want {want}), flags Z={int(z)} C={int(cy)} (want 0 0)")
             print("ALL OK" if ok else "FAILURES")
 
 

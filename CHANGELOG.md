@@ -5,6 +5,10 @@ file is the only history. Dates are ISO.
 
 ## 2026-11-08
 
+- Constrictor special behaviour: `mxLaserHook` (replaces the `ld (ix+34),a` after `sub c` in `applyLaserDamagetoEntity`, same 3 bytes) makes the Constrictor ignore lasers weaker than
+  military: the laser power per hit is in C (pulse and beam 15, military 23, mining 50, as in the BBC), a hit below 23 leaves the energy unchanged and returns NZ/NC so nothing counts. Other ships keep the
+  original store. **Measured: 36 bytes; flight tail now 477 of 610 (133 free).** `tools/test_mission_flight.py` has five laser scenarios (all 14 pass). Missiles and collisions still hurt it; its ECM and
+  missiles come from the hull header and were not checked.
 - Constrictor flight part complete (branch `mission-constrictor`): `mxSpawnCheck` (replaces the first instruction of `spawnCommand0` with a 3-byte call, ends with that
   instruction) spawns the Constrictor when the hunt is on, all seven hints are given (stage 7) and the player is in Orarra (galaxy 2, x 144, y 33), unless one is already alive;
   `mxKillHook` (replaces `call getBounty` in `todo_killedsomeone`, where both laser and missile kills are paid, IY = the dead ship's blueprint) sets state 3 when the dead

@@ -114,4 +114,32 @@ mxKillDone:
     pop af
     ret
 
+; Replaces `ld (ix+34),a` in applyLaserDamagetoEntity (same 3 bytes; A = energy minus the hit, C = laser power: pulse and beam 15, military 23, mining 50,
+; flags from the `sub c`). Like the BBC Constrictor, the Constrictor only takes damage from a military laser or better (C >= 23). A weaker hit leaves the energy
+; unchanged and returns NZ/NC, so the caller neither kills nor counts it. Every other ship gets the original store, flags untouched.
+mxLaserHook:
+    push af
+    push hl
+    ld l,(ix+35)
+    ld h,(ix+36)
+    ld a,shipdatConstrictor & 0xFF
+    cp l
+    jr nz,mxLaserNormal
+    ld a,shipdatConstrictor >> 8
+    cp h
+    jr nz,mxLaserNormal
+    ld a,c
+    cp 0x17
+    jr nc,mxLaserNormal
+    pop hl
+    pop af
+    ld a,(ix+34)                      ; weak laser: no damage
+    or a                              ; NC, and NZ because a live ship has energy
+    ret
+mxLaserNormal:
+    pop hl
+    pop af
+    ld (ix+34),a
+    ret
+
     INCLUDE "missions_hull.asm"
