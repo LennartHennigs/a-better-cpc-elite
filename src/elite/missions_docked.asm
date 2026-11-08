@@ -46,7 +46,7 @@ mxPlansPart:
     ld a,b
     and 0x0C
     cp 0x0C
-    jr z,mxTrumbles
+    jr z,mxAfterPlans
     and a
     jr nz,mxPlansRow
     ld a,(mxKillScoreHigh)            ; plans not offered yet: 1280 kill points and galaxy 3
@@ -55,8 +55,7 @@ mxPlansPart:
     ld a,(mxCurrentGalaxy)
     cp 0x02
     ret nz
-    ld a,c
-    jr mxLoadModule
+    jr mxLoadC
 mxPlansRow:
     rrca
     rrca                              ; 1 (go to Ceerdi) or 2 (go to Birera)
@@ -80,26 +79,24 @@ mxStageRow:                           ; A = row of mxStageTable: load module C o
     ld a,(mxPresentSystemY)
     cp (hl)
     ret nz
-    ld a,c
-    jr mxLoadModule
+    jr mxLoadC
+mxAfterPlans:                         ; plans finished: the asteroid mission (missionState bits 4-6, set when the plans are delivered) comes before the Trumbles
+    ld a,b
+    and 0x70
+    jr z,mxTrumbles                   ; 0: not part of this chain
+    cp 0x10
+    ret z                             ; 1: the clearing at Ceerdi is a flight matter
+    cp 0x20
+    jr z,mxLoadC                      ; 2: cleared, the module (c = "P") pays the reward. 3: paid, on to the Trumbles
 mxTrumbles:
     bit 7,b
     ret nz                            ; the Trumbles offer was made already
-    ld hl,(mxCredits)                 ; both finished: offer Trumbles at 5,017.6 Cr (whole thousands word, then the decicredits word)
+    ld hl,(mxCredits)                 ; both finished: offer Trumbles from 5,000 Cr, the price (whole thousands word)
     ld a,h
     and a
     jr nz,mxCashOk
     ld a,l
-    cp 0x06
-    jr nc,mxCashOk
     cp 0x05
-    ret nz
-    ld hl,(mxCredits+2)
-    ld a,h
-    and a
-    jr nz,mxCashOk
-    ld a,l
-    cp 176
     ret c
 mxCashOk:
     ld a,"T"

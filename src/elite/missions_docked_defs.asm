@@ -14,7 +14,9 @@ mxActionsAtEndOfMessage equ 0x499E    ; waits for a key, redraws the frame, then
 mxColorsMessage        equ 0x4A31     ; colour set of the "mission accepted" box (colorsThargonMissionAccepted)
 missionState           equ 0x38FD     ; save byte, never used by the stock game (docs/_savegame.md)
 ;   bits 0-1 Constrictor: 0 not offered, 1 hunting, 3 killed (set by the kill hook), 2 finished (paid)
-;   bits 2-3 Thargoid plans (later), bits 4-6 hint stage 0-7 (7 = hints done, the ship waits at Orarra), bit 7 Trumbles offered (later)
+;   bits 2-3 Thargoid plans, bits 4-6 hint stage 0-7 (7 = hints done, the ship waits at Orarra), bit 7 Trumbles offered
+;   after the Constrictor is paid bits 4-6 are free again and hold the asteroid mission: 0 not offered, 1 clearing Ceerdi, 2 cleared, 3 paid
+mxAsteroidCount        equ 0x38FE     ; asteroids still to destroy at Ceerdi (save byte of an unused laser slot, docs/_savegame.md)
 mxKillScoreHigh        equ 0x38D9     ; BBC TALLY+1: at least 1 = 256 kill points
 mxCurrentGalaxy        equ 0x38DC     ; 0-7
 mxPresentSystemY       equ 0x390E

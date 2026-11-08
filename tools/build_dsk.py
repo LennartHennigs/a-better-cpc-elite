@@ -181,7 +181,7 @@ def main():
             base, data = overlay(tag)
             blocks = add_file(d, secs, first, f"MISSION{tag}", "BIN", data, base)
             print(f"MISSION{tag}.BIN: {len(data)} bytes at &{base:04X}, blocks {blocks}")
-        for tag in ("0", "C", "P", "T"):
+        for tag in ("0", "C", "P", "T", "A"):
             base, data = flight_image(tag)
             blocks = add_file(d, secs, first, f"MFLIGHT{tag}", "BIN", data, base)
             print(f"MFLIGHT{tag}.BIN: {len(data)} bytes at &{base:04X}, blocks {blocks}")

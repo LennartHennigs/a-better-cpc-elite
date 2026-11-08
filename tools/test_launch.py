@@ -35,6 +35,10 @@ SCENARIOS = {
     "plans_aboard":            (0x0A, "0", "P"),
     "plans_aboard_from_C":     (0x0A, "C", "P"),
     "plans_done":              (0x0E, "P", "0"),
+    "asteroids_clearing":      (0x1E, "0", "A"),
+    "asteroids_clearing_from_P": (0x1E, "P", "A"),
+    "asteroids_cleared":       (0x2E, "A", "0"),
+    "asteroids_paid":          (0x3E, "A", "0"),
     "trumbles_aboard":         (0x0E, "0", "T"),
     "trumbles_from_C":         (0x01, "C", "T"),
     "trumbles_gone":           (0x8E, "T", "0"),
@@ -64,7 +68,7 @@ def patches():
 async def main():
     files = dskx.read_files(dskx.load_sectors(ROOT / "work/elite_missions.dsk"))
     images = {}
-    for t in "0CPT":
+    for t in "0CPTA":
         raw = files[(0, f"MFLIGHT{t}.BIN")]
         images[t] = raw[128:128 + dskx.amsdos_header(raw)["length"]]   # the file is padded to whole records after the real length
     params = StdioServerParameters(command="cpcxray", args=["mcp", "--config", "config/cpc6128.toml"])
