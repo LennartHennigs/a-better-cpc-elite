@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Assemble src/elite and write the four code files into a copy of the Firebird DSK, keeping the AMSDOS headers.
 
-usage: python3 -I tools/build_dsk.py [--missions] [OUT.dsk]      (default work/elite_rebuilt.dsk; base is Elite_UK_Firebird_cracked_trainer.dsk)
+usage: python3 -I tools/build_dsk.py [--missions | --de] [OUT.dsk]      (default work/elite_rebuilt.dsk; base is Elite_UK_Firebird_cracked_trainer.dsk;
+       --de assembles src/elite_de into a copy of Elite_DE_cracked.dsk, default work/elite_de_rebuilt.dsk)
 
 The base disk is never modified. Each file keeps its 128-byte AMSDOS header and its size: the new bytes must have the
 same length as the old ones (the build is byte-exact apart from the CPC+ fix), otherwise the script stops.
@@ -18,12 +19,14 @@ import dskx  # noqa: E402
 from dskx import amsdos_header, sector_offsets  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
-BASE = ROOT / "Elite_UK_Firebird_cracked_trainer.dsk"
+DE = "--de" in sys.argv
+BASE = ROOT / ("Elite_DE_cracked.dsk" if DE else "Elite_UK_Firebird_cracked_trainer.dsk")
+SRC = ROOT / ("src/elite_de" if DE else "src/elite")
 MISSIONS = "--missions" in sys.argv   # assemble LARGEAXX and COMMONXX with -DMISSIONS (src/elite/missions_*.asm in the free tails)
-args = [a for a in sys.argv[1:] if a != "--missions"]
-OUT = Path(args[0]) if args else ROOT / "work" / ("elite_missions.dsk" if MISSIONS else "elite_rebuilt.dsk")
+args = [a for a in sys.argv[1:] if a not in ("--missions", "--de")]
+OUT = Path(args[0]) if args else ROOT / "work" / ("elite_de_rebuilt.dsk" if DE else "elite_missions.dsk" if MISSIONS else "elite_rebuilt.dsk")
 SJASM = Path.home() / ".local/bin/sjasmplus"
-FILES = {"LARGEAXX": ["-DFIREBIRD"], "COMMONXX": ["-DTITLESEL"], "COMMON2X": [], "MUSIQUEX": ["-DTITLESEL"]}   # TITLESEL: cursor keys change the title ship
+FILES = {"LARGEAXX": [] if DE else ["-DFIREBIRD"], "COMMONXX": ["-DTITLESEL"], "COMMON2X": [], "MUSIQUEX": ["-DTITLESEL"]}   # TITLESEL: cursor keys change the title ship
 
 
 def add_file(d, secs, first, name, ext, data, load):
@@ -115,7 +118,7 @@ def main():
         for n, defs in FILES.items():
             out = Path(tmp) / f"{n}.bin"
             extra = ["-DMISSIONS"] if MISSIONS and n in ("LARGEAXX", "COMMONXX") else []
-            r = subprocess.run([str(SJASM), *defs, *extra, f"--raw={out}", str(ROOT / "src/elite" / f"{n.lower()}.asm")],
+            r = subprocess.run([str(SJASM), *defs, *extra, f"--raw={out}", str(SRC / f"{n.lower()}.asm")],
                                capture_output=True, text=True)
             if r.returncode:
                 sys.exit(f"{n}: assemble failed\n{r.stdout[-400:]}{r.stderr[-400:]}")

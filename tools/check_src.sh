@@ -36,15 +36,20 @@ if [ "$SRC" = "$ROOT/src/elite" ]; then
     if sjasmplus -DMISSIONS --raw="$OUT/$n.m.bin" "$SRC/$n.asm" >"$OUT/$n.m.log" 2>&1 && [ "$(wc -c <"$OUT/$n.m.bin")" -eq "$(wc -c <"$BIN/$f.BIN")" ]; then echo "$n -DMISSIONS: ok (same length)"; else echo "$n -DMISSIONS: FAILED"; tail -3 "$OUT/$n.m.log"; rc=1; fi
   done
 fi
-# English only: -DTITLESEL (title screen ship selection; hook code in the zero tail of MUSIQUEX) keeps the lengths, and the
-# addresses musiquex.asm hard-codes for COMMONXX must be the real ones
-if [ "$SRC" = "$ROOT/src/elite" ]; then
-  for fl in "" "-DMISSIONS"; do
+# -DTITLESEL (title screen ship selection; hook code in the zero tail of MUSIQUEX) keeps the lengths, and the addresses musiquex.asm
+# hard-codes for COMMONXX must be the real ones (English also with -DMISSIONS)
+TSYMS=""; TFLAGS=""
+case "$SRC" in
+  "$ROOT/src/elite")    TSYMS="setCommandsCPL:4531 setCommandsNOP:4535 transferBuffertoScreen:1ED1 spawnCommandParser:809C dataFromPPI:8D2D splash2Shipnr:1DA8"; TFLAGS="-DMISSIONS";;
+  "$ROOT/src/elite_de") TSYMS="setCommandsCPL:463E setCommandsNOP:4642 transferBuffertoScreen:1ED1 spawnCommandParser:81E3 dataFromPPI:8E75 splash2Shipnr:1DA8";;
+esac
+if [ -n "$TSYMS" ]; then
+  for fl in "" $TFLAGS; do
   if sjasmplus -DTITLESEL $fl --raw="$OUT/c.t.bin" --sym="$OUT/c.t.sym" "$SRC/commonxx.asm" >"$OUT/c.t.log" 2>&1 \
      && sjasmplus -DTITLESEL --raw="$OUT/m.t.bin" "$SRC/musiquex.asm" >"$OUT/m.t.log" 2>&1 \
      && [ "$(wc -c <"$OUT/c.t.bin")" -eq "$(wc -c <"$BIN/COMMONXX.BIN")" ] && [ "$(wc -c <"$OUT/m.t.bin")" -eq "$(wc -c <"$BIN/MUSIQUEX.BIN")" ]; then
     bad=0
-    for pr in setCommandsCPL:4531 setCommandsNOP:4535 transferBuffertoScreen:1ED1 spawnCommandParser:809C dataFromPPI:8D2D splash2Shipnr:1DA8; do
+    for pr in $TSYMS; do
       n=${pr%%:*}; v=${pr##*:}
       grep -qi "^$n: EQU 0x0000$v" "$OUT/c.t.sym" && grep -qi "^$n equ 0x$v" "$SRC/musiquex.asm" || { echo "TITLESEL $fl: $n is not at &$v"; bad=1; }
     done

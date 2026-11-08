@@ -314,8 +314,13 @@ loc_1CC2:
     ld (Viewdirection),a
     call transferDashBoardToScreenMem
 loc_1CCF:
+    IFDEF TITLESEL
+    call TITLE_SHOW                 ; musiquex.asm: spawns the current title ship (Cobra Mk III at the start)
+    ds 2
+    ELSE
     ld a,0x79
     call spawnCommandParser
+    ENDIF
     ld hl,sEntityRoll
     set 7,(hl)
 loc_1CD9:
@@ -324,7 +329,11 @@ loc_1CD9:
     call printSplashscreen1
     call drawIntroShip
     call transferBuffertoScreen
+    IFDEF TITLESEL
+    call TITLE_SCREEN1              ; musiquex.asm: cursor left/right change the ship, then setCommandsNOP
+    ELSE
     call setCommandsNOP
+    ENDIF
     ld a,(pressedKey)
     inc a
     jr z,loc_1CD9
@@ -343,6 +352,10 @@ CMDRLoadExtensions:
     call drawFrame
     call drawDashboard
 branchNewCommander:
+    IFDEF TITLESEL
+    call TITLE_NEXT                 ; musiquex.asm: next ship in its list, spawned
+    ds 20
+    ELSE
     ld hl,splash2Shipnr
     inc (hl)
     ld a,(hl)
@@ -358,6 +371,7 @@ loc_1D1E:
     add a,a
     add a,0x09
     call spawnCommandParser
+    ENDIF
     call setCommandsCPL
     call ClearBitmap
     call printPressSpace
@@ -371,7 +385,11 @@ loc_1D3C:
     call ClearBitmap
     call printPressSpace
     call drawIntroShip
+    IFDEF TITLESEL
+    call TITLE_SCREEN2              ; musiquex.asm: cursor left/right change the ship, then transferBuffertoScreen
+    ELSE
     call transferBuffertoScreen
+    ENDIF
     ld a,(pressedKey)
     cp 0x20
     jr nz,loc_1D3C
@@ -15251,6 +15269,12 @@ LAB_ram_8c52:
 ; getInputForFunctionHL (buy, sell, equipment) leaves on it, and InputString ignores it. Assemble with -DESC_KEYCODE=0xFF for the original bytes.
     IFNDEF ESC_KEYCODE
 ESC_KEYCODE equ 0x7F                ; tools/check_src.sh also assembles with -DESC_KEYCODE=0xFF and compares that with the original
+    IFDEF TITLESEL
+TITLE_SCREEN1 equ 0x6E21            ; jump table at the start of the music file's zero tail (src/elite_de/musiquex.asm)
+TITLE_SCREEN2 equ 0x6E24
+TITLE_NEXT equ 0x6E27
+TITLE_SHOW equ 0x6E2A
+    ENDIF
     ENDIF
 tblKeyboardmatrix:
     db 0xFF,0xFF,0xFF,"963",0x0D,".",0xFF,0xFF,"785120"

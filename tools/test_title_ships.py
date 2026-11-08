@@ -2,13 +2,16 @@
 """Test the title-screen ship selection (-DTITLESEL, hook code in the MUSIQUEX tail at &6E21) in cpcxray.
 
 Build first:  python3 -I tools/build_dsk.py ; cp work/elite_rebuilt.dsk work/xray/disk/
-usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_title_ships.py
+usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_title_ships.py [de]
+With `de` the German build is tested: python3 -I tools/build_dsk.py --de ; cp work/elite_de_rebuilt.dsk work/xray/disk/ ; it is booted from the disk (RUN"ELITE),
+because the entry snapshot holds the English code.
 
 Boots the entry snapshot, lets the first title screen come up, then taps the cursor keys and checks that the ship index (splash2Shipnr, &1DA8, bits 0-2)
 and the blueprint pointer of the demo ship (&1B51 + 35) change as expected, that a held key steps only once, and that the press-space screen still follows.
 """
 import asyncio
 import json
+import sys
 import subprocess
 import tempfile
 from pathlib import Path
@@ -66,11 +69,22 @@ async def main():
                 await c("key_release", {"key": key})
                 await c("run", {"max_us": 400_000, "timeout_s": 60})
 
-            await c("disk_insert", {"drive": "A", "path": "disk/elite_rebuilt.dsk"})
-            await c("sna_load", {"path": "output/firebird_at_entry.sna"})
-            for addr, data in patches():
-                await c("memory_write", {"address": addr, "data": data.hex()})
-            await c("run", {"max_us": 8_000_000, "timeout_s": 120})
+            if "de" in sys.argv[1:]:
+                await c("disk_insert", {"drive": "A", "path": "disk/elite_de_rebuilt.dsk"})
+                await c("run", {"max_us": 3_000_000, "timeout_s": 60})
+                await c("type_text", {"text": 'run"elite\n', "wait": False})
+                bp = (await c("breakpoint_add", {"address": 0x1CD9, "kind": "pc"}))["id"]   # the first title loop
+                for _ in range(8):
+                    if (await c("run", {"max_us": 10_000_000, "timeout_s": 120})).get("reason") == "breakpoint":
+                        break
+                await c("breakpoint_remove", {"breakpoint_id": bp})
+                await c("run", {"max_us": 1_000_000, "timeout_s": 60})
+            else:
+                await c("disk_insert", {"drive": "A", "path": "disk/elite_rebuilt.dsk"})
+                await c("sna_load", {"path": "output/firebird_at_entry.sna"})
+                for addr, data in patches():
+                    await c("memory_write", {"address": addr, "data": data.hex()})
+                await c("run", {"max_us": 8_000_000, "timeout_s": 120})
             ok = True
             seen = {}
 
