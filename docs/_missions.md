@@ -574,3 +574,20 @@ Method as in the analysis above ("Trumbles crowding the screen"): software sprit
 - **Time:** six 16 x 12 blits are about 290 byte operations, roughly 10,000 T-states per frame; the game already spends more than a frame on the copy to the screen, so a few percent at most.
 - **Open points (unchanged from the older analysis):** only pen 2 (black) is fixed in views 0-3, so a two-pen design is a black body with an eye in pen 1 or 3 whose colour depends on the system; pen 3 flickers orange during explosions; sprites show only in views 0-3.
 - **Verdict:** A or B1 fit with room to spare (about 0.2 KB and 0.27 KB); masked animation does not fit without cutting other Trumbles features. Nothing needs more docked space.
+
+### What the C64 does for its Trumble sprites (read in `work/ext_c64`, 2026-11-08; behaviour only, copyrighted, not copied)
+
+Files read: `elite-source.asm` (`MVTRIBS`, `TRIBDIR`, `TRIBDIRH`, `SPMASK`, `TRIBTA`, `TRIBMA`, the `TRIBCT`/`TRIBVX`/`TRIBVXH`/`TRIBXH` workspace, the count-to-sprites code in the sight routine) and `elite-loader.asm` (VIC setup, sprite pointers).
+- **Shapes:** `SPRITE.bin` is 448 bytes = seven 64-byte hardware sprites (24 x 21 px, 3 bytes per row): four laser sights, one explosion and **two Trumble shapes** (one looks right, one looks left). Sprites 2, 4, 6 use the right-facing
+  shape and 3, 5, 7 the left-facing one, so the six Trumbles alternate facing. All sprites are drawn double width and double height (48 x 42 px on a 320 x 200 screen, about 15% x 21% of it), single colour.
+- **Colours:** six different pen colours (brown, grey, blue, white, green, brown); the CPC has no spare pens in the flight view (only pen 2, black, is fixed), so that cannot be copied.
+- **Drawing cost on the C64: none.** The VIC-II draws the sprites; the code only changes registers. `MVTRIBS` is about 110 instructions, most of them the 9-bit x-coordinate and the I/O-banking switches. Its logic: one Trumble per main-loop pass
+  (loop counter mod 8, only those below the shown count), an 8% chance (random >= 235) of a new velocity from the table 0, +1, -1, 0 separately for x and y (so half of the picks mean no movement), then x and y are advanced by that velocity and wrap
+  around the edges (x past the right edge returns at the left and the other way round; y just wraps at 8 bits).
+- **State:** `TRIBCT` (1 byte, the number of sprites 0-6), and three 16-byte tables of which 12 bytes each are used (x velocity low and y velocity interleaved, x velocity high, bit 8 of x): 49 bytes of RAM. Position lives in the VIC registers.
+- **Count to sprites:** bits 4-6 of the high byte of the 16-bit count (0-7) go through the 8-entry `TRIBTA` to 0-6 sprites, so the first sprite appears at 4,096 Trumbles and the sixth at 20,480 or more. The count is only a few hundred
+  for a long time, so the sprites show up late; on the CPC the thresholds are a free choice (our count roughly doubles per jump).
+
+**What this changes in the estimate above.** The C64 uses two facing shapes, which is design B1 (two frames, no mask: 96 bytes of data at 16 x 12 px) and not the masked B2. Per-Trumble state on the CPC would be x, y, vx, vy: 24 bytes for six, instead of 18.
+Movement is simpler on the CPC (x in 4-pixel byte units, 0-63, plain 8-bit wrap), so the 45 bytes stand; the draw routine (about 70 bytes) is the part the C64 gets for free. Expected Trumbles image with the two facing shapes: about
+560 of 610 bytes (about 50 free). A C64-sized sprite (a third of the flight view) is out of reach: 38 x 27 px would be about 270 bytes per shape.
