@@ -1,5 +1,7 @@
 # Changelog
 
+- **Escape leaves the buy, sell and equipment prompts (branch `escape-menus`, one byte per build).** The ESC key was mapped to `&FF` in `tblKeyboardmatrix` (the ASCII keyboard table, row 8 bit 2; `&FF` means "no key"), so the prompts never saw it. It now returns `&7F`. `getInputForFunctionHL` treats every code of `&3A` or more as "leave the prompt" (that is why any letter already left it), so `&7F` goes back to the inventory (buy, sell) or the status screen (equipment) with no new code. `&7F` is above the `&5A` limit of `InputString`, so names are unaffected; the pause-mode and title-screen key tests ignore it or treat it as any key. Runtime addresses of the byte: English `&8C98`, German `&8DE0`, French `&8E37`; `tools/check_src.sh` expects it (like the CPC+ byte). Tested live in cpcxray (docked at Lave, key 2, Esc): stock stays in the prompt, with the byte set it returns to the inventory. The built DSK was not booted (the test snapshot holds the old code); the byte itself is checked by `check_src.sh`.
+
 Changes to the project, newest first. The project root is a git repository from 2026-11-07; before that, this
 file is the only history. Dates are ISO.
 
