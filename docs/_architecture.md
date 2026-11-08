@@ -143,7 +143,7 @@ filter, so the result is a lower bound. 17 chains (846 bytes) pass; reading them
 
 Conclusion (corrected 2026-11-08): **there is no reclaimable dead code in the `db` runs.** The reliable free space is the 610-byte
 tail of `COMMONXX` (minus the few top bytes the stack uses at `&A000`; the ISR's worst-case depth is still unmeasured) plus about 10 bytes
-of `unusedGet*`. Fessor's 450 bytes of switched-off blocks could not be placed in stock and stay unverified.
+of `unusedGet*`. (`unusedViewBorderFill`, `&1FD2-&1FF0`, 31 bytes with no references, now holds `dustPlotPixel` under `STAR_OCCLUDE`.) Fessor's 450 bytes of switched-off blocks could not be placed in stock and stay unverified.
 
 ## Dynamic labels (found 2026-11-08, for later reference)
 

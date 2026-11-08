@@ -25,9 +25,15 @@ for p in "largeaxx LARGEAXX" "commonxx COMMONXX" "common2x COMMON2X" "musiquex M
   sym() { awk -v k="$1:" '$2 == k || $1 == k { print $NF }' "$OUT/$n.sym"; }
   ESCP=$(( $(sym tblKeyboardmatrix) + 66 ))                  # row 8 bit 2 of the table
   [ "$SRC" != "$ROOT/src/elite_de" ] && printf '\x49' | dd of="$REF" bs=1 seek=$(( $(sym getPPI_Input) + 20 - 0x1A40 )) conv=notrunc 2>/dev/null
-  if ! sjasmplus -DESC_KEYCODE=0xFF --raw="$OUT/$n.stock.bin" "$SRC/$n.asm" >/dev/null 2>&1 || ! cmp -s "$OUT/$n.stock.bin" "$REF"; then echo "$n -DESC_KEYCODE=0xFF: DIFFERS from the original"; rc=1
-  elif [ "$(cmp -l "$OUT/$n.bin" "$REF" | awk '{print $1":"$2":"$3}')" = "$((ESCP-0x1A40+1)):177:377" ]; then echo "$n: ok"   # cmp -l: 1-based offset, octal values
-  else echo "$n: DIFFERS (expected only the ESC byte)"; rc=1; fi
+  # STAR_OCCLUDE (stars no longer drawn over the planet disc and lines): the build with -DSTAR_OCCLUDE=0 has the original bytes, the default build differs only
+  # inside dustPlotPixel's slot (unusedViewBorderFill..ClearBitmap) and the dust loop dust70..dust70+16.
+  OCC0="-DSTAR_OCCLUDE=0"; [ -n "$(sym dustPlotPixel)" ] || OCC0=""
+  if ! sjasmplus -DESC_KEYCODE=0xFF $OCC0 --raw="$OUT/$n.stock.bin" "$SRC/$n.asm" >/dev/null 2>&1 || ! cmp -s "$OUT/$n.stock.bin" "$REF"; then echo "$n -DESC_KEYCODE=0xFF $OCC0: DIFFERS from the original"; rc=1
+  elif ! sjasmplus $OCC0 --raw="$OUT/$n.noocc.bin" "$SRC/$n.asm" >/dev/null 2>&1 || [ "$(cmp -l "$OUT/$n.noocc.bin" "$REF" | awk '{print $1":"$2":"$3}')" != "$((ESCP-0x1A40+1)):177:377" ]; then echo "$n $OCC0: DIFFERS (expected only the ESC byte)"; rc=1
+  elif [ -n "$OCC0" ]; then
+    LO=$(( $(sym dustPlotPixel) - 0x1A40 )); HI=$(( $(sym ClearBitmap) - 0x1A40 )); DL=$(( $(sym dust70) - 0x1A40 ))
+    if cmp -l "$OUT/$n.bin" "$OUT/$n.noocc.bin" | awk -v lo=$LO -v hi=$HI -v dl=$DL '{o=$1-1; if (!((o>=lo && o<hi) || (o>=dl && o<dl+16))) bad=1} END{exit bad}'; then echo "$n: ok (star occlusion confined to its two slots)"; else echo "$n: STAR_OCCLUDE changes bytes outside its slots"; rc=1; fi
+  else echo "$n: ok"; fi
 done
 # English only: the -DMISSIONS variant (src/elite/missions_*.asm in the free tails) must keep both files the same length
 if [ "$SRC" = "$ROOT/src/elite" ]; then

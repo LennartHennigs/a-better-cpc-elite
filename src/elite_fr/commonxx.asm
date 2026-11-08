@@ -694,6 +694,27 @@ sub_1FCC:
     ld bc,0x0200
     ldir
     ret
+; Star occlusion: with STAR_OCCLUDE (default on; check_src.sh also assembles with -DSTAR_OCCLUDE=0 and compares that with the original) the stars no longer
+; show through the planet or sun disc, ship lines and tunnel lines. The 31 dead bytes below hold dustPlotPixel, which the dust loop (dust70) calls.
+    IFNDEF STAR_OCCLUDE
+STAR_OCCLUDE equ 1
+    ENDIF
+    IF STAR_OCCLUDE
+; Plots one star pixel into the off-screen bitmap: DE = byte address, C = pixel mask (hi plane bit + lo plane bit). The background is 0x0F, so
+; (byte XOR 0x0F) AND mask is zero only while the pixel is still background; anything drawn earlier (disc, lines) is left alone.
+dustPlotPixel:
+    ld a,(de)
+    xor 0x0F
+    and c
+    ret nz
+    ld a,(de)
+    cpl
+    or c
+    cpl
+    ld (de),a
+    ret
+    DS 0x1FF1-$                      ; pad to ClearBitmap (unusedViewBorderFill's 31 bytes)
+    ELSE
 ; Probably dead (nothing calls or jumps here): paints the two left and two right bytes of each of the 16 64-byte
 ; character rows of the 256x128 view with 0x0F, for 8 scan lines.
 unusedViewBorderFill:
@@ -720,6 +741,7 @@ unusedViewBorderCol:
     ld h,a
     dec c
     jr nz,unusedViewBorderRow
+    ENDIF
 ; Clear the whole screen bitmap to 0x0F0F by pushing words down from &C000, keeping SP in clsSP
 ClearBitmap:
     ld (clsSP),sp
@@ -11802,6 +11824,13 @@ dust70:
     ld d,(hl)
     inc hl
     ld c,(hl)
+    IF STAR_OCCLUDE
+    call dustPlotPixel
+    inc hl
+    djnz dust70
+    ret
+    DS 2                             ; keeps the routine the length of the original (5 bytes became 3)
+    ELSE
     ld a,(de)
     cpl
     or c
@@ -11810,6 +11839,7 @@ dust70:
     inc hl
     djnz dust70
     ret
+    ENDIF
 ; Negates A and flips the dust pixel mask bit 6
 dust71:
     neg
