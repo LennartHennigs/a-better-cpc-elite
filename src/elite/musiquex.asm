@@ -516,7 +516,8 @@ titleArrows:
 titleLeft:
     dec a
 titleStep:
-    and 0x87
+    and 0x07
+    or 0x80                         ; keep "key is down" (a wrap from 0 to 7 would otherwise clear it)
     ld (hl),a
 ; Spawn the demo ship for the current index (the command patches go to NOP for the spawn and back to CPL after it)
 titleShow:

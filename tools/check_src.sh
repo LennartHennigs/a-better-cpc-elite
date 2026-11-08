@@ -39,16 +39,18 @@ fi
 # English only: -DTITLESEL (title screen ship selection; hook code in the zero tail of MUSIQUEX) keeps the lengths, and the
 # addresses musiquex.asm hard-codes for COMMONXX must be the real ones
 if [ "$SRC" = "$ROOT/src/elite" ]; then
-  if sjasmplus -DTITLESEL --raw="$OUT/c.t.bin" --sym="$OUT/c.t.sym" "$SRC/commonxx.asm" >"$OUT/c.t.log" 2>&1 \
+  for fl in "" "-DMISSIONS"; do
+  if sjasmplus -DTITLESEL $fl --raw="$OUT/c.t.bin" --sym="$OUT/c.t.sym" "$SRC/commonxx.asm" >"$OUT/c.t.log" 2>&1 \
      && sjasmplus -DTITLESEL --raw="$OUT/m.t.bin" "$SRC/musiquex.asm" >"$OUT/m.t.log" 2>&1 \
      && [ "$(wc -c <"$OUT/c.t.bin")" -eq "$(wc -c <"$BIN/COMMONXX.BIN")" ] && [ "$(wc -c <"$OUT/m.t.bin")" -eq "$(wc -c <"$BIN/MUSIQUEX.BIN")" ]; then
     bad=0
     for pr in setCommandsCPL:4531 setCommandsNOP:4535 transferBuffertoScreen:1ED1 spawnCommandParser:809C dataFromPPI:8D2D splash2Shipnr:1DA8; do
       n=${pr%%:*}; v=${pr##*:}
-      grep -qi "^$n: EQU 0x0000$v" "$OUT/c.t.sym" && grep -qi "^$n equ 0x$v" "$SRC/musiquex.asm" || { echo "TITLESEL: $n is not at &$v"; bad=1; }
+      grep -qi "^$n: EQU 0x0000$v" "$OUT/c.t.sym" && grep -qi "^$n equ 0x$v" "$SRC/musiquex.asm" || { echo "TITLESEL $fl: $n is not at &$v"; bad=1; }
     done
-    [ $bad -eq 0 ] && echo "commonxx/musiquex -DTITLESEL: ok (same length, hook addresses match)" || rc=1
-  else echo "-DTITLESEL: FAILED"; tail -3 "$OUT/c.t.log" "$OUT/m.t.log"; rc=1; fi
+    [ $bad -eq 0 ] && echo "commonxx/musiquex -DTITLESEL $fl: ok (same length, hook addresses match)" || rc=1
+  else echo "-DTITLESEL $fl: FAILED"; tail -3 "$OUT/c.t.log" "$OUT/m.t.log"; rc=1; fi
+  done
 fi
 # the three source trees must agree on the ESC default
 if [ "$(grep -h '^ESC_KEYCODE equ' "$ROOT"/src/elite/commonxx.asm "$ROOT"/src/elite_de/commonxx.asm "$ROOT"/src/elite_fr/commonxx.asm | awk '{print $3}' | sort -u | wc -l)" -ne 1 ]; then echo "ESC_KEYCODE defaults differ between src/elite, src/elite_de and src/elite_fr"; rc=1; fi

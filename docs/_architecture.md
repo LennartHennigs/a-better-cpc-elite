@@ -230,3 +230,6 @@ from `src/elite`. Facts found on the way:
 - The German `COMMONXX` has the same trailing free area as the English one, only smaller (282 against 610 zero bytes at the end).
 - The headers of the German disk's files have load address 0 except `COMMONXX.BIN`; `ELITE.BAS` is the English unprotected loader.
 
+## Title screen ship selection (`-DTITLESEL`, 2026-11-08)
+
+Cursor and joystick left/right step the demo ship on both title screens. The code is in the zero tail of `MUSIQUEX.BIN` (`&6E21-&6FFF`, about 120 bytes used; the file is resident only while the title screens run, and a failed load is retried by `loadFile` so the hooks cannot meet `NOTMUSIC`). A jump table at `&6E21` (`TITLE_SCREEN1`, `TITLE_SCREEN2`, `TITLE_NEXT`, `TITLE_SHOW`) is called from four places in `COMMONXX` that keep their byte length. `splash2Shipnr` (`&1DA8`) holds the ship index in bits 0-2 and "a direction key was already down" in bit 7; the eight hulls are in `titleShips` (spawn actions, high nibble = ship type - 2). The raw PPI rows (`dataFromPPI`) are read because `irki2` rewrites `keybFlags2` into roll values. The six `COMMONXX` addresses `musiquex.asm` hard-codes are checked by `tools/check_src.sh` (plain and `-DMISSIONS`); test `tools/test_title_ships.py`. The automatic pick on the press-space screen now follows this list instead of the stock order. English only.
