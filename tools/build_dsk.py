@@ -177,11 +177,11 @@ def main():
                 d[off:off + len(chunk)] = chunk
             print(f"{n}.BIN: {len(new)} bytes written, header kept (load {h['load']:04X})")
     if MISSIONS:
-        for tag in ("C", "P", "T"):
+        for tag in ("C", "P", "T", "R"):
             base, data = overlay(tag)
             blocks = add_file(d, secs, first, f"MISSION{tag}", "BIN", data, base)
             print(f"MISSION{tag}.BIN: {len(data)} bytes at &{base:04X}, blocks {blocks}")
-        for tag in ("0", "C", "P", "T", "A", "V"):
+        for tag in ("0", "C", "P", "T", "S", "R"):
             base, data = flight_image(tag)
             blocks = add_file(d, secs, first, f"MFLIGHT{tag}", "BIN", data, base)
             print(f"MFLIGHT{tag}.BIN: {len(data)} bytes at &{base:04X}, blocks {blocks}")

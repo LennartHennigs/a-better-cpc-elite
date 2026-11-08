@@ -4,7 +4,7 @@
 ; (mxFlightBase to mxFlightEnd) and the launch hook below loads the one the state byte asks for.
 mxTrCount equ 0x3905                ; Trumble count, 16 bit, kept at 0x7FFF or less (save bytes the stock game never uses; docs/_savegame.md)
 mxStateByte equ 0x38FD              ; missionState (see missions_docked.asm): bits 0-1 Constrictor, bits 2-3 Thargoid plans, bits 4-6 hint stage, bit 7 Trumbles
-mxAsteroidCount equ 0x38FE            ; asteroid counter, then (asteroids paid) the stolen police ship state in bits 0-1
+mxAsteroidCount equ 0x38FE            ; first mission: jumps to wait; second mission (after the first is paid): state in bits 0-1, asteroids to go in bits 2-7
 mxTypeConstrictor equ 19            ; ship type after the 19 stock ships (0-18)
 
     IFDEF FL_C
@@ -26,14 +26,14 @@ mxTypeConstrictor equ 19            ; ship type after the 19 stock ships (0-18)
     DEFINE HAS_INV
     DEFINE HAS_DRAW
     ENDIF
-    IFDEF FL_A
-    DEFINE FLID "A"
+    IFDEF FL_S
+    DEFINE FLID "S"
     DEFINE HAS_SPAWN
     DEFINE HAS_KILL
     DEFINE HAS_ARRIVE
     ENDIF
-    IFDEF FL_V
-    DEFINE FLID "V"
+    IFDEF FL_R
+    DEFINE FLID "R"
     DEFINE HAS_SPAWN
     DEFINE HAS_KILL
     ENDIF
@@ -65,7 +65,7 @@ mxFlightId:
     db FLID                         ; "0" default, "C", "P": which image is in RAM (the launch hook compares it)
 
 ; Launch hook: replaces the first call of launchSequence (`call loadIndicator`). Makes sure the flight image the state asks for is in this tail, then carries on with
-; loadIndicator. "T" while Trumbles are aboard, "C" while the Constrictor hunt is on (state 1 or 3), "P" while the plans are aboard, "A" while the asteroid mission waits or Ceerdi is being cleared, else "0" (this default image).
+; loadIndicator. "T" while Trumbles are aboard, "C" while the Constrictor hunt is on (state 1 or 3), "P" while the plans are aboard, "S" while the stolen-ship mission waits or hunts, "R" while Ceerdi is being cleared, else "0" (this default image).
 ; Nothing is loaded when the right image is already there. This code is the same in every image, at the same address, so the load can overwrite it while it waits.
 mxLaunchEntry:
     ld hl,(mxTrCount)
@@ -88,16 +88,16 @@ mxLaunchEntry:
     ld a,b
     and 0x5C
     cp 0x1C                           ; plans finished and the asteroid stage is 1 (waiting: the image counts the jumps) or 3 (clearing Ceerdi); bit 5 tells them apart
-    ld a,"A"
+    ld a,"S"
     jr z,mxFlightGo
     ld a,b
     and 0x7C
-    cp 0x5C                           ; asteroids paid: the police ship hunt (&38FE bits 0-1 = 1) needs the V image
+    cp 0x5C                           ; first mission paid: the second one clearing (&38FE bits 0-1 = 1) needs the R image
     jr nz,mxFlightNone
     ld a,(mxAsteroidCount)
     and 0x03
     cp 0x01
-    ld a,"V"
+    ld a,"R"
     jr z,mxFlightGo
 mxFlightNone:
     ld a,"0"
@@ -171,10 +171,10 @@ mxRechargeImpl:
     IFDEF FL_T
     INCLUDE "missions_flight_t.asm"
     ENDIF
-    IFDEF FL_A
-    INCLUDE "missions_flight_a.asm"
+    IFDEF FL_S
+    INCLUDE "missions_flight_s.asm"
     ENDIF
-    IFDEF FL_V
-    INCLUDE "missions_flight_v.asm"
+    IFDEF FL_R
+    INCLUDE "missions_flight_r.asm"
     ENDIF
 mxFlightEnd:

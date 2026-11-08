@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Test the flight side of the asteroid mission (-DFL_A image) in cpcxray: asteroids spawn at Ceerdi only while clearing, kills of asteroids count down. (The docked part is tested by tools/test_mission_hook.py.)
+"""Test the flight side of the asteroid mission (-DFL_R image) in cpcxray: asteroids spawn at Ceerdi only while clearing, kills of asteroids count down. (The docked part is tested by tools/test_mission_hook.py.)
 
 Build first:  python3 -I tools/build_dsk.py --missions ; cp work/elite_missions.dsk work/xray/disk/
-usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_asteroids.py
+usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_rocks.py
 
 Same method as tools/test_mission_flight.py: start from output/firebird_in_flight.sna, let the launch finish, stop at handleEntitys (&5066), write the
 freshly assembled COMMONXX patches (-DMISSIONS), set variables, call the routine with a trap return address. The docked module is in LARGEAXX, which comes
@@ -57,7 +57,7 @@ def build(flag="-DFL_P"):
 
 
 async def main():
-    new, syms = build("-DFL_A")
+    new, syms = build("-DFL_R")
     SITES = patch_ranges(new)
     params = StdioServerParameters(command="cpcxray", args=["mcp", "--config", "config/cpc6128.toml"])
     async with stdio_client(params) as (r, w):
@@ -109,10 +109,10 @@ async def main():
                 return kinds
 
             # spawn: (label, state, galaxy, x, y, asteroids expected)
-            for label, st, gal, x, y, want in (("clearing at Ceerdi", 0x3E, 2, 215, 84, True), ("wrong place", 0x3E, 2, 215, 85, False), ("wrong galaxy", 0x3E, 1, 215, 84, False),
-                                               ("waiting (stage 1)", 0x1E, 2, 215, 84, False), ("cleared", 0x4E, 2, 215, 84, False)):
+            for label, st, gal, x, y, want in (("clearing at Ceerdi", 0x5E, 2, 215, 84, True), ("wrong place", 0x5E, 2, 215, 85, False), ("wrong galaxy", 0x5E, 1, 215, 84, False),
+                                               ("first mission not paid", 0x3E, 2, 215, 84, False), ("cleared (state 2)", 0x5E, 2, 215, 84, False)):
                 await start()
-                await wr(0x38FD, st); await wr(syms["currentGalaxy"], gal); await wr(syms["presentSystemX"], x); await wr(syms["presentSystemY"], y)
+                await wr(0x38FD, st); await wr(AST, 0x51 if label != "cleared (state 2)" else 0x02); await wr(syms["currentGalaxy"], gal); await wr(syms["presentSystemX"], x); await wr(syms["presentSystemY"], y)
                 before = await slots()
                 for _ in range(30):
                     await call(syms["mxSpawnCheck"])
@@ -120,45 +120,33 @@ async def main():
                 good = (n >= 1) if want else (n == 0)
                 ok &= good
                 print(f"{'ok  ' if good else 'FAIL'} spawn {label:26s} after 30 checks: {n} new asteroids ({'some' if want else 'none'})")
-            # kill hook: (label, state, place ok, blueprint, count before, count after, state after)
-            for label, st, x, bpname, cnt, want_cnt, want_st in (("asteroid, 3 left", 0x3E, 215, "shipdatAsteroid", 3, 2, 0x3E), ("last asteroid", 0x3E, 215, "shipdatAsteroid", 1, 0, 0x4E),
-                                                                  ("other ship", 0x3E, 215, "shipdatViper", 3, 3, 0x3E), ("asteroid elsewhere", 0x3E, 216, "shipdatAsteroid", 3, 3, 0x3E),
-                                                                  ("not clearing", 0x0E, 215, "shipdatAsteroid", 3, 3, 0x0E)):
+            # kill hook: (label, &38FD, x, blueprint, &38FE before, &38FE after); the byte is (asteroids to go << 2) | state
+            for label, st, x, bpname, before, after in (("asteroid, 3 left", 0x5E, 215, "shipdatAsteroid", 0x0D, 0x09), ("last asteroid", 0x5E, 215, "shipdatAsteroid", 0x05, 0x02),
+                                                         ("other ship", 0x5E, 215, "shipdatViper", 0x0D, 0x0D), ("asteroid elsewhere", 0x5E, 216, "shipdatAsteroid", 0x0D, 0x0D),
+                                                         ("not offered (state 0)", 0x5E, 215, "shipdatAsteroid", 0x0C, 0x0C), ("first mission not paid", 0x3E, 215, "shipdatAsteroid", 0x0D, 0x0D)):
                 await start()
-                await wr(0x38FD, st); await wr(AST, cnt); await wr(syms["currentGalaxy"], 2); await wr(syms["presentSystemX"], x); await wr(syms["presentSystemY"], 84)
-                regs = await call(syms["mxKillHook"], iy=syms[bpname], de=0)
-                c1, s1 = (await rd(AST))[0], (await rd(0x38FD))[0]
-                good = c1 == want_cnt and s1 == want_st
+                await wr(0x38FD, st); await wr(AST, before); await wr(syms["currentGalaxy"], 2); await wr(syms["presentSystemX"], x); await wr(syms["presentSystemY"], 84)
+                await call(syms["mxKillHook"], iy=syms[bpname], de=0)
+                a1 = (await rd(AST))[0]
+                good = a1 == after
                 ok &= good
-                print(f"{'ok  ' if good else 'FAIL'} kill  {label:20s} count {cnt} -> {c1} (want {want_cnt}), state {st:02X} -> {s1:02X} (want {want_st:02X})")
-            # arrival: (label, state, count before, count after, state after); A = 1 and the flags are kept
-            for label, st, cnt, want_cnt, want_st in (("waiting, 5 left", 0x1E, 5, 4, 0x1E), ("waiting, last jump", 0x1E, 1, 0, 0x2E), ("clearing: jumps do not count", 0x3E, 20, 20, 0x3E),
-                                                      ("plans done, no asteroid stage", 0x0E, 7, 7, 0x0E)):
-                await start()
-                await wr(0x38FD, st); await wr(AST, cnt); await wr(syms["tunnelFlag2"], 0)
-                await call(syms["mxArrive"], af=0x0100)
-                regs = await c("registers_get")
-                c1, s1, tf = (await rd(AST))[0], (await rd(0x38FD))[0], (await rd(syms["tunnelFlag2"]))[0]
-                good = c1 == want_cnt and s1 == want_st and tf == 1 and (regs["af"] >> 8) == 1
-                ok &= good
-                print(f"{'ok  ' if good else 'FAIL'} arrive {label:30s} count {cnt} -> {c1} (want {want_cnt}), state {st:02X} -> {s1:02X} (want {want_st:02X}), tunnelFlag2 {tf}, A {regs['af'] >> 8}")
-            # live: the real game loop at Ceerdi for a few seconds: its own spawn check calls the hook; no hang, asteroids appear, screenshot for the eye
+                print(f"{'ok  ' if good else 'FAIL'} kill  {label:24s} &38FE {before:#04x} -> {a1:#04x} (want {after:#04x})")
+            # live: the real game loop at Ceerdi for a few seconds (spawn timer forced past the station-near test), screenshot for the eye
             await start()
             hb = (await c("breakpoint_add", {"address": syms["mxSpawnCheck"], "kind": "pc"}))["id"]
-            await wr(0x38FD, 0x3E); await wr(AST, 20); await wr(syms["currentGalaxy"], 2); await wr(syms["presentSystemX"], 215); await wr(syms["presentSystemY"], 84)
+            await wr(0x38FD, 0x5E); await wr(AST, 0x51); await wr(syms["currentGalaxy"], 2); await wr(syms["presentSystemX"], 215); await wr(syms["presentSystemY"], 84)
             await c("memory_write", {"address": syms["heNotOnThargonMission"] + 12, "data": "00 00"})   # the test snapshot is next to the station: drop the `jr nz` that skips the spawn when it is near
             await wr(syms["todoLaunchFlag"], 0); await wr(syms["todoLaserVar2"], 2)
             rep = await c("run", {"max_us": 40_000_000, "timeout_s": 200})
-            print("     run:", str(rep)[:300], "todoLaserVar2", (await rd(syms["todoLaserVar2"]))[0], "FlagStationNear", (await rd(syms["FlagStationNear"]))[0])
             print("     first live hit of mxSpawnCheck:", rep.get("reason"), rep.get("pc"))
             await c("breakpoint_remove", {"breakpoint_id": hb})
             await wr(syms["todoLaserVar2"], 2)
             await c("run", {"max_us": 6_000_000, "timeout_s": 100})
             n = (await slots()).get(syms["shipdatAsteroid"], 0)
-            await c("screen_image", {"path": "output/asteroids_live.png"})
+            await c("screen_image", {"path": "output/rocks_live.png"})
             good = n >= 1
             ok &= good
-            print(f"{'ok  ' if good else 'FAIL'} live game loop at Ceerdi (spawn timer forced), 40 s: {n} asteroids in the slots; screenshot work/xray/output/asteroids_live.png")
+            print(f"{'ok  ' if good else 'FAIL'} live game loop at Ceerdi: {n} asteroids in the slots; screenshot work/xray/output/rocks_live.png")
             print("ALL OK" if ok else "FAILURES")
 
 

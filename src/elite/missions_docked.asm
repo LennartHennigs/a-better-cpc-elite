@@ -1,5 +1,5 @@
 ; Resident stub of the LARGEAXX tail (&1714-&1A3F), assembled with -DMISSIONS. It picks the active mission module, loads its overlay file
-; (MISSIONC.BIN, MISSIONP.BIN or MISSIONT.BIN) into the rest of the tail and jumps to it. The tail is reloaded with LARGEAXX at every docking, so the stub is always there.
+; (MISSIONC.BIN, MISSIONP.BIN, MISSIONT.BIN or MISSIONR.BIN) into the rest of the tail and jumps to it. The tail is reloaded with LARGEAXX at every docking, so the stub is always there.
 ; Overlay layout: +0 jp moduleEntry, +3 dw missionTextTable, then the module. An overlay file is the bytes from mxOverlayBase to mxOverlayEnd of a build with
 ; -DOVL_C or -DOVL_P (tools/build_dsk.py slices them by label). A module ends by `jp mxShowEnd` (message box, then back to the docking code) or `ret`.
     INCLUDE "missions_docked_defs.asm"
@@ -17,6 +17,10 @@ missionsDockedEntry:                  ; = &1714, the fixed entry the docking cod
     ret z                             ; under 256 kill points no mission can be active: do not touch the disk
     ld a,(missionState)
     ld b,a
+    bit 7,b
+    jr z,mxTrumbles                   ; the Trumbles offer comes at any docking, whatever the chain state (it is made once)
+mxChain:
+    ld a,b
     and 0x03
     cp 0x02
     jr z,mxPlansPart
@@ -80,31 +84,26 @@ mxStageRow:                           ; A = row of mxStageTable: load module C o
     cp (hl)
     ret nz
     jr mxLoadC
-mxAfterPlans:                         ; plans finished: the asteroid mission (missionState bits 4-6, scheduled when the plans are delivered) comes before the Trumbles
+mxAfterPlans:                         ; plans finished: the stolen police ship (missionState bits 4-6, scheduled when the plans are delivered), then the asteroids
     ld a,b
     and 0x70
-    jr z,mxTrumbles                   ; 0: not part of this chain
+    ret z                             ; 0: no mission scheduled (a commander from before this chain)
     cp 0x50
-    jr nc,mxPolice                    ; 5: paid
+    jr nc,mxRocks                     ; 5: the first one is paid
     bit 4,a
-    ret nz                            ; 1 and 3 (waiting, clearing) are flight matters
-    jr mxLoadC                        ; 2 ready: the module (c = "P") makes the offer; 4 cleared: it pays
-mxPolice:                             ; asteroids paid: the stolen police ship (&38FE bits 0-1; the module is MISSIONT) comes before the Trumbles
+    ret nz                            ; 1 and 3 (waiting, hunting) are flight matters
+    jr mxLoadC                        ; 2 ready: the module (c = "P") makes the offer; 4 killed: it pays
+mxRocks:                              ; the asteroids: &38FE bits 0-1 0 offer, 1 clearing (flight), 2 reward (module MISSIONR), 3 paid
     ld a,(mxAsteroidCount)
-    and 0x03
-    cp 0x03
-    jr z,mxTrumbles                   ; 3: paid
-    cp 0x01
-    ret z                             ; 1: the hunt at Birera is a flight matter
-    jr mxCashOk                       ; 0: offer, 2: reward (a module load, "T")
+    bit 0,a
+    ret nz
+    ld a,"R"
+    jr mxLoadModule
 mxTrumbles:
-    bit 7,b
-    ret nz                            ; the Trumbles offer was made already
-    ld hl,(mxCredits)                 ; both finished: offer Trumbles from 5,000 Cr, the price (whole thousands word)
+    ld hl,(mxCredits)                 ; offer Trumbles from 5,000 Cr, the price (whole thousands word)
     ld de,-5
     add hl,de
-    ret nc                            ; carry when the thousands are 5 or more
-mxCashOk:
+    jp nc,mxChain                     ; carry when the thousands are 5 or more
     ld a,"T"
 mxLoadModule:
     ld (mxOverlayName+7),a
@@ -167,5 +166,8 @@ mxOverlayBase:                        ; the overlay file is loaded here
     ENDIF
     IFDEF OVL_T
     INCLUDE "missions_overlay_t.asm"
+    ENDIF
+    IFDEF OVL_R
+    INCLUDE "missions_overlay_r.asm"
     ENDIF
 mxOverlayEnd:

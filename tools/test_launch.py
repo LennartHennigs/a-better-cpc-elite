@@ -35,21 +35,21 @@ SCENARIOS = {
     "plans_aboard":            (0x0A, "0", "P"),
     "plans_aboard_from_C":     (0x0A, "C", "P"),
     "plans_done":              (0x0E, "P", "0"),
-    "asteroids_waiting":       (0x1E, "0", "A"),
-    "asteroids_waiting_from_P": (0x1E, "P", "A"),
-    "asteroids_ready":         (0x2E, "A", "0"),
-    "asteroids_clearing":      (0x3E, "0", "A"),
-    "asteroids_cleared":       (0x4E, "A", "0"),
-    "asteroids_paid":          (0x5E, "A", "0"),
+    "stolen_waiting":       (0x1E, "0", "S"),
+    "stolen_waiting_from_P": (0x1E, "P", "S"),
+    "stolen_ready":         (0x2E, "S", "0"),
+    "stolen_clearing":      (0x3E, "0", "S"),
+    "stolen_cleared":       (0x4E, "S", "0"),
+    "stolen_paid":          (0x5E, "S", "0"),
     "trumbles_aboard":         (0x0E, "0", "T"),
     "trumbles_from_C":         (0x01, "C", "T"),
     "trumbles_gone":           (0x8E, "T", "0"),
-    "police_hunting":          (0x5E, "0", "V"),
-    "police_hunting_from_A":   (0x5E, "A", "V"),
-    "police_killed":           (0x5E, "V", "0"),
-    "police_paid":             (0x5E, "V", "0"),
+    "rocks_hunting":          (0x5E, "0", "R"),
+    "rocks_hunting_from_S":   (0x5E, "S", "R"),
+    "rocks_killed":           (0x5E, "R", "0"),
+    "rocks_paid":             (0x5E, "R", "0"),
 }
-POLICE = {"police_hunting": 1, "police_hunting_from_A": 1, "police_killed": 2, "police_paid": 3}   # &38FE (stolen police ship state, bits 0-1)
+POLICE = {"rocks_hunting": 1, "rocks_hunting_from_S": 1, "rocks_killed": 2, "rocks_paid": 3}   # &38FE (stolen police ship state, bits 0-1)
 TRUMBLES = {"trumbles_aboard", "trumbles_from_C"}   # these run with a non-zero count in &3905
 FLIGHT_ID = 0x9DB6   # mxFlightId: the id byte after the 8-entry vector table
 
@@ -75,7 +75,7 @@ def patches():
 async def main():
     files = dskx.read_files(dskx.load_sectors(ROOT / "work/elite_missions.dsk"))
     images = {}
-    for t in "0CPTAV":
+    for t in "0CPTSR":
         raw = files[(0, f"MFLIGHT{t}.BIN")]
         images[t] = raw[128:128 + dskx.amsdos_header(raw)["length"]]   # the file is padded to whole records after the real length
     params = StdioServerParameters(command="cpcxray", args=["mcp", "--config", "config/cpc6128.toml"])
