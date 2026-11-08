@@ -524,7 +524,7 @@ Common to all: `83B0` = 1 once the offer is shown (the offer runs when `83B0` is
 | End | dock anywhere: 4,000 Cr | dock **in the target system**: 5,000 Cr (`0xC350` decicredits) | state equals 1, dock anywhere: 6,000 Cr (`0xEA60`) |
 
 Notes: (a) so "the two Elite Plus missions" that are not in any other port are 4 and 6; 5 is the BBC plans mission with an ambush; (b) no failure path was found for 6
-(the asteroids never "reach the planet"; leaving the system just stops the spawning, the counter stays); (c) the mask mission texts belong to the 2/3 slots and are not examined;
+(the asteroids never "reach the planet"; leaving the system just stops the spawning, the counter stays); (c) the "masking device" mission of the Plus texts (find the invisible-ship system, retrieve the device, "Use ... to activate it") is the cloaking device mission that the CPC already has (Cougar with Asp escorts, `aspMissionState`, `Y` key; section 2 above), so it is not missing: the only Plus missions the CPC lacks are 4 and 6 (6 is built on branch `mission-asteroids`);
 (d) which blueprint rows are the asteroid and boulder is unchecked (row index times 10 into `0x8739`; the row numbers do not match the name list order); (e) the `[+0x25]` marker byte
 is a ship-record byte the CPC does not have: it needs a different marker (see the plan below).
 
