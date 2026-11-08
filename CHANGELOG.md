@@ -3,6 +3,10 @@
 Changes to the project, newest first. The project root is a git repository from 2026-11-07; before that, this
 file is the only history. Dates are ISO.
 
+## 2026-11-08
+
+- `docs/_gameplay.md` (was empty): the witchspace mis-jump on the CPC compared with the C64 and Spectrum. Found by reading, not traced: the random mis-jump roll looks unreachable (the seed byte is compared with `0x40` then `0x20`); only the bit-6 pause toggle forces it. `work/ext_c64/` (C64 source) and `work/ext_c64_flicker/` cloned as references.
+
 ## 2026-11-07
 
 - Applied the CPC+ fix to `src/elite_fr/commonxx.asm` too (`getPPI_Input` at `&8F2B`, patched byte `&8F3F`, `ED 79` -> `ED 49`): the assembled `COMMONXX` differs from `work/bin_fr` in exactly that byte. `tools/check_src.sh` expects the patched byte for `src/elite` (`&8DA0`) and `src/elite_fr` (`&8F3F`); German (disk already patched) needs no exception. All three checks pass. Not tested in an emulator (Caprice32 does not reproduce the Plus bug anyway); a patched French disk is not built.
