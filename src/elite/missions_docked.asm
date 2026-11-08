@@ -86,21 +86,16 @@ mxAfterPlans:                         ; plans finished: the asteroid mission (mi
     jr z,mxTrumbles                   ; 0: not part of this chain
     cp 0x50
     jr nc,mxTrumbles                  ; 5: paid
-    cp 0x20
-    jr z,mxLoadC                      ; 2: ready, the module (c = "P") makes the offer
-    cp 0x40
-    jr z,mxLoadC                      ; 4: cleared, the module pays. 1 and 3 (waiting, clearing) are flight matters
-    ret
+    bit 4,a
+    ret nz                            ; 1 and 3 (waiting, clearing) are flight matters
+    jr mxLoadC                        ; 2 ready: the module (c = "P") makes the offer; 4 cleared: it pays
 mxTrumbles:
     bit 7,b
     ret nz                            ; the Trumbles offer was made already
     ld hl,(mxCredits)                 ; both finished: offer Trumbles from 5,000 Cr, the price (whole thousands word)
-    ld a,h
-    and a
-    jr nz,mxCashOk
-    ld a,l
-    cp 0x05
-    ret c
+    ld de,-5
+    add hl,de
+    ret nc                            ; carry when the thousands are 5 or more
 mxCashOk:
     ld a,"T"
 mxLoadModule:

@@ -32,16 +32,14 @@ mxBriefing:
     cp 0x02
     ret nc
     ld c,a
+    rrca
+    rrca
+    rrca                              ; galaxy 1: stage 0, galaxy 2: stage 2 (0x20)
+    ld b,a
     ld a,(missionState)
     and 0x8C                          ; keep the Plans and Trumbles bits
-    or 0x01                           ; hunting
-    ld b,a
-    ld a,c
-    and a
-    jr z,mxBriefing2
-    ld a,0x20                         ; stage 2
-mxBriefing2:
     or b
+    inc a                             ; hunting (bit 0 was clear)
     ld (missionState),a
     ld a,0x02
     add a,c                           ; middle part: string 2 (galaxy 1) or 3 (galaxy 2)

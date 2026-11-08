@@ -91,13 +91,12 @@ mxSpawnDone:
 mxKillHookImpl:
     call getBounty
     push af
-    push de
     push hl
-    push iy
-    pop de
-    ld hl,shipdatConstrictor
-    and a
-    sbc hl,de
+    ld a,iyl
+    cp shipdatConstrictor & 0xFF
+    jr nz,mxKillDone
+    ld a,iyh
+    cp shipdatConstrictor >> 8
     jr nz,mxKillDone
     ld hl,mxStateByte
     ld a,(hl)
@@ -107,7 +106,6 @@ mxKillHookImpl:
     set 1,(hl)                        ; 01 -> 11
 mxKillDone:
     pop hl
-    pop de
     pop af
     ret
 
@@ -116,25 +114,20 @@ mxKillDone:
 ; unchanged and returns NZ/NC, so the caller neither kills nor counts it. Every other ship gets the original store, flags untouched.
 mxLaserHookImpl:
     push af
-    push hl
-    ld l,(ix+35)
-    ld h,(ix+36)
-    ld a,shipdatConstrictor & 0xFF
-    cp l
+    ld a,(ix+35)
+    cp shipdatConstrictor & 0xFF
     jr nz,mxLaserNormal
-    ld a,shipdatConstrictor >> 8
-    cp h
+    ld a,(ix+36)
+    cp shipdatConstrictor >> 8
     jr nz,mxLaserNormal
     ld a,c
     cp 0x17
     jr nc,mxLaserNormal
-    pop hl
     pop af
     ld a,(ix+34)                      ; weak laser: no damage
     or a                              ; NC, and NZ because a live ship has energy
     ret
 mxLaserNormal:
-    pop hl
     pop af
     ld (ix+34),a
     ret

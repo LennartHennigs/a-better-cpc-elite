@@ -80,14 +80,10 @@ mxLaunchEntry:
     ld a,"P"
     jr z,mxFlightGo                   ; plans aboard
     ld a,b
-    and 0x7C
-    cp 0x1C                           ; plans finished and the asteroid stage is 1 (waiting: the image counts the jumps) or 3 (clearing Ceerdi)
-    jr z,mxFlightA
-    cp 0x3C
-    jr nz,mxFlightNone
-mxFlightA:
+    and 0x5C
+    cp 0x1C                           ; plans finished and the asteroid stage is 1 (waiting: the image counts the jumps) or 3 (clearing Ceerdi); bit 5 tells them apart
     ld a,"A"
-    jr mxFlightGo
+    jr z,mxFlightGo
 mxFlightNone:
     ld a,"0"
 mxFlightGo:
