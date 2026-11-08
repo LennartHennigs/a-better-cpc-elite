@@ -74,9 +74,14 @@ async def main():
             ix = (await c("registers_get"))["ix"]
             hdr = bytes.fromhex((await c("memory_read", {"address": ix + 34, "length": 3}))["hex"])
             print("slot flags %02X, blueprint address %04X" % (hdr[0], hdr[1] | hdr[2] << 8))
-            for off, val in ((0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (5, 0), (6, 0), (7, 0x03), (8, 0), (37, 0x7F)):   # z 768 straight ahead, hostile flags like spawnCommand1
+            for off, val in ((0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (5, 0), (6, 0), (7, 0x01), (6, 0x80), (8, 0), (27, 0), (37, 0x7F)):   # z 384 straight ahead, speed 0 so it hangs there, hostile flags like spawnCommand1
                 await c("memory_write", {"address": ix + off, "data": "%02X" % val})
-            await call(0x82B8, ix=ix)                     # setDirectionofEntity: builds the orientation, without it the ship is not drawn
+            flag = (await c("memory_read", {"address": ix + 32, "length": 1}))["hex"]
+            await c("memory_write", {"address": ix + 32, "data": "%02X" % (int(flag, 16) & ~0x40)})   # res 6,(ix+32): spawnShip sets it, the game re-places such ships (loc_83AA clears it)
+            await c("memory_write", {"address": 0x1A40 + 7, "data": "70"})   # push the planet (slot 0) far away: the view is full of it and a ship ahead would be inside it
+            print("  after writes:", (await c("memory_read", {"address": ix, "length": 9}))["hex"])
+            await call(0x82B8, ix=ix)
+            print("  after setDirectionofEntity:", (await c("memory_read", {"address": ix, "length": 9}))["hex"])                     # setDirectionofEntity: builds the orientation, without it the ship is not drawn
             await c("breakpoint_remove", {"breakpoint_id": 1})
             await c("registers_set", {"values": {k: saved[k] for k in ("af", "bc", "de", "hl", "ix", "iy", "sp", "pc", "af_", "bc_", "de_", "hl_") if k in saved}})
             if "--fill" in sys.argv:   # watch the stack loads of the fill routine (ld sp,hl at &F636): HL must stay inside the bitmap &A000-&C000
@@ -115,7 +120,7 @@ async def main():
                         print(await c("stack_get", {}))
                         break
                 await c("breakpoint_remove", {"breakpoint_id": pcx})
-            await c("run", {"max_us": 120_000, "timeout_s": 60})
+            await c("run", {"max_us": 400_000, "timeout_s": 60})
             print("position bytes ix+0..8 after the run:", (await c("memory_read", {"address": ix, "length": 9}))["hex"])
             alive = (await c("memory_read", {"address": ix + 34, "length": 1}))["hex"]
             print("slot flag after 2 s:", alive)

@@ -13,6 +13,7 @@ file is the only history. Dates are ISO.
   (horizontal lines at the bottom, a field of red text, a runaway stack) came from the test harness, not the game: it injected calls at an arbitrary stop (the fill routines use SP as a write pointer inside the
   bitmap) and then resumed at the trap address, running the zeroed tail and the bitmap as code. The script now stops at `handleEntitys` (`&5066`) and restores all registers after the calls; the screen is
   then clean, the Constrictor slot is processed (its position changes) and it is drawn (a red dot in the view and on the scanner, it flies off quickly). The snapshot is still undocking at start: run 4 s first.
+  Close-up (`work/xray/output/missions_constrictor_closeup.png`): with speed 0 and `res 6,(ix+32)` (spawnShip sets bit 6 and the game re-places such ships; the stock `loc_83AA` clears it) the hull is drawn as a red wireframe wedge at z 342. Hull and ship type 19 work.
 - Constrictor hull size measured: 261 bytes (Fessor's `Constrictor.asm`, CPC layout, read only; not committed because `extended/CLAUDE.md` forbids it). The MSX disassembly has the same geometry decoded (`work/ext_msx/ricbit/shapes.asm`), so our own hull can be generated from that.
 - Constrictor, docked part (in the `-DMISSIONS` build, `src/elite/missions_docked.asm`, text in `missions_text.txt`): offer at docking with 256 kill points
   in galaxy 1 or 2 (galaxy 2 starts the trail at Cearso), seven system hints (Reesdice, Arexe, Cearso, Errius, Inbibe, Ausar, Usleri; table of galaxy/x/y/string),
