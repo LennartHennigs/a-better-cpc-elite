@@ -37,7 +37,7 @@ Missions run one at a time, so their code is loaded when needed instead of being
 - **Hook sites in stock code** (each a 3-byte `call` replacement, so no stock routine moves): `spawnShip` (`mxShipTable`, serves ship type 19), `spawnCommand0` (`mxSpawnCheck`), `todo_killedsomeone` (`mxKillHook`, replaces `call getBounty`),
   `applyLaserDamagetoEntity` (`mxLaserHook`), `RechargeEnergy` (`mxRecharge`), the docking sequence (`&1714`), `launchSequence` (`mxLaunchEntry`), `setShipvarsAtArrival` (`mxArrive`), `todoOverheating` (`mxSun`), the Inventory loop
   (`mxInvHook`) and the `call transferBuffertoScreen` in `Spaceflight` at `&1E4D` (`mxFlightDraw`, the sprites).
-- **Build.** `-DMISSIONS` selects the hooks and tails; `-DFL_C/P/T/S/R` pick the flight image and `-DOVL_C/P/T/R` the overlay; `tools/build_dsk.py` slices each by labels (`mxFlightBase..mxFlightEnd`, `mxOverlayBase..mxOverlayEnd`) and adds the files with AMSDOS headers.
+- **Build.** `-DMISSIONS` selects the hooks and tails; `-DFL_C/P/T/S/R` pick the flight image and `-DOVL_C/P/T/R` the overlay; `tools/build_dsk.py` slices each by labels (`mxFlightBase..mxFlightEnd`, `mxOverlayBase..mxOverlayEnd`) and adds the files with AMSDOS headers, then adds `README.TXT` and marks every file except `ELITE.BAS` and `README.TXT` as System (hidden from `CAT`, as on the original disk).
 - **Save bytes used** (all unused by the stock game, no key change): `&38FD` mission state (bits 0-1 Constrictor, 2-3 plans, 4-6 stage of the first added mission, 7 Trumbles offered), `&38FE` (jump counter of the stolen ship, then the asteroids' state and count),
   `&3905-&3906` Trumble count (at most `&7FFF`). `docs/_savegame.md` has the layout.
 

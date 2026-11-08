@@ -1,5 +1,7 @@
 # Changelog
 
+- **Mission disk: README.TXT and hidden files.** `tools/build_dsk.py --missions` adds `README.TXT` (source `src/disk/README.TXT`, a short spoiler-free text, ASCII with CRLF and Ctrl-Z) and gives every other directory entry the System attribute (bit 7 of the third extension byte), as the original protected disk does: `CAT` shows only `ELITE.BAS` and `README.TXT`, `LOAD`, `RUN` and the game's own file loads still find the rest (checked: `CAT`, `LOAD` of a hidden overlay, `test_launch.py`, the README read back with `LINE INPUT#`). No decoy entries. The trainer disks (`tools/build_cheat.sh`) keep the game files hidden and list `CHEAT.BAS`, `SHOWSAVE.BAS`, `EDITSAVE.BAS`, `README.TXT` and `ELITE.BAS`.
+
 - **Edited saves load in the game.** Tested in cpcxray on the combined mission disk: a save written by `tools/saveedit.py` and one written by `EDITSAVE.BAS` (header load `&6000`) are both found by the disk menu and load correctly (kills, cash, mission byte, name). Key timing for the test is in `docs/_cheats.md`.
 
 - **`EDITSAVE.BAS`, a save editor on the CPC** (generator `tools/mk_editsave.py`, key lines shared with `tools/mk_showsave.py`, which is now a module with a `__main__` guard): detects the build by key, edits kills, jumps, cash, legal status, cloak and the added-mission preset, fixes the checksums, writes with `SAVE`; tested on a UK and a French save. `tools/build_cheat.sh` builds three programs now. See `docs/_cheats.md`.

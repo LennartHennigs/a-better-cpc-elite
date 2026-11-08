@@ -64,6 +64,29 @@ def overlay(tag):
         return labels["mxOverlayBase"], out.read_bytes()[labels["mxOverlayBase"] - 0x840:labels["mxOverlayEnd"] - 0x840]
 
 
+def add_readme(d, secs, first):
+    """src/disk/README.TXT as an ASCII file (CRLF, ends with Ctrl-Z, last record padded with Ctrl-Z)."""
+    data = (ROOT / "src/disk/README.TXT").read_bytes()
+    records = -(-len(data) // 128)
+    dskx.add_payload(d, secs, first, "README", "TXT", data.ljust(records * 128, b"\x1a"), records)
+    print(f"README.TXT: {len(data)} bytes")
+
+
+def hide_files(d, secs, first, keep):
+    """Give every directory entry whose file is not in `keep` the System attribute (bit 7 of the third extension byte), as the original disk does: CAT lists only the files in `keep`, LOAD and RUN still find the rest."""
+    hidden = []
+    for i in range(64):
+        off = secs[(0, first + i // 16)][0] + (i % 16) * 32
+        e = d[off:off + 32]
+        if e[0] == 0xE5:
+            continue
+        name = bytes(b & 0x7F for b in e[1:9]).decode("latin1").strip() + "." + bytes(b & 0x7F for b in e[9:12]).decode("latin1").strip()
+        if name not in keep and not e[10] & 0x80:
+            d[off + 10] = e[10] | 0x80
+            hidden.append(name)
+    print(f"{len(hidden)} directory entries hidden (System attribute), visible: {', '.join(sorted(keep))}")
+
+
 def main():
     d = bytearray(BASE.read_bytes())
     secs = sector_offsets(d)
@@ -119,6 +142,9 @@ def main():
             base, data = flight_image(tag)
             blocks = add_file(d, secs, first, f"MFLIGHT{tag}", "BIN", data, base)
             print(f"MFLIGHT{tag}.BIN: {len(data)} bytes at &{base:04X}, blocks {blocks}")
+    if MISSIONS:
+        add_readme(d, secs, first)
+        hide_files(d, secs, first, keep={"ELITE.BAS", "README.TXT"})
     OUT.write_bytes(d)
     print("wrote", OUT)
 
