@@ -5,6 +5,15 @@ file is the only history. Dates are ISO.
 
 ## 2026-11-08
 
+- Overlays (branch `mission-plans`): the docked modules are now separate files loaded at docking. A 97-byte resident stub in the LARGEAXX tail (`src/elite/missions_docked.asm`:
+  it hands over to `chkMissions` while an old mission is pending, returns when `killScoreHigh` is 0 (no disk access under 256 points), picks the module from the state byte, patches the
+  last letter of the name `MISSION?`, loads the file with the game's `loadFile` at `mxOverlayBase` (`&1775`) and jumps there; it also holds the shared box printer `missionShow`). Overlay
+  layout: `jp moduleEntry`, `dw missionTextTable`, module. Overlays: `MISSIONC.BIN` (Constrictor, `missions_overlay_c.asm`, **711 bytes**) and `MISSIONP.BIN` (Thargoid plans,
+  `missions_overlay_p.asm`, **362 bytes**), cut from `-DOVL_C` / `-DOVL_P` builds by label. **Docked tail needed: 97 + 711 = 808 of 812 bytes (4 spare) instead of about 1,170 resident.**
+  `tools/build_dsk.py --missions` now adds the two files to the DSK (new AMSDOS header, directory entry and block allocation; `--plans` is gone, the flight hooks of both missions are always in
+  `-DMISSIONS`; flight tail 575 of 610). The test string is gone (Constrictor strings are 1-10) and `missionOrder` was dropped until Trumbles needs it (code in `docs/_mission_build_plan.md`).
+  Tested in cpcxray (`tools/test_mission_hook.py`, 15 scenarios through the real overlay load, `tools/test_plans.py` flight side): all pass. **Cost: about 1.75 s of emulated time per docking
+  that loads a module, 0 when all missions are done or `killScoreHigh` is 0.**
 - Thargoid plans (branch `mission-plans`, built with `-DMISSIONS -DPLANS`, `tools/build_dsk.py --plans`): docked module `missions_docked_plans.asm` (shared definitions and
   the box printer moved to `missions_docked_defs.asm` and `missions_docked_show.asm`): offer with the Constrictor finished, `killScoreHigh >= 5`, galaxy 3 (bits 2-3 of `&38FD` = 1);
   Ceerdi (215,84) hands over the plans (2); Birera (63,72) pays the Navy energy unit (`extraEnergyUnit` = `&FE`) and +1 rank (3). Flight: while the plans are aboard `mxSpawnCheck` adds a

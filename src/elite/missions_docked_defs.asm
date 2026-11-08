@@ -20,4 +20,5 @@ mxCurrentGalaxy        equ 0x38DC     ; 0-7
 mxPresentSystemY       equ 0x390E
 mxPresentSystemX       equ 0x3910
 mxAddDEtoMoney         equ 0xFE6A     ; DE thousands of credits (COMMON2X)
+mxLoadFile             equ 0x8667     ; loadFile: the call is followed by the load address and the file name pointer
 mxExtraEnergyUnit      equ 0x3902     ; 0 none, 0xFF extra energy unit, 0xFE Navy unit (Thargoid plans reward; recharges 3 steps per call)

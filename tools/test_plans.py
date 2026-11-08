@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Test the Thargoid plans mission in cpcxray: docked module, 22% Thargoid + Thargon spawn, Navy energy unit recharge.
+"""Test the flight side of the Thargoid plans mission in cpcxray: 22% Thargoid + Thargon spawn, Navy energy unit recharge. (The docked modules are tested by tools/test_mission_hook.py.)
 
-Build first:  python3 -I tools/build_dsk.py --plans ; cp work/elite_plans.dsk work/xray/disk/
+Build first:  python3 -I tools/build_dsk.py --missions ; cp work/elite_missions.dsk work/xray/disk/
 usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_plans.py
 
 Same method as tools/test_mission_flight.py: start from output/firebird_in_flight.sna, let the launch finish, stop at handleEntitys (&5066), write the
-freshly assembled COMMONXX patches (-DMISSIONS -DPLANS), set variables, call the routine with a trap return address. The docked module is in LARGEAXX, which comes
+freshly assembled COMMONXX patches (-DMISSIONS), set variables, call the routine with a trap return address. The docked module is in LARGEAXX, which comes
 from the disk after a call to loadLARGEAXX (&8732).
 """
 import asyncio
@@ -37,7 +37,7 @@ DOCKED = {   # name: (state, killScoreHigh, galaxy, x, y, state after, message, 
 def build():
     with tempfile.TemporaryDirectory() as d:
         out, sym = Path(d) / "c.bin", Path(d) / "c.sym"
-        subprocess.run([str(Path.home() / ".local/bin/sjasmplus"), "-DMISSIONS", "-DPLANS", f"--raw={out}", f"--sym={sym}", str(ROOT / "src/elite/commonxx.asm")],
+        subprocess.run([str(Path.home() / ".local/bin/sjasmplus"), "-DMISSIONS", f"--raw={out}", f"--sym={sym}", str(ROOT / "src/elite/commonxx.asm")],
                        check=True, capture_output=True)
         syms = {m.group(1): int(m.group(2), 16) for m in re.finditer(r"^(\w+):\s+EQU\s+0x([0-9A-Fa-f]+)", sym.read_text(), re.M)}
         return out.read_bytes(), syms
@@ -65,7 +65,7 @@ async def main():
                 return bytes.fromhex((await c("memory_read", {"address": addr, "length": n}))["hex"])
 
             async def start():
-                await c("disk_insert", {"drive": "A", "path": "disk/elite_plans.dsk"})
+                await c("disk_insert", {"drive": "A", "path": "disk/elite_missions.dsk"})
                 await c("sna_load", {"path": "output/firebird_in_flight.sna"})
                 await c("run", {"max_us": 4_000_000, "timeout_s": 60})
                 bp = (await c("breakpoint_add", {"address": 0x5066, "kind": "pc"}))["id"]
@@ -83,29 +83,6 @@ async def main():
                 return await c("run", {"max_us": limit, "timeout_s": 120})
 
             ok = True
-            # docked module: load the rebuilt LARGEAXX tail, then call the entry
-            await start()
-            rep = await call(0x8732, 20_000_000)
-            assert rep.get("reason") == "breakpoint", rep
-            await c("sna_save", {"path": "output/_plans_after_load.sna"})
-            for name, (st, ksh, gal, x, y, want, msg, reward) in DOCKED.items():
-                await c("sna_load", {"path": "output/_plans_after_load.sna"})
-                await wr(0x38FD, st); await wr(0x38D9, ksh); await wr(0x38DC, gal); await wr(0x3910, x); await wr(0x390E, y)
-                await wr(0x3926, 0); await wr(0x1C23, 0); await wr(0x3902, 0)
-                rep = await call(0x1714, 3_000_000)
-                shown = rep.get("reason") == "time_limit"
-                if shown:
-                    await c("screen_image", {"path": f"output/plans_{name}.png"})
-                    await c("key_press", {"key": "space"})
-                    rep = await c("run", {"max_us": 4_000_000, "timeout_s": 60})
-                    await c("key_release", {"key": "space"})
-                back = rep.get("reason") == "breakpoint" and rep.get("pc") == "%04X" % TRAP
-                st1 = (await rd(0x38FD))[0]
-                unit = (await rd(0x3902))[0]
-                ksh1 = (await rd(0x38D9))[0]
-                good = shown == msg and back and st1 == want and ((unit == 0xFE and ksh1 == ksh + 1) if reward else (unit == 0 and ksh1 == ksh))
-                ok &= good
-                print(f"{'ok  ' if good else 'FAIL'} docked {name:17s} message={shown} returned={back} state {st:02X}->{st1:02X} (want {want:02X}) unit {unit:02X} killScoreHigh {ksh}->{ksh1}")
             # flight: 22% Thargoid + Thargon
             for label, st, calls in (("plans aboard", 0x0A, 60), ("not aboard", 0x06, 60)):
                 await start()

@@ -1,13 +1,10 @@
-; Thargoid plans module of the LARGEAXX tail (&1714-&1A3F). Assembled with -DMISSIONS -DPLANS instead of the Constrictor module.
+; Thargoid plans module. Loaded at mxOverlayBase by the stub in missions_docked.asm.
 ; State: missionState bits 2-3: 0 not offered, 1 briefed (go to Ceerdi), 2 plans aboard (go to Birera), 3 finished (reward paid).
 ; Needs the Constrictor finished (bits 0-1 = 2), 1280 kill points (killScoreHigh >= 5) and galaxy 3. Systems checked against the CPC name generator
 ; (docs/_missions.md section 7): Ceerdi galaxy 3 x 215 y 84, Birera galaxy 3 x 63 y 72.
-    INCLUDE "missions_docked_defs.asm"
-
-missionsDockedEntry:                  ; = &1714, the fixed entry the docking code calls
-    ld a,(mxThargonMissionVar)
-    and a
-    jp nz,mxChkMissions               ; an existing mission offer or reward is pending: its turn
+    jp mxModuleEntry
+    dw missionTextTable
+mxModuleEntry:
     ld a,(missionState)
     ld b,a
     and 0x03
@@ -47,14 +44,14 @@ missionsDockedEntry:                  ; = &1714, the fixed entry the docking cod
     and 0x0C
     cp 0x0C
     ld a,(hl)                         ; string number; the flags of the CP survive
-    jr nz,mxShowEnd
+    jp nz,mxShowEnd
     push af                           ; delivered: the Navy energy unit and one rank step
     ld a,0xFE
     ld (mxExtraEnergyUnit),a
     ld hl,mxKillScoreHigh
     inc (hl)
     pop af
-    jr mxShowEnd
+    jp mxShowEnd
 
 ; Offer: Constrictor done, 1280 kill points, galaxy 3.
 mxPlansBrief:
@@ -67,8 +64,8 @@ mxPlansBrief:
     ld a,b
     or 0x04
     ld (missionState),a
-    ld a,0x01                         ; string 1 and fall into mxShowEnd
-    INCLUDE "missions_docked_show.asm"
+    ld a,0x01
+    jp mxShowEnd
 
 ; Stage rows: system x, system y, string number.
 mxPlansTable:

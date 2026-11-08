@@ -29,7 +29,6 @@ mxSpawnCheck:
     push hl
     push ix
     push iy
-    IFDEF PLANS
     ld a,(mxStateByte)                ; Thargoid plans aboard (bits 2-3 = 2): about 22% of the checks (a roll of 200 or more) add a Thargoid and a Thargon
     and 0x0C
     cp 0x08
@@ -40,7 +39,6 @@ mxSpawnCheck:
     call mxSpawnThargoidPair
     jr mxSpawnDone
 mxNoPlansSpawn:
-    ENDIF
     ld a,(mxStateByte)
     ld b,a
     and 0x03
@@ -154,7 +152,6 @@ mxLaserNormal:
     ld (ix+34),a
     ret
 
-    IFDEF PLANS
 ; A Thargoid (type 15) placed like spawnCommand1 places one, and a Thargon (type 18) on top of it. Stops quietly when no slot is free.
 mxSpawnThargoidPair:
     call lookforFreeSlot
@@ -195,6 +192,5 @@ mxRecharge:
     cp 0xFE
     ret nz
     jp SUB_ram_3693
-    ENDIF
 
     INCLUDE "missions_hull.asm"

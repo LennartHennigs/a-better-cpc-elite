@@ -3829,7 +3829,7 @@ todoSomethingwithDamageTaken:
 RechargeEnergy:
     ld a,(extraEnergyUnit)
     and a
-    IFDEF PLANS
+    IFDEF MISSIONS
     call nz,mxRecharge              ; missions_flight.asm: the Navy unit adds a further step
     ELSE
     call nz,SUB_ram_3693

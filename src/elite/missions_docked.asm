@@ -1,120 +1,68 @@
-; Constrictor module of the LARGEAXX tail (&1714-&1A3F). Assembled only with -DMISSIONS (and not -DPLANS).
+; Resident stub of the LARGEAXX tail (&1714-&1A3F), assembled with -DMISSIONS. It picks the active mission module, loads its overlay file
+; (MISSIONC.BIN or MISSIONP.BIN) into the rest of the tail and jumps to it. The tail is reloaded with LARGEAXX at every docking, so the stub is always there.
+; Overlay layout: +0 jp moduleEntry, +3 dw missionTextTable, then the module. An overlay file is the bytes from mxOverlayBase to mxOverlayEnd of a build with
+; -DOVL_C or -DOVL_P (tools/build_dsk.py slices them by label). A module ends by `jp mxShowEnd` (message box, then back to the docking code) or `ret`.
     INCLUDE "missions_docked_defs.asm"
 
 missionsDockedEntry:                  ; = &1714, the fixed entry the docking code calls
     ld a,(mxThargonMissionVar)
     and a
     jp nz,mxChkMissions               ; an existing mission offer or reward is pending: its turn, returns to the docking code
-    ld a,(missionState)
-    and 0x03
-    jr z,mxBriefing                   ; 0: not offered yet
-    cp 0x03
-    jr z,mxDebrief                    ; 3: killed, collect the reward
-    cp 0x01
-    ret nz                            ; 2: finished
-                                      ; 1: hunting, fall through to the hints
-; Hint chain: at the system of the current stage (table below) show its text and advance the stage.
-mxHint:
-    ld a,(missionState)
-    rrca
-    rrca
-    rrca
-    rrca
-    and 0x07
-    cp 0x07
-    ret nc                            ; stage 7: all hints given
-    add a,a
-    add a,a
-    ld e,a                            ; 4 bytes per row
-    ld d,0
-    ld hl,missionHintTable
-    add hl,de
-    ld a,(mxCurrentGalaxy)
-    cp (hl)
-    ret nz
-    inc hl
-    ld a,(mxPresentSystemX)
-    cp (hl)
-    ret nz
-    inc hl
-    ld a,(mxPresentSystemY)
-    cp (hl)
-    ret nz
-    inc hl
-    ld a,(missionState)
-    add a,0x10                        ; next stage
-    ld (missionState),a
-    ld a,(hl)                         ; string number
-    jr mxShowEnd
-
-; Offer: needs 256 kill points and galaxy 1 or 2. Galaxy 2 skips the first two hints and starts at Cearso (stage 2).
-mxBriefing:
     ld a,(mxKillScoreHigh)
     and a
-    ret z
-    ld a,(mxCurrentGalaxy)
-    cp 0x02
-    ret nc
-    ld c,a
+    ret z                             ; under 256 kill points no mission can be active: do not touch the disk
     ld a,(missionState)
-    and 0x8C                          ; keep the Plans and Trumbles bits
-    or 0x01                           ; hunting
     ld b,a
-    ld a,c
-    and a
-    jr z,mxBriefing2
-    ld a,0x20                         ; stage 2
-mxBriefing2:
-    or b
-    ld (missionState),a
-    ld a,0x02
-    add a,c                           ; string 2 (galaxy 1) or 3 (galaxy 2)
-    jr mxShowEnd
+    and 0x03
+    cp 0x02
+    ld a,"C"                          ; Constrictor not finished: its module
+    jr nz,mxLoadModule
+    ld a,b
+    and 0x0C
+    cp 0x0C
+    ret z                             ; Thargoid plans finished too: nothing left to load
+    ld a,"P"
+mxLoadModule:
+    ld (mxOverlayName+7),a
+    call mxLoadFile
+    dw mxOverlayBase
+    dw mxOverlayName
+    jp mxOverlayBase
 
-; Reward: 5,000 Cr and one rank step, like the stock rewards (inc killScoreHigh).
-mxDebrief:
-    ld a,(missionState)
-    and 0x8C
-    or 0x02                           ; finished, stage cleared
-    ld (missionState),a
-    ld hl,mxKillScoreHigh
-    inc (hl)
-    ld de,0x0005
-    call mxAddDEtoMoney
-    ld a,0x0B                         ; string 11
-    INCLUDE "missions_docked_show.asm"
+mxOverlayName:
+    db "MISSION?"
 
-; Hint stages: galaxy (0-7), system x, system y, string number. Coordinates from the CPC name generator (docs/_missions.md section 7).
-missionHintTable:
-    db 0x00,149,101,0x04              ; Reesdice -> Arexe
-    db 0x00,164, 89,0x05              ; Arexe -> galactic jump, Cearso
-    db 0x01, 87,109,0x06              ; Cearso -> Errius
-    db 0x01,184,149,0x07              ; Errius -> Inbibe
-    db 0x01,152,146,0x08              ; Inbibe -> Ausar
-    db 0x01,146,102,0x09              ; Ausar -> Usleri
-    db 0x01,148, 68,0x0A              ; Usleri -> Orarra
+; Message box for string A of the module's text table (word at overlay +3): frame, view 14, colours, cursor, key, back to the docking code.
+mxShowEnd:
+    ld de,mxColorsMessage
+    ld hl,0x0200
+    call missionShow
+    jp mxActionsAtEndOfMessage
 
-; A = mission order 0..2 from the commander name at &38CB: rotate left and xor every letter up to the NUL, then mod 3
-; (0: Constrictor, Plans, Trumbles; 1: Constrictor, Trumbles, Plans; 2: Trumbles, Constrictor, Plans). Name bytes after the NUL are stale.
-missionOrder:
-    ld hl,0x38CB
-    xor a
-missionOrderLoop:
-    ld c,(hl)
-    inc hl
-    inc c
-    dec c
-    jr z,missionOrderMod
-    rlca
-    xor c
-    jr missionOrderLoop
-missionOrderMod:
-    sub 3
-    jr nc,missionOrderMod
-    add a,3
-    ret
+; Like drawFlipChart (commonxx.asm) but prints string A of the overlay's table: frame, view 14, colours DE, cursor HL.
+missionShow:
+    push af
+    push hl
+    push de
+    call mxDrawFrame
+    ld a,0x5C
+    call mxPrintStringA
+    ld a,0x0E
+    ld (mxViewdirection),a
+    pop de
+    call mxSetColors
+    pop hl
+    ld (mxCharXY),hl
+    pop af
+    ld d,a
+    ld hl,(mxOverlayBase+3)           ; the module's missionTextTable
+    jp mxPrintStringScan
 
-; Strings of the mission table: 1-based, NUL-terminated, tokens as in stringsTable2 (references 0x81-0xD6 point into stringsTable2).
-; Source text: missions_text.txt; regenerate with: python3 -I tools/textenc.py --asm src/elite/missions_text.txt > src/elite/missions_text.asm
-missionTextTable:
-    INCLUDE "missions_text.asm"
+mxOverlayBase:                        ; the overlay file is loaded here
+    IFDEF OVL_C
+    INCLUDE "missions_overlay_c.asm"
+    ENDIF
+    IFDEF OVL_P
+    INCLUDE "missions_overlay_p.asm"
+    ENDIF
+mxOverlayEnd:

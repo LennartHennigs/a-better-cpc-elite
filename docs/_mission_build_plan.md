@@ -111,6 +111,11 @@ mo2:           sub 3 / jr nc,mo2 / add a,3 / ret
 ```
 Checked 2026-11-08 on `work/saves/` (German build, key offset `&2C2`; checksums ok): names are plain uppercase ASCII ending in a NUL, and the bytes after the NUL are stale (`LEN` is followed by `SON`, left over from JAMESON), so the hash must stop at the NUL, as the routine does. The routine reads the name from RAM at `&38CB`, where it is not encrypted. LEN, PETE and PETER decode to 2, 2 and 1, as predicted. The UK key does not decode these saves.
 
+## Overlays: BUILT (2026-11-08)
+Resident stub (97 bytes) + one overlay file per mission, loaded into the LARGEAXX tail at docking by the game's own `loadFile` (`MISSIONC.BIN` 711 bytes, `MISSIONP.BIN` 362 bytes). Docked
+tail 808 of 812 bytes; about 1.75 s of emulated time per docking that loads a module; the flight code of both missions stays resident (575 of 610 bytes). Details and tests in `CHANGELOG.md`.
+Dropped `missionOrder` (21 bytes, see the snippet above) from the build until Trumbles exists: with the Constrictor before Plans, the name hash only moves Trumbles.
+
 ## Housekeeping
 Commits without any Claude/Anthropic trailer (user rule). Mirror label renames into `src/elite_de/` and `src/elite_fr/`; run
 `bash tools/check_src.sh`, `... de`, `... fr`. Update `CHANGELOG.md`, `TODO.md` and the docs in the same step as each fact.

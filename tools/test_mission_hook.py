@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-"""Test the docked mission code in cpcxray (Constrictor offer, hints, reward).
+"""Test the docked mission stub and both overlays (Constrictor MISSIONC.BIN, Thargoid plans MISSIONP.BIN) in cpcxray.
 
 Build first:  python3 -I tools/build_dsk.py --missions   and copy work/elite_missions.dsk to work/xray/disk/.
 usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_mission_hook.py
 
-From output/firebird_in_flight.sna the script calls loadLARGEAXX (&8732) so the rebuilt LARGEAXX tail is in RAM, then for each scenario sets
-variables with memory_write (missionState &38FD, killScoreHigh &38D9, galaxy &38DC, system x/y &3910/&390E), clears todoUnknownStatusFlags
-(&1C23, a real docking does), calls missionsDockedEntry (&1714) with a trap return address at &9F00, takes a screenshot
-(output/missions_<name>.png), presses a key and reports missionState and the credits (&38DD thousands word) after the call.
-chkMissions has a single call site, the docking sequence, so a plain new-commander start never reaches the hook.
+From output/firebird_in_flight.sna the script lets the launch finish, stops at handleEntitys (&5066), calls loadLARGEAXX (&8732) so the stub in the LARGEAXX tail is in
+RAM, then for each scenario sets variables with memory_write (missionState &38FD, killScoreHigh &38D9, galaxy &38DC, system x/y &3910/&390E), clears
+todoUnknownStatusFlags (&1C23, a real docking does), and calls missionsDockedEntry (&1714) with a trap return address at &9F00. The stub loads the overlay file from
+the disk (real firmware disk access, a few emulated seconds). A message box is detected by a breakpoint on WaitForKeypress (&3E5E); then a key is pressed. Reports
+missionState, killScoreHigh, the Navy unit byte and the credits after the call. chkMissions has a single call site, the docking sequence.
 """
 import asyncio
 import json
@@ -17,16 +17,24 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
 TRAP = 0x9F00
-# name: (state, killScoreHigh, galaxy, x, y, expected state after, expected credit thousands added, expect a message)
+WAITKEY = 0x3E5E
+# name: (state, killScoreHigh, galaxy, x, y, state after, credit thousands added, navy unit after, message, killScoreHigh added)
 SCENARIOS = {
-    "offer_g1":   (0x00, 1, 0, 10, 10, 0x01, 0, True),     # 256 kill points, galaxy 1: briefing, hunting, stage 0
-    "offer_low":  (0x00, 0, 0, 10, 10, 0x00, 0, False),    # no kill points: nothing
-    "offer_g2":   (0x00, 1, 1, 10, 10, 0x21, 0, True),     # galaxy 2: stage 2
-    "hint0":      (0x01, 1, 0, 149, 101, 0x11, 0, True),   # at Reesdice in stage 0
-    "hint_wrong": (0x01, 1, 0, 150, 101, 0x01, 0, False),  # elsewhere: nothing
-    "hint6":      (0x61, 1, 1, 148, 68, 0x71, 0, True),    # Usleri, last hint, stage becomes 7
-    "reward":     (0x73, 1, 1, 10, 10, 0x02, 5, True),     # killed: 5,000 Cr, finished, stage bits cleared
-    "done":       (0x72, 1, 1, 148, 68, 0x72, 0, False),   # finished: nothing
+    "c_offer_g1":    (0x00, 1, 0, 10, 10, 0x01, 0, 0x00, True, 0),
+    "c_offer_low":   (0x00, 0, 0, 10, 10, 0x00, 0, 0x00, False, 0),
+    "c_offer_g2":    (0x00, 1, 1, 10, 10, 0x21, 0, 0x00, True, 0),
+    "c_hint0":       (0x01, 1, 0, 149, 101, 0x11, 0, 0x00, True, 0),
+    "c_hint_wrong":  (0x01, 1, 0, 150, 101, 0x01, 0, 0x00, False, 0),
+    "c_hint6":       (0x61, 1, 1, 148, 68, 0x71, 0, 0x00, True, 0),
+    "c_reward":      (0x73, 1, 1, 10, 10, 0x02, 5, 0x00, True, 1),
+    "p_brief":       (0x02, 5, 2, 10, 10, 0x06, 0, 0x00, True, 0),
+    "p_brief_low":   (0x02, 4, 2, 10, 10, 0x02, 0, 0x00, False, 0),
+    "p_brief_g1":    (0x02, 5, 0, 10, 10, 0x02, 0, 0x00, False, 0),
+    "p_ceerdi":      (0x06, 5, 2, 215, 84, 0x0A, 0, 0x00, True, 0),
+    "p_ceerdi_wrong": (0x06, 5, 2, 215, 85, 0x06, 0, 0x00, False, 0),
+    "p_birera":      (0x0A, 5, 2, 63, 72, 0x0E, 0, 0xFE, True, 1),
+    "p_birera_early": (0x06, 5, 2, 63, 72, 0x06, 0, 0x00, False, 0),
+    "all_done":      (0x0E, 6, 2, 63, 72, 0x0E, 0, 0x00, False, 0),
 }
 
 
@@ -50,38 +58,46 @@ async def main():
             async def rd(addr, n=1):
                 return bytes.fromhex((await c("memory_read", {"address": addr, "length": n}))["hex"])
 
-            async def call(addr, limit):
+            async def call(addr, limit, **regs):
                 sp = (await c("registers_get"))["sp"] - 2
                 await c("memory_write", {"address": sp, "data": "%02X %02X" % (TRAP & 255, TRAP >> 8)})
-                await c("registers_set", {"values": {"sp": sp, "pc": addr}})
-                return await c("run", {"max_us": limit, "timeout_s": 120})
+                await c("registers_set", {"values": {"sp": sp, "pc": addr, **regs}})
+                return await c("run", {"max_us": limit, "timeout_s": 200})
 
             await c("disk_insert", {"drive": "A", "path": "disk/elite_missions.dsk"})
             await c("sna_load", {"path": "output/firebird_in_flight.sna"})
+            await c("run", {"max_us": 4_000_000, "timeout_s": 60})
+            safe = (await c("breakpoint_add", {"address": 0x5066, "kind": "pc"}))["id"]
+            rep = await c("run", {"max_us": 10_000_000, "timeout_s": 60})
+            assert rep.get("reason") == "breakpoint", rep
+            await c("breakpoint_remove", {"breakpoint_id": safe})
             await c("breakpoint_add", {"address": TRAP, "kind": "pc"})
-            r1 = await call(0x8732, 20_000_000)
-            assert r1.get("reason") == "breakpoint", r1
-            snap = "output/_after_load.sna"
-            await c("sna_save", {"path": snap})
+            wk = (await c("breakpoint_add", {"address": WAITKEY, "kind": "pc"}))["id"]
+            rep = await call(0x8732, 20_000_000)          # loadLARGEAXX
+            assert rep.get("pc") == "%04X" % TRAP, rep
+            await c("sna_save", {"path": "output/_missions_after_load.sna"})
             ok = True
-            for name, (st, ksh, gal, x, y, want_st, want_cr, msg) in SCENARIOS.items():
-                await c("sna_load", {"path": snap})
+            for name, (st, ksh, gal, x, y, want, want_cr, want_unit, msg, want_ksh) in SCENARIOS.items():
+                await c("sna_load", {"path": "output/_missions_after_load.sna"})
                 await wr(0x38FD, st); await wr(0x38D9, ksh); await wr(0x38DC, gal); await wr(0x3910, x); await wr(0x390E, y)
-                await wr(0x3926, 0); await wr(0x1C23, 0)
+                await wr(0x3926, 0); await wr(0x1C23, 0); await wr(0x3902, 0)
                 cr0 = int.from_bytes(await rd(0x38DD, 2), "little")
-                rep = await call(0x1714, 3_000_000)
-                shown = rep.get("reason") == "time_limit"          # waiting for a key = a message box is up
+                rep = await call(0x1714, 60_000_000)
+                ms = rep.get("emulated_us", 0) / 1000   # includes the overlay load from disk (none when the stub returns early)
+                shown = rep.get("pc") == "%04X" % WAITKEY
                 if shown:
                     await c("screen_image", {"path": f"output/missions_{name}.png"})
                     await c("key_press", {"key": "space"})
-                    rep = await c("run", {"max_us": 4_000_000, "timeout_s": 60})
+                    rep = await c("run", {"max_us": 30_000_000, "timeout_s": 200})
                     await c("key_release", {"key": "space"})
-                back = rep.get("reason") == "breakpoint" and rep.get("pc") == "9F00"
+                back = rep.get("pc") == "%04X" % TRAP
                 st1 = (await rd(0x38FD))[0]
                 cr1 = int.from_bytes(await rd(0x38DD, 2), "little")
-                good = shown == msg and back and st1 == want_st and cr1 - cr0 == want_cr
+                unit = (await rd(0x3902))[0]
+                ksh1 = (await rd(0x38D9))[0]
+                good = shown == msg and back and st1 == want and cr1 - cr0 == want_cr and unit == want_unit and ksh1 - ksh == want_ksh
                 ok &= good
-                print(f"{'ok  ' if good else 'FAIL'} {name:11s} message={shown} returned={back} state {st:02X}->{st1:02X} (want {want_st:02X}) credits +{cr1 - cr0} (want {want_cr})")
+                print(f"{'ok  ' if good else 'FAIL'} {name:15s} message={shown} returned={back} state {st:02X}->{st1:02X} (want {want:02X}) credits +{cr1 - cr0} unit {unit:02X} killScoreHigh +{ksh1 - ksh}  [{ms:.0f} ms to the message or return]")
             print("ALL OK" if ok else "FAILURES")
 
 
