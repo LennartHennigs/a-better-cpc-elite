@@ -545,7 +545,11 @@ Spaceflight:
     call handleLaser
     call Witchspace
     call todoDrawExplosions
+    IFDEF MISSIONS
+    call mxFlightDraw               ; missions_flight.asm: Trumble sprites into the bitmap, then transferBuffertoScreen
+    ELSE
     call transferBuffertoScreen
+    ENDIF
     call UpdateScanner
     call UpdateIndicatorBars
     call chkCloak

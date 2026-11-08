@@ -75,7 +75,8 @@ Open work, most useful first. `CLAUDE.md` keeps the short list; details live in 
 - [x] (2026-11-08, branch `mission-plans`) Thargoid plans built and tested: docked 402 bytes, flight +98 (575/610 with the Constrictor). Constrictor + Plans docked do not fit together (802 + 402 > 812): overlay or shared code/text needed. Open: real playthrough, Trumbles branch.
 - [x] (2026-11-08) Overlay scheme built and tested (stub 97 + MISSIONC 711 / MISSIONP 362; docked tail 808/812; flight tail 575/610 with both missions). Open: the flight side is still resident (Trumbles needs room: shrink or overlay the flight code), name-hash order when Trumbles exists, shrinking the Constrictor text (the two briefings share most words), a real playthrough.
 - [x] (2026-11-08, branch `mission-trumbles`) Trumbles built and tested; flight code is now overlaid too (images 125/587/223/286 bytes, vectors + launch hook); docked max 787/812.
-- [ ] Constrictor flight image is 587 of 610 bytes (23 free): shrink it (its spawn check is 128 bytes) before adding anything else to it.
+- [ ] Trumble sprites: art is a draft (`missions_trumble_art.txt`), waiting for a look at it; a CPC colour option for the fur (only pen 3 is used), count thresholds for how many are shown.
+- [ ] Constrictor flight image is 593 of 610 bytes (23 free): shrink it (its spawn check is 128 bytes) before adding anything else to it.
 - [ ] Trumbles: sound, a real end condition other than the sun, interplay with the escape pod and with selling; name-hash order (`docs/_mission_build_plan.md` has the 21-byte routine) now only moves Trumbles.
 - [ ] Play the whole chain in a real game; merge order: foundation -> constrictor -> plans -> trumbles (they are stacked, so only `mission-trumbles` needs merging).
 - [ ] (superseded) Evaluate the mission overlay scheme (load missions one at a time, random order per commander): loader size, disk space, save-load restore.

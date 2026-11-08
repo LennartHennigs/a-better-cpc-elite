@@ -6,6 +6,13 @@ file is the only history. Dates are ISO.
 ## 2026-11-08
 
 - `docs/_gameplay.md` (was empty): the witchspace mis-jump on the CPC compared with the C64 and Spectrum. Found by reading, not traced: the random mis-jump roll looks unreachable (the seed byte is compared with `0x40` then `0x20`); only the bit-6 pause toggle forces it. `work/ext_c64/` (C64 source) and `work/ext_c64_flicker/` cloned as references.
+- Trumble sprites, draft (branch `mission-trumbles`): up to six furry blobs drawn into the off-screen bitmap each frame by `mxFlightDraw`, a ninth vector in the flight table (+3 bytes there, +3 for the default stub: default image
+  125 -> 131 bytes, Constrictor image 587 -> 593, plans 223 -> 229). **Hook site corrected: it is the `call transferBuffertoScreen` in `Spaceflight` (`&1E4D`), not `drawViewPorttoScreen` (that is only the hyperspace tunnel path; the earlier
+  "single jp" claim in `docs/_missions.md` section 11 was wrong).** One 16 x 14 pixel shape (`src/elite/missions_trumble_art.txt` -> `tools/sprite_enc.py` -> `missions_trumble_data.asm`: a lumpy, slightly off-round body with irregular stubby spikes
+  like the Claude Code asterisk, no eyes, pen 3), OR-blitted; positions in bytes/lines kept inside the frame, velocities 0/+1/-1 as on the C64, one Trumble moved per call, shown = one per Trumble up to six. **Measured: Trumbles image 562 of 610
+  bytes (48 free); the sprites cost 270 bytes (code about 210, shape 56, state 28).** Bug found and fixed on the way: `mxMoveSprite` clobbered `C`, the number of sprites, so after a move the draw loop ran off the 6-entry state array and drew about 100
+  garbage sprites, some into the dashboard rows of screen memory (the live game showed a garbled dashboard). The unit tests missed it because they only looked at the first six records; `tools/test_trumble_sprites.py` now has a regression case
+  (a call that moves a Trumble must leave no stray bitmap bytes outside the sprites and the frame) and a live-loop screenshot. All suites pass again (launch 12, trumbles 7, flight 14, plans 5, docked 25, sprites 9).
 - No needless overlay loads (branch `mission-trumbles`): the docked stub now tests the trigger before it touches the disk. A 9-row system table (`mxStageTable`, galaxy/x/y: the seven
   Constrictor hint systems, Ceerdi, Birera) and the stage in the state byte tell it whether the player is at the system the current stage wants; the offers need galaxy 1-2 (Constrictor), rank 5 and
   galaxy 3 (plans), cash (Trumbles). The overlays dropped their own tables and place checks (they only advance the stage and show the text). **Result: a docking that has nothing to do takes 0 ms

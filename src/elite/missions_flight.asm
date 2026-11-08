@@ -23,13 +23,14 @@ mxTypeConstrictor equ 19            ; ship type after the 19 stock ships (0-18)
     DEFINE HAS_ARRIVE
     DEFINE HAS_SUN
     DEFINE HAS_INV
+    DEFINE HAS_DRAW
     ENDIF
     IFNDEF FLID
     DEFINE FLID "0"
     ENDIF
 
 mxFlightBase:
-; Vector table: the hook sites in commonxx.asm call these fixed addresses (3 bytes each).
+; Vector table: the hook sites in commonxx.asm call or jump to these fixed addresses (3 bytes each).
 mxShipTable:                        ; replaces `ld hl,shipGFXdataTable` in spawnShip: A = ship type (kept), HL = table base
     jp mxShipTableImpl
 mxSpawnCheck:                       ; replaces `ld a,(cargoSlaves)` at the start of spawnCommand0 and must end with it
@@ -46,6 +47,8 @@ mxSun:                              ; replaces `ld hl,CockpitTemp` in todoOverhe
     jp mxSunImpl
 mxInvHook:                          ; replaces `call prQuantityofGoodinCargohold` in the Inventory loop (carry of the result must survive)
     jp mxInvHookImpl
+mxFlightDraw:                       ; replaces the `call transferBuffertoScreen` in Spaceflight (draws into the off-screen bitmap, then jumps there)
+    jp mxFlightDrawImpl
 mxFlightId:
     db FLID                         ; "0" default, "C", "P": which image is in RAM (the launch hook compares it)
 
@@ -118,6 +121,10 @@ mxSunImpl:
     IFNDEF HAS_INV
 mxInvHookImpl:
     jp prQuantityofGoodinCargohold
+    ENDIF
+    IFNDEF HAS_DRAW
+mxFlightDrawImpl:
+    jp transferBuffertoScreen
     ENDIF
 
 ; Navy energy unit (extraEnergyUnit = &FE, the Thargoid plans reward): it stays fitted after the mission, so this is in every image. One extra recharge step

@@ -94,6 +94,8 @@ async def main():
             assert rep.get("reason") == "breakpoint", rep
             await c("breakpoint_remove", {"breakpoint_id": bp})
             ranges, syms = patches()
+            global FLIGHT_ID
+            FLIGHT_ID = syms["mxFlightId"]
             for addr, data in ranges:
                 await c("memory_write", {"address": addr, "data": data.hex()})
             await c("breakpoint_add", {"address": TRAP, "kind": "pc"})

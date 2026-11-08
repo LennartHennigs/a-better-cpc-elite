@@ -560,7 +560,7 @@ loads the flight image for the state at every launch where it differs from the o
 Sprites need flight code only, so the cost falls on the Trumbles flight image (`MFLIGHTT.BIN`, 286 of 610 bytes today, 324 free, 292 after a 32-byte stack reserve); the docked side and the other images are untouched.
 Method as in the analysis above ("Trumbles crowding the screen"): software sprites drawn into the off-screen bitmap `&A000-&BFFF` (64 bytes per line, Mode 1, 4 pixels per byte) just before the copy to the screen.
 
-- **Hook:** the single `jp transferBuffertoScreen` at the end of the flight loop (`commonxx.asm`, after `LaserSights`/`DrawTunnle`; the docking and hyperspace tunnels use `call` sites and stay untouched) becomes `jp mxFlightDraw`: one more
+- **Hook (corrected 2026-11-08, see the next paragraph for what was built):** the `call transferBuffertoScreen` in `Spaceflight` (`&1E4D`; `drawViewPorttoScreen`, which ends in a `jp`, is only the hyperspace tunnel path) becomes `call mxFlightDraw`: one more
   vector, **+3 bytes in the table and +3 for a default stub in every image** (the Constrictor image goes from 587 to 593 of 610).
 - **Cost of the sprite part in the Trumbles image:**
 
@@ -591,3 +591,6 @@ Files read: `elite-source.asm` (`MVTRIBS`, `TRIBDIR`, `TRIBDIRH`, `SPMASK`, `TRI
 **What this changes in the estimate above.** The C64 uses two facing shapes, which is design B1 (two frames, no mask: 96 bytes of data at 16 x 12 px) and not the masked B2. Per-Trumble state on the CPC would be x, y, vx, vy: 24 bytes for six, instead of 18.
 Movement is simpler on the CPC (x in 4-pixel byte units, 0-63, plain 8-bit wrap), so the 45 bytes stand; the draw routine (about 70 bytes) is the part the C64 gets for free. Expected Trumbles image with the two facing shapes: about
 560 of 610 bytes (about 50 free). A C64-sized sprite (a third of the flight view) is out of reach: 38 x 27 px would be about 270 bytes per shape.
+
+**Built (draft, 2026-11-08):** one 16 x 14 shape (single, no eyes, irregular stubby spikes, pen 3) instead of the two facing shapes of design B1, so the cost is 270 bytes (code about 210, shape 56, state 28), Trumbles image 562 of 610 bytes.
+See `CHANGELOG.md` for the hook site, the register bug that was found live and the tests.
