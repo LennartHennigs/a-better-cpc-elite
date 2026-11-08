@@ -113,6 +113,16 @@ async def main():
             await call(syms["mxArrive"], af=0x0100)
             n = await word(COUNT)
             report(n == 0x7FFF, f"arrival, 20480 Trumbles: count {n:#x} (0x7fff)")
+            # cap again: a count at the cap and just below it must stay at 0x7FFF, not wrap
+            for cnt in (0x7FFF, 0x7FF0, 0x4000, 0x3FFF):
+                await start()
+                await wr(COUNT, cnt & 255, cnt >> 8)
+                await call(syms["mxArrive"], af=0x0100)
+                n = await word(COUNT)
+                want_cap = cnt >= 0x4000
+                good = (n == 0x7FFF) if want_cap else (n == 0x7FFF or n >= 8)      # below 0x4000 the sum is doubled unless it reached 0x4000 by the random part
+                ok &= good
+                print(f"{'ok  ' if good else 'FAIL'} arrival, {cnt:#06x} Trumbles: count {n:#06x} ({'capped at 0x7fff' if want_cap else 'doubled, no wrap'})")
             # sun: halves at cabin temperature 240, A kept, HL = CockpitTemp
             for temp, want in ((240, 50), (239, 100)):
                 await start()

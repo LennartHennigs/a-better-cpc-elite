@@ -66,9 +66,11 @@ SCENARIOS.update({
     "r_paid":          (0x5E, 6, 2, 10, 10, 0x5E, 0, 0x00, False, 0),     # both paid: nothing
     "t_any_time":      (0x01, 6, 0, 10, 10, 0x81, 0, 0x00, True, 0),      # the Trumbles are offered at any docking: here during the Constrictor hunt
     "t_before_rocks":  (0x5E, 6, 2, 10, 10, 0xDE, 0, 0x00, True, 0),      # ... and before the asteroids offer
+    "t_no_kills":      (0x00, 0, 0, 10, 10, 0x80, 0, 0x00, True, 0),      # ... and with under 256 kill points (the kill gate is for the chain only)
 })
 EXTRA["t_any_time"] = dict(cash=(6, 0), key="space", count_after=0, cash_delta=0)
 EXTRA["t_before_rocks"] = dict(cash=(6, 0), key="space", count_after=0, cash_delta=0)
+EXTRA["t_no_kills"] = dict(cash=(6, 0), key="space", count_after=0, cash_delta=0)
 AST0 = {"r_hunt_idle": 0x51, "r_reward": 2, "r_paid": 3}                      # &38FE before
 AST1 = {"p_birera": range(5, 13), "r_offer": [0x51], "r_hunt_idle": [0x51], "r_reward": [3], "r_paid": [3]}   # &38FE after (default 0)
 

@@ -73,7 +73,7 @@ def add_readme(d, secs, first):
 
 
 def hide_files(d, secs, first, keep):
-    """Give every directory entry whose file is not in `keep` the System attribute (bit 7 of the third extension byte), as the original disk does: CAT lists only the files in `keep`, LOAD and RUN still find the rest."""
+    """Give every directory entry whose file is not in `keep` the System attribute (bit 7 of the second extension byte, e[10]; the first is read-only, the third archive), as the original disk does: CAT lists only the files in `keep`, LOAD and RUN still find the rest."""
     hidden = []
     for i in range(64):
         off = secs[(0, first + i // 16)][0] + (i % 16) * 32

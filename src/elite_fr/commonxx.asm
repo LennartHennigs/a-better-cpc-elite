@@ -15333,12 +15333,15 @@ LAB_ram_8c52:
     rl h
     rra
     ret
+; Key code of ESC in the ASCII keyboard table below (row 8, bit 2). The stock game has 0xFF (= no key), so ESC does nothing; 0x7F is above every code the prompts accept, so
+; getInputForFunctionHL (buy, sell, equipment) leaves on it, and InputString ignores it. Set it back to 0xFF for the original bytes (tools/check_src.sh then needs its ESC patch removed).
+ESC_KEYCODE equ 0x7F
 tblKeyboardmatrix:
     db 0xFF,0xFF,0xFF,"963",0x0D,".",0xFF,0xFF,"785120"
     db 0xFD,"[",0x0D,"]4",0xFF,0x5C,0xFF,"^-@P;:/."
     db "09OILKM,87UYHJN "
     db "65RTGFBV43EWSDCX"
-    db "12",0x7F,"Q",0xFF,"A",0xFF,"Z",0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFE
+    db "12",ESC_KEYCODE,"Q",0xFF,"A",0xFF,"Z",0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFE
 ; Keyboard interrupt step: clears flags, reads the PPI keyboard, stores the key, updates controls
 IRKeyboardInput:
     call ClearsomeFlags

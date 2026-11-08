@@ -42,6 +42,7 @@ mxTypeConstrictor equ 19            ; ship type after the 19 stock ships (0-18)
     ENDIF
 
 mxFlightBase:
+    ASSERT mxFlightBase == 0x9D9E             ; the tail starts here: the launch hook, tools/build_dsk.py and the tests rely on it
 ; Vector table: the hook sites in commonxx.asm call or jump to these fixed addresses (3 bytes each).
 mxShipTable:                        ; replaces `ld hl,shipGFXdataTable` in spawnShip: A = ship type (kept), HL = table base
     jp mxShipTableImpl

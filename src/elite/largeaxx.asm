@@ -1327,11 +1327,8 @@ StringTable4:
 ; Free tail of LARGEAXX (&1714-&1A3F, 812 bytes, docked only: the file is reloaded at every docking). Build with -DMISSIONS to add mission code.
 missionsDockedTail:
     IFDEF MISSIONS
-    IFDEF PLANS
-    INCLUDE "missions_docked_plans.asm"        ; Thargoid plans module (a separate overlay candidate: -DMISSIONS -DPLANS)
-    ELSE
-    INCLUDE "missions_docked.asm"              ; Constrictor module
-    ENDIF
+    INCLUDE "missions_docked.asm"              ; the stub; the overlay selected by -DOVL_C/P/T/R follows it
+    ASSERT missionsDockedEntry == 0x1714       ; the hook in COMMONXX is `call 0x1714` (it cannot see this label)
     ENDIF
     ASSERT $ <= 0x1A40
     DS 0x1A40-$

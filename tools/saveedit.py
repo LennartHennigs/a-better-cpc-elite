@@ -159,29 +159,29 @@ def write_out(out_spec, data_with_header):
     first = min(r for (t, r) in secs if t == 0)
     dirdata = b"".join(d[secs[(0, first + i)][0]:secs[(0, first + i)][0] + 512] for i in range(4))
     want = str(name).upper()
-    slots, total = [], 0
+    extents = []
     for i in range(64):
         e = dirdata[i * 32:(i + 1) * 32]
         if e[0] == 0xE5:
             continue
-        nm = bytes(b & 0x7F for b in e[1:9]).decode("latin1").strip() + "." + bytes(b & 0x7F for b in e[9:12]).decode("latin1").strip()
-        if nm.upper() != want:
-            continue
-        total += e[15] * 128
-        for b in e[16:32]:
-            if b:
-                for s in (0, 1):
-                    ls = b * 2 + s
-                    slots.append(secs[(ls // 9, first + ls % 9)][0])
-    if not slots:
+        nm = bytes(x & 0x7F for x in e[1:9]).decode("latin1").strip() + "." + bytes(x & 0x7F for x in e[9:12]).decode("latin1").strip()
+        if nm.upper() == want:
+            extents.append((e[12], [x for x in e[16:32] if x]))
+    if not extents:
         stem, _, ext = str(name).upper().partition(".")
         dskx.add_payload(d, secs, first, stem[:8], (ext or "BIN")[:3], data_with_header, -(-len(data_with_header) // 128))
         disk.write_bytes(d)
         print("added", name, "to", disk)
         return
-    if len(data_with_header) > total + 127 and len(data_with_header) > len(slots) * 512:
+    slots = []
+    for _, blocks in sorted(extents):           # in extent order, not directory order
+        for blk in blocks:
+            for half in (0, 1):
+                ls = blk * 2 + half
+                slots.append(secs[(ls // 9, first + ls % 9)][0])
+    if len(data_with_header) > len(slots) * 512:
         raise SystemExit("the new file is larger than the old one")
-    payload = data_with_header.ljust(len(slots) * 512, b"\0")
+    payload = data_with_header.ljust(len(slots) * 512, b"\xE5")    # the disk's filler byte, as add_payload pads
     for k, off in enumerate(slots):
         d[off:off + 512] = payload[k * 512:(k + 1) * 512]
     disk.write_bytes(d)

@@ -79,7 +79,7 @@ async def main():
             assert rep.get("reason") == "breakpoint", rep
             await c("breakpoint_remove", {"breakpoint_id": safe})
             saved = await c("registers_get")      # restored after the injected calls: the game must resume where it stopped
-            await c("breakpoint_add", {"address": TRAP, "kind": "pc"})
+            trap_bp = (await c("breakpoint_add", {"address": TRAP, "kind": "pc"}))["id"]
             rep = await call(0x816B)
             ix = (await c("registers_get"))["ix"]
             print("free slot IX = %04X" % ix)
@@ -95,7 +95,7 @@ async def main():
             print("  after writes:", (await c("memory_read", {"address": ix, "length": 9}))["hex"])
             await call(0x82B8, ix=ix)
             print("  after setDirectionofEntity:", (await c("memory_read", {"address": ix, "length": 9}))["hex"])                     # setDirectionofEntity: builds the orientation, without it the ship is not drawn
-            await c("breakpoint_remove", {"breakpoint_id": 1})
+            await c("breakpoint_remove", {"breakpoint_id": trap_bp})
             await c("registers_set", {"values": {k: saved[k] for k in ("af", "bc", "de", "hl", "ix", "iy", "sp", "pc", "af_", "bc_", "de_", "hl_") if k in saved}})
             if "--fill" in sys.argv:   # watch the stack loads of the fill routine (ld sp,hl at &F636): HL must stay inside the bitmap &A000-&C000
                 fb = (await c("breakpoint_add", {"address": 0xF636, "kind": "pc"}))["id"]

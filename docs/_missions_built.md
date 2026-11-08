@@ -10,7 +10,7 @@ Everything lives on one branch, `addon-missions` (it contains `missions-foundati
 The three stock missions (S1 to S3: supernova rescue, cloaking device, Thargon invasion) run first and unchanged: the docked stub hands over to the original `chkMissions` whenever `ThargonMissionVar` is not 0.
 The added chain is fixed: **Constrictor -> Thargoid plans -> stolen police ship -> asteroid bombardment**. The Trumbles are independent: offered at any docking.
 
-Global prerequisites for every added mission: the files on the disk; at least 256 kill points (`killScoreHigh` >= 1; below that the stub returns without touching the disk); no Trumbles aboard (while they are aboard nothing
+Global prerequisites for every added mission: the files on the disk; for the chain at least 256 kill points (`killScoreHigh` >= 1; below that the stub returns without touching the disk; the Trumbles offer has no kill gate); no Trumbles aboard (while they are aboard nothing
 else is offered and the Trumbles flight image replaces the others, so a running mission pauses until a sun kills them); no stock mission offer or reward pending.
 
 | # | Mission | Prerequisites | Offer trigger | Hunt / flight part | Completion and reward | State | Code |
@@ -18,7 +18,7 @@ else is offered and the Trumbles flight image replaces the others, so a running 
 | S1 | Supernova rescue (stock) | none; jumps counted from galaxy 2 on | arrival hook: low byte of `jumpCounter` reaches 32 (stage 1, `Missionflag` bit 0); the briefing replaces the Buy Cargo screen at a docking | the sun goes nova (`FlightMode` 1), every hyperspace key is a free galactic jump | refugees sold at `SellGoods`: rank +1 and gems | `Missionflag` bits 0, 5 | stock |
 | S2 | Cloaking device / Cougar (stock) | supernova stage done (bit 0) | `jumpCounter` reaches 128 (stage 2, bit 1) | random encounters (30/256 per spawn check) spawn a marked Asp Mk II with 2-3 escorts | kill it with a laser, scoop the canister: cloak (`Y`, bit 6), rank +1 | `Missionflag` bits 1, 6, `aspMissionState` | stock |
 | S3 | Thargon invasion (stock) | cloak stage reached (bit 1) | `jumpCounter` reaches 254 (stage 3, sets bit 2 and `ThargonMissionVar` 1) | the Thargons take the station of system 0 of the galaxy, it launches Thargoids; docking there in state 4 is game over | kill the station: rank +1, ECM jammer (bit 7), name FLORENCE | `Missionflag` bits 2, 3, 7, `ThargonMissionVar` | stock |
-| T | Trumbles | 5,000 Cr or more (thousands word >= 5); offer not made before (`missionState` bit 7) | the first docking in any galaxy (galaxy 1 included: no galaxy test), once whatever the answer, so a "no" is final | breed on every arrival (eat food and narcotics), slow breeding from 256, squeak, sprites, heat halves them | none; Y pays 5,000 Cr for one Trumble; only a sun kills them | `&3905` count, bit 7 | MISSIONT, MFLIGHTT |
+| T | Trumbles | 5,000 Cr or more (thousands word >= 5); offer not made before (`missionState` bit 7); no kill-score gate | the first docking in any galaxy (galaxy 1 included: no galaxy test), once whatever the answer, so a "no" is final | breed on every arrival (eat food and narcotics), slow breeding from 256, squeak, sprites, heat halves them | none; Y pays 5,000 Cr for one Trumble; only a sun kills them | `&3905` count, bit 7 | MISSIONT, MFLIGHTT |
 | 1 | Constrictor | none | docking in galaxy 1 or 2 | seven hints, each shown only when docked at that stage's system (Reesdice, Arexe, Cearso, Errius, Inbibe, Ausar, Usleri; galaxy 2 starts at Cearso); the Constrictor spawns at Orarra (galaxy 2, 144/33); only a military laser hurts it | kill it; the next docking pays 5,000 Cr and one rank step | bits 0-1 (0 none, 1 hunting, 3 killed, 2 paid), 4-6 hint stage | MISSIONC, MFLIGHTC |
 | 2 | Thargoid plans | Constrictor paid; 1280 kill points (`killScoreHigh` >= 5) | docking in galaxy 3 | plans at Ceerdi (215/84), deliver at Birera (63/72); 22% of spawn checks add a Thargoid and a Thargon while aboard | delivery: Navy energy unit (3 recharge steps) and a rank step | bits 2-3 (0 none, 1 briefed, 2 aboard, 3 done) | MISSIONP, MFLIGHTP |
 | 3 | Stolen police ship (Elite Plus 4) | plans delivered | waits 5 to 12 hyperspace arrivals, then offered at the next docking anywhere | at Birera (galaxy 3, 63/72) one non-police hostile Viper (energy `&C8`), 22% of spawn checks, never two | kill it: the next docking pays 4,000 Cr; the kill is no offence | bits 4-6 (1 waiting, 2 ready, 3 hunting, 4 killed, 5 paid); `&38FE` counts the jumps | MISSIONP, MFLIGHTS |
@@ -60,7 +60,7 @@ Missions run one at a time, so their code is loaded when needed instead of being
 | Part | Constrictor | Plans | Stolen ship | Asteroids | Trumbles |
 |---|---|---|---|---|---|
 | Docked overlay file | `MISSIONC.BIN` 561 | `MISSIONP.BIN` 506 (also the stolen ship) | in `MISSIONP` | `MISSIONR.BIN` 170 | `MISSIONT.BIN` 178 |
-| Flight image file | `MFLIGHTC.BIN` 609 | `MFLIGHTP.BIN` 256 | `MFLIGHTS.BIN` 352 | `MFLIGHTR.BIN` 276 | `MFLIGHTT.BIN` 606 |
+| Flight image file | `MFLIGHTC.BIN` 609 | `MFLIGHTP.BIN` 256 | `MFLIGHTS.BIN` 352 | `MFLIGHTR.BIN` 276 | `MFLIGHTT.BIN` 609 |
 
 Default image `MFLIGHT0.BIN` 158 (what `COMMONXX.BIN` carries). Resident stub 249. **Limits:** docked stub plus largest overlay (Constrictor) ends at `&1A3E` of `&1A40` (2 spare); the Constrictor flight image is 609 of 610 (1 spare), so any further change there
 needs trimming first. Every image carries the launch picker and the recharge hook. Text is tokenised with the game's own digrams and string references (`tools/textenc.py`), 25-31% smaller than raw text. Mission text is in the default capitalised-words
@@ -76,6 +76,8 @@ All run in cpcxray (`work/xray`, `~/.local/share/uv/tools/cpcxray/bin/python -I 
 - Helpers: `tools/size_report.py`, `tools/textenc.py`, `tools/sprite_enc.py`, `tools/fessor_hull.py`, `tools/build_dsk.py` (shared DSK code in `tools/dskx.py`). Testing aids: the trainer `CHEAT.BAS` (kills, jumps, added-mission presets), `tools/saveedit.py` and `SHOWSAVE.BAS` (`docs/_cheats.md`).
 
 ## 6. Open items
+
+Known limits (from the code review, 2026-11-08): while Trumbles are aboard a running chain mission cannot progress (the Trumbles image carries none of its hooks; a design choice for "Trumbles at any time"); a launch needs the game disk in the drive for the flight image (`loadFile` shows the firmware disk error and retries like every other game load, there is no mission-specific fallback); the vector table and the stub sit at fixed addresses (`&9D9E`, `&1714`), now guarded by `ASSERT`s in the sources.
 
 A real playthrough of the whole chain with save and load; listening to the squeak (other effects: flags2 bit 7 the lock blip, flags1 bit 7 the key click); tuning (20 asteroids, 50% and 22% spawn rates, Birera as the police target); a Trumbles end condition other than a sun;
 the Cobra Mk III that Elite Plus adds to the asteroid mission; a random per-commander order (not built: the two last missions are encoded differently and the stub plus Constrictor overlay has no room); optionally a Trumbles gate after a stock mission or outside galaxy 1;

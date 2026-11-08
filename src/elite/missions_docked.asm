@@ -12,14 +12,14 @@ missionsDockedEntry:                  ; = &1714, the fixed entry the docking cod
     ld a,h
     or l
     ret nz                            ; Trumbles aboard: one mission at a time, nothing else is offered
-    ld a,(mxKillScoreHigh)
-    and a
-    ret z                             ; under 256 kill points no mission can be active: do not touch the disk
     ld a,(missionState)
     ld b,a
     bit 7,b
-    jr z,mxTrumbles                   ; the Trumbles offer comes at any docking, whatever the chain state (it is made once)
+    jr z,mxTrumbles                   ; the Trumbles offer comes at any docking, whatever the chain state and the kill score (it is made once)
 mxChain:
+    ld a,(mxKillScoreHigh)
+    and a
+    ret z                             ; under 256 kill points no chain mission can be active: do not touch the disk
     ld a,b
     and 0x03
     cp 0x02

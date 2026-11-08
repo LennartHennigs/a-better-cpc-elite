@@ -94,3 +94,11 @@ Plus.dsk`), SHA-256 `09f7e527760b1232400dd70d8302b1753a4259260def9f82c022c165e24
 
 Open question: do any other routines touch the PSG or PPI with the same ordering (music player `MUSIQUEX`, joystick reads)? Grep
 for `0xF4`/`0xF6` port writes in `src/elite/` while doing step 4.
+
+## Other one-byte patches in the sources
+
+Besides the CPC+ fix, `src/elite`, `src/elite_de` and `src/elite_fr` carry **one more change to the stock bytes**: the key code of ESC in the ASCII keyboard table (`tblKeyboardmatrix`, row 8 bit 2) is `ESC_KEYCODE` = `&7F` instead of `&FF` ("no key"),
+so the buy, sell and equipment prompts leave on Escape (`getInputForFunctionHL` leaves on any code of `&3A` or more). Runtime address of the byte: English `&8C98`, German `&8DE0`, French `&8E37`; `tools/check_src.sh` expects it, as it expects the CPC+ byte.
+It is unconditional, so it also reaches every other consumer of `pressedKey`: `InputString` (names, planet search) ignores codes above `&5A`, the pause mode compares against specific letters, and on the title screen ESC now counts as "any key" (it starts a new commander like any key other than the load key;
+the "press space" loop still needs space). To get the original bytes back set `ESC_KEYCODE` to `&FF` and drop the ESC patch in `check_src.sh`.
+
