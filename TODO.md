@@ -1,13 +1,17 @@
 # TODO
 
-Open work, most useful first. `CLAUDE.md` keeps the short list; details live in `docs/` (`notes.md` is an index).
+Open work, most useful first. `CLAUDE.md` keeps the short list; details live in `docs/` (there is no `notes.md`).
 
 - [x] allow Escape to exit the buy menu (goods): done (one byte, `CHANGELOG.md`)
 - [ ] can we reduce the flicker in the radar view?
-- [ ] stars and ships are transparent
+- [x] stars no longer shine through the planet and sun (`STAR_OCCLUDE`, `CHANGELOG.md`)
+- [ ] ships are still see-through (stars between the edges): options in `docs/_ship_occlusion.md`; try the bounding box (B) first, after measuring the free bytes in the `-DMISSIONS` build
+- [ ] test the star patch in cpcxray on the German disk (`work/elite_de_rebuilt.dsk`) and the French build (only the English snapshot was shown so far)
+- [ ] `tools/build_dsk.py --fr` (no French disk can be built yet; needs a base disk decision)
+- [ ] hidden-files rule (`CLAUDE.md`): `README.TXT` is still visible on the mission disk; hide it if the rule should be strict
 - [ ] more than one color for moving stars?
 - [ ] or other color for asteroids?
-- [ ] show different ships on load. asrrow keys left right for next
+- [x] show different ships on load, arrow keys left/right for next (`TITLESEL`, English and German; French not done)
   
 ## Missions (branch `addon-missions`, overview in `docs/_missions_built.md`)
 - [ ] Real playthrough of the whole chain with save and load (so far only forced states, direct calls, the trainer pokes and a booted disk). A real docking triggering each offer has not been seen in the running game.
