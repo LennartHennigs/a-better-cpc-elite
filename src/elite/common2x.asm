@@ -2533,7 +2533,7 @@ LAB_ram_ff81:
     call printFollowingTokenWithSpace
 titleTab:
     IFDEF ENHANCED
-    db 0x02                         ; control code 8: the headline starts in column 3 (was 0x04)
+    db 0x01                         ; control code 8: the headline starts in column 2 (was 0x04)
     ELSE
     db 0x04
     ENDIF
