@@ -2493,8 +2493,14 @@ SUB_ram_ff39:
 jpprintFuelRange:
     ld a,0x69
     call anotherPrintWithToken3A
+    IFDEF ENHANCED
+fuelTab:
+    call printFollowingTokenWithSpace   ; text column 8: the number starts in column 9, like the other lines of the status screen
+    db 0x08
+    ELSE
     call printStringFollowingByte
     db " "
+    ENDIF
     ld a,(0x38F9)
     call printCount
     ld a,0xC3
