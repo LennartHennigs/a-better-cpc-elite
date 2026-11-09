@@ -79,7 +79,7 @@ All run in cpcxray (`work/xray`, `~/.local/share/uv/tools/cpcxray/bin/python -I 
 
 Known limits (from the code review, 2026-11-08): while Trumbles are aboard a running chain mission cannot progress (the Trumbles image carries none of its hooks; a design choice for "Trumbles at any time"); a launch needs the game disk in the drive for the flight image (`loadFile` shows the firmware disk error and retries like every other game load, there is no mission-specific fallback); the vector table and the stub sit at fixed addresses (`&9D9E`, `&1714`), now guarded by `ASSERT`s in the sources.
 
-A real playthrough of the whole chain with save and load; listening to the squeak (other effects: flags2 bit 7 the lock blip, flags1 bit 7 the key click); tuning (20 asteroids, 50% and 22% spawn rates, Birera as the police target); a Trumbles end condition other than a sun;
+A real playthrough of the whole chain with save and load; the squeak is settled (effect 13, kept after listening with `TRUMBLE.BAS`); tuning (20 asteroids, 50% and 22% spawn rates, Birera as the police target); a Trumbles end condition other than a sun;
 the Cobra Mk III that Elite Plus adds to the asteroid mission; a random per-commander order (not built: the two last missions are encoded differently and the stub plus Constrictor overlay has no room); optionally a Trumbles gate after a stock mission or outside galaxy 1;
 the Constrictor's ECM and missiles come from the hull header and were not checked; merging `addon-missions` into `master` (the repo still has `master`, not `main`).
 

@@ -15,7 +15,7 @@ Open work, most useful first. `CLAUDE.md` keeps the short list; details live in 
   
 ## Missions (branch `addon-missions`, overview in `docs/_missions_built.md`)
 - [ ] Real playthrough of the whole chain with save and load (so far only forced states, direct calls, the trainer pokes and a booted disk). A real docking triggering each offer has not been seen in the running game.
-- [ ] Listen to the Trumble squeak and pick the effect (bit 5 now; alternatives flags2 bit 7, flags1 bit 7); decide a Trumble end condition other than a sun and the sprite-count thresholds.
+- [x] Trumble squeak: keep effect 13 (flags2 bit 5), chosen by ear with `RUN"TRUMBLE` on 2026-11-09. [ ] Still open: decide a Trumble end condition other than a sun and the sprite-count thresholds.
 - [ ] Tune the added missions (20 asteroids, 50% and 22% spawn rates, Birera as the police target); optionally the Cobra Mk III that Elite Plus adds to the asteroid mission.
 - [ ] Optional: gate the Trumbles offer behind a stock mission or outside galaxy 1; a per-commander random order (not built, no room in the stub plus Constrictor overlay).
 - [ ] Space: the Constrictor overlay (2 spare) and flight image (1 spare) need trimming before any further change there.
