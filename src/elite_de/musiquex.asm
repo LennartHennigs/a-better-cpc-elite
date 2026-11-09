@@ -464,13 +464,8 @@ spawnCommandParser equ 0x81E3
 dataFromPPI equ 0x8E75
 splash2Shipnr equ 0x1DA8
     ASSERT $ == 0x6E21
-    jp titleScreen1                 ; +0  replaces call setCommandsNOP (first screen)
-    jp titleScreen2                 ; +3  replaces call transferBuffertoScreen (press-space screen)
-    jp titleNext                    ; +6  replaces the automatic ship pick before the press-space screen
-    jp titleShow                    ; +9  replaces the fixed first spawn on the first screen
-titleScreen1:
-    call titleArrows
-    jp setCommandsNOP
+    jp titleScreen2                 ; +0  replaces call transferBuffertoScreen (press-space screen)
+    jp titleNext                    ; +3  replaces the automatic ship pick before the press-space screen
 titleScreen2:
     call titleArrows
     jp transferBuffertoScreen

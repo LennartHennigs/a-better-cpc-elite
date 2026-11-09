@@ -93,9 +93,16 @@ async def main():
                 ok &= bool(cond)
                 print(f"{'ok  ' if cond else 'FAIL'} {name}: {info}")
 
+            ia, pa = await state()
+            check("start on the Cobra Mk III", ia & 7 == COBRA_AT_START, f"index {ia:02X}, blueprint &{pa:04X}")
+            await tap("cursor_right")
+            ib, pb = await state()
+            check("the first screen ignores the arrows", ib == ia and pb == pa, f"index {ib:02X}, blueprint &{pb:04X}")
+            await tap("n", 1.4)       # to the press-space screen, which steps the ship by one
+            await c("run", {"max_us": 3_000_000, "timeout_s": 60})
             i0, p0 = await state()
             seen[i0] = p0
-            check("start on the Cobra Mk III", i0 & 7 == COBRA_AT_START, f"index {i0:02X}, blueprint &{p0:04X}")
+            check("press-space screen advanced the ship by one", (i0 & 7) == (ia + 1) & 7, f"{ia & 7} -> {i0 & 7}, blueprint &{p0:04X}")
             await tap("cursor_right")
             i1, p1 = await state()
             check("right steps +1", (i1 & 7) == (i0 + 1) & 7 and p1 != p0, f"index {i1:02X}, blueprint &{p1:04X}")
@@ -123,13 +130,6 @@ async def main():
             check("held right at index 7 wraps to 0 once", iw2 == 0, f"index {iw2:02X}")
             i3, _ = await state()
             check("bit 7 clear when no key is down", i3 & 0x80 == 0, f"index {i3:02X}")
-            await tap("n", 1.4)
-            await c("run", {"max_us": 3_000_000, "timeout_s": 60})
-            i4, p4 = await state()
-            check("press-space screen advanced the ship by one", (i4 & 7) == (i3 + 1) & 7, f"{i3 & 7} -> {i4 & 7}, blueprint &{p4:04X}")
-            await tap("cursor_right")
-            i5, p5 = await state()
-            check("arrows work on the press-space screen", (i5 & 7) == (i4 + 1) & 7 and p5 != p4, f"index {i5:02X}")
             print("ALL OK" if ok else "FAILURES")
 
 

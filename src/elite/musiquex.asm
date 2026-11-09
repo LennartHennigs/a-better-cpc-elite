@@ -469,14 +469,9 @@ flagWhichScreenToPrint equ 0x454E
 todoPrintFlag3948 equ 0x3948
 todoSomePrintFlag equ 0x3949
     ASSERT $ == 0x6E21
-    jp titleScreen1                 ; +0  replaces call setCommandsNOP (first screen)
-    jp titleScreen2                 ; +3  replaces call transferBuffertoScreen (press-space screen)
-    jp titleNext                    ; +6  replaces the automatic ship pick before the press-space screen
-    jp titleShow                    ; +9  replaces the fixed first spawn on the first screen
-    jp titleName                    ; +12 replaces printELITE on the press-space screen
-titleScreen1:
-    call titleArrows
-    jp setCommandsNOP
+    jp titleScreen2                 ; +0  replaces call transferBuffertoScreen (press-space screen)
+    jp titleNext                    ; +3  replaces the automatic ship pick before the press-space screen
+    jp titleName                    ; +6  replaces printELITE on the press-space screen
 titleScreen2:
     call titleArrows
     jp transferBuffertoScreen

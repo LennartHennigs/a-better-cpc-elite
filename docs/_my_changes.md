@@ -11,7 +11,7 @@ Every difference between our builds and the original game, with why it exists, w
 | Escape leaves buy, sell and equipment prompts | `ESC_KEYCODE` / `ENHANCED` | all three | 1 (`FF` -> `7F` in `tblKeyboardmatrix`) | 0 |
 | Stars stay behind planet and sun | `STAR_OCCLUDE` / `ENHANCED` | all three | 16 bytes of the dust loop | 11 bytes in dead `unusedViewBorderFill` |
 | Cash on the quantity line of buy, sell and equip | `ENHANCED` | English | two 3-byte call operands (`clrLine0x15` -> `clrLineCash`) | 16 dead bytes in `LARGEAXX` (`&08E7`) and 7 in the dead block of `COMMONXX` (`cashHome`, `&1FEA`) |
-| Title screen ship choice, ship name on the press-space screen | `TITLESEL` | English, German (name: English only) | four call operands plus one `call printELITE` in `COMMONXX` (same length) | about 280 bytes in the tail of `MUSIQUEX` |
+| Title screen ship choice, ship name on the press-space screen | `TITLESEL` | English, German (name: English only) | three call operands (two in German) plus one `call printELITE` in `COMMONXX` (same length) | about 280 bytes in the tail of `MUSIQUEX` |
 | Added missions | `MISSIONS` (+ `FL_*`, `OVL_*`) | English | about a dozen 3-byte call replacements (hook sites) | both zero tails, plus overlay and image files on disk |
 | Trainer and save tools | none (BASIC programs, host scripts) | UK, French, German saves | none | none |
 
@@ -37,9 +37,9 @@ the default build to equal the original and the `-DENHANCED` build to differ onl
 
 ## Title screen ship choice (`TITLESEL`)
 
-Cursor left/right and joystick left/right step the demo ship on both title screens (Y/N and press-space) through eight hulls: Viper, Asp, Cobra Mk III, Fer-de-Lance, Sidewinder, Krait, Rock Hermit, Thargoid (the Python, big trader and Coriolis do
-not fit the window). The code, about 120 bytes with its table, lives in the zero tail of `MUSIQUEX.BIN` (`&6E21-&6FFF`), which is resident only while the title screens run. `COMMONXX` reaches it through four hooks of unchanged byte length:
-`TITLE_SHOW` replaces the fixed Cobra spawn, `TITLE_SCREEN1` and `TITLE_SCREEN2` replace the `setCommandsNOP` / `transferBuffertoScreen` calls in the two loops, `TITLE_NEXT` replaces the automatic pick before the press-space screen. `splash2Shipnr` (`&1DA8`) holds
+Cursor left/right and joystick left/right step the demo ship on the press-space screen (the first screen keeps the fixed Cobra Mk III and ignores the arrows) through eight hulls: Viper, Asp, Cobra Mk III, Fer-de-Lance, Sidewinder, Krait, Rock Hermit, Thargoid (the Python, big trader and Coriolis do
+not fit the window). The code, about 120 bytes with its table, lives in the zero tail of `MUSIQUEX.BIN` (`&6E21-&6FFF`), which is resident only while the title screens run. `COMMONXX` reaches it through hooks of unchanged byte length:
+`TITLE_SCREEN2` replaces the `transferBuffertoScreen` call in the press-space loop, `TITLE_NEXT` replaces the automatic pick before that screen (English also `TITLE_NAME`, below). `splash2Shipnr` (`&1DA8`) holds
 the ship index (bits 0-2) and "a key was already down" (bit 7), so a held key steps once and the choice carries over between screens and restarts. The raw PPI rows (`dataFromPPI`) are read because `irki2` rewrites `keybFlags2` into roll values.
 The six `COMMONXX` addresses `musiquex.asm` hard-codes are checked by `check_src.sh`. Test: `tools/test_title_ships.py [de]`.
 
