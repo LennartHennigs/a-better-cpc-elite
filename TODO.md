@@ -3,7 +3,7 @@
 Open work, most useful first. `CLAUDE.md` keeps the short list; details live in `docs/` (there is no `notes.md`).
 
 - [x] allow Escape to exit the buy menu (goods): done (one byte, `CHANGELOG.md`)
-- [ ] can we reduce the flicker in the radar view?
+- [ ] radar (scanner) flicker. Measured 2026-11-09 (cpcxray, in flight): a game frame is about 200 ms; `UpdateScanner` takes about 24 ms, of which `cleanScanner` (blank the area, rebuild the background from `gfxdataScanner` with `exx`-heavy loops, drawn straight on the visible screen) is about 21.7 ms and the ship dots about 2 ms. That is longer than one video frame, so the beam always crosses a half-drawn scanner. Ruled out: a hidden-row off-screen copy (rows 24-31 of the screen RAM, `&C600-&C7FF` etc., hold the square and other lookup tables) and an erase list for the dots (an `or`-plotted pixel cannot be restored without saved bytes, up to about 650). Free space: 20 bytes in the dead block, 10 in `unusedGet*`; the Constrictor and Trumble flight images leave 1 byte in the tail. Left: rewrite `cleanScanner` in place to about 14 ms (tight nibble-split loop) and sync `UpdateScanner` to just after the beam has passed the scanner (ISR counter), so the blank period (about 16 ms) falls between two passes; cannot be verified in cpcxray (no beam), only by eye.
 - [x] stars no longer shine through the planet and sun (`STAR_OCCLUDE`, `CHANGELOG.md`)
 - [ ] ships are still see-through (stars between the edges): options in `docs/_ship_occlusion.md`; try the bounding box (B) first, after measuring the free bytes in the `-DMISSIONS` build
 - [ ] test the star patch in cpcxray on the German disk (`work/elite_de_rebuilt.dsk`) and the French build (only the English snapshot was shown so far)
@@ -56,23 +56,22 @@ Open work, most useful first. `CLAUDE.md` keeps the short list; details live in 
 - [x] (done 2026-11-07, `docs/_architecture.md`) Check whether `Elite_UK_original_protected.dsk` ships the Anaconda and Transporter after all: it does not. The German disk's second set of 14 blueprints is a second copy of `COMMONXX` in the raw image (tracks 7 and 27; all 17 sampled windows occur twice), not a new ship set; why the copy is there is unknown (`iDSK -l` lists only one `COMMONXX.BIN`).
 
 ## Missions (plan in `docs/_missions.md`)
-- [ ] Phase 0: fixed-table save key, DSK writer (the dead-code reclaim is cancelled: there is none).
-- [ ] Phase 1-3: mission state byte, text compressor, BBC-to-CPC hull converter, Constrictor mission.
-- [ ] Phase 4: Thargoid plans and the naval energy unit.
+- [x] Phase 0: no fixed-table save key needed (2026-11-08), DSK writer is `tools/build_dsk.py` (the dead-code reclaim is cancelled: there is none).
+- [x] Phase 1-3: mission state byte, text compressor (`tools/textenc.py`), hull converter (`tools/fessor_hull.py`), Constrictor mission: built.
+- [x] Phase 4: Thargoid plans and the Navy energy unit: built.
 - [x] Read the Trumbles code in the C64 source (done, in `docs/_missions.md`). Still unread: `TRIBTA`/`TRIBMA` sprite count, inventory print, escape pod.
-- [ ] Decide whether Trumbles are worth porting: text-only about 150-250 bytes of code plus 100 of text; with software sprites in the off-screen bitmap about 0.6-0.9 KB in total (see `docs/_missions.md`, "Trumbles crowding the screen"). No reward in the original, so decide a purpose first.
+- [x] Decided: Trumbles are ported, with sprites (270 bytes) and squeak (`docs/_missions_built.md`).
 - [x] (done 2026-11-07, `docs/_missions.md` "Colours") Check which of the two-colour sprite pens exist in every view (`setInks`) before drawing anything into the off-screen bitmap: only pen 2 (ink 20, black) is fixed in views 0-3; pens 0/1/3 vary by system, supernova mode and cloak. Confirmed in cpcxray (all 8 systems, supernova mode, cloak, energy-bomb flash); explosion flicker of pen 3 is listing-only.
 - [x] (done 2026-11-07, `docs/_missions.md` section 3) Check the ten system names of the Constrictor and Plans chains against the CPC name generator: all ten exist once, in the right galaxy.
 
-- [ ] Decide the mission order and trigger for new missions: the ST and MSX queue (one per 64 jumps outside the first galaxy) or the CPC
-      thresholds (32, 128, 254); see `docs/_missions.md`, "Order and trigger".
+- [x] Decided the mission order and trigger: fixed chain Constrictor -> plans -> stolen ship -> asteroids after the stock missions, Trumbles independent (`docs/_missions_built.md` section 1).
 - [x] Read the ST Cougar mission (`$40-$41`) and compare with the CPC Asp code (done 2026-11-07, table in `docs/_missions.md` section 2).
       "elite-msx-skoolkit" does not exist online; `elite-skoolkit` is the Spectrum one and `ricbit/elite` the MSX one (cloned, `docs/_references.md`).
 - [x] Read the CPC's laser-only Asp draw test and the non-laser gate reset (done 2026-11-07, source only, not yet traced in cpcxray): `todoWorkVariable` -> `aspMissionState`, `LAB_ram_5755` -> `drawShipDistanceCheck`, `LAB_ram_5175` -> `aspGateClearIfBlueprint1E`, `LAB_ram_517c` -> `aspGateReset`. 
 - [x] (first pass done 2026-11-07, `docs/_spectrum_map.md`) Mine `work/ext_msx/skoolkit/src/elite.skool` (Spectrum) to seed `src/elite/`: 43 names, ~140 cross-reference comments. Maths, circle, text, chart, trade, movement and spawn routines now commented (about 170); open: the 25 matched routines still without a comment, the unmatched rest; match the rest (routines the CPC splits differently); label `sqr_table` (`&C600`) and the default commander (`&39D1`).
-- [ ] Stolen police ship: Elite Plus logic is now documented from the EXE (`docs/_missions.md`, section 4, "Elite Plus code"); decide whether to build it on the CPC.
+- [x] Stolen police ship: built from the Elite Plus logic (`docs/_missions_built.md`).
 - [x] Settled the two save-format disagreements with the type-in (2026-11-07, in-game jump): `&48` is the tech level minus 1 (`presentTechLevel`), and y is at `&43`, x at `&45`; see `docs/_savegame.md`.
-- [ ] Test `CHEAT` mission stages 2 and 3, the pirate-boarding poke and the unlimited-hold toggle in play.
+- [ ] Test `CHEAT` stock mission stages 2 and 3 (rows not run, `docs/_missions_built.md` section 7), the pirate-boarding poke and the unlimited-hold toggle in play.
 
 - [x] Scan the `db` runs of `COMMONXX` for unreferenced code (`tools/dbcode.py`): about 130-155 bytes in six routines, plus 28 bytes of labelled
       dead code (`tools/deadcode.py`). See `docs/_architecture.md`.
@@ -88,10 +87,10 @@ Open work, most useful first. `CLAUDE.md` keeps the short list; details live in 
 - [x] (2026-11-08, branch `mission-plans`) Thargoid plans built and tested: docked 402 bytes, flight +98 (575/610 with the Constrictor). Constrictor + Plans docked do not fit together (802 + 402 > 812): overlay or shared code/text needed. Open: real playthrough, Trumbles branch.
 - [x] (2026-11-08) Overlay scheme built and tested (stub 97 + MISSIONC 711 / MISSIONP 362; docked tail 808/812; flight tail 575/610 with both missions). Open: the flight side is still resident (Trumbles needs room: shrink or overlay the flight code), name-hash order when Trumbles exists, shrinking the Constrictor text (the two briefings share most words), a real playthrough.
 - [x] (2026-11-08, branch `mission-trumbles`) Trumbles built and tested; flight code is now overlaid too (images 125/587/223/286 bytes, vectors + launch hook); docked max 787/812.
-- [ ] Trumble sprites: art is a draft (`missions_trumble_art.txt`), waiting for a look at it; a CPC colour option for the fur (only pen 3 is used), count thresholds for how many are shown.
-- [ ] Constrictor flight image is 593 of 610 bytes (23 free): shrink it (its spawn check is 128 bytes) before adding anything else to it.
-- [ ] Trumbles: sound, a real end condition other than the sun, interplay with the escape pod and with selling; name-hash order (`docs/_mission_build_plan.md` has the 21-byte routine) now only moves Trumbles.
-- [ ] Play the whole chain in a real game; merge order: foundation -> constrictor -> plans -> trumbles (they are stacked, so only `mission-trumbles` needs merging).
+- [x] Trumble sprites built (up to six, pen 3, `missions_trumble_art.txt`); count thresholds are in. [ ] Still open: a CPC colour option for the fur.
+- [x] Constrictor flight image: now 609 of 610 bytes; trimming is tracked under Missions above ("Space").
+- [x] Trumbles sound done (effect 13). [ ] Open: an end condition other than the sun, interplay with the escape pod and with selling.
+- [x] Branches are merged into one: `addon-missions` contains all of them; only its merge into `master` is open (see Missions above).
 - [ ] (superseded) Evaluate the mission overlay scheme (load missions one at a time, random order per commander): loader size, disk space, save-load restore.
 
 ## Space savings (review 2026-11-07)
@@ -103,7 +102,7 @@ Open work, most useful first. `CLAUDE.md` keeps the short list; details live in 
 - [ ] Share the listing parser between `tools/deadcode.py` and `tools/dbcode.py` (both define their own `parse()`).
 
 ## Build and test
-- [ ] Build a commander save editor (`tools/`): show every field of a save (name, cash, kills and rank, legal status, galaxy,
+- [x] (done: `tools/saveedit.py`, `EDITSAVE.BAS`, `SHOWSAVE.BAS`) Build a commander save editor (`tools/`): show every field of a save (name, cash, kills and rank, legal status, galaxy,
       fuel, missiles, lasers, equipment, cargo, market stock, mission variables and flags such as the cloak and jammer bits)
       and let the user edit them, then write a valid save: re-encrypt with the right build's key (English `&2BE`, German
       `&2C2` in `LARGEAXX`) and recompute both checksums. Cash is a word pair (thousands of Cr plus decicredits), see
