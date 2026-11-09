@@ -15,7 +15,15 @@ for p in "largeaxx LARGEAXX" "commonxx COMMONXX" "common2x COMMON2X" "musiquex M
   if ! sjasmplus --raw="$OUT/$n.bin" --sym="$OUT/$n.sym" "$SRC/$n.asm" >"$OUT/$n.log" 2>&1; then echo "$n: assemble FAILED"; tail -5 "$OUT/$n.log"; rc=1; continue; fi
   REF="$OUT/$n.ref"; cp "$BIN/$f.BIN" "$REF"
   if [ "$n" != commonxx ]; then
-    if cmp -s "$OUT/$n.bin" "$REF"; then echo "$n: ok"; else echo "$n: DIFFERS"; rc=1; fi
+    if cmp -s "$OUT/$n.bin" "$REF"; then echo "$n: ok"; else echo "$n: DIFFERS"; rc=1; continue; fi
+    # LARGEAXX -DENHANCED (CASH_CORNER, English only): differs only in the 16-byte clrLineCash slot and the operands of the two `call clrLineCash` sites
+    if [ "$n" = largeaxx ] && grep -q '^ *IFDEF ENHANCED' "$SRC/largeaxx.asm"; then
+      if sjasmplus -DENHANCED --raw="$OUT/$n.enh.bin" --sym="$OUT/$n.enh.sym" "$SRC/$n.asm" >/dev/null 2>&1; then
+        esym() { awk -v k="$1:" '$2 == k || $1 == k { print $NF }' "$OUT/$n.enh.sym"; }
+        CL=$(( $(esym clrLineCash) - 0x840 )); PQ=$(( $(esym printInputQuestionforQuantity) - 0x840 )); EQ=$(( $(esym eqShoppingloop) - 0x840 ))
+        if cmp -l "$OUT/$n.enh.bin" "$REF" | awk -v cl=$CL -v pq=$PQ -v eq=$EQ '{o=$1-1; if (!((o>=cl && o<cl+16) || o==pq+1 || o==pq+2 || o==eq+1 || o==eq+2)) bad=1} END{exit bad}'; then echo "$n -DENHANCED: ok (differs only in the clrLineCash slot and its two call sites)"; else echo "$n -DENHANCED: differs outside the clrLineCash slot and its call sites"; rc=1; fi
+      else echo "$n -DENHANCED: assemble FAILED"; rc=1; fi
+    fi
     continue
   fi
   # COMMONXX: the default build (no flags) must equal the original bytes, apart from the CPC+ fix (ED 79 -> ED 49 in getPPI_Input, see docs/_cpcplus.md; the German stock

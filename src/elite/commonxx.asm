@@ -749,6 +749,16 @@ mxPodHook:
     ld hl,Missionflag
     ret
     ENDIF
+    IFDEF ENHANCED
+    ASSERT $ <= 0x1FEA
+    DS 0x1FEA-$
+; Cash on the quantity line (CASH_CORNER, clrLineCash in largeaxx.asm): back to the start of the prompt row after the balance is printed
+cashHome:
+    ASSERT cashHome == 0x1FEA            ; largeaxx.asm calls it by address
+    ld hl,0x1500
+    ld (charXY),hl
+    ret
+    ENDIF
     DS 0x1FF1-$                      ; pad to ClearBitmap (unusedViewBorderFill's 31 bytes)
     ELSE
 ; Probably dead (nothing calls or jumps here): paints the two left and two right bytes of each of the 16 64-byte
