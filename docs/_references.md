@@ -13,6 +13,7 @@
 - The King of Grabs, Elite Amstrad CPC: https://thekingofgrabs.com/2020/03/02/elite-amstrad-cpc/
 - Amstrad Action issue 3: https://archive.org/details/amstrad-action-003/page/n69/mode/1up (local copy `magazines/Amstrad_Action_003.pdf`, preview pp. 70-71)
 - Elite archive, lost ports, 40th anniversary: https://theoasisbbs.com/elite-archive-lost-ports-elites-40th-anniversary-highlights/
+- Filfre (The Digital Antiquarian), "Elite": https://www.filfre.net/2013/12/elite/ (history of the game and its ports)
 
 ## Commodore 64 and 6502 source (found 2026-11-07)
 

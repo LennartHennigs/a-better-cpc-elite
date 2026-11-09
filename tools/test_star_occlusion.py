@@ -26,7 +26,7 @@ SUN = "sun" in sys.argv   # the sun (posDataSun &1C26) straight ahead, the plane
 def build():
     with tempfile.TemporaryDirectory() as d:
         out, sym = Path(d) / "c.bin", Path(d) / "c.sym"
-        subprocess.run([str(Path.home() / ".local/bin/sjasmplus"), f"--raw={out}", f"--sym={sym}", str(ROOT / "src/elite/commonxx.asm")], check=True, capture_output=True)
+        subprocess.run([str(Path.home() / ".local/bin/sjasmplus"), "-DENHANCED", f"--raw={out}", f"--sym={sym}", str(ROOT / "src/elite/commonxx.asm")], check=True, capture_output=True)
         labels = {l.split()[0].rstrip(":"): int(l.split()[-1], 16) for l in sym.read_text().splitlines() if "EQU" in l}
         return out.read_bytes(), labels
 

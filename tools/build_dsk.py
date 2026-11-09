@@ -41,7 +41,7 @@ def flight_image(tag):
     """Assemble COMMONXX with -DMISSIONS (-DFL_<tag> for C/P/T/S/R; "0" is the default image) and slice mxFlightBase..mxFlightEnd (the COMMONXX tail)."""
     with tempfile.TemporaryDirectory() as tmp:
         out, sym = Path(tmp) / "c.bin", Path(tmp) / "c.sym"
-        flags = ["-DMISSIONS"] + ([f"-DFL_{tag}"] if tag != "0" else [])
+        flags = ["-DENHANCED", *FILES["COMMONXX"], "-DMISSIONS"] + ([f"-DFL_{tag}"] if tag != "0" else [])   # the flags of the COMMONXX that goes on the disk
         r = subprocess.run([str(SJASM), *flags, f"--raw={out}", f"--sym={sym}", str(ROOT / "src/elite/commonxx.asm")], capture_output=True, text=True)
         if r.returncode:
             sys.exit(f"flight image {tag}: assemble failed\n{r.stdout[-400:]}")
@@ -57,7 +57,7 @@ def overlay(tag):
     """Assemble LARGEAXX with -DMISSIONS -DOVL_<tag> and slice mxOverlayBase..mxOverlayEnd (labels from the symbol file)."""
     with tempfile.TemporaryDirectory() as tmp:
         out, sym = Path(tmp) / "l.bin", Path(tmp) / "l.sym"
-        r = subprocess.run([str(SJASM), "-DMISSIONS", f"-DOVL_{tag}", "-DFIREBIRD", f"--raw={out}", f"--sym={sym}", str(ROOT / "src/elite/largeaxx.asm")],
+        r = subprocess.run([str(SJASM), "-DENHANCED", *FILES["LARGEAXX"], "-DMISSIONS", f"-DOVL_{tag}", f"--raw={out}", f"--sym={sym}", str(ROOT / "src/elite/largeaxx.asm")],
                            capture_output=True, text=True)
         if r.returncode:
             sys.exit(f"overlay {tag}: assemble failed\n{r.stdout[-400:]}")
@@ -122,7 +122,7 @@ def main():
         for n, defs in FILES.items():
             out = Path(tmp) / f"{n}.bin"
             extra = ["-DMISSIONS"] if MISSIONS and n in ("LARGEAXX", "COMMONXX") else []
-            r = subprocess.run([str(SJASM), *defs, *extra, f"--raw={out}", str(SRC / f"{n.lower()}.asm")],
+            r = subprocess.run([str(SJASM), "-DENHANCED", *defs, *extra, f"--raw={out}", str(SRC / f"{n.lower()}.asm")],
                                capture_output=True, text=True)
             if r.returncode:
                 sys.exit(f"{n}: assemble failed\n{r.stdout[-400:]}{r.stderr[-400:]}")

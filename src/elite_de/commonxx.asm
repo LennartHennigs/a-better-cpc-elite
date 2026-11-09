@@ -656,10 +656,14 @@ sub_1FCC:
     ld bc,0x0200
     ldir
     ret
-; Star occlusion: with STAR_OCCLUDE (default on; check_src.sh also assembles with -DSTAR_OCCLUDE=0 and compares that with the original) the stars no longer
+; Star occlusion: with STAR_OCCLUDE (on with -DENHANCED, off by default = the original bytes; check_src.sh compares both) the stars no longer
 ; show through the planet or sun disc, ship lines and tunnel lines. The 31 dead bytes below hold dustPlotPixel, which the dust loop (dust70) calls.
     IFNDEF STAR_OCCLUDE
+      IFDEF ENHANCED
 STAR_OCCLUDE equ 1
+      ELSE
+STAR_OCCLUDE equ 0
+      ENDIF
     ENDIF
     IF STAR_OCCLUDE
 ; Plots one star pixel into the off-screen bitmap: DE = byte address, C = pixel mask (hi plane bit + lo plane bit). The background is 0x0F, so
@@ -15149,15 +15153,19 @@ LAB_ram_8c52:
     rra
     ret
 ; Key code of ESC in the ASCII keyboard table below (row 8, bit 2). The stock game has 0xFF (= no key), so ESC does nothing; 0x7F is above every code the prompts accept, so
-; getInputForFunctionHL (buy, sell, equipment) leaves on it, and InputString ignores it. Assemble with -DESC_KEYCODE=0xFF for the original bytes.
+; getInputForFunctionHL (buy, sell, equipment) leaves on it, and InputString ignores it. Active with -DENHANCED; the default build keeps 0xFF (the original bytes).
     IFNDEF ESC_KEYCODE
-ESC_KEYCODE equ 0x7F                ; tools/check_src.sh also assembles with -DESC_KEYCODE=0xFF and compares that with the original
+      IFDEF ENHANCED
+ESC_KEYCODE equ 0x7F                ; tools/check_src.sh compares the -DENHANCED build with the original
+      ELSE
+ESC_KEYCODE equ 0xFF                ; the original bytes
+      ENDIF
+    ENDIF
     IFDEF TITLESEL
 TITLE_SCREEN1 equ 0x6E21            ; jump table at the start of the music file's zero tail (src/elite_de/musiquex.asm)
 TITLE_SCREEN2 equ 0x6E24
 TITLE_NEXT equ 0x6E27
 TITLE_SHOW equ 0x6E2A
-    ENDIF
     ENDIF
 tblKeyboardmatrix:
     db 0xFF,0xFF,0xFF,"963",0x0D,".",0xFF,0xFF,"785120"

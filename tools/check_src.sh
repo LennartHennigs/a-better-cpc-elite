@@ -2,8 +2,8 @@
 # Assemble src/elite*/*.asm with sjasmplus and compare with the original binaries.
 # usage: bash tools/check_src.sh [de]     (no argument: stock English, src/elite vs work/bin_stock;
 #                                          de: German, src/elite_de vs work/bin_german)
-#        exit 0 only if all four files are byte-exact apart from the documented one-byte patches below
-#        (src/elite and src/elite_fr have the one-byte CPC+ fix; the check expects it, see docs/_cpcplus.md)
+#        exit 0 only if the default (stock) build is byte-exact, apart from the one-byte CPC+ fix in src/elite and src/elite_fr (docs/_cpcplus.md),
+#        and the -DENHANCED build differs only in the documented places (ESC byte, star occlusion)
 set -u
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 if [ "${1:-}" = "fr" ]; then SRC="$ROOT/src/elite_fr"; BIN="$ROOT/work/bin_fr"; elif [ "${1:-}" = "de" ]; then SRC="$ROOT/src/elite_de"; BIN="$ROOT/work/bin_german"; else SRC="$ROOT/src/elite"; BIN="$ROOT/work/bin_stock"; fi
@@ -18,22 +18,17 @@ for p in "largeaxx LARGEAXX" "commonxx COMMONXX" "common2x COMMON2X" "musiquex M
     if cmp -s "$OUT/$n.bin" "$REF"; then echo "$n: ok"; else echo "$n: DIFFERS"; rc=1; fi
     continue
   fi
-  # COMMONXX carries two one-byte changes to the stock bytes; their runtime addresses come from the symbol table (nothing is hard-coded per build):
-  #  - the CPC+ fix (ED 79 -> ED 49 in getPPI_Input, see docs/_cpcplus.md; the German stock disk already has it): the reference gets that byte;
-  #  - ESC_KEYCODE (the key code of ESC in tblKeyboardmatrix: &FF = no key in the stock game, &7F here so that the buy, sell and equipment prompts leave on Escape).
-  # The ESC change is proved, not patched into the reference: the build with -DESC_KEYCODE=0xFF must equal the reference, and the default build must differ from it in exactly one byte, the ESC byte, with the value &7F.
+  # COMMONXX: the default build (no flags) must equal the original bytes, apart from the CPC+ fix (ED 79 -> ED 49 in getPPI_Input, see docs/_cpcplus.md; the German stock
+  # disk already has it), which the reference gets. The -DENHANCED build (STAR_OCCLUDE + ESC_KEYCODE=0x7F) may differ only in the ESC byte (value &7F, row 8 bit 2 of
+  # tblKeyboardmatrix) and inside dustPlotPixel's slot (unusedViewBorderFill..ClearBitmap) and the dust loop dust70..dust70+16.
   sym() { awk -v k="$1:" '$2 == k || $1 == k { print $NF }' "$OUT/$n.sym"; }
-  ESCP=$(( $(sym tblKeyboardmatrix) + 66 ))                  # row 8 bit 2 of the table
   [ "$SRC" != "$ROOT/src/elite_de" ] && printf '\x49' | dd of="$REF" bs=1 seek=$(( $(sym getPPI_Input) + 20 - 0x1A40 )) conv=notrunc 2>/dev/null
-  # STAR_OCCLUDE (stars no longer drawn over the planet disc and lines): the build with -DSTAR_OCCLUDE=0 has the original bytes, the default build differs only
-  # inside dustPlotPixel's slot (unusedViewBorderFill..ClearBitmap) and the dust loop dust70..dust70+16.
-  OCC0="-DSTAR_OCCLUDE=0"; [ -n "$(sym dustPlotPixel)" ] || OCC0=""
-  if ! sjasmplus -DESC_KEYCODE=0xFF $OCC0 --raw="$OUT/$n.stock.bin" "$SRC/$n.asm" >/dev/null 2>&1 || ! cmp -s "$OUT/$n.stock.bin" "$REF"; then echo "$n -DESC_KEYCODE=0xFF $OCC0: DIFFERS from the original"; rc=1
-  elif ! sjasmplus $OCC0 --raw="$OUT/$n.noocc.bin" "$SRC/$n.asm" >/dev/null 2>&1 || [ "$(cmp -l "$OUT/$n.noocc.bin" "$REF" | awk '{print $1":"$2":"$3}')" != "$((ESCP-0x1A40+1)):177:377" ]; then echo "$n $OCC0: DIFFERS (expected only the ESC byte)"; rc=1
-  elif [ -n "$OCC0" ]; then
-    LO=$(( $(sym dustPlotPixel) - 0x1A40 )); HI=$(( $(sym ClearBitmap) - 0x1A40 )); DL=$(( $(sym dust70) - 0x1A40 ))
-    if cmp -l "$OUT/$n.bin" "$OUT/$n.noocc.bin" | awk -v lo=$LO -v hi=$HI -v dl=$DL '{o=$1-1; if (!((o>=lo && o<hi) || (o>=dl && o<dl+16))) bad=1} END{exit bad}'; then echo "$n: ok (star occlusion confined to its two slots)"; else echo "$n: STAR_OCCLUDE changes bytes outside its slots"; rc=1; fi
-  else echo "$n: ok"; fi
+  ESCP=$(( $(sym tblKeyboardmatrix) + 66 - 0x1A40 ))
+  if ! cmp -s "$OUT/$n.bin" "$REF"; then echo "$n (default build): DIFFERS from the original"; rc=1; continue; fi
+  if ! sjasmplus -DENHANCED --raw="$OUT/$n.enh.bin" --sym="$OUT/$n.enh.sym" "$SRC/$n.asm" >/dev/null 2>&1; then echo "$n -DENHANCED: assemble FAILED"; rc=1; continue; fi
+  esym() { awk -v k="$1:" '$2 == k || $1 == k { print $NF }' "$OUT/$n.enh.sym"; }
+  LO=$(( $(esym dustPlotPixel) - 0x1A40 )); HI=$(( $(esym ClearBitmap) - 0x1A40 )); DL=$(( $(esym dust70) - 0x1A40 ))
+  if cmp -l "$OUT/$n.enh.bin" "$REF" | awk -v lo=$LO -v hi=$HI -v dl=$DL -v esc=$((ESCP+1)) '{o=$1-1; if ($1==esc) { if ($2!="177" || $3!="377") bad=1; seen=1 } else if (!((o>=lo && o<hi) || (o>=dl && o<dl+16))) bad=1} END{exit (bad || !seen)}'; then echo "$n: ok (default = original; -DENHANCED differs only in the ESC byte and the two star-occlusion slots)"; else echo "$n -DENHANCED: differs outside the ESC byte and the star-occlusion slots"; rc=1; fi
 done
 # English only: the -DMISSIONS variant (src/elite/missions_*.asm in the free tails) must keep both files the same length
 if [ "$SRC" = "$ROOT/src/elite" ]; then
@@ -63,6 +58,6 @@ if [ -n "$TSYMS" ]; then
   else echo "-DTITLESEL $fl: FAILED"; tail -3 "$OUT/c.t.log" "$OUT/m.t.log"; rc=1; fi
   done
 fi
-# the three source trees must agree on the ESC default
-if [ "$(grep -h '^ESC_KEYCODE equ' "$ROOT"/src/elite/commonxx.asm "$ROOT"/src/elite_de/commonxx.asm "$ROOT"/src/elite_fr/commonxx.asm | awk '{print $3}' | sort -u | wc -l)" -ne 1 ]; then echo "ESC_KEYCODE defaults differ between src/elite, src/elite_de and src/elite_fr"; rc=1; fi
+# the three source trees must agree on the ESC values (0x7F enhanced, 0xFF default)
+if [ "$(for t in elite elite_de elite_fr; do grep -h '^ESC_KEYCODE equ' "$ROOT/src/$t/commonxx.asm" | awk '{print $3}' | tr '\n' ' '; echo; done | sort -u | wc -l)" -ne 1 ]; then echo "ESC_KEYCODE values differ between src/elite, src/elite_de and src/elite_fr"; rc=1; fi
 rm -rf "$OUT"; exit $rc
