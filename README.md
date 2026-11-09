@@ -1,7 +1,7 @@
 # Elite for the Amstrad CPC, taken apart and given more to do
 
 This project takes the Amstrad CPC version of *Elite* (Firebird, 1985, a Z80 port of the Spectrum game), disassembles it into readable, commented, reassemblable source, and uses that source to build a **richer Elite**:
-a version with the missions the other versions of the game had, and a few they did not.
+a version with the missions the other versions of the game had, and a few they did not, plus a few quality-of-life improvements (see *Small improvements* below).
 
 ## Secret Missions
 
@@ -35,7 +35,8 @@ Besides the missions, the build has a few changes that make the game nicer to pl
 - **The keyboard works on a CPC464+/6128+.** The original game's keyboard is dead on a Plus machine; one byte in the keyboard scan (`getPPI_Input`, `ED 79` -> `ED 49`, found by diffing Redbox's patched disk) fixes it. It is not a switch, and the German stock disk already has it. Not tried on real Plus hardware; details in `docs/_cpcplus.md`.
 - **Escape leaves the buy, sell and equipment prompts.** Escape now backs out of them (switch `ESC_KEYCODE`; the stock game ignores that key there).
 - **Stars stay behind the planet and sun.** The stars used to be drawn over the planet and sun discs, so they shone through them. Now they only appear against empty space (switch `STAR_OCCLUDE`, in all three languages). Ships are still wireframes, so you see stars between their edges, as in the original.
-- **Choose the ship on the title screen.** Cursor left and right, or the joystick, step the demo ship through eight hulls (Viper, Asp, Cobra Mk III, Fer-de-Lance, Sidewinder, Krait, Rock Hermit, Thargoid), so you can look at all of them (switch `TITLESEL`, English and German; the disks from `tools/build_dsk.py` include it).
+- **Choose the ship on the title screen.** Cursor left and right, or the joystick, step the demo ship through eight hulls (Viper, Asp, Cobra Mk III, Fer-de-Lance, Sidewinder, Krait, Rock Hermit, Thargoid), so you can look at all of them (switch `TITLESEL`, English and German; the disks from `tools/build_dsk.py` include it). In the English build the press-space screen shows the ship's name, in the ship colour, where the ELITE title stood.
+- **Cash on the quantity line.** The buy, sell and equipment prompts show your credits at the bottom right, on the row where you type the quantity, and refresh after every purchase (`-DENHANCED`, English only so far).
 
 ## The commented code
 
@@ -76,7 +77,7 @@ Underneath, a plain `sjasmplus` run gives the **stock** game (`bash tools/check_
 
 | Switch | What it does | Files |
 |---|---|---|
-| `ENHANCED` | turns on `STAR_OCCLUDE` and `ESC_KEYCODE=0x7F` together (the "small improvements" above) | `commonxx.asm` |
+| `ENHANCED` | turns on `STAR_OCCLUDE` and `ESC_KEYCODE=0x7F` together, and the cash display (the "small improvements" above) | `commonxx.asm`, `largeaxx.asm` |
 | `STAR_OCCLUDE` | stars stay behind planet and sun (`=1`/`=0`, overrides `ENHANCED`) | `commonxx.asm` |
 | `ESC_KEYCODE` | key code of Escape in the keyboard table (`0x7F` = Escape leaves the prompts, `0xFF` = stock) | `commonxx.asm` |
 | `TITLESEL` | choose the demo ship on the title screen | `commonxx.asm`, `musiquex.asm` |
@@ -91,7 +92,7 @@ Underneath, a plain `sjasmplus` run gives the **stock** game (`bash tools/check_
 |---|---|---|---|
 | zero tail of `LARGEAXX` (`&1714-&1A3F`, reloaded from disk at every docking) | 812 | resident mission stub (251) plus the one docked overlay that is loaded on demand (largest: Constrictor, 561) | **0** |
 | zero tail of `COMMONXX` (`&9D9E-&9FFF`) | 610 | vector table, launch hook and one flight image, picked at every launch (largest: 608; the image must end at `&9FFE` or below, because an interrupt can push at `&9FFE-&9FFF`, which an `ASSERT` checks) | **0** |
-| dead `unusedViewBorderFill` (`&1FD2-&1FF0`) | 31 | `dustPlotPixel` for star occlusion (11 bytes) and `mxPodHook`, which zeroes the Trumble count when an escape pod is used (10 bytes) | 10 |
+| dead `unusedViewBorderFill` (`&1FD2-&1FF0`) | 31 | `dustPlotPixel` for star occlusion (11 bytes), `mxPodHook`, which zeroes the Trumble count when an escape pod is used (10 bytes), and `cashHome` for the cash display (7 bytes) | 3 |
 
 Changes to existing stock bytes are small: the CPC+ keyboard fix and the Escape key code (one byte each), 16 bytes of the dust loop for star occlusion, and a handful of 3-byte call replacements at the mission hook sites. Nothing else moves. With the switches off only the CPC+ byte differs from the original, and `tools/check_src.sh` checks every one of these claims. So there are 0 spare bytes in each of the two tails: a further mission or change to the largest ones has to trim something first (sizes per mission in `docs/_missions_built.md`).
 

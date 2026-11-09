@@ -30,7 +30,7 @@ A flag-less `sjasmplus` run gives the **original bytes** (plus the one-byte CPC+
 
 | Switch | Effect | Files |
 |---|---|---|
-| `ENHANCED` | `STAR_OCCLUDE` and `ESC_KEYCODE=0x7F` together | `commonxx.asm` |
+| `ENHANCED` | `STAR_OCCLUDE` and `ESC_KEYCODE=0x7F` together; also the cash on the quantity line (English) | `commonxx.asm`, `largeaxx.asm` |
 | `STAR_OCCLUDE` (`=1`/`=0`) | stars stay behind planet and sun; overrides `ENHANCED` | `commonxx.asm` |
 | `ESC_KEYCODE` (`=0x7F`/`0xFF`) | key code of ESC in the keyboard table; `0x7F` leaves the buy, sell and equipment prompts | `commonxx.asm` |
 | `TITLESEL` | choose the demo ship on the title screens | `commonxx.asm`, `musiquex.asm` |
@@ -58,7 +58,7 @@ Assembles the four files of one tree and compares with `work/bin_stock` / `bin_g
 
 1. `largeaxx`, `common2x`, `musiquex` are byte-identical to the originals.
 2. `commonxx` without flags equals the original, with the CPC+ byte (`getPPI_Input` + 20 = `ED 49`) applied to the reference (not for German).
-3. `commonxx -DENHANCED` differs from it only in the ESC byte (`tblKeyboardmatrix` + 66: `&7F` instead of `&FF`) and in two slots: `dustPlotPixel`'s space (`unusedViewBorderFill` up to `ClearBitmap`) and 16 bytes of the dust loop (`dust70`).
+3. `commonxx -DENHANCED` differs from it only in the ESC byte (`tblKeyboardmatrix` + 66: `&7F` instead of `&FF`) and in two slots: `dustPlotPixel`'s space (`unusedViewBorderFill` up to `ClearBitmap`) and 16 bytes of the dust loop (`dust70`); `largeaxx -DENHANCED` (English) differs only in the 16-byte `clrLineCash` slot (`&08E7`) and the operands of its two call sites.
 4. English: `-DMISSIONS` keeps the lengths of `LARGEAXX` and `COMMONXX`.
 5. English and German: `-DTITLESEL` keeps the lengths, and the six `COMMONXX` addresses that `musiquex.asm` hard-codes (`setCommandsCPL`, `setCommandsNOP`, `transferBuffertoScreen`, `spawnCommandParser`, `dataFromPPI`, `splash2Shipnr`) are the real ones (English also with `-DMISSIONS`).
 6. The three trees agree on the `ESC_KEYCODE` value.

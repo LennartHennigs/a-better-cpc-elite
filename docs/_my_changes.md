@@ -11,7 +11,7 @@ Every difference between our builds and the original game, with why it exists, w
 | Escape leaves buy, sell and equipment prompts | `ESC_KEYCODE` / `ENHANCED` | all three | 1 (`FF` -> `7F` in `tblKeyboardmatrix`) | 0 |
 | Stars stay behind planet and sun | `STAR_OCCLUDE` / `ENHANCED` | all three | 16 bytes of the dust loop | 11 bytes in dead `unusedViewBorderFill` |
 | Cash on the quantity line of buy, sell and equip | `ENHANCED` | English | two 3-byte call operands (`clrLine0x15` -> `clrLineCash`) | 16 dead bytes in `LARGEAXX` (`&08E7`) and 7 in the dead block of `COMMONXX` (`cashHome`, `&1FEA`) |
-| Title screen ship choice | `TITLESEL` | English, German | four call operands in `COMMONXX` (same length) | about 120 bytes in the tail of `MUSIQUEX` |
+| Title screen ship choice, ship name on the press-space screen | `TITLESEL` | English, German (name: English only) | four call operands plus one `call printELITE` in `COMMONXX` (same length) | about 280 bytes in the tail of `MUSIQUEX` |
 | Added missions | `MISSIONS` (+ `FL_*`, `OVL_*`) | English | about a dozen 3-byte call replacements (hook sites) | both zero tails, plus overlay and image files on disk |
 | Trainer and save tools | none (BASIC programs, host scripts) | UK, French, German saves | none | none |
 
@@ -42,6 +42,13 @@ not fit the window). The code, about 120 bytes with its table, lives in the zero
 `TITLE_SHOW` replaces the fixed Cobra spawn, `TITLE_SCREEN1` and `TITLE_SCREEN2` replace the `setCommandsNOP` / `transferBuffertoScreen` calls in the two loops, `TITLE_NEXT` replaces the automatic pick before the press-space screen. `splash2Shipnr` (`&1DA8`) holds
 the ship index (bits 0-2) and "a key was already down" (bit 7), so a held key steps once and the choice carries over between screens and restarts. The raw PPI rows (`dataFromPPI`) are read because `irki2` rewrites `keybFlags2` into roll values.
 The six `COMMONXX` addresses `musiquex.asm` hard-codes are checked by `check_src.sh`. Test: `tools/test_title_ships.py [de]`.
+
+**Ship name (English only).** A fifth hook, `TITLE_NAME` (`&6E2D`), replaces `call printELITE` in `printPressSpace`: `titleName` prints the name of the ship on show (table `titleNames`, 16 bytes per name, in `titleShips` order) centred on text row 1 in capitals (`todoPrintFlag3948` forced to 1 while printing). It then recolours that row of the off-screen bitmap from pen 0 to pen 3, the pen of the ship lines and frame: the background byte is `&0F`, text pixels have both planes clear, so `byte := &0F | (~byte & &0F) << 4`.
+
+## Cash on the quantity line (`ENHANCED`)
+
+The buy, sell and equipment prompts show the balance at the right end of text row `&16`, the row below the prompt where the typed quantity appears (8 characters ending at column 30, one decimal, space-padded by `printDeciCredit`). `clrLineCash` replaces `clrLine0x15` at two sites (`printInputQuestionforQuantity`, used by buy and sell, and `eqShoppingloop`): it clears the two rows, prints `getMoneyinHLDE` at `(22, &16)` and jumps to `cashHome`, which puts `charXY` back on `&1500` so the prompt prints as before. Because the prompt runs before every row, the balance is fresh after each purchase.
+`clrLineCash` sits in 16 dead bytes of `LARGEAXX` (`&08E7`, a ZX Spectrum attribute fill nothing calls), `cashHome` (7 bytes, `&1FEA`) at the end of the star-occlusion dead block in `COMMONXX`; `largeaxx.asm` calls it by address and `commonxx.asm` asserts it. `check_src.sh` requires the default `LARGEAXX` to equal the original and the `-DENHANCED` one to differ only in that slot and the two call operands. German and French not ported.
 
 ## The added missions (`MISSIONS`)
 
