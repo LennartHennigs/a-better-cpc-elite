@@ -159,7 +159,7 @@ that lands on `addr` as a boundary and decodes sensibly; do not trust a decode t
 
 ## Open items
 
-- Star occlusion (`STAR_OCCLUDE`, default on, all three trees): `dustPlotPixel` lives in the dead `unusedViewBorderFill` (`&1FD2-&1FF0`, about 9 bytes left) and is
+- Star occlusion (`STAR_OCCLUDE`, default on, all three trees): `dustPlotPixel` lives in the dead `unusedViewBorderFill` (`&1FD2-&1FF0`, 20 bytes left (`&1FDD-&1FF0`)) and is
   called from the dust loop `dust70`. `check_src.sh` proves it (`-DSTAR_OCCLUDE=0` = original bytes; the default differs only in those two slots). Ship hulls stay
   see-through: `docs/_ship_occlusion.md` (options A/B/C, not built).
 - Screens of a planet and sun: `tools/test_star_occlusion.py [off] [far] [sun]` (run from `work/xray`, PNGs in `output/stars_*.png` via cpcxray `screen_image`). In flight

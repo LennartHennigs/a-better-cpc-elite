@@ -33,7 +33,7 @@ see-through: stars show between their edge lines. This note records the options 
 
 ## Constraints
 
-- **Space.** The dead block `unusedViewBorderFill` (`&1FD2-&1FF0`) now holds `dustPlotPixel` and has about 9 bytes left; `unusedGetFlightMode` and
+- **Space.** The dead block `unusedViewBorderFill` (`&1FD2-&1FF0`) now holds `dustPlotPixel` and has 20 bytes left (`&1FDD-&1FF0`); `unusedGetFlightMode` and
   `unusedGetCloakFlag` give 10. The `&9D9E` tail has 610 bytes, but the `-DMISSIONS` builds fill it with mission images and the Constrictor flight
   image has 1 byte spare. A does not fit without moving its table (overlay or screen-gap memory). B might fit.
 - **Check.** `tools/check_src.sh` needs a second switch with the same proof as `STAR_OCCLUDE`: off gives the original bytes, on differs only inside
