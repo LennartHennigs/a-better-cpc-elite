@@ -53,7 +53,7 @@ into the lower screen rows. Most of the rest of the file is blank screen bytes (
 
 - **In flight** the view is drawn into a linear bitmap `&A000-&BFFF`: 128 lines of 64 bytes (256 pixels wide), wiped by `ClearBitmap` (`&1FF1`, 256 x 16 pushes of `&0F0F` with SP set to `&C000`) and
   copied to the screen by `transferBuffertoScreen` (`&1ED1`) each frame. The whole range is therefore working memory: nothing may be kept there while flying.
-- **Docked** screens are drawn straight to screen RAM, so `&A600-&BFFF` is not needed as bitmap and holds 6.5 KB (`&1A00` bytes) of parked data: the same size as `&0040-&1A3F`, which is what it is swapped with.
+- **Docked** screens are drawn straight to screen RAM, so `&A600-&BFFF` is not needed as bitmap and holds 6.5 KB (`&1A00` bytes) of parked data, the firmware's upper RAM including the jumpblock `&BB00-&BDFF`: the same size as `&0040-&1A3F`, which it is swapped with.
 - **Swapping** (`loadLARGEAXX`, `loadIndicator`, `switchMemoryContents`): at docking `loadLARGEAXX` copies `&0040-&1A3F` to `&A600` and loads `LARGEAXX.BIN` at `&0840`, so the docked tail is fresh at every docking. At launch
   `loadIndicator` loads the progress-bar screen and swaps `&0040-&1A3F` with `&A600-&BFFF`: the parked data returns to low memory and the docked copy (including `LARGEAXX`) goes to `&A600`, where the bitmap destroys it, which is why
   `LARGEAXX` is reloaded from disk at the next docking. At the title screen `LARGEAXX` is already parked, so code in the `&1714` tail (the mission stub) is valid only after `loadLARGEAXX`.
@@ -64,8 +64,10 @@ into the lower screen rows. Most of the rest of the file is blank screen bytes (
   - In flight (snapshot `firebird_in_flight.sna` against the boot snapshot): low memory equals the docked-layout `&A600` content (6003 of 6656 bytes) and the old low memory is not recoverable from `&A600`.
   - about 20 s of flight (two key presses, otherwise idle) changed **0 bytes** in `&0000-&1A3F`.
   - `commonxx.asm` has no direct operand into `&0040-&1A3F` (grep for address operands; its `0x0E01`-style hits are immediates), so flight code does not read it directly.
-- **What the parked 6.5 KB is** is still open: not a file, not written in flight, not referenced directly by `COMMONXX`. By the comment at `drawDashboard` (a stored dashboard image from `&AE00`) at least part of it is the dashboard graphic
-  that docked screens use. The mission design depends only on the tail being fresh after `loadLARGEAXX`, not on this.
+- **What the parked 6.5 KB is (settled in cpcxray, 2026-11-09):** the CPC firmware's own upper RAM. Its main jumpblock `&BB00-&BDFF` sits in it (768 bytes: entries such as `CF F2 8C` at `&BC32`, `SCR_SET_INK`, and `C3 40 1D` at `&BDF4`, `KM_SCAN_KEYS`
+  patched to a `jp &1D40`), together with firmware data and zeros. The 768 bytes of the docked-layout snapshot equal the parked copy in low memory in flight (768 of 768). The game needs the firmware at docking, where it loads files
+  (`CAS_IN_OPEN` `&BC77`, `KL_ADD_TICKER` `&BCE9`, `KM_SCAN_KEYS` `&BDF4` are called through that jumpblock), but in flight the bitmap `&A000-&BFFF` overwrites it. So the swap saves the firmware's upper RAM into low memory for flight and restores it
+  at docking; the mission design is unaffected. (It also explains why the block matches no disk file.)
 
 ## Stack
 
