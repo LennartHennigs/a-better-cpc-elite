@@ -44,10 +44,15 @@ mxSpawnThargoidPair:
     call setDirectionofEntity
     push ix
     pop hl                            ; the Thargoid's position
+    push hl                           ; spawnShip and lookforFreeSlot clobber HL, so keep it on the stack for the ldir
     call lookforFreeSlot
-    ret nz
+    jr z,mxPairSlot
+    pop hl
+    ret
+mxPairSlot:
     ld a,0x12
     call spawnShip
+    pop hl
     push ix
     pop de
     ld bc,0x0009

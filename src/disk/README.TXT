@@ -14,14 +14,13 @@ Find them yourself: fly, fight,
 trade, dock and listen to what
 the stations tell you.
 
-Also new: 
-ESC leaves the buy, sell, and 
+Also new:
+ESC leaves the buy, sell, and
 equipment menus.
 
-You can navigate the game's  
+You can navigate the game's
 ships in the start menu via
 arrow keys.
-
 
 Elite by David Braben and Ian
 Bell. CPC version by Firebird.

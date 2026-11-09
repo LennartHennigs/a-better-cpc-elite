@@ -23,6 +23,8 @@ DE = "--de" in sys.argv
 BASE = ROOT / ("Elite_DE_cracked.dsk" if DE else "Elite_UK_Firebird_cracked_trainer.dsk")
 SRC = ROOT / ("src/elite_de" if DE else "src/elite")
 MISSIONS = "--missions" in sys.argv   # assemble LARGEAXX and COMMONXX with -DMISSIONS (src/elite/missions_*.asm in the free tails)
+if DE and MISSIONS:
+    sys.exit("--de and --missions cannot be combined: the missions exist for the English build only (src/elite)")
 args = [a for a in sys.argv[1:] if a not in ("--missions", "--de")]
 OUT = Path(args[0]) if args else ROOT / "work" / ("elite_de_rebuilt.dsk" if DE else "elite_missions.dsk" if MISSIONS else "elite_rebuilt.dsk")
 SJASM = Path.home() / ".local/bin/sjasmplus"

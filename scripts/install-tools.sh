@@ -11,8 +11,9 @@ BIN="${PREFIX_BIN:-$HOME/.local/bin}"
 JOBS="$(sysctl -n hw.ncpu 2>/dev/null || echo 4)"
 
 # Override to pin a tag or commit, e.g. SJASMPLUS_REF=v1.21.0
-SJASMPLUS_REF="${SJASMPLUS_REF:-}"
-IDSK_REF="${IDSK_REF:-}"
+# Defaults are the versions this project was built and checked with (sjasmplus 1.24.0; the iDSK commit in use).
+SJASMPLUS_REF="${SJASMPLUS_REF:-v1.24.0}"
+IDSK_REF="${IDSK_REF:-bd620361720b2f45aafd9c100a1000c56957cb05}"
 
 for tool in git cmake make; do
   command -v "$tool" >/dev/null || { echo "missing: $tool (brew install $tool)" >&2; exit 1; }
@@ -26,7 +27,8 @@ fetch() { # name url ref
     git -C "$SRC/$name" fetch --depth 1 origin ${ref:+"$ref"}
     git -C "$SRC/$name" checkout --quiet FETCH_HEAD
   else
-    git clone --depth 1 ${ref:+--branch "$ref"} "$url" "$SRC/$name"
+    git clone "$url" "$SRC/$name"
+    [ -z "$ref" ] || git -C "$SRC/$name" checkout --quiet "$ref"
   fi
   # sjasmplus vendors LuaBridge as a submodule; a plain shallow clone leaves it empty.
   git -C "$SRC/$name" submodule update --init --depth 1 --recursive

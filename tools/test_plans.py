@@ -103,15 +103,20 @@ async def main():
                 await wr(0x38FD, st)
                 for _ in range(calls):
                     await call(syms["mxSpawnCheck"])
-                kinds = {}
+                kinds, pos = {}, {}
                 for i in range(1, 7):
                     ix = 0x1A40 + 0x27 * i
                     b = await rd(ix + 34, 3)
                     if b[0]:
                         bp = b[1] | b[2] << 8
                         kinds[bp] = kinds.get(bp, 0) + 1
+                        pos.setdefault(bp, []).append(bytes(await rd(ix, 9)))
                 th, tg = kinds.get(syms["shipdatThargoid"], 0), kinds.get(syms["shipdatThargon"], 0)
                 good = (th >= 1 and tg >= 1 and th == tg) if st == 0x0A else (th == 0 and tg == 0)
+                if st == 0x0A:   # each Thargon sits on a Thargoid: same x, y, z (regression: HL was clobbered before the ldir)
+                    same = sorted(pos.get(syms["shipdatThargon"], [])) == sorted(pos.get(syms["shipdatThargoid"], []))
+                    good &= same
+                    print(f"{'ok  ' if same else 'FAIL'} flight {label:13s} Thargons at their mother ship's x, y, z")
                 ok &= good
                 print(f"{'ok  ' if good else 'FAIL'} flight {label:13s} after {calls} spawn checks: Thargoids {th}, Thargons {tg}")
             # recharge: steps per call
