@@ -49,13 +49,13 @@ SCENARIOS.update({
     "c_offer_galaxy3": (0x00, 1, 2, 10, 10, 0x00, 0, 0x00, False, 0),    # the Constrictor is offered in galaxy 1 and 2 only
     "c_stage7_idle":   (0x71, 1, 1, 148, 68, 0x71, 0, 0x00, False, 0),   # all hints given: nothing to do docked
     "c_hint_stage2_wrong_place": (0x21, 1, 0, 149, 101, 0x21, 0, 0x00, False, 0),   # stage 2 wants Cearso, Reesdice is stage 0
-    "t_offer_yes":    (0x0E, 6, 2, 10, 10, 0x8E, 0, 0x00, True, 0),
-    "t_offer_no":     (0x0E, 6, 2, 10, 10, 0x8E, 0, 0x00, True, 0),
-    "t_cash_exact":   (0x0E, 6, 2, 10, 10, 0x8E, 0, 0x00, True, 0),
-    "t_cash_short":   (0x0E, 6, 2, 10, 10, 0x0E, 0, 0x00, False, 0),
-    "t_poor":         (0x0E, 6, 2, 10, 10, 0x0E, 0, 0x00, False, 0),
-    "t_offered_before": (0x8E, 6, 2, 10, 10, 0x8E, 0, 0x00, False, 0),
-    "t_aboard":       (0x0E, 6, 2, 10, 10, 0x0E, 0, 0x00, False, 0),
+    "t_offer_yes":    (0x02, 6, 2, 10, 10, 0x82, 0, 0x00, True, 0),
+    "t_offer_no":     (0x02, 6, 2, 10, 10, 0x82, 0, 0x00, True, 0),
+    "t_cash_exact":   (0x02, 6, 2, 10, 10, 0x82, 0, 0x00, True, 0),
+    "t_cash_short":   (0x02, 6, 0, 10, 10, 0x02, 0, 0x00, False, 0),
+    "t_poor":         (0x02, 6, 0, 10, 10, 0x02, 0, 0x00, False, 0),
+    "t_offered_before": (0x82, 6, 0, 10, 10, 0x82, 0, 0x00, False, 0),
+    "t_aboard":       (0x02, 6, 2, 10, 10, 0x02, 0, 0x00, False, 0),
     "s_waiting_idle":  (0x1E, 6, 2, 215, 84, 0x1E, 0, 0x00, False, 0),    # waiting for the jumps: a flight matter, no disk access docked
     "s_ready_offer":   (0x2E, 6, 2, 10, 10, 0x3E, 0, 0x00, True, 0),      # ready: the stolen ship offer
     "s_clearing_idle": (0x3E, 6, 2, 215, 84, 0x3E, 0, 0x00, False, 0),    # clearing Ceerdi is a flight matter
@@ -64,19 +64,21 @@ SCENARIOS.update({
     "r_hunt_idle":     (0x5E, 6, 2, 215, 84, 0x5E, 0, 0x00, False, 0),    # clearing Ceerdi is a flight matter
     "r_reward":        (0x5E, 6, 2, 10, 10, 0x5E, 6, 0x00, True, 0),      # cleared: 6,000 Cr at any docking (2 -> 3)
     "r_paid":          (0x5E, 6, 2, 10, 10, 0x5E, 0, 0x00, False, 0),     # both paid: nothing
-    "t_any_time":      (0x01, 6, 0, 10, 10, 0x81, 0, 0x00, True, 0),      # the Trumbles are offered at any docking: here during the Constrictor hunt
-    "t_before_rocks":  (0x5E, 6, 2, 10, 10, 0xDE, 0, 0x00, True, 0),      # ... and before the asteroids offer
-    "t_no_kills":      (0x00, 0, 0, 10, 10, 0x80, 0, 0x00, True, 0),      # ... and with under 256 kill points (the kill gate is for the chain only)
+    "t_any_time":      (0x01, 6, 0, 10, 10, 0x01, 0, 0x00, False, 0),      # not offered during the Constrictor hunt (the offer waits for the gap after it)
+    "t_no_kills":      (0x00, 0, 0, 10, 10, 0x00, 0, 0x00, False, 0),      # not offered before the Constrictor
 })
 EXTRA["t_any_time"] = dict(cash=(6, 0), key="space", count_after=0, cash_delta=0)
-EXTRA["t_before_rocks"] = dict(cash=(6, 0), key="space", count_after=0, cash_delta=0)
 EXTRA["t_no_kills"] = dict(cash=(6, 0), key="space", count_after=0, cash_delta=0)
+SCENARIOS["t_stage_bits"] = (0x72, 6, 2, 10, 10, 0xF2, 0, 0x00, True, 0)       # offered with the hint stage bits (4-6) left over from the hunt
+EXTRA["t_stage_bits"] = dict(cash=(6, 0), key="space", count_after=0, cash_delta=0)
+SCENARIOS["t_plans_done"] = (0x0E, 6, 2, 10, 10, 0x0E, 0, 0x00, False, 0)      # plans already offered: no Trumbles offer any more
+EXTRA["t_plans_done"] = dict(cash=(6, 0), key="space", count_after=0, cash_delta=0)
 AST0 = {"r_hunt_idle": 0x51, "r_reward": 2, "r_paid": 3}                      # &38FE before
 AST1 = {"p_birera": range(5, 13), "r_offer": [0x51], "r_hunt_idle": [0x51], "r_reward": [3], "r_paid": [3]}   # &38FE after (default 0)
 
 # Scenarios where the stub must return without touching the disk (no overlay load): they take a few ms, a load takes about 1750 ms.
 FAST = {"r_paid", "r_hunt_idle", "s_waiting_idle", "s_clearing_idle", "c_offer_low", "c_hint_wrong", "c_offer_galaxy3", "c_stage7_idle", "c_hint_stage2_wrong_place", "p_brief_low", "p_brief_g1", "p_ceerdi_wrong", "p_birera_early",
-        "t_cash_short", "t_poor", "t_offered_before", "t_aboard"}
+        "t_cash_short", "t_poor", "t_offered_before", "t_aboard", "t_any_time", "t_no_kills", "t_plans_done"}
 
 
 async def main():

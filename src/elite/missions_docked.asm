@@ -14,8 +14,9 @@ missionsDockedEntry:                  ; = &1714, the fixed entry the docking cod
     ret nz                            ; Trumbles aboard: one mission at a time, nothing else is offered
     ld a,(missionState)
     ld b,a
-    bit 7,b
-    jr z,mxTrumbles                   ; the Trumbles offer comes at any docking, whatever the chain state and the kill score (it is made once)
+    and 0x8F
+    cp 0x02
+    jr z,mxTrumbles                   ; the Trumbles are offered once, in the gap after the Constrictor (bits 0-1 = 2), before the plans (bits 2-3 = 0), offer not made (bit 7 = 0); bits 4-6 are ignored
 mxChain:
     ld a,(mxKillScoreHigh)
     and a
