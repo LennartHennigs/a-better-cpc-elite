@@ -464,7 +464,11 @@ printSplashscreen1:
     jr subPrintSplash1
 ; Print the ELITE title and the 'press space' splash line
 printPressSpace:
+    IFDEF TITLESEL
+    call TITLE_NAME                 ; musiquex.asm: the ship's name instead of the ELITE title
+    ELSE
     call printELITE
+    ENDIF
     ld hl,0x0E04
     ld a,0x07
 subPrintSplash1:
@@ -15486,6 +15490,7 @@ TITLE_SCREEN1 equ 0x6E21            ; jump table at the start of the music file'
 TITLE_SCREEN2 equ 0x6E24
 TITLE_NEXT equ 0x6E27
 TITLE_SHOW equ 0x6E2A
+TITLE_NAME equ 0x6E2D
     ENDIF
 tblKeyboardmatrix:
     db 0xFF,0xFF,0xFF,"963",0x0D,".",0xFF,0xFF,"785120"

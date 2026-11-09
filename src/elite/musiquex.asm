@@ -463,11 +463,17 @@ transferBuffertoScreen equ 0x1ED1
 spawnCommandParser equ 0x809C
 dataFromPPI equ 0x8D2D
 splash2Shipnr equ 0x1DA8
+printString equ 0x43DC
+charXY equ 0x38C4
+flagWhichScreenToPrint equ 0x454E
+todoPrintFlag3948 equ 0x3948
+todoSomePrintFlag equ 0x3949
     ASSERT $ == 0x6E21
     jp titleScreen1                 ; +0  replaces call setCommandsNOP (first screen)
     jp titleScreen2                 ; +3  replaces call transferBuffertoScreen (press-space screen)
     jp titleNext                    ; +6  replaces the automatic ship pick before the press-space screen
     jp titleShow                    ; +9  replaces the fixed first spawn on the first screen
+    jp titleName                    ; +12 replaces printELITE on the press-space screen
 titleScreen1:
     call titleArrows
     jp setCommandsNOP
@@ -534,6 +540,78 @@ titleShow:
 titleKeyUp:
     res 7,(hl)
     ret
+; Print the current ship's name centred on the title line (text row 1), where the ELITE title stood
+titleName:
+    ld a,(splash2Shipnr)
+    and 0x07
+    add a,a
+    add a,a
+    add a,a
+    add a,a                         ; 16 bytes per name
+    ld e,a
+    ld d,0
+    ld hl,titleNames
+    add hl,de
+    push hl
+    ld b,0
+titleNameLen:
+    ld a,(hl)
+    and a
+    jr z,titleNameCentre
+    inc hl
+    inc b
+    jr titleNameLen
+titleNameCentre:
+    ld a,30
+    sub b
+    srl a                           ; charXY is incremented before each character is drawn
+    ld l,a
+    ld h,1
+    ld (charXY),hl
+    ld hl,flagWhichScreenToPrint
+    set 7,(hl)
+    pop hl
+    ld a,(todoPrintFlag3948)
+    push af
+    ld a,1                          ; capitals only
+    ld (todoPrintFlag3948),a
+titleNamePrint:
+    ld a,(hl)
+    and a
+    jr z,titleNameEnd
+    push hl
+    call printString
+    pop hl
+    inc hl
+    jr titleNamePrint
+titleNameEnd:
+    ld hl,0xA000 + 2 * 0x0100 + 2   ; text row 1, column 1 of the bitmap buffer: 8 pixel lines, 0x40 bytes apart
+    ld c,8
+titleNameLine:
+    ld b,60                         ; columns 1-30
+titleNameBlue:
+    ld a,(hl)                       ; background pixels are pen 1 (bit set in the low nibble), text pixels pen 0
+    cpl
+    and 0x0F                        ; text pixels
+    rlca
+    rlca
+    rlca
+    rlca
+    or 0x0F                         ; text becomes pen 3, the pen of the ship lines and the frame
+    ld (hl),a
+    inc hl
+    djnz titleNameBlue
+    ld de,0x40 - 60
+    add hl,de
+    dec c
+    jr nz,titleNameLine
+    pop af
+    ld (todoPrintFlag3948),a
+    ld a,1                          ; the next letter, 'Press', is a capital
+    ld (todoSomePrintFlag),a
+    ld hl,flagWhichScreenToPrint
+    res 7,(hl)
+    ret
 ; spawnCommandParser actions: ship type in the high nibble, action 9 (title ship) in the low one
 titleShips:
     db 0x69                         ; Viper
@@ -544,6 +622,24 @@ titleShips:
     db 0xF9                         ; Krait
     db 0x59                         ; Rock Hermit (the Python is too long for the window)
     db 0xD9                         ; Thargoid
+; Ship names in the order of titleShips, zero-terminated, 16 bytes each
+titleNames:
+    db "VIPER",0
+    ds 16 - 6
+    db "ASP MK II",0
+    ds 16 - 10
+    db "COBRA MK III",0
+    ds 16 - 13
+    db "FER-DE-LANCE",0
+    ds 16 - 13
+    db "SIDEWINDER",0
+    ds 16 - 11
+    db "KRAIT",0
+    ds 16 - 6
+    db "ROCK HERMIT",0
+    ds 16 - 12
+    db "THARGOID",0
+    ds 16 - 9
     ASSERT $ <= 0x7000
     ds 0x7000 - $
  ELSE
