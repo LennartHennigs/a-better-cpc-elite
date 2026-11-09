@@ -47,6 +47,7 @@ The six `COMMONXX` addresses `musiquex.asm` hard-codes are checked by `check_src
 Five missions on top of the three stock ones: Constrictor, Thargoid plans, Trumbles, and the two Elite Plus missions (stolen police ship, asteroid bombardment). How they work, their order and triggers: `_missions_built.md`; the research: `_missions.md`.
 What they change in the stock game:
 
+- **Credit:** the Constrictor hull (`src/elite/missions_hull.asm`) is by Fessor, used with his permission (post: <https://www.cpcwiki.eu/forum/programming/expanding-elite/msg205425/#msg205425>).
 - **Hook sites** (each a 3-byte `call` replacement, so no stock routine moves): `spawnShip` (`mxShipTable`, ship type 19), `spawnCommand0` (`mxSpawnCheck`), `todo_killedsomeone` (`mxKillHook`, replaces `call getBounty`),
   `applyLaserDamagetoEntity` (`mxLaserHook`), `RechargeEnergy` (`mxRecharge`), the docking sequence (`&1714` replaces `chkMissions`), `launchSequence` (`mxLaunchEntry`), `setShipvarsAtArrival` (`mxArrive`), `todoOverheating` (`mxSun`),
   the Inventory loop (`mxInvHook`), the `call transferBuffertoScreen` in `Spaceflight` at `&1E4D` (`mxFlightDraw`, the Trumble sprites) and the escape-pod launch (`mxPodHook`).

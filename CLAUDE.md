@@ -15,7 +15,7 @@ write the modified build back to a DSK image that runs on a CPC emulator.
 - On every disk we build, `CAT` shows only `.BAS` and `.TXT` files (`ELITE.BAS`, our `CHEAT/SHOWSAVE/EDITSAVE.BAS`, `README.TXT`); every other file (`.BIN` code,
   mission overlays, flight images) gets the System attribute. `tools/build_dsk.py` does it for all its variants, `tools/hide_files.py DISK` for finished images
   (`tools/build_cheat.sh` calls it); iDSK adds files unhidden, so hide again after any `iDSK -i` or `-r`. Check with `CAT` or by reading the directory, not `iDSK -l` (it lists hidden files).
-- Do not re-upload Fessor's material elsewhere; see `extended/CLAUDE.md`.
+- Fessor's material stays out of the repo and is not re-uploaded; see `extended/CLAUDE.md`. Exception, by his private mail: the Constrictor hull (`src/elite/missions_hull.asm`) and the use of his names and findings in the source, credited in `README.md`.
 - `scripts/build-fessor.sh` builds Fessor's source in `work/build_fessor_run/` and compares with the beta disk (user runs it).
 - Building downloaded source in Bash is blocked by the permission classifier. Put it in a script under
   `scripts/` and ask the user to run it (`! bash scripts/…`); do not try to work around the block.

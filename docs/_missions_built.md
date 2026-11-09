@@ -42,7 +42,7 @@ Missions run one at a time, so their code is loaded when needed instead of being
 
 ## 3. How each mission works (insights)
 
-- **Constrictor.** The CPC hull is Fessor's converted by `tools/fessor_hull.py` (only this one ship is used; the rest of `extended/` stays out of git). Ship type 19 is served from a one-entry table (`cp 19` in `mxShipTable`, only our spawn passes 19).
+- **Constrictor.** The CPC hull is Fessor's (his post: <https://www.cpcwiki.eu/forum/programming/expanding-elite/msg205425/#msg205425>, used with his permission), converted by `tools/fessor_hull.py` (only this one ship is used; the rest of `extended/` stays out of git). Ship type 19 is served from a one-entry table (`cp 19` in `mxShipTable`, only our spawn passes 19).
   Spawn at Orarra in stage 7 (all hints), one at a time; the laser hook makes any hit whose laser power lacks bit 4 do nothing (pulse and beam are 15, military 23, mining 50), so only a military laser or better hurts it. The kill hook sets state 3; the reward is paid at the next docking.
   The stub loads the overlay only at the system of the current hint stage, so hunts cost no disk time elsewhere.
 - **Plans.** The 22% Thargoid + Thargon spawn mirrors the BBC; the Navy energy unit is `extraEnergyUnit` `&FE`, one more `SUB_ram_3693` recharge step (3 per call). Delivery also schedules the stolen ship.

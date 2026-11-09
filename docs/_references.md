@@ -7,7 +7,7 @@ Local clones live under `work/` (untracked).
 
 - Amtix issue 13: https://archive.org/details/Amtix_Magazine_Issue_13 (`magazines/Amtix_Magazine_Issue_13.pdf`, Pinto interview pp. 84-86)
 - Amstrad Action issue 3: https://archive.org/details/amstrad-action-003/page/n69/mode/1up (`magazines/Amstrad_Action_003.pdf`, preview pp. 70-71)
-- CPCWiki forum, "Expanding Elite" (Fessor): https://www.cpcwiki.eu/forum/programming/expanding-elite/ (pages 1-2 and later). Source of the off-screen bitmap `&A000-&BFFF`, the memory swapping at takeoff and docking and the 20/23-byte ship header; also his beta and source. Nothing there on `&A600` specifically
+- CPCWiki forum, "Expanding Elite" (**Fessor**): https://www.cpcwiki.eu/forum/programming/expanding-elite/ (pages 1-3). His disassembly, source, beta disk and symbol list are there (his source and beta are not redistributed here; get them from the thread). His post showing the Constrictor, the hull used in `src/elite/missions_hull.asm`: https://www.cpcwiki.eu/forum/programming/expanding-elite/msg205425/#msg205425. He agreed by private mail to the use of the hull and of his names and findings. Source of the off-screen bitmap `&A000-&BFFF`, the memory swapping at takeoff and docking and the 20/23-byte ship header; also his beta and source. Nothing there on `&A600` specifically
 - Ricardo Pinto, interview about the Elite Z80 conversions: https://www.ricardopinto.com/2022/09/19/interview-about-elite-z80-conversions/
 - The King of Grabs, Elite Amstrad CPC: https://thekingofgrabs.com/2020/03/02/elite-amstrad-cpc/
 - Elite archive, lost ports: https://theoasisbbs.com/elite-archive-lost-ports-elites-40th-anniversary-highlights/

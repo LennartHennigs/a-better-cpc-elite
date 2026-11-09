@@ -27,7 +27,7 @@ the "not enough hold capacity" test when buying goods (a trainer patch).
 
 ## How to read it
 
-- Names come from Fessor's reconstruction where `work/fessor_to_stock.sym` has a confident match (about
+- Names come from Fessor's reconstruction (used with his permission; see the credits in the top-level `README.md`) where `work/fessor_to_stock.sym` has a confident match (about
   1,900 in `commonxx`). Others are generated: `sub_XXXX` (call target), `loc_XXXX` (jump target),
   `dat_XXXX` (data or variable reference). Many variables are still `dat_`; check `docs/_cheats.md` and `docs/_gameplay.md` for the
   known ones (`&3926` mission variable, `&3927` mission flags, `&38DA` jump counter, `&38F9` fuel ...).

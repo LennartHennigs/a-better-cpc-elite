@@ -1,6 +1,6 @@
 ; Constrictor blueprint (261 bytes: 23-byte header, 17 vertices, 24 edges, 10 faces) in the CPC ship layout.
-; Hull data from Fessor's Constrictor.asm (CPCWiki thread "Expanding Elite"), converted to sjasmplus syntax by tools/fessor_hull.py.
-; Included with the project owner's permission for this one file; Fessor asked that his material is not re-uploaded without asking him.
+; Hull data by Fessor (Constrictor.asm, CPCWiki thread "Expanding Elite", https://www.cpcwiki.eu/forum/programming/expanding-elite/msg205425/#msg205425), converted to sjasmplus syntax by tools/fessor_hull.py.
+; Used with Fessor's permission (confirmed by private mail). Credit for the CPC ship layout and this hull goes to him.
 shipdatConstrictor:
     db 0x03   ; Loot
     db 65   ; Targetarea
