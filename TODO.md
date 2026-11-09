@@ -1,6 +1,6 @@
 # TODO
 
-Open work, most useful first. `CLAUDE.md` keeps the short list; details live in `docs/` (there is no `notes.md`).
+Open work, most useful first. `CLAUDE.md` keeps the short list; details live in `docs/` (there is no `notes.md`). Things we do not know yet are in `docs/_open_questions.md`.
 
 - [x] allow Escape to exit the buy menu (goods): done (one byte, `CHANGELOG.md`)
 - [ ] radar (scanner) flicker. Measured 2026-11-09 (cpcxray, in flight): a game frame is about 200 ms; `UpdateScanner` takes about 24 ms, of which `cleanScanner` (blank the area, rebuild the background from `gfxdataScanner` with `exx`-heavy loops, drawn straight on the visible screen) is about 21.7 ms and the ship dots about 2 ms. That is longer than one video frame, so the beam always crosses a half-drawn scanner. Ruled out: a hidden-row off-screen copy (rows 24-31 of the screen RAM, `&C600-&C7FF` etc., hold the square and other lookup tables) and an erase list for the dots (an `or`-plotted pixel cannot be restored without saved bytes, up to about 650). Free space: 20 bytes in the dead block, 10 in `unusedGet*`; the Constrictor and Trumble flight images leave 1 byte in the tail. Left: rewrite `cleanScanner` in place to about 14 ms (tight nibble-split loop) and sync `UpdateScanner` to just after the beam has passed the scanner (ISR counter), so the blank period (about 16 ms) falls between two passes; cannot be verified in cpcxray (no beam), only by eye.

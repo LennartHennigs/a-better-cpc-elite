@@ -26,7 +26,7 @@ The repository contains no game binaries, disk images or third-party source: the
 | `src/elite/missions_*.asm` | the added missions: code, text and one ship model, assembled only with `-DMISSIONS` so the stock build stays untouched |
 | `src/cheats/` | a trainer, a save viewer and a save editor, all written in CPC BASIC |
 | `tools/` | Python helpers: disassembler and verifier, disk reader and writer, text compressor, sprite converter, savegame decoder and editor, emulator tests |
-| `docs/` | notes by topic: architecture, game facts, save format, cheats, the other versions' missions (research), and the implemented missions |
+| `docs/` | notes by topic: building and the switches, what we changed in the game, memory map, architecture, save format, cheats, disks, the other versions' missions (research), the implemented missions, and open questions |
 
 ## Small improvements
 
