@@ -27,10 +27,12 @@ for P in $PROGS; do
 done
 cp $DISK work/firebird_cheat.dsk
 for P in $DISKPROGS; do iDSK work/firebird_cheat.dsk -i $D/$P.BAS -t 2 -f >/dev/null 2>&1; done
+python3 -I tools/hide_files.py work/firebird_cheat.dsk
 cp work/firebird_cheat.dsk work/xray/disk/firebird_cheat.dsk
 if [ -f work/elite_missions.dsk ]; then
   cp work/elite_missions.dsk work/missions_cheat.dsk
   for P in $DISKPROGS; do iDSK work/missions_cheat.dsk -i $D/$P.BAS -t 2 -f >/dev/null 2>&1; done
+  python3 -I tools/hide_files.py work/missions_cheat.dsk
   cp work/missions_cheat.dsk work/xray/disk/missions_cheat.dsk
   echo "also built work/missions_cheat.dsk (mission build + trainer + save viewer)"
 fi

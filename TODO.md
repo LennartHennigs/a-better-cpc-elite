@@ -8,7 +8,6 @@ Open work, most useful first. `CLAUDE.md` keeps the short list; details live in 
 - [ ] ships are still see-through (stars between the edges): options in `docs/_ship_occlusion.md`; try the bounding box (B) first, after measuring the free bytes in the `-DMISSIONS` build
 - [ ] test the star patch in cpcxray on the German disk (`work/elite_de_rebuilt.dsk`) and the French build (only the English snapshot was shown so far)
 - [ ] `tools/build_dsk.py --fr` (no French disk can be built yet; needs a base disk decision)
-- [ ] hidden-files rule (`CLAUDE.md`): `README.TXT` is still visible on the mission disk; hide it if the rule should be strict
 - [ ] more than one color for moving stars?
 - [ ] or other color for asteroids?
 - [x] show different ships on load, arrow keys left/right for next (`TITLESEL`, English and German; French not done)
