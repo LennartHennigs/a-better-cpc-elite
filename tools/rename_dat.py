@@ -8,9 +8,10 @@ collide with the label's address. Refuses a name that already exists. Check with
 import re, sys, glob
 
 ALL = "--all-trees" in sys.argv
-argv = [a for a in sys.argv[1:] if a != "--all-trees"]
+if ALL:
+    sys.argv.remove("--all-trees")
 pairs = []
-for line in open(argv[0]):
+for line in open(sys.argv[1]):
     line = line.split("#")[0].strip()
     if not line:
         continue
@@ -21,10 +22,6 @@ for line in open(argv[0]):
 trees = ["src/elite"] + (["src/elite_de", "src/elite_fr"] if ALL else [])
 files = {p: open(p).read().split("\n") for t in trees for p in sorted(glob.glob(t + "/*.asm"))}
 alltext = {t: "\n".join("\n".join(v) for p, v in files.items() if p.startswith(t + "/")) for t in trees}
-def files_in(tree):
-    return ["\n".join(v) for p, v in files.items() if p.startswith(tree + "/")]
-
-
 lab = re.compile(r"^([A-Za-z_][A-Za-z_0-9.]*):")
 news = [new for _, new, _ in pairs]
 dups = sorted({n for n in news if news.count(n) > 1})
@@ -36,12 +33,13 @@ for old, new, exc in pairs:
             sys.exit(f"name {new} already used in {t} (for {old})")
     if not re.search(r"^" + old + ":", alltext["src/elite"], re.M):
         sys.exit(f"{old}: no definition")
+defined = {(old, t): bool(re.search(r"^" + old + r"(:| equ)", alltext[t], re.M)) for old, _, _ in pairs for t in trees}
 n = 0
 for old, new, exc in pairs:
     rx = re.compile(r"(?<![A-Za-z0-9_])" + re.escape(old) + r"(?![A-Za-z0-9_])")
     for p, L in files.items():
         tree = p.rsplit("/", 1)[0]
-        if tree != "src/elite" and not re.search(r"^" + old + r"(:| equ)", "\n".join(files_in(tree)), re.M):
+        if not defined[old, tree]:
             continue
         enc = ""
         for i, l in enumerate(L):

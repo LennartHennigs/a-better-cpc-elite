@@ -60,7 +60,7 @@ Missions run one at a time, so their code is loaded when needed instead of being
 | Part | Constrictor | Plans | Stolen ship | Asteroids | Trumbles |
 |---|---|---|---|---|---|
 | Docked overlay file | `MISSIONC.BIN` 561 | `MISSIONP.BIN` 506 (also the stolen ship) | in `MISSIONP` | `MISSIONR.BIN` 170 | `MISSIONT.BIN` 178 |
-| Flight image file | `MFLIGHTC.BIN` 609 | `MFLIGHTP.BIN` 261 | `MFLIGHTS.BIN` 352 | `MFLIGHTR.BIN` 276 | `MFLIGHTT.BIN` 609 |
+| Flight image file | `MFLIGHTC.BIN` 609 | `MFLIGHTP.BIN` 260 | `MFLIGHTS.BIN` 352 | `MFLIGHTR.BIN` 276 | `MFLIGHTT.BIN` 609 |
 
 Default image `MFLIGHT0.BIN` 158 (what `COMMONXX.BIN` carries). Resident stub 251. **Limits:** docked stub plus largest overlay (Constrictor) ends at `&1A3F`, the last byte of the tail (0 spare); the Constrictor flight image is 609 of 610 (1 spare), so any further change there
 needs trimming first. Every image carries the launch picker and the recharge hook. Text is tokenised with the game's own digrams and string references (`tools/textenc.py`), 25-31% smaller than raw text. Mission text is in the default capitalised-words
