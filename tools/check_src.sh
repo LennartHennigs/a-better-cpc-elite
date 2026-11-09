@@ -36,7 +36,8 @@ for p in "largeaxx LARGEAXX" "commonxx COMMONXX" "common2x COMMON2X" "musiquex M
   if ! sjasmplus -DENHANCED --raw="$OUT/$n.enh.bin" --sym="$OUT/$n.enh.sym" "$SRC/$n.asm" >/dev/null 2>&1; then echo "$n -DENHANCED: assemble FAILED"; rc=1; continue; fi
   esym() { awk -v k="$1:" '$2 == k || $1 == k { print $NF }' "$OUT/$n.enh.sym"; }
   LO=$(( $(esym dustPlotPixel) - 0x1A40 )); HI=$(( $(esym ClearBitmap) - 0x1A40 )); DL=$(( $(esym dust70) - 0x1A40 ))
-  if cmp -l "$OUT/$n.enh.bin" "$REF" | awk -v lo=$LO -v hi=$HI -v dl=$DL -v esc=$((ESCP+1)) '{o=$1-1; if ($1==esc) { if ($2!="177" || $3!="377") bad=1; seen=1 } else if (!((o>=lo && o<hi) || (o>=dl && o<dl+16))) bad=1} END{exit (bad || !seen)}'; then echo "$n: ok (default = original; -DENHANCED differs only in the ESC byte and the two star-occlusion slots)"; else echo "$n -DENHANCED: differs outside the ESC byte and the star-occlusion slots"; rc=1; fi
+  VL=$(( $(esym viewTitleSlot) - 0x1A40 )); VH=$(( $(esym viewTitleEnd) - 0x1A40 ))   # English: the view title without " VIEW"
+  if cmp -l "$OUT/$n.enh.bin" "$REF" | awk -v lo=$LO -v hi=$HI -v dl=$DL -v vl=${VL:--1} -v vh=${VH:--1} -v esc=$((ESCP+1)) '{o=$1-1; if ($1==esc) { if ($2!="177" || $3!="377") bad=1; seen=1 } else if (!((o>=lo && o<hi) || (o>=dl && o<dl+16) || (o>=vl && o<vh))) bad=1} END{exit (bad || !seen)}'; then echo "$n: ok (default = original; -DENHANCED differs only in the ESC byte and the two star-occlusion slots)"; else echo "$n -DENHANCED: differs outside the ESC byte and the star-occlusion slots"; rc=1; fi
 done
 # English only: the -DMISSIONS variant (src/elite/missions_*.asm in the free tails) must keep both files the same length
 if [ "$SRC" = "$ROOT/src/elite" ]; then
