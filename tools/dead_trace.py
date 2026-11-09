@@ -84,8 +84,6 @@ async def main():
                             first_hit[name] = n
                             if name in CONTROLS:   # controls fire often: turn off after the first sighting
                                 await call("breakpoint_enable", {"breakpoint_id": ids[name], "enabled": False})
-                    if pc and 0x1714 <= int(pc, 16) <= 0x1A3F:
-                        pass
                     if stops > 400:
                         left = 0
                 await call("key_release", {"key": key})

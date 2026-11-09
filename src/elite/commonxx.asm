@@ -718,6 +718,11 @@ STAR_OCCLUDE equ 1
 STAR_OCCLUDE equ 0
       ENDIF
     ENDIF
+    IFDEF MISSIONS
+MISSIONS_POD equ STAR_OCCLUDE        ; the escape-pod hook (mxPodHook) lives in the dead block, which only exists with STAR_OCCLUDE
+    ELSE
+MISSIONS_POD equ 0
+    ENDIF
     IF STAR_OCCLUDE
 ; Plots one star pixel into the off-screen bitmap: DE = byte address, C = pixel mask (hi plane bit + lo plane bit). The background is 0x0F, so
 ; (byte XOR 0x0F) AND mask is zero only while the pixel is still background; anything drawn earlier (disc, lines) is left alone.
@@ -732,6 +737,14 @@ dustPlotPixel:
     cpl
     ld (de),a
     ret
+    IF MISSIONS_POD
+; Escape pod: the Trumbles do not survive it, so the Trumbles quest ends there (the original leaves 1-7 of them aboard). Replaces `ld hl,Missionflag` in the pod launch code.
+mxPodHook:
+    ld hl,0x0000
+    ld (mxTrCount),hl
+    ld hl,Missionflag
+    ret
+    ENDIF
     DS 0x1FF1-$                      ; pad to ClearBitmap (unusedViewBorderFill's 31 bytes)
     ELSE
 ; Probably dead (nothing calls or jumps here): paints the two left and two right bytes of each of the 16 64-byte
@@ -4025,7 +4038,11 @@ mleCleanInvLoop:
     ld (hl),a
     inc hl
     djnz mleCleanInvLoop
+    IF MISSIONS_POD
+    call mxPodHook                  ; zeroes the Trumble count, then loads HL = Missionflag
+    ELSE
     ld hl,Missionflag
+    ENDIF
     ld a,(hl)
     and 0xDF
     ld (hl),a

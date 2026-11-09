@@ -23,8 +23,8 @@ options (all optional, each sets one thing; the numbers match the trainer; --to-
   --fuel LY            fuel in light years (0-7.0)
   --stock 0-3          stock missions like the trainer: 1 supernova stage, 2 cloak stage (also bit 0), 3 invasion stage (bits 0 and 1): sets the jump counter 31, 127 or 253
   --cloak yes|no       own the cloaking device (Missionflag bit 6)
-  --added 0-4          the added missions chain (docs/_missions.md section 11): 0 none (state 0, &38FE 0), 1 plans next (Constrictor paid), 2 stolen police ship next
-                       (plans delivered, offer at the next docking), 3 asteroids next (stolen ship paid), 4 Trumbles open (both paid, asteroids state 3)
+  --added 0-4          the added missions chain (docs/_missions.md section 11): 0 none (state 0, &38FE 0), 1 Trumbles offered next, then plans (Constrictor paid), 2 stolen police ship next
+                       (plans delivered, offer at the next docking), 3 asteroids next (stolen ship paid), 4 all paid, asteroids state 3 (the Trumbles are no longer offered)
   --state HEX          missionState (&38FD) byte, raw
   --state2 HEX         the byte at &38FE, raw (asteroid counter / state)
   --trumbles N         Trumble count (&3905/&3906, 0-32767)

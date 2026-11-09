@@ -11,11 +11,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from dskx import sector_offsets  # noqa: E402
 
 
-def hide(path):
-    d = bytearray(Path(path).read_bytes())
-    secs = sector_offsets(d)
-    first = min(r for (t, r) in secs if t == 0)
-    hidden, shown = 0, set()
+def hide_entries(d, secs, first):
+    """Set the System attribute (bit 7 of e[10], the second extension byte) on every directory entry that is not a .BAS or .TXT file, in the bytearray d. Returns (hidden names, visible names)."""
+    hidden, shown = [], set()
     for i in range(64):
         off = secs[(0, first + i // 16)][0] + (i % 16) * 32
         e = d[off:off + 32]
@@ -26,9 +24,16 @@ def hide(path):
             shown.add(name)
         elif not e[10] & 0x80:
             d[off + 10] = e[10] | 0x80
-            hidden += 1
+            hidden.append(name)
+    return hidden, shown
+
+
+def hide(path):
+    d = bytearray(Path(path).read_bytes())
+    secs = sector_offsets(d)
+    hidden, shown = hide_entries(d, secs, min(r for (t, r) in secs if t == 0))
     Path(path).write_bytes(d)
-    print(f"{path}: {hidden} entries hidden, visible: {', '.join(sorted(shown))}")
+    print(f"{path}: {len(hidden)} entries hidden, visible: {', '.join(sorted(shown))}")
 
 
 if __name__ == "__main__":

@@ -8,10 +8,6 @@ missionsDockedEntry:                  ; = &1714, the fixed entry the docking cod
     ld a,(mxThargonMissionVar)
     and a
     jp nz,mxChkMissions               ; an existing mission offer or reward is pending: its turn, returns to the docking code
-    ld hl,(mxTrCount)
-    ld a,h
-    or l
-    ret nz                            ; Trumbles aboard: one mission at a time, nothing else is offered
     ld a,(missionState)
     ld b,a
     and 0x8F

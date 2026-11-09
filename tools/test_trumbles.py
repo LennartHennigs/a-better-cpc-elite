@@ -25,7 +25,7 @@ COUNT, FOOD, NARC, FREE, TUNNEL2, TEMP, STORED = 0x3905, 0x38E2, 0x38E8, 0x38F3,
 def build():
     with tempfile.TemporaryDirectory() as d:
         out, sym = Path(d) / "c.bin", Path(d) / "c.sym"
-        subprocess.run([str(Path.home() / ".local/bin/sjasmplus"), "-DMISSIONS", "-DFL_T", f"--raw={out}", f"--sym={sym}", str(ROOT / "src/elite/commonxx.asm")], check=True, capture_output=True)
+        subprocess.run([str(Path.home() / ".local/bin/sjasmplus"), "-DENHANCED", "-DMISSIONS", "-DFL_T", f"--raw={out}", f"--sym={sym}", str(ROOT / "src/elite/commonxx.asm")], check=True, capture_output=True)
         syms = {m.group(1): int(m.group(2), 16) for m in re.finditer(r"^(\w+):\s+EQU\s+0x([0-9A-Fa-f]+)", sym.read_text(), re.M)}
         return out.read_bytes(), syms
 
@@ -130,6 +130,12 @@ async def main():
                 regs = await call(syms["mxSun"], af=0x5500)
                 n = await word(COUNT)
                 report(n == want and regs["hl"] == TEMP and (regs["af"] >> 8) == 0x55, f"sun at temperature {temp}: count {n} ({want}), HL {regs['hl']:#x} ({TEMP:#x}), A {regs['af'] >> 8:#x} (0x55)")
+            # escape pod: the hook zeroes the count and leaves HL = Missionflag for the code it replaced
+            await start()
+            await wr(COUNT, 100, 0)
+            regs = await call(syms["mxPodHook"])
+            n = await word(COUNT)
+            report(n == 0 and regs["hl"] == syms["Missionflag"], f"escape pod with 100 Trumbles: count {n} (0), HL {regs['hl']:#x} ({syms['Missionflag']:#x})")
             # slow breeding: only with 256 or more, about 14% of the checks
             for start_count, expect_growth in ((300, True), (100, False)):
                 await start()

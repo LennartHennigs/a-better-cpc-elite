@@ -12,18 +12,6 @@ mxArriveImpl:
     ld a,h
     or l
     jr z,mxArriveDone
-    ld a,(cargoHold)                  ; food, good 0
-    ld b,a
-    xor a
-    ld (cargoHold),a
-    ld a,(cargoNarcotics)             ; narcotics, good 6
-    add a,b
-    ld b,a
-    xor a
-    ld (cargoNarcotics),a
-    ld a,(cargoSpaceFree)
-    add a,b
-    ld (cargoSpaceFree),a
     call getRandomNumber
     and 0x0F
     ld c,a
@@ -41,6 +29,15 @@ mxArriveCap:
     ld hl,0x7FFF
 mxArriveStore:
     ld (mxTrCount),hl
+    ld hl,cargoHold                   ; food, good 0
+    ld a,(hl)
+    ld (hl),0x00
+    ld hl,cargoNarcotics              ; narcotics, good 6
+    add a,(hl)
+    ld (hl),0x00
+    ld hl,cargoSpaceFree              ; the eaten tonnes are free again
+    add a,(hl)
+    ld (hl),a
 mxArriveDone:
     pop hl
     pop bc
@@ -142,11 +139,11 @@ mxFlightDrawImpl:
     jr z,mxDrawDone                   ; no Trumbles aboard
     ld a,h
     and a
-    ld a,0x06
-    jr nz,mxHaveN
+    jr nz,mxSix
     ld a,l
     cp 0x07
     jr c,mxHaveN
+mxSix:
     ld a,0x06
 mxHaveN:
     ld c,a                            ; C = number of Trumbles shown (1-6)

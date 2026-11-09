@@ -179,3 +179,4 @@ mxRechargeImpl:
     INCLUDE "missions_flight_r.asm"
     ENDIF
 mxFlightEnd:
+    ASSERT mxFlightEnd <= 0x9FFE              ; with SP at &A000 an interrupt pushes at &9FFE-&9FFF (docs/_architecture.md): no image byte may sit there

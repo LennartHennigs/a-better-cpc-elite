@@ -1,4 +1,4 @@
-; Trumbles module (offer only; the breeding is in the flight image MFLIGHTT). Loaded at mxOverlayBase by the stub in missions_docked.asm, which loads it at any docking (after 256 kill points)
+; Trumbles module (offer only; the breeding is in the flight image MFLIGHTT). Loaded at mxOverlayBase by the stub in missions_docked.asm, which loads it at a docking after the Constrictor reward and before the plans offer (missionState & 0x8F == 2)
 ; when no Trumbles are aboard, the offer was not made yet (missionState bit 7) and cash is at least 5,000 Cr.
 ; The offer is recorded (bit 7) whatever the answer. Y pays 5,000 Cr (5 thousand) and gives one Trumble (count 1 in &3905).
     jp mxModuleEntry

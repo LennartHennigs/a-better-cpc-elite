@@ -116,9 +116,8 @@ mxLaserHookImpl:
     ld a,(ix+36)
     cp shipdatConstrictor >> 8
     jr nz,mxLaserNormal
-    ld a,c
-    cp 0x17
-    jr nc,mxLaserNormal
+    bit 4,c                           ; the powers are 15 (pulse, beam), 23 (military) and 50 (mining): bit 4 set = military or better
+    jr nz,mxLaserNormal
     pop af
     ld a,(ix+34)                      ; weak laser: no damage
     or a                              ; NC, and NZ because a live ship has energy

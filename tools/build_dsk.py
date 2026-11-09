@@ -17,6 +17,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import dskx  # noqa: E402
 from dskx import amsdos_header, sector_offsets  # noqa: E402
+from hide_files import hide_entries  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 DE = "--de" in sys.argv
@@ -77,23 +78,6 @@ def add_readme(d, secs, first):
     print(f"README.TXT: {len(data)} bytes")
 
 
-def hide_files(d, secs, first):
-    """Give every directory entry that is not a .BAS or .TXT file the System attribute (bit 7 of the second extension byte, e[10]; the first is read-only, the third archive), as the original disk does: CAT lists only the programs and texts, LOAD and RUN still find the rest. tools/hide_files.py does the same for finished images."""
-    hidden, shown = [], set()
-    for i in range(64):
-        off = secs[(0, first + i // 16)][0] + (i % 16) * 32
-        e = d[off:off + 32]
-        if e[0] == 0xE5:
-            continue
-        name = bytes(b & 0x7F for b in e[1:9]).decode("latin1").strip() + "." + bytes(b & 0x7F for b in e[9:12]).decode("latin1").strip()
-        if name.endswith((".BAS", ".TXT")):
-            shown.add(name)
-        elif not e[10] & 0x80:
-            d[off + 10] = e[10] | 0x80
-            hidden.append(name)
-    print(f"{len(hidden)} directory entries hidden (System attribute), visible: {', '.join(sorted(shown))}")
-
-
 def main():
     d = bytearray(BASE.read_bytes())
     secs = sector_offsets(d)
@@ -151,7 +135,8 @@ def main():
             print(f"MFLIGHT{tag}.BIN: {len(data)} bytes at &{base:04X}, blocks {blocks}")
     if MISSIONS:
         add_readme(d, secs, first)
-    hide_files(d, secs, first)
+    hidden, shown = hide_entries(d, secs, first)   # System attribute on everything but .BAS and .TXT (CLAUDE.md rule; code in tools/hide_files.py)
+    print(f"{len(hidden)} directory entries hidden (System attribute), visible: {', '.join(sorted(shown))}")
     OUT.write_bytes(d)
     print("wrote", OUT)
 

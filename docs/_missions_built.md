@@ -8,10 +8,9 @@ Everything lives on one branch, `addon-missions` (it contains `missions-foundati
 ## 1. Missions, order, triggers
 
 The three stock missions (S1 to S3: supernova rescue, cloaking device, Thargon invasion) run first and unchanged: the docked stub hands over to the original `chkMissions` whenever `ThargonMissionVar` is not 0.
-The added chain is fixed: **Constrictor -> Thargoid plans -> stolen police ship -> asteroid bombardment**. The Trumbles are offered once, in the gap after the Constrictor is paid and before the plans are offered, so they never interrupt a running hunt; while they are aboard the other missions pause until a sun kills them.
+The added chain is fixed: **Constrictor -> Thargoid plans -> stolen police ship -> asteroid bombardment**. The Trumbles are offered once, in the gap after the Constrictor is paid and before the plans are offered, so they never interrupt a running hunt; with Trumbles aboard the docked offers and payouts still work, but a mission that needs flight hooks (the Trumbles image carries none of them) cannot progress until a sun kills them, as in the original, where the sun is the only end.
 
-Global prerequisites for every added mission: the files on the disk; for the chain at least 256 kill points (`killScoreHigh` >= 1; below that the stub returns without touching the disk; the Trumbles offer has no kill gate); no Trumbles aboard (while they are aboard nothing
-else is offered and the Trumbles flight image replaces the others, so a running mission pauses until a sun kills them); no stock mission offer or reward pending.
+Global prerequisites for every added mission: the files on the disk; for the chain at least 256 kill points (`killScoreHigh` >= 1; below that the stub returns without touching the disk; the Trumbles offer has no kill gate); no stock mission offer or reward pending.
 
 | # | Mission | Prerequisites | Offer trigger | Hunt / flight part | Completion and reward | State | Code |
 |---|---|---|---|---|---|---|---|
@@ -77,7 +76,7 @@ All run in cpcxray (`work/xray`, `~/.local/share/uv/tools/cpcxray/bin/python -I 
 
 ## 6. Open items
 
-Known limits (from the code review, 2026-11-08): while Trumbles are aboard a running chain mission cannot progress (the Trumbles image carries none of its hooks; a design choice for "Trumbles at any time"); a launch needs the game disk in the drive for the flight image (`loadFile` shows the firmware disk error and retries like every other game load, there is no mission-specific fallback); the vector table and the stub sit at fixed addresses (`&9D9E`, `&1714`), now guarded by `ASSERT`s in the sources.
+Known limits (from the code review, 2026-11-08): while Trumbles are aboard a running chain mission cannot progress in flight (the Trumbles image carries none of its hooks; the docked stub still offers and pays; the original has no such block, but also no end other than the sun, and its escape pod leaves 1-7 Trumbles where ours leaves none: `mxPodHook` in the dead block at `&1FDD` zeroes the count, so an escape pod ends the Trumbles quest); a launch needs the game disk in the drive for the flight image (`loadFile` shows the firmware disk error and retries like every other game load, there is no mission-specific fallback); the vector table and the stub sit at fixed addresses (`&9D9E`, `&1714`), now guarded by `ASSERT`s in the sources.
 
 A real playthrough of the whole chain with save and load; the squeak is settled (effect 13, kept after listening with `TRUMBLE.BAS`); tuning (20 asteroids, 50% and 22% spawn rates, Birera as the police target); a Trumbles end condition other than a sun;
 the Cobra Mk III that Elite Plus adds to the asteroid mission; a random per-commander order (not built: the two last missions are encoded differently and the stub plus Constrictor overlay has no room);
@@ -95,13 +94,13 @@ are for `memory_write` in an emulator, or a monitor on a running game. Kill poin
 | Thargoid plans | Kills 1280, Added mission 1 | `POKE &39D5,5:POKE &39F9,2` | `&38D9` = 5, `&38FD` = `&02` | needs a galaxy 3 docking (use "Free gal jump" in the trainer and a galactic hyperdrive); the offer comes at the docking there, then Ceerdi and Birera |
 | Stolen police ship | Kills 256, Added mission 2 | `POKE &39D5,1:POKE &39F9,&2E` | `&38D9` = 1, `&38FD` = `&2E` | the offer comes at the next docking in any galaxy; the hunt is at Birera in galaxy 3. To test the jump wait instead: `POKE &39F9,&1E:POKE &39FA,5` (five hyperspace arrivals, then the next docking offers it) |
 | Asteroid bombardment | Kills 256, Added mission 3 | `POKE &39D5,1:POKE &39F9,&5E:POKE &39FA,0` | `&38D9` = 1, `&38FD` = `&5E`, `&38FE` = 0 | the offer comes at the next docking in any galaxy; the rocks are at Ceerdi in galaxy 3. To start already clearing: `POKE &39FA,&51` (20 to go) |
-| Trumbles | Kills 256, Cash 6000 | `POKE &39D5,1:POKE &39D9,6:POKE &39DA,0` | `&38D9` = 1, `&38DD/&38DE` = 6 (thousands) | the offer comes at the first docking (also during any of the missions above if the state allows). To have them aboard at once: `POKE &3A01,3:POKE &3A02,0` (runtime `&3905/&3906` = 3) |
+| Trumbles | Kills 256, Cash 6000, Added mission 1 | `POKE &39D5,1:POKE &39D9,6:POKE &39DA,0:POKE &39F9,2` | `&38D9` = 1, `&38DD/&38DE` = 6 (thousands), `&38FD` = `&02` | the offer comes at the next docking, once, in the gap after the Constrictor reward and before the plans offer (state 0 offers the Constrictor first). To have them aboard at once: `POKE &3A01,3:POKE &3A02,0` (runtime `&3905/&3906` = 3) |
 | Supernova (stock) | Mission 1 | `POKE &4E5D,0:POKE &39D6,31` | `&38DA` = 31 | the next hyperspace arrival starts it (the `&4E5D` patch makes jumps count in galaxy 1) |
 | Cloaking device (stock) | Mission 2 | `POKE &4E5D,0:POKE &39D6,127:POKE &3A23,1` | `&38DA` = 127, `&3927` = 1 | the next arrival starts it |
 | Thargon invasion (stock) | Mission 3 | `POKE &4E5D,0:POKE &39D6,253:POKE &3A23,3` | `&38DA` = 253, `&3927` = 3 | the next arrival starts it |
 
 Notes. The added-mission presets keep the earlier stages consistent: preset 2 and up also fit the Navy energy unit (`&3902` / loader `&39FE` = `&FE`), which `saveedit.py --added` and `EDITSAVE.BAS` write (the trainer presets do not); with raw pokes add `POKE &39FE,&FE` if you care. Galaxy cannot be poked
 (the seeds define it): reach galaxy 3 by two galactic jumps, with the trainer's free galactic jump, or load a save whose galaxy is already 3. The host save editor does the same presets on a save file (`tools/saveedit.py edit SAVE --kills 256 --added 2 -o ...`),
-and `EDITSAVE.BAS` on the CPC. An added mission runs only with no Trumbles aboard.
+and `EDITSAVE.BAS` on the CPC. With Trumbles aboard an added mission can be offered and paid at a docking, but not advanced in flight.
 
 Checked 2026-11-08 in cpcxray: for the Constrictor, plans, stolen ship, asteroids and Trumbles rows the trainer answers started the real game with exactly these values in memory (kills 256 or 1280, `&38FD/E` = `0000`, `0200`, `2E00`, `5E00`, `0000`, cash 6 thousand for the Trumbles); the status screen showed the rating Competent for 256 kills. That the offers then appear at a docking is covered by the docked tests with the same state values (`tools/test_mission_hook.py`), not by a real docking in the running game. The stock rows were not run.

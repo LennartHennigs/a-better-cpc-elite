@@ -196,7 +196,7 @@ thresholds 32, 128, 254. Adding missions 4 and 5 means choosing between the two 
   Braben code with Moxon's commentary, so it is copyrighted: read it, do not copy it into this project. The pieces:
   - `DOENTRY` holds the offer; `TBRIEF` (https://elite.bbcelite.com/c64/main/subroutine/tbrief.html) makes it; `SOLAR`, main
     loop part 5 and main flight loop part 15 hold the breeding, noise and sun death; `TRIBBLE` is the 16-bit count in the save
-    block. The details are in the table in the next subsection. They survive the escape pod (stated by the deep dive, not read).
+    block. The details are in the table in the next subsection. The escape pod does not clear them: the original sets the count to a random 1-7 (read in the NES source, `ESCAPE` part, "not a solution to the trouble with Trumbles"); our build zeroes the count (`mxPodHook`, `-DMISSIONS` with `STAR_OCCLUDE`; the pod ends the quest).
   - `MVTRIBS` (https://elite.bbcelite.com/c64/main/subroutine/mvtribs.html): once per main-loop pass it moves one of the
     sprites (the pass counter mod 8 selects it; none moves if that is at or above `TRIBCT`, the count shown, 0 to 6). An 8%
     chance picks a new direction from a four-entry table (`TRIBDIR`/`TRIBDIRH`: still or one step each way), the y position

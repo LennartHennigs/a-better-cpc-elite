@@ -43,7 +43,6 @@ EXTRA = {
     "t_cash_short":   dict(cash=(4, 9999), key="space", count_after=0, cash_delta=0),
     "t_poor":         dict(cash=(4, 9999), key="space", count_after=0, cash_delta=0),
     "t_offered_before": dict(cash=(9, 0), key="space", count_after=0, cash_delta=0),
-    "t_aboard":       dict(cash=(9, 0), key="space", count=5, count_after=5, cash_delta=0),
 }
 SCENARIOS.update({
     "c_offer_galaxy3": (0x00, 1, 2, 10, 10, 0x00, 0, 0x00, False, 0),    # the Constrictor is offered in galaxy 1 and 2 only
@@ -55,7 +54,6 @@ SCENARIOS.update({
     "t_cash_short":   (0x02, 6, 0, 10, 10, 0x02, 0, 0x00, False, 0),
     "t_poor":         (0x02, 6, 0, 10, 10, 0x02, 0, 0x00, False, 0),
     "t_offered_before": (0x82, 6, 0, 10, 10, 0x82, 0, 0x00, False, 0),
-    "t_aboard":       (0x02, 6, 2, 10, 10, 0x02, 0, 0x00, False, 0),
     "s_waiting_idle":  (0x1E, 6, 2, 215, 84, 0x1E, 0, 0x00, False, 0),    # waiting for the jumps: a flight matter, no disk access docked
     "s_ready_offer":   (0x2E, 6, 2, 10, 10, 0x3E, 0, 0x00, True, 0),      # ready: the stolen ship offer
     "s_clearing_idle": (0x3E, 6, 2, 215, 84, 0x3E, 0, 0x00, False, 0),    # clearing Ceerdi is a flight matter
@@ -76,7 +74,7 @@ AST1 = {"p_birera": range(5, 13), "r_offer": [0x51], "r_hunt_idle": [0x51], "r_r
 
 # Scenarios where the stub must return without touching the disk (no overlay load): they take a few ms, a load takes about 1750 ms.
 FAST = {"r_paid", "r_hunt_idle", "s_waiting_idle", "s_clearing_idle", "c_offer_low", "c_hint_wrong", "c_offer_galaxy3", "c_stage7_idle", "c_hint_stage2_wrong_place", "p_brief_low", "p_brief_g1", "p_ceerdi_wrong", "p_birera_early",
-        "t_cash_short", "t_poor", "t_offered_before", "t_aboard", "t_during_hunt", "t_no_kills", "t_plans_done"}
+        "t_cash_short", "t_poor", "t_offered_before", "t_during_hunt", "t_no_kills", "t_plans_done"}
 
 
 async def main():
