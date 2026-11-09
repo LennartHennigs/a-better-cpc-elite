@@ -6464,7 +6464,12 @@ CommanderStatus:
     call setColors
     call displayAlertStateinHeader
     call printFollowingTokenWithSpace
+statusTitleCol:
+    IFDEF ENHANCED
+    db 0x04                         ; the title starts in column 5 like the other headlines (was 0x06)
+    ELSE
     db 0x06
+    ENDIF
     call printStringFollowingByte
     db "~"
     ld a,0x03

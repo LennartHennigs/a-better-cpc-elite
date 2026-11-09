@@ -43,9 +43,9 @@ for p in "largeaxx LARGEAXX" "commonxx COMMONXX" "common2x COMMON2X" "musiquex M
   if ! sjasmplus -DENHANCED --raw="$OUT/$n.enh.bin" --sym="$OUT/$n.enh.sym" "$SRC/$n.asm" >/dev/null 2>&1; then echo "$n -DENHANCED: assemble FAILED"; rc=1; continue; fi
   esym() { awk -v k="$1:" '$2 == k || $1 == k { print $NF }' "$OUT/$n.enh.sym"; }
   LO=$(( $(esym dustPlotPixel) - 0x1A40 )); HI=$(( $(esym ClearBitmap) - 0x1A40 )); DL=$(( $(esym dust70) - 0x1A40 ))
-  SB=$(( $(esym statusLabels) - 0x1A40 )); CP=$(( $(esym statusColonPrint) - 0x1A40 )); CC=$(( $(esym statusColon) - 0x1A40 ))   # English: the status colon column
+  SB=$(( $(esym statusLabels) - 0x1A40 )); CP=$(( $(esym statusColonPrint) - 0x1A40 )); TC=$(( $(esym statusTitleCol) - 0x1A40 )); CC=$(( $(esym statusColon) - 0x1A40 ))   # English: the status colon column
   SL=$(( $(esym statusToken) - 0x1A40 ))   # English: "STATUS" instead of "LEGAL STATUS" (empty for the other trees)
-  if cmp -l "$OUT/$n.enh.bin" "$REF" | awk -v lo=$LO -v hi=$HI -v dl=$DL -v sl=${SL:--99999} -v cc=${CC:--99999} -v sb=${SB:--99999} -v cp=${CP:--99999} -v esc=$((ESCP+1)) '{o=$1-1; if ($1==esc) { if ($2!="177" || $3!="377") bad=1; seen=1 } else if (!((o>=lo && o<hi) || (o>=dl && o<dl+16) || (o>=sl && o<sl+7) || o==cc || (o>=sb && o<sb+12) || (o>=cp && o<cp+4))) bad=1} END{exit (bad || !seen)}'; then echo "$n: ok (default = original; -DENHANCED differs only in the ESC byte and the two star-occlusion slots)"; else echo "$n -DENHANCED: differs outside the ESC byte and the star-occlusion slots"; rc=1; fi
+  if cmp -l "$OUT/$n.enh.bin" "$REF" | awk -v lo=$LO -v hi=$HI -v dl=$DL -v sl=${SL:--99999} -v cc=${CC:--99999} -v tc=${TC:--99999} -v sb=${SB:--99999} -v cp=${CP:--99999} -v esc=$((ESCP+1)) '{o=$1-1; if ($1==esc) { if ($2!="177" || $3!="377") bad=1; seen=1 } else if (!((o>=lo && o<hi) || (o>=dl && o<dl+16) || (o>=sl && o<sl+7) || o==cc || o==tc || (o>=sb && o<sb+12) || (o>=cp && o<cp+4))) bad=1} END{exit (bad || !seen)}'; then echo "$n: ok (default = original; -DENHANCED differs only in the ESC byte and the two star-occlusion slots)"; else echo "$n -DENHANCED: differs outside the ESC byte and the star-occlusion slots"; rc=1; fi
 done
 # English only: the -DMISSIONS variant (src/elite/missions_*.asm in the free tails) must keep both files the same length
 if [ "$SRC" = "$ROOT/src/elite" ]; then
