@@ -41,7 +41,7 @@ the "not enough hold capacity" test when buying goods (a trainer patch).
 - Strings use the game's token scheme: `python3 -I tools/elitetext.py 0xFCA 0xdf` expands a docked-screen string,
   `python3 -I tools/elitetext.py --flight 0xC2` an in-flight message token.
 - Pointer tables found so far are `dw` (or `jp` for jump tables): `sfxTableOfFunctions`, `sfxTableRegSettingFunctions`, `commandsPatchTable`, `DockedFuncJumptable`, `shipGFXdataTable`, `Jumptokens1/2`. Other inline words in tables are still `db`.
-- Lines `; ZX Spectrum: name (&ADDR)` mark a routine that matches a routine of the ZX Spectrum disassembly (`work/ext_msx/skoolkit`), and names like `mult_b_c` or `circle_run_up` come from there; see `docs/_spectrum_map.md`. Pre-change copies: `work/backup_src_pre_spectrum/`.
+- Lines `; ZX Spectrum: name (&ADDR)` mark a routine that matches a routine of the ZX Spectrum disassembly (`work/ext_msx/skoolkit`), and names like `mult_b_c` or `circle_run_up` come from there; see `docs_other/_spectrum_map.md` (local, untracked). Pre-change copies: `work/backup_src_pre_spectrum/`.
 
 ### Label prefixes
 

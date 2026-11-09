@@ -17,3 +17,6 @@ magazines/*
 .DS_Store
 __pycache__/
 *.pyc
+
+# Internal notes (process, history, generated maps, third-party text); kept locally
+docs_other/

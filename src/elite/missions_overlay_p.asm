@@ -2,7 +2,7 @@
 ; State: missionState bits 2-3: 0 not offered, 1 briefed (go to Ceerdi), 2 plans aboard (go to Birera), 3 finished (reward paid).
 ; Delivering the plans schedules the stolen police ship (bits 4-6: 1 waiting 5-12 jumps (counter mxMissionByte2), 2 ready, 3 hunting at Birera, 4 killed, 5 paid). This module makes the offer (2 -> 3) and pays 4,000 Cr (4 -> 5).
 ; Needs the Constrictor finished (bits 0-1 = 2), 1280 kill points (killScoreHigh >= 5) and galaxy 3. Systems checked against the CPC name generator
-; (docs/_missions.md section 7): Ceerdi galaxy 3 x 215 y 84, Birera galaxy 3 x 63 y 72.
+; (docs/_missions.md section 3): Ceerdi galaxy 3 x 215 y 84, Birera galaxy 3 x 63 y 72.
     jp mxModuleEntry
     dw missionTextTable
 mxModuleEntry:

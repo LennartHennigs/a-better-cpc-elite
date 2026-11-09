@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regenerate docs/_spectrum_map.md from work/spectrum_map/matches.tsv and data_matches.tsv.
+"""Regenerate docs_other/_spectrum_map.md from work/spectrum_map/matches.tsv and data_matches.tsv.
 usage: python3 -I tools/spectrum_map.py && python3 -I tools/spectrum_data_map.py && python3 -I tools/gen_spectrum_map_doc.py"""
 import csv
 from pathlib import Path
@@ -36,5 +36,5 @@ for r in data: L.append(f'| {r["spec_label"]} | ${r["spec_addr"]} | {r["len"]} |
 L += ["", "The squares table `sqr_table` (`&C600`, 512 bytes) and the default commander (`&39D1`, 92 bytes) are identical too but have no label in `src/elite` yet.",
 "", "## Not matched", "", "Hardware routines (screen, keyboard, sound, loading, copy protection) differ by design; routines the CPC splits or joins differently from",
 "the Spectrum also fail the whole-routine comparison. Candidates below 0.85 are in `work/spectrum_map/matches.tsv`.", ""]
-(R / "docs/_spectrum_map.md").write_text("\n".join(L))
+(R / "docs_other/_spectrum_map.md").write_text("\n".join(L))
 print(len(g), "rows")

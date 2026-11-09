@@ -117,9 +117,11 @@ The missions are tested in an emulator driven from Python (`tools/test_*.py`): t
 
 The notes live in `docs/`, one file per topic (`docs/_*.md`); the main ones:
 
-- `docs/_architecture.md` memory map, load sequence, free space and the dynamic labels
+- `docs/_build.md` building, switches and what the checker proves, `docs/_my_changes.md` every change we made to the game, `docs/_memory_map.md` memory map, swapping and free space
+- `docs/_architecture.md` design, dead code and the dynamic labels
 - `docs/_missions_built.md` the implemented missions (spoilers), `docs/_missions.md` the research on the other versions (spoilers)
 - `docs/_savegame.md` the save format, `docs/_cheats.md` the trainer and save tools
+- `docs/_open_questions.md` what is unverified, with how to settle it
 - `CHANGELOG.md` what changed and why, `TODO.md` what is open, `CLAUDE.md` working notes for the tooling
 
 ## Credits and sources

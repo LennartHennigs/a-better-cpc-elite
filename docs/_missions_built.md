@@ -1,7 +1,7 @@
 # Implemented missions (combined build, 2026-11-08)
 
 What is built, how it works, what it costs and how it is tested. The research behind each mission (other versions, source reading, Elite Plus code) is in `docs/_missions.md`.
-Everything lives on one branch, `addon-missions` (it contains `missions-foundation`, `mission-constrictor`, `mission-plans`, `mission-trumbles`, `escape-menus`; `master` is its ancestor).
+Everything lives on branch `addon-missions` (stacked on `missions-foundation`, `mission-constrictor`, `mission-plans`, `mission-trumbles`, `escape-menus`; `master` is its ancestor).
 `python3 -I tools/build_dsk.py --missions` writes `work/elite_missions.dsk`: the four code files plus the overlay and image files below. The stock build stays byte-exact (`bash tools/check_src.sh`, also `de` and `fr`).
 **Status:** booted from the DSK with `RUN"ELITE` in cpcxray; every mission is tested with forced states and direct calls, none has been played through.
 
@@ -28,7 +28,7 @@ Galaxy numbers are the game's 1-based galaxies (code index 0-7).
 ## 2. Architecture
 
 Missions run one at a time, so their code is loaded when needed instead of being resident (overlays).
-- **Docked part.** The 812-byte zero tail of `LARGEAXX` (`&1714-&1A3F`; `loadLARGEAXX` reloads the file from disk at every docking, so the tail is fresh each time and unused by the game) holds a resident **stub** (249 bytes) and one **overlay** loaded behind it
+- **Docked part.** The 812-byte zero tail of `LARGEAXX` (`&1714-&1A3F`; `loadLARGEAXX` reloads the file from disk at every docking, so the tail is fresh each time and unused by the game) holds a resident **stub** (251 bytes) and one **overlay** loaded behind it
   with the game's own `loadFile`. The docking sequence calls `&1714` in place of `chkMissions`. The stub tests the trigger first (state bytes, galaxy, system table `mxStageTable`, cash) and loads an overlay only where something can happen,
   about 2 s of emulated disk time; a docking with nothing to do costs nothing. Overlay layout: `jp entry`, `dw textTable`, code, strings; a module ends with `jp mxShowEnd` (message box, back to the docking code) or `ret`.
 - **Flight part.** The last 610 bytes of `COMMONXX` (`&9D9E-&9FFF`) hold a table of ten 3-byte `jp` vectors, an id byte and the launch hook, then at most one **flight image**. At every launch `mxLaunchEntry` picks the image for the state
@@ -36,14 +36,14 @@ Missions run one at a time, so their code is loaded when needed instead of being
 - **Hook sites in stock code** (each a 3-byte `call` replacement, so no stock routine moves): `spawnShip` (`mxShipTable`, serves ship type 19), `spawnCommand0` (`mxSpawnCheck`), `todo_killedsomeone` (`mxKillHook`, replaces `call getBounty`),
   `applyLaserDamagetoEntity` (`mxLaserHook`), `RechargeEnergy` (`mxRecharge`), the docking sequence (`&1714`), `launchSequence` (`mxLaunchEntry`), `setShipvarsAtArrival` (`mxArrive`), `todoOverheating` (`mxSun`), the Inventory loop
   (`mxInvHook`) and the `call transferBuffertoScreen` in `Spaceflight` at `&1E4D` (`mxFlightDraw`, the sprites).
-- **Build.** `-DMISSIONS` selects the hooks and tails; `-DFL_C/P/T/S/R` pick the flight image and `-DOVL_C/P/T/R` the overlay; `tools/build_dsk.py` slices each by labels (`mxFlightBase..mxFlightEnd`, `mxOverlayBase..mxOverlayEnd`) and adds the files with AMSDOS headers, then adds `README.TXT` and marks every file except `ELITE.BAS` and `README.TXT` as System (hidden from `CAT`, as on the original disk).
+- **Build.** `-DMISSIONS` selects the hooks and tails; `-DFL_C/P/T/S/R` pick the flight image and `-DOVL_C/P/T/R` the overlay; `tools/build_dsk.py` slices each by labels (`mxFlightBase..mxFlightEnd`, `mxOverlayBase..mxOverlayEnd`) and adds the files with AMSDOS headers, then adds `README.TXT` and hides every file that is not `.BAS` or `.TXT` (System attribute, as on the original disk; `tools/hide_files.py`).
 - **Save bytes used** (all unused by the stock game, no key change): `&38FD` mission state (bits 0-1 Constrictor, 2-3 plans, 4-6 stage of the first added mission, 7 Trumbles offered), `&38FE` (jump counter of the stolen ship, then the asteroids' state and count),
   `&3905-&3906` Trumble count (at most `&7FFF`). `docs/_savegame.md` has the layout.
 
 ## 3. How each mission works (insights)
 
 - **Constrictor.** The CPC hull is Fessor's converted by `tools/fessor_hull.py` (only this one ship is used; the rest of `extended/` stays out of git). Ship type 19 is served from a one-entry table (`cp 19` in `mxShipTable`, only our spawn passes 19).
-  Spawn at Orarra in stage 7 (all hints), one at a time; the laser hook makes any hit with power below 23 (military) do nothing, so only a military laser or better hurts it. The kill hook sets state 3; the reward is paid at the next docking.
+  Spawn at Orarra in stage 7 (all hints), one at a time; the laser hook makes any hit whose laser power lacks bit 4 do nothing (pulse and beam are 15, military 23, mining 50), so only a military laser or better hurts it. The kill hook sets state 3; the reward is paid at the next docking.
   The stub loads the overlay only at the system of the current hint stage, so hunts cost no disk time elsewhere.
 - **Plans.** The 22% Thargoid + Thargon spawn mirrors the BBC; the Navy energy unit is `extraEnergyUnit` `&FE`, one more `SUB_ram_3693` recharge step (3 per call). Delivery also schedules the stolen ship.
 - **Stolen police ship.** Elite Plus spawns the same Viper blueprint as the police with aggression 5, energy `&C8` and a marker byte. The CPC has no spare ship-record byte, so the marker is a flag pattern: police Vipers have bits 1 and 6 of `(ix+33)` set
@@ -52,7 +52,7 @@ Missions run one at a time, so their code is loaded when needed instead of being
 - **Trumbles.** Arrival hook breeds (`2 * ((count + 0..15) OR 4)`; a sum of `&4000` or more before the doubling is held at `&7FFF`) and eats the hold's food and narcotics; with 256 or more, slow breeding in the spawn check and a squeak (bit 5 of `sfxFlags2Bitmap`, chance high byte / 64); the sun halves them; the inventory
   shows a line. **Sprites:** up to six 16 x 14 round, fluffy blobs (pen 3, one shape, `missions_trumble_art.txt` via `tools/sprite_enc.py`) OR-ed into the off-screen bitmap `&A000` just before it is copied to the screen, so nothing needs erasing; one
   Trumble moves per frame (counter mod 8) with an 8% chance of a new direction. Cost 270 bytes (code about 210, shape 56, state 28).
-- **Escape key.** Separate from the missions: ESC is key code `&7F` instead of `&FF` in the ASCII keyboard table, so the buy, sell and equipment prompts leave on Escape (`docs/_cheats.md` and `CHANGELOG.md`).
+- **Escape key.** Separate from the missions: ESC is key code `&7F` instead of `&FF` in the ASCII keyboard table, so the buy, sell and equipment prompts leave on Escape (`-DENHANCED`; `docs/_cpcplus.md`).
 
 ## 4. Sizes (bytes, from the assembled files)
 
@@ -61,7 +61,7 @@ Missions run one at a time, so their code is loaded when needed instead of being
 | Docked overlay file | `MISSIONC.BIN` 561 | `MISSIONP.BIN` 506 (also the stolen ship) | in `MISSIONP` | `MISSIONR.BIN` 170 | `MISSIONT.BIN` 178 |
 | Flight image file | `MFLIGHTC.BIN` 609 | `MFLIGHTP.BIN` 260 | `MFLIGHTS.BIN` 352 | `MFLIGHTR.BIN` 276 | `MFLIGHTT.BIN` 609 |
 
-Default image `MFLIGHT0.BIN` 158 (what `COMMONXX.BIN` carries). Resident stub 251. **Limits:** docked stub plus largest overlay (Constrictor) ends at `&1A3F`, the last byte of the tail (0 spare); the Constrictor flight image is 609 of 610 (1 spare), so any further change there
+Default image `MFLIGHT0.BIN` 158 (what `COMMONXX.BIN` carries). **Limits:** docked stub plus largest overlay (Constrictor) ends at `&1A3F`, the last byte of the tail (0 spare); the Constrictor flight image is 609 of 610 (1 spare), so any further change there
 needs trimming first. Every image carries the launch picker and the recharge hook. Text is tokenised with the game's own digrams and string references (`tools/textenc.py`), 25-31% smaller than raw text. Mission text is in the default capitalised-words
 style (all caps): the stock mission screens use `{0D}`/`{13}` sentence case instead, which would cost about 38 docked bytes in the Constrictor overlay, so it stays as is for now.
 **Time (emulated):** an overlay load about 1.9-2.1 s; a launch with an image swap about 3.9 s against 2.0 s for `loadIndicator` alone; nothing extra when nothing is active or the right image is in RAM.
@@ -74,13 +74,19 @@ All run in cpcxray (`work/xray`, `~/.local/share/uv/tools/cpcxray/bin/python -I 
 - Method: start from `output/firebird_in_flight.sna`, stop at `handleEntitys` (`&5066`, a safe point), write the freshly assembled `COMMONXX` patches, set variables, call a vector with a trap return address and restore registers when injecting calls.
 - Helpers: `tools/size_report.py`, `tools/textenc.py`, `tools/sprite_enc.py`, `tools/fessor_hull.py`, `tools/build_dsk.py` (shared DSK code in `tools/dskx.py`). Testing aids: the trainer `CHEAT.BAS` (kills, jumps, added-mission presets), `tools/saveedit.py` and `SHOWSAVE.BAS` (`docs/_cheats.md`).
 
-## 6. Open items
+## 6. Limits and open items
 
-Known limits (from the code review, 2026-11-08): while Trumbles are aboard a running chain mission cannot progress in flight (the Trumbles image carries none of its hooks; the docked stub still offers and pays; the original has no such block, but also no end other than the sun, and its escape pod leaves 1-7 Trumbles where ours leaves none: `mxPodHook` in the dead block at `&1FDD` zeroes the count, so an escape pod ends the Trumbles quest); a launch needs the game disk in the drive for the flight image (`loadFile` shows the firmware disk error and retries like every other game load, there is no mission-specific fallback); the vector table and the stub sit at fixed addresses (`&9D9E`, `&1714`), now guarded by `ASSERT`s in the sources.
+**Known limits** (code review, 2026-11-08):
+- While Trumbles are aboard, a running chain mission cannot progress in flight (the Trumbles image has none of its hooks); the docked stub still offers and pays. The original has no end for Trumbles other than a sun; ours also ends them with an escape pod (`mxPodHook` in the dead block at `&1FDD` zeroes the count; the original leaves 1-7).
+- A launch needs the game disk in the drive for the flight image (`loadFile` shows the firmware disk error and retries like every other game load; no mission-specific fallback).
+- The vector table and the stub sit at fixed addresses (`&9D9E`, `&1714`), guarded by `ASSERT`s; flight images must end at or below `&9FFE`.
 
-A real playthrough of the whole chain with save and load; the squeak is settled (effect 13, kept after listening with `TRUMBLE.BAS`); tuning (20 asteroids, 50% and 22% spawn rates, Birera as the police target); a Trumbles end condition other than a sun;
-the Cobra Mk III that Elite Plus adds to the asteroid mission; a random per-commander order (not built: the two last missions are encoded differently and the stub plus Constrictor overlay has no room);
-the Constrictor's ECM and missiles come from the hull header and were not checked; merging `addon-missions` into `master` (the repo still has `master`, not `main`).
+**Open:**
+- A real playthrough of the whole chain with save and load.
+- Tuning: 20 asteroids, 50% and 22% spawn rates, Birera as the police target. The Trumble squeak is settled (effect 13, chosen with `TRUMBLE.BAS`).
+- A Trumbles end condition other than a sun; the Cobra Mk III that Elite Plus adds to the asteroid mission; the Constrictor's ECM and missiles (from the hull header, unchecked).
+- A random per-commander order is not built: the last two missions are encoded differently and the stub plus Constrictor overlay has no room.
+- Merging `addon-missions` into `master` (the repo still has `master`, not `main`).
 
 ## 7. Pokes to start each mission (for testing)
 
@@ -101,6 +107,6 @@ are for `memory_write` in an emulator, or a monitor on a running game. Kill poin
 
 Notes. The added-mission presets keep the earlier stages consistent: preset 2 and up also fit the Navy energy unit (`&3902` / loader `&39FE` = `&FE`), which `saveedit.py --added` and `EDITSAVE.BAS` write (the trainer presets do not); with raw pokes add `POKE &39FE,&FE` if you care. Galaxy cannot be poked
 (the seeds define it): reach galaxy 3 by two galactic jumps, with the trainer's free galactic jump, or load a save whose galaxy is already 3. The host save editor does the same presets on a save file (`tools/saveedit.py edit SAVE --kills 256 --added 2 -o ...`),
-and `EDITSAVE.BAS` on the CPC. With Trumbles aboard an added mission can be offered and paid at a docking, but not advanced in flight.
+and `EDITSAVE.BAS` on the CPC.
 
 Checked 2026-11-08 in cpcxray: for the Constrictor, plans, stolen ship, asteroids and Trumbles rows the trainer answers started the real game with exactly these values in memory (kills 256 or 1280, `&38FD/E` = `0000`, `0200`, `2E00`, `5E00`, `0000`, cash 6 thousand for the Trumbles); the status screen showed the rating Competent for 256 kills. That the offers then appear at a docking is covered by the docked tests with the same state values (`tools/test_mission_hook.py`), not by a real docking in the running game. The stock rows were not run.

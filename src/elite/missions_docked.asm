@@ -113,7 +113,7 @@ mxOverlayName:
     db "MISSION?"
 
 ; Where the stage-bound modules have something to do: galaxy (0-7), system x, system y. Rows 0-6 are the Constrictor hint stages (Reesdice, Arexe, Cearso, Errius,
-; Inbibe, Ausar, Usleri), rows 7 and 8 the plans (Ceerdi, Birera). Coordinates from the CPC name generator (docs/_missions.md section 7). The stub loads the overlay
+; Inbibe, Ausar, Usleri), rows 7 and 8 the plans (Ceerdi, Birera). Coordinates from the CPC name generator (docs/_missions.md section 3). The stub loads the overlay
 ; only at the system the current stage asks for, so the 1.75 s disk load is not paid at every docking of a hunt.
 mxStageTable:
     db 0,149,101

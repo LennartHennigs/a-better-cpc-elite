@@ -16204,7 +16204,7 @@ shipdatViper:
     db 0x0D,"f",0x00," ",0x00,0x1F,0x16,"!",0x0B,0x9F,0x16,"!",0x0B,0x1F,0x16,"!"
     db 0x0B,0xDF,0x16,"!",0x0B,"_",0x00," ",0x00,"_",0x00,0x00,"0?"
 ; Free tail of COMMONXX (&9D9E-&9FFF, 610 bytes, flight time; the stack pushes at the top). Build with -DMISSIONS to add mission code
-; (docs/_mission_build_plan.md); without it these are 610 zero bytes and the file is byte-exact.
+; (docs/_missions_built.md); without it these are 610 zero bytes and the file is byte-exact.
 missionsFlightTail:
     IFDEF MISSIONS
     INCLUDE "missions_flight.asm"
