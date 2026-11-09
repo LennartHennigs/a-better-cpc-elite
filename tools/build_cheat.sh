@@ -12,6 +12,7 @@ export PATH="$HOME/.local/bin:$PATH"
 D=src/cheats
 DISK=Elite_UK_Firebird_cracked_trainer.dsk
 PROGS="CHEAT SHOWSAVE EDITSAVE TRUMBLE"
+DISKPROGS="CHEAT SHOWSAVE EDITSAVE"   # TRUMBLE.BAS is built into src/cheats/ but not put on the disks (the squeak is settled)
 for P in $PROGS; do
   rm -f work/tmp_asc.dsk work/xray/disk/tmp_asc.dsk work/xray/disk/tmp_tok.dsk
   iDSK work/tmp_asc.dsk -n >/dev/null 2>&1
@@ -25,11 +26,11 @@ for P in $PROGS; do
   echo "built $D/$P.BAS ($(wc -c < $D/$P.BAS) bytes with header)"
 done
 cp $DISK work/firebird_cheat.dsk
-for P in $PROGS; do iDSK work/firebird_cheat.dsk -i $D/$P.BAS -t 2 -f >/dev/null 2>&1; done
+for P in $DISKPROGS; do iDSK work/firebird_cheat.dsk -i $D/$P.BAS -t 2 -f >/dev/null 2>&1; done
 cp work/firebird_cheat.dsk work/xray/disk/firebird_cheat.dsk
 if [ -f work/elite_missions.dsk ]; then
   cp work/elite_missions.dsk work/missions_cheat.dsk
-  for P in $PROGS; do iDSK work/missions_cheat.dsk -i $D/$P.BAS -t 2 -f >/dev/null 2>&1; done
+  for P in $DISKPROGS; do iDSK work/missions_cheat.dsk -i $D/$P.BAS -t 2 -f >/dev/null 2>&1; done
   cp work/missions_cheat.dsk work/xray/disk/missions_cheat.dsk
   echo "also built work/missions_cheat.dsk (mission build + trainer + save viewer)"
 fi
