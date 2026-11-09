@@ -290,7 +290,7 @@ Problems to solve:
   (listing only).
 
   The per-system row comes from `tableSystemColors` (three bytes per system: pen 3, pen 0, pen 1), copied by `setViewColors` into the
-  operands of `patchviewPortInk3/0/1`; it runs in `setupNewGame` and in `generateTargetSystemParAtHyperjump`.
+  operands of `smc_patchviewPortInk3/0/1`; it runs in `setupNewGame` and in `generateTargetSystemParAtHyperjump`.
   - **Pen 2 is the only fixed pen**: always `&54` = ink 20 (black) in views 0-3. Two exceptions: the energy bomb flashes it between `&54`
     and `&4D` (ink 13) for `&18` frames (`counter_colorsetting`, `flag_color0alternating`, it flashes the border too).
     The colour-split code leaves pen 2 alone in views 0-3 (`changeInks2and3` runs only for views 4 and up).

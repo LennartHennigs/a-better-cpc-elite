@@ -19,14 +19,21 @@ Open work, most useful first. `CLAUDE.md` keeps the short list; details live in 
 - [ ] Optional: gate the Trumbles offer behind a stock mission or outside galaxy 1; a per-commander random order (not built, no room in the stub plus Constrictor overlay).
 - [ ] Space: the Constrictor overlay (2 spare) and flight image (1 spare) need trimming before any further change there.
 - [ ] Merge `addon-missions` into `master` (the repo has no `main` yet); check `check_src.sh de` and `fr`.
+- [ ] Name the last `dat_` variables by tracing (`tools/trace_unknowns.py`; `dat_2F36` and `dat_38E1` were not hit, need a run with a real galactic jump and the inventory screen); the seed byte `dat_3D2D` is rewritten by `waggle_galaxy`.
+- [ ] Optional: comments for `chardefs1-7` (`common2x`, never referenced by label) and `sEntityunknown` as a named field of the ship record (byte `+0x26`).
+- [ ] Optional: strip the screen-address remarks from the German and French copies of the scanner and alert icon comments (not checked there).
+- [x] Macros: only `DUP` for the long runs (done); the short idioms and inline-argument calls stay as they are.
 - [ ] Cleanups skipped in the /simplify pass: one shared cpcxray test harness (`tools/test_*.py` copy about 500 lines), shared test snapshots, deriving the per-build patch addresses in `check_src.sh` from symbols, state-mask equates shared by the stub, picker and images.
 - [x] Built: Constrictor, Thargoid plans, stolen police ship (Elite Plus 4), asteroid bombardment (Elite Plus 6), Trumbles with sprites and squeak; trainer prompts, `saveedit.py`, `SHOWSAVE.BAS`, `EDITSAVE.BAS`; README and hidden files on the mission disk.
 
 ## Disassembly (`src/elite/`)
 - [x] Name the `dat_` variables: 109 of 176 named on 2026-11-07 (`tools/rename_dat.py`, map in `tools/rename_maps/`); `tools/check_src.sh` still byte-exact.
-- [ ] The remaining 37 `dat_` labels in `src/elite/` (counted with `grep -c "^dat_"`), checked 2026-11-07. Done: 16 address/message-id immediates
-  (`&2000 &4000 &3FC0 &7F00 &7F01 &7F03 &7F10 &7F89 &640A &7B05 &6170 &7EFD &80FF &C03F &C040 &CE00`) are now numeric operands in
-  `src/elite`, `elite_de` and `elite_fr`; `dat_6161`/`dat_6163` are `smcIndicatorPatch1/2` (patched by `loadMusicnIndicator`).
+- [ ] The remaining 7 `dat_` labels in `src/elite/` (counted with `grep -c "^dat_"`), checked 2026-11-09 (23 before this pass). Done: 16 address/message-id immediates
+  (`&2000 &4000 &3FC0 &7F00 &7F01 &7F03 &7F10 &7F89 &640A &7B05 &6170 &7EFD &80FF &C03F &C040 &CE00`) are numeric operands in
+  `src/elite`, `elite_de` and `elite_fr`; `dat_6161`/`dat_6163` are `smcIndicatorPatch1/2`; 2026-11-09: `&2710 &5B4E &5C4C &58C1 &FFFF` also numeric, and renamed
+  `saveChk0..3` (`&0F5B-&0F5E`), `edgeVecX/Y/Z` (`&5921-&5925`), `catalogBuf`, `tempString1End`, `casOutAddr`, `keybFlags0` (`&8E23`, a flag byte decoded as `adc a,h`).
+  `dat_2F36` is now `fuelPriceByte`, `dat_38DE` is byte 2 of the credits high word. Left: `dat_0F01` (code label whose address is loaded), `dat_38DE`, `dat_38E1`
+  (cargo/market bytes, see `docs/_savegame.md`), `dat_3D2D` (planet-type byte after the target seed), `dat_8427` (return-address stub), `dat_90A2` (inside ship data).
   - **Variables with an unknown role**: `&1B2A-&1B73` (entity slot workspace), `&38DE`/`&38E1` (block pointers; `&38E1` is the
     market byte, see `docs/_missions.md` section 3), `&3B3F-&3B69` (galactic chart buffers), `&3D2D` (7 bytes after the target
     seed), `&5921-&5925` (three words in the ship-edge drawing code), `&1BE3`, `&2F36`, `&864B`, `&C083`, `&FFFF`, and `largeaxx`
@@ -52,7 +59,7 @@ Open work, most useful first. `CLAUDE.md` keeps the short list; details live in 
       to the code; the station-takeover one is not yet found. The ST and MSX sources have the Thargoid base invasion as mission 5;
       check whether Amtix's "pirates take over" is the same mission described loosely.
 - [x] (done 2026-11-07, `docs/_architecture.md`) Find where the disk-drawing routine can crash when a planet leaves the screen. Open: sweep radii under 9, the screen-memory fill path (`ce2func46`) and a finer edge grid with `tools/circle_sweep.py`.
-- [x] (done 2026-11-07) Verify Fessor-vs-stock findings in `extended/FESSOR_VS_STOCK.md`: nearly all flags were false positives (variables, or dead code Fessor drops). Open from it: name the stock dead blocks (`dat_5860`, `Filemenuloop` tail, `&B1/&A9` pair, `jp` stubs after `msgSupernovaMission`) and `dat_3A6C` as a data buffer.
+- [x] (done 2026-11-07) Verify Fessor-vs-stock findings in `extended/FESSOR_VS_STOCK.md`: nearly all flags were false positives (variables, or dead code Fessor drops). Open from it: name the stock dead blocks (`buf_5860`, `Filemenuloop` tail, `&B1/&A9` pair, `jp` stubs after `msgSupernovaMission`) and `buf_3A6C` as a data buffer.
 - [x] (done 2026-11-07, `docs/_architecture.md`) Check whether `Elite_UK_original_protected.dsk` ships the Anaconda and Transporter after all: it does not. The German disk's second set of 14 blueprints is a second copy of `COMMONXX` in the raw image (tracks 7 and 27; all 17 sampled windows occur twice), not a new ship set; why the copy is there is unknown (`iDSK -l` lists only one `COMMONXX.BIN`).
 
 ## Missions (plan in `docs/_missions.md`)
@@ -77,7 +84,7 @@ Open work, most useful first. `CLAUDE.md` keeps the short list; details live in 
       dead code (`tools/deadcode.py`). See `docs/_architecture.md`.
 - [x] (done 2026-11-08, `tools/dead_trace.py`, two 700-key runs; static check too) Those six chains are live code or a buffer, not dead (`docs/_architecture.md`). Free space is the 610-byte tail only.
 - [ ] Measure the ISR's worst-case stack depth at `&A000` (the top of the free tail), then fix the safe size of the tail.
-- [ ] Name the dynamic labels in `src/elite/` with a common prefix? (list in `docs/_architecture.md`, "Dynamic labels"): `dat_5860` is a runtime buffer, not dead.
+- [x] (done 2026-11-09) Dynamic labels share prefixes in all three trees: `smc_` for the 59 self-patched code/operand labels (`smc_patchInk0`, `smc_PatchAND_1`, ...; `smcIndicatorPatch1/2` kept), `buf_` for 14 runtime buffers (`buf_5860`, `buf_3A6C`, `buf_3B3F..3B69`, `buf_1B2A..1B73`, `buf_7406`). Left alone: `altJrPoint*` (jump targets), `commandsPatchTable` (a table), the `equ` aliases and the operand labels without `patch` in the name (`dvRotatePixmask`, `irds22`, ...). `check_src.sh`, `de`, `fr` pass.
 - [x] (2026-11-08, branch `missions-foundation`) `tools/textenc.py` and `tools/size_report.py`; open there: fixed-table save key, state bytes in `&38FD/&38FE/&3905/&3906`, string-table entry point, `chkMissions` dispatch, `-DMISSIONS` variant.
 - [x] (2026-11-08) No fixed-table save key needed while the `EquipShip` window stays unchanged (`tools/size_report.py` checks it).
 - [x] (2026-11-08) `-DMISSIONS` scaffold in `src/elite` (tails as conditional includes, `missionOrder` 21 bytes); next: string-table entry point, `chkMissions` dispatch, state-byte accessors, then mirror to `elite_de`/`elite_fr` if the missions are kept.

@@ -8,7 +8,7 @@ usage: python3 -I tools/apply_spectrum_names.py [--dry]
    @label at ratio >= 0.90 (or >= 0.80 when found through the call graph), margin >= 0.05 over the runner-up and mutual best are renamed to that label
    (through tools/rename_dat.py, map kept in tools/rename_maps/2026-11-07-spectrum-names.txt).
 2. Every match at ratio >= 0.85 (propagated: >= 0.70) gets one comment line above its label:
-   `; ZX Spectrum: <label> (&ADDR) <ratio>`, so the Spectrum commentary can be read at that address. No
+   `; ZX Spectrum: <label> (&ADDR)`, so the Spectrum commentary can be read at that address. No
    commentary text is copied. Rerunning does not duplicate lines. Check with tools/check_src.sh afterwards.
 """
 import csv, re, subprocess, sys
@@ -58,7 +58,7 @@ for r in ok:
     idx = next((i for i, l in enumerate(L) if l.startswith(lab + ":")), None)
     if idx is None:
         continue
-    mark = f"; ZX Spectrum: {r['spec_label'] or '-'} (&{r['spec_addr']}) {float(r['ratio']):.2f}"
+    mark = f"; ZX Spectrum: {r['spec_label'] or '-'} (&{r['spec_addr']})"
     if idx > 0 and L[idx - 1].startswith("; ZX Spectrum:"):
         continue
     L.insert(idx, mark)

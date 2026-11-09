@@ -8,10 +8,10 @@ circleOffsetY equ 0x20C7
 circleOffsetXlo equ 0x20C8
 circleOffsetXhi equ 0x20C9
 drawradius equ 0x20CA
-dat_2F36 equ 0x2F36
+fuelPriceByte equ 0x2F36
 charXY equ 0x39CB
 creditsHighWord equ 0x39E4
-dat_38DE equ 0x39E5
+creditsHighWordHi equ 0x39E5
 creditsLowWord equ 0x39E6
 cargoSpaceFree equ 0x39FA
 FlightMode equ 0x39FF
@@ -68,7 +68,7 @@ Inventory equ 0x4B50
 ClearSaveGameRam equ 0x4BAE
 setFuel equ 0x5013
 listFilecatalog equ 0x8644
-patchFWTextfunctions equ 0x8689
+smc_patchFWTextfunctions equ 0x8689
 loadFile equ 0x87AE
 SaveSavegame equ 0x87DA
 DrawCircle equ 0xE73D
@@ -79,7 +79,7 @@ tryPayForGood equ 0xFE80
 
  org 0x0840
 
-; ZX Spectrum: buy_cargo (&E6AE) 0.93
+; ZX Spectrum: buy_cargo (&E6AE)
 ; Key 2 (docked only): the buy cargo screen.
 BuyGoods:
     ld a,(Missionflag)
@@ -90,7 +90,7 @@ BuyGoods:
     jr z,MarketBuyGoods
     ld a,0x5B
     ld de,0x4B32
-    ld hl,StringTable4
+    ld hl,0x1401  ; text cursor position for the message
     call drawFlipChart
     ld a,0x32
     ld (circleOffsetXlo),a
@@ -165,7 +165,7 @@ LAB_ram_08f7:
     call ClearCharAtpos
     call restore_trade_state
     jr todoInputNumber1to9
-; ZX Spectrum: read_trade_quantity (&E776) 0.87
+; ZX Spectrum: read_trade_quantity (&E776)
 ; Reads a one- or two-digit quantity; HL is the row handler (buyQuantityofGood, sellQuantityofGood or the equipment handler), called as each digit is typed.
 getInputForFunctionHL:
     ld (storedCallAddress),hl
@@ -235,7 +235,7 @@ printWithTokens03n07:
 ; Trampoline: jumps to the address in HL, so `call CallJPHL` acts as an indirect call
 CallJPHL:
     jp (hl)
-; ZX Spectrum: buy_commodity_row (&E7DB) 0.94
+; ZX Spectrum: buy_commodity_row (&E7DB)
 buyQuantityofGood:
     call snapshot_trade_state
     ld a,(todo_storestringnumber)
@@ -366,7 +366,7 @@ todo_storestringnumber:
     db 0x00
 storedCallAddress:
     db 0x00,0x00
-; ZX Spectrum: sell_cargo (&E8AE) 0.97
+; ZX Spectrum: sell_cargo (&E8AE)
 ; Key 3 (docked only): the sell cargo screen.
 SellGoods:
     ld a,(FlightMode)
@@ -428,7 +428,7 @@ reAskifNotAllSold:
     jr z,LAB_ram_0a9f
 csGotoInventoryScreen:
     jp Inventory
-; ZX Spectrum: sell_commodity_row (&E935) 1.00
+; ZX Spectrum: sell_commodity_row (&E935)
 sellQuantityofGood:
     call snapshot_trade_state
     ld a,(todo_storestringnumber)
@@ -570,7 +570,7 @@ eqFuel:
     and a
     jr nz,eqShoppingloop
     xor a
-    ld (dat_2F36),a
+    ld (fuelPriceByte),a
     call printWithTokens03n07
     ld a,0x46
     call setFuel
@@ -753,7 +753,7 @@ fmTempStack:
 FileMenu:
     ld a,0x0D
     ld (Viewdirection),a
-    call patchFWTextfunctions
+    call smc_patchFWTextfunctions
     xor a
     ld (filemenuvar),a
     ld (fmTempStack),sp
@@ -959,13 +959,13 @@ LAB_ram_0e91:
     sub 0x15
     and 0x0F
     ld e,a
-    ld (dat_0F5B),a
+    ld (saveChk0),a
     ld a,(creditsHighWord)
     ld d,a
-    ld (dat_0F5C),a
-    ld a,(dat_38DE)
+    ld (saveChk1),a
+    ld a,(creditsHighWordHi)
     ld l,a
-    ld (dat_0F5D),a
+    ld (saveChk2),a
     ld a,l
     xor d
     xor e
@@ -984,18 +984,18 @@ LAB_ram_0eef:
     jr z,LAB_ram_0ef5
     set 7,a
 LAB_ram_0ef5:
-    ld (dat_0F5E),a
-    ld a,(dat_0F5E)
+    ld (saveChk3),a
+    ld a,(saveChk3)
     call SUB_ram_0f49
-    ld a,(dat_0F5D)
+    ld a,(saveChk2)
 dat_0F01:
     call SUB_ram_0f49
-    ld a,(dat_0F5C)
+    ld a,(saveChk1)
     call SUB_ram_0f49
-    ld a,(dat_0F5B)
+    ld a,(saveChk0)
     call SUB_ram_0f49
-    ld hl,(dat_0F5D)
-    ld de,(dat_0F5B)
+    ld hl,(saveChk2)
+    ld de,(saveChk0)
     ld a,l
     xor d
     add a,0x3D
@@ -1026,7 +1026,7 @@ loc_0F3B:
     ldir
 loc_0F46:
     jp Filemenuloop
-; Counts the set bits of A and shifts the parity into the byte at dat_0F5B (checksum helper, probably)
+; Counts the set bits of A and shifts the parity into the byte at saveChk0 (checksum helper, probably)
 SUB_ram_0f49:
     ld b,0x08
     ld c,0x00
@@ -1037,16 +1037,16 @@ LAB_ram_0f4d:
 LAB_ram_0f51:
     djnz LAB_ram_0f4d
     rr c
-    ld hl,dat_0F5B
+    ld hl,saveChk0
     rl (hl)
     ret
-dat_0F5B:
+saveChk0:
     db 0x00
-dat_0F5C:
+saveChk1:
     db 0x00
-dat_0F5D:
+saveChk2:
     db 0x00
-dat_0F5E:
+saveChk3:
     db 0x00
 ; XORs the 104-byte commander block at &38CB with the code of EquipShip (save/load key)
 encryptSAV:
@@ -1105,7 +1105,7 @@ InputFilename:
     ld b,0x0A
     ld a,0x08
     jp InputString
-; ZX Spectrum: - (&DA5A) 0.86
+; ZX Spectrum: - (&DA5A)
 SUB_ram_0faf:
     push af
     xor a
@@ -1118,6 +1118,8 @@ SUB_ram_0faf:
     pop af
     call printStringA
     jp placeCursor
+; Message table for the docked screens (menus, prompts). printStringA uses it instead of MainStackNStrings when the view is 4 or higher
+; and the status flag is clear (it loads this address). Same format as stringsTable: zero-terminated strings picked by counting zeros.
 stringsTable2:
     db 0x1E,"-ZUGRIFF",0xC3,0x02,"  1 N"
     db "EU",0xF6," ",0x9A,0xC9,"LAD",0xF6,0x0C,0x0C,"  2 "
@@ -1222,7 +1224,6 @@ stringsTable2:
     db "W",0xED,"P",0xF6,0x00
     db "MOTT",0xF6,0x00
     db "W",0xEE
-StringTable4:
     db "TZ",0xF6,"SCHWE",0xF0,0x00
     db 0xEF,"D",0xF6,0x00
     db "AMEI",0xDA,"N",0x00

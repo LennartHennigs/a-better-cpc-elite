@@ -41,4 +41,12 @@ the "not enough hold capacity" test when buying goods (a trainer patch).
 - Strings use the game's token scheme: `python3 -I tools/elitetext.py 0xFCA 0xdf` expands a docked-screen string,
   `python3 -I tools/elitetext.py --flight 0xC2` an in-flight message token.
 - Pointer tables found so far are `dw` (or `jp` for jump tables): `sfxTableOfFunctions`, `sfxTableRegSettingFunctions`, `commandsPatchTable`, `DockedFuncJumptable`, `shipGFXdataTable`, `Jumptokens1/2`. Other inline words in tables are still `db`.
-- Lines `; ZX Spectrum: name (&ADDR) ratio` mark a routine that matches a routine of the ZX Spectrum disassembly (`work/ext_msx/skoolkit`), and names like `mult_b_c` or `circle_run_up` come from there; see `docs/_spectrum_map.md`. Pre-change copies: `work/backup_src_pre_spectrum/`.
+- Lines `; ZX Spectrum: name (&ADDR)` mark a routine that matches a routine of the ZX Spectrum disassembly (`work/ext_msx/skoolkit`), and names like `mult_b_c` or `circle_run_up` come from there; see `docs/_spectrum_map.md`. Pre-change copies: `work/backup_src_pre_spectrum/`.
+
+### Label prefixes
+
+- `smc_`: self-modifying code. The label marks an instruction or operand byte that the game patches at run time (inks, masks, line-plotter operands, patched jumps). Do not move or resize these without tracing, and static dead-code checks must skip them.
+- `buf_`: a buffer in the code image that is written at run time (entity slot workspace, chart buffers, `buf_5860`, `buf_7406`), not dead code.
+- `DUP n` / `EDUP` (sjasmplus) stands for a long run of one instruction (`push de`, `ldi`); the bytes are unchanged.
+- `dat_XXXX`: a variable or table whose role is still unknown; the number is its stock address. The list of the few left is in `TODO.md`.
+- Ship blueprints (`shipdat*`) share one layout, described above `shipdatAspMk2` in `commonxx.asm`; `stringsTable` is described above its label.

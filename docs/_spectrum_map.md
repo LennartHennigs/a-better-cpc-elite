@@ -10,7 +10,7 @@ runner-up is at least 0.05 and the match is mutual best. Read the Spectrum comme
 What is in `src/elite/` (byte-exact, `tools/check_src.sh`):
 - Generic labels with a confident Spectrum name were renamed (maps in `tools/rename_maps/2026-11-07-spectrum-*.txt`, applied by
   `tools/apply_spectrum_names.py` and `tools/rename_dat.py`), including Fessor's `todo_*` placeholders that have an exact counterpart.
-- Every pair has a `; ZX Spectrum: name (&ADDR) ratio` line above its label.
+- Every pair has a `; ZX Spectrum: name (&ADDR)` line above its label.
 - About 170 routines carry our own comment (maths, divides, square root, circle/disc code, text engine, charts, trade, ship movement, spawning);
   the wording is ours, written from the code, with the Spectrum I/O descriptions as a check. No Spectrum commentary is copied.
 - Pre-change copies of the sources: `work/backup_src_pre_spectrum/`. Fessor's other names were left alone.
@@ -169,7 +169,7 @@ the Spectrum labels for several blueprints (the CPC `shipdatAlloy` is the Spectr
 | commonxx | &8BFE | combat_ai_refine_dist_zone | $A686 | combat_ai_refine_dist_zone | 1.00 | direct |
 | commonxx | &8C15 | minus_4_a_b | $A69D | minus_4_a_b | 1.00 | direct |
 | commonxx | &8C24 | dot_product_scale_factor | $A6AC | dot_product_scale_factor | 1.00 | direct |
-| commonxx | &8E23 | dat_8E23 | $FCBA | handle_held_key | 0.97 | direct |
+| commonxx | &8E23 | keybFlags0 | $FCBA | handle_held_key | 0.97 | direct |
 | commonxx | &8F68 | irki2_19 | $FF16 | clamp_speed_rate_max | 1.00 | direct |
 | largeaxx | &0840 | BuyGoods | $E6AE | buy_cargo | 0.93 | direct |
 | largeaxx | &08FF | getInputForFunctionHL | $E776 | read_trade_quantity | 0.87 | direct |

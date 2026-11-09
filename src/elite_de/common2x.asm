@@ -128,7 +128,7 @@ sub_C058:
     inc hl
     ld d,(hl)
     inc hl
-    ld (dat_C083),de
+    ld (casOutAddr),de
     ld e,(hl)
     inc hl
     ld d,(hl)
@@ -146,11 +146,11 @@ sub_C058:
     call 0xBC8C
     pop hl
     ld a,0x02
-    ld de,(dat_C083)
+    ld de,(casOutAddr)
     call 0xBC98
     call 0xBC8F
     ret
-dat_C083:
+casOutAddr:
     db 0x00,"@",0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
     db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
     db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
@@ -419,7 +419,7 @@ todo_drawcircleInteriorpart:
     srl a
     jr nc,LAB_ram_ce85
     inc hl
-patchmask1:
+smc_patchmask1:
     ld (hl),0xF0
 LAB_ram_ce85:
     ld l,d
@@ -430,8 +430,8 @@ LAB_ram_ce85:
     pop af
     push af
     ld sp,hl
-patchJr:
-    jr patchJr
+smc_patchJr:
+    jr smc_patchJr
     db 0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5
     db 0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xED
     db "s''1.",0xF7,0xE5,"*''+6",0xF0,"+6",0xF0
@@ -535,7 +535,7 @@ LAB_ram_cf13:
     srl a
     jr nc,LAB_ram_cf44
     inc hl
-patchmask4:
+smc_patchmask4:
     ld (hl),0xF0
 LAB_ram_cf44:
     ld l,d
@@ -546,8 +546,8 @@ LAB_ram_cf44:
     pop af
     push af
     ld sp,hl
-patchJr1:
-    jr patchJr1
+smc_patchJr1:
+    jr smc_patchJr1
     db 0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5
     db 0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xF5,0xED
     db "s''1.",0xF7,0xE5,"*''+6",0xF0,"+6",0xF0
@@ -1271,7 +1271,7 @@ drawFilledCircle:
     ldir
     ld a,(drawradius)
     cp 0x09
-dfcPatchpos:
+smc_dfcPatchpos:
     ret c
     xor a
     ld (circlevar3),a
@@ -1424,7 +1424,7 @@ LAB_ram_ee02:
     pop bc
     djnz LAB_ram_ee02
     ret
-; ZX Spectrum: squared_distance_to_cursor (&DFCE) 1.00
+; ZX Spectrum: squared_distance_to_cursor (&DFCE)
 ; Squared distance between the coordinate in A, B and the chart cursor: each axis difference is squared (one halved first, the chart has half
 ; the vertical scale) and summed. Out: HL = result, carry set on overflow.
 squared_distance_to_cursor:
@@ -1443,7 +1443,7 @@ squared_distance_to_cursor:
     pop de
     add hl,de
     ret
-; ZX Spectrum: abs_difference (&DFEA) 1.00
+; ZX Spectrum: abs_difference (&DFEA)
 ; Out: A = |A - B|.
 abs_difference:
     cp b
@@ -1458,9 +1458,9 @@ LAB_ram_ee2c:
 CalculateDistance:
     jr c,finalize_distance
     jr LAB_ram_ee35
-; ZX Spectrum: finalize_distance (&DFF2) 0.92
+; ZX Spectrum: finalize_distance (&DFF2)
 finalize_distance:
-    ld hl,dat_FFFF
+    ld hl,0xFFFF
 LAB_ram_ee35:
     ld a,h
     or l
@@ -1473,7 +1473,7 @@ LAB_ram_ee35:
 LAB_ram_ee41:
     ld (travelDistance),hl
     ret
-; ZX Spectrum: mul_a_by_d (&E009) 1.00
+; ZX Spectrum: mul_a_by_d (&E009)
 ; Out: HL = A * D (unsigned 8 x 8 bits).
 mul_a_by_d:
     ld e,0x00
@@ -1488,7 +1488,7 @@ LAB_ram_ee4c:
 LAB_ram_ee55:
     djnz LAB_ram_ee4c
     ret
-; ZX Spectrum: generate_system_name (&E01C) 1.00
+; ZX Spectrum: generate_system_name (&E01C)
 ; Builds a system's name in an 8-byte buffer from 3 or 4 pairs of letters (the fourth only when bit 6 of the seed byte is set), taken from the digram table.
 name_planet:
     ld hl,0x3E48
@@ -1557,7 +1557,7 @@ finalizePlanetName:
     ld de,0x3E5A
     ldir
     ret
-; ZX Spectrum: generate_system_data (&E08C) 1.00
+; ZX Spectrum: generate_system_data (&E08C)
 ; Derives economy, government, tech level, population and productivity from the system's 6-byte seed (the BBC algorithm, bit arithmetic differs).
 generatePlanetstats:
     ld hl,(0x3E2F)
@@ -1877,7 +1877,7 @@ LAB_ram_f60f:
     srl a
     jr nc,LAB_ram_f62b
     inc hl
-patchmask11:
+smc_patchmask11:
     ld (hl),0xF0
 LAB_ram_f62b:
     ld l,d
@@ -1981,7 +1981,7 @@ LAB_ram_f6ac:
     srl a
     jr nc,LAB_ram_f6dd
     inc hl
-patchmask14:
+smc_patchmask14:
     ld (hl),0xF0
 LAB_ram_f6dd:
     ld l,d
@@ -2123,7 +2123,7 @@ LAB_ram_f7b8:
 LAB_ram_f7bf:
     ld (hl),a
     jr LAB_ram_f7d0
-; ZX Spectrum: circle_plot_hbyte_r (&91C0) 0.89
+; ZX Spectrum: circle_plot_hbyte_r (&91C0)
 ; The mirror of circle_plot_hbyte_l: fills from bit 0 up to the highest set pixel.
 LAB_ram_f7c2:
     ld a,(hl)
@@ -2319,14 +2319,14 @@ LAB_ram_fe4a:
     pop bc
     djnz LAB_ram_fe3b
     ret
-; ZX Spectrum: cp_hl_de (&D3CE) 1.00
+; ZX Spectrum: cp_hl_de (&D3CE)
 ; Carry set if HL < DE; HL is unchanged (push, sbc, pop).
 SBC_HLDE:
     push hl
     sbc hl,de
     pop hl
     ret
-; ZX Spectrum: add_cash (&D3D3) 1.00
+; ZX Spectrum: add_cash (&D3D3)
 ; Adds DE (tenths of a credit) to the remainder word; at 10000 it wraps and carries 1 into the thousands word. A second entry adds whole thousands.
 getMoney:
     ld hl,(creditsLowWord)
@@ -2355,7 +2355,7 @@ SbcDEfromMoney:
 SetCarryflag:
     scf
     ret
-; ZX Spectrum: subtract_cash (&D3FD) 1.00
+; ZX Spectrum: subtract_cash (&D3FD)
 ; Subtracts DE (tenths of a credit) from the cash, borrowing 1000 Cr from the thousands word when the remainder goes negative; carry set if there is not enough.
 tryPayForGood:
     ld hl,(creditsLowWord)
@@ -2381,7 +2381,7 @@ LAB_ram_fe9e:
 useJumpTokens2:
     ld hl,Jumptokens2
     jr LAB_ram_feab
-; ZX Spectrum: print_control_code (&D7B5) 0.90
+; ZX Spectrum: print_control_code (&D7B5)
 ; A = a control code 0-13 found inside a token: indexes the jump table and jumps to that handler.
 useJumpTokens1:
     ld hl,Jumptokens1
@@ -2492,7 +2492,7 @@ jptodoSetUnknownFlag:
     ld (0x3A51),a
 nothing_return:
     ret
-; ZX Spectrum: print_flavour_phrase (&D885) 1.00
+; ZX Spectrum: print_flavour_phrase (&D885)
 ; Token control code: prints a short random descriptive phrase for the system data screen by joining 1-4 token pairs picked at random from the pair table.
 printFlightDigramsReducedRandom:
     call jptodoSetUnknownFlag
@@ -2549,7 +2549,6 @@ strAEIOU:
     db "AEIOU>",0x01,0x18,0x02,">",0x00
     db "2",0xE4,"D",0xC9,0x00
     db 0x00,0x00,0x00
-dat_FFFF:
     db 0x00
 LAB_ram_f638 equ 0xF638   ; inside the instruction at 0xF637 (patched or jumped into)
 LAB_ram_f6ea equ 0xF6EA   ; inside the instruction at 0xF6E9 (patched or jumped into)

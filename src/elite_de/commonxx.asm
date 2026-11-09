@@ -32,7 +32,7 @@ todoDrawCircleFlag equ 0xE71D
 lcDrawRangeCircle equ 0xE71E
 todoDrawFilledCircle equ 0xE787
 clearCircle equ 0xE795
-dfcPatchpos equ 0xE7AE
+smc_dfcPatchpos equ 0xE7AE
 SUB_ram_e7b6 equ 0xE7B6
 SUB_ram_e7c2 equ 0xE7C2
 SUB_ram_e7cd equ 0xE7CD
@@ -88,6 +88,7 @@ sEntityRole:
     db 0x00
 sEntityEnergy:
     db 0xF0,0xE0,0x99,0x7F
+; Slot 0's byte +0x26 (38). The entity code tests single bits of this byte on every ship slot through (ix+38); at arrival bit 7 of slot 0 is tested and cleared (see LAB_ram_4e4c).
 sEntityunknown:
     db 0x0C,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
     db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
@@ -102,16 +103,16 @@ sEntityunknown:
     db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
     db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
     db 0x00,0x00,0x00,0x00
-dat_1B2A:
+buf_1B2A:
     db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
     db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
     db 0x00,0x00,0x00,0x00,0x00,0x00,0x00
-dat_1B51:
+buf_1B51:
     db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
-dat_1B5A:
+buf_1B5A:
     db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
     db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
-dat_1B73:
+buf_1B73:
     db 0x00,0x00,0x00,0x00,0x00
 ; 19 four-byte records indexed by ship type (spawnShip reads bytes +1,+2 as a word): the first byte is an unused
 ; `jp` opcode (&C3), then the address of the ship's blueprint data (shipdat...), then a ship class byte. Written as jp + db so the bytes stay identical.
@@ -159,7 +160,7 @@ strChar32:
 tempString1:
     db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
     db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
-dat_1BE3:
+tempString1End:
     db 0x00
 tempString2:
     db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
@@ -587,66 +588,9 @@ tfloopNextLine:
     inc de
     inc hl
     inc de
+    DUP 60
     ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
-    ldi
+    EDUP
     inc hl
     inc de
     inc hl
@@ -767,22 +711,9 @@ ClearBitmap:
     ld de,0x0F0F
     ld b,0x00
 LAB_ram_1ffd:
+    DUP 16
     push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
+    EDUP
     djnz LAB_ram_1ffd
     ld sp,(clsSP)
     ret
@@ -840,7 +771,7 @@ SUB_ram_2058:
     ld a,0x01
     ld (BYTE_ram_3933),a
     ret
-; ZX Spectrum: resume_screen_after_load (&7278) 0.91
+; ZX Spectrum: resume_screen_after_load (&7278)
 ; The arrival/briefing state machine (the Spectrum's arrival_state byte is this build's ThargonMissionVar, &3926): states 1 and 2 ask for the
 ; invasion mission, 3 does nothing, 4 is the boarded-by-Thargons game over, 5 pays out the reward (ThargonMissionFinished). Called after every docking.
 chkMissions:
@@ -1102,7 +1033,7 @@ ce2func12:
     jp nc,ce2func19
 ce2func13:
     jp ce2func27
-; ZX Spectrum: lookup_square (&87BF) 1.00
+; ZX Spectrum: lookup_square (&87BF)
 ; In: A. Out: DE = A*A, read from the table of 16-bit squares (low bytes at &C600, high bytes at &C700). HL is kept.
 ; The circle code and the multiply routines below all work from this table: no multiply instruction is ever used.
 GetSquareforAinDE:
@@ -1120,7 +1051,7 @@ ce2func14:
     call ce2func15
     call SUB_ram_e7e4
     ret
-; ZX Spectrum: circle_arc_segment (&87D4) 1.00
+; ZX Spectrum: circle_arc_segment (&87D4)
 ; One arc segment: seeds the alternate registers (C' = -radius, E' = 0) and turns the segment's two ends, centre - radius and centre + radius at the
 ; chord's row, into bitmap addresses with ce2func39 and ce2func40.
 ce2func15:
@@ -1147,7 +1078,7 @@ ce2func16:
     ld (circleVar4),a
     xor a
     jr ce2func18
-; ZX Spectrum: circle_fill_vert (&87FE) 1.00
+; ZX Spectrum: circle_fill_vert (&87FE)
 ; Fills the part of the disc where the outline runs nearly vertically (the left and right slivers): takes the half-chord width from circle_half_chord,
 ; then draws one run upwards (circle_run_up) and one downwards (circle_run_down), each preceded by circle_run_setup_step and circle_run_setup_addr.
 ce2func17:
@@ -1320,7 +1251,7 @@ ce2func32:
     call nz,SUB_ram_e7cd
     call z,SUB_ram_e7d9
     ret
-; ZX Spectrum: circle_fill_steep_diag2 (&893F) 1.00
+; ZX Spectrum: circle_fill_steep_diag2 (&893F)
 ; The same shape for the steep-diagonal region: half-chord from circle_half_chord, both ends of the chord stepped (ce2func39 for centre - half-chord,
 ; ce2func40 for centre + half-chord), then the run is issued through realDrawFilledCircle.
 ce2func33:
@@ -1359,7 +1290,7 @@ ce2func34:
     call nz,SUB_ram_e7e4
     call z,SUB_ram_e7f0
     ret
-; ZX Spectrum: circle_horiz_end (&8985) 0.97
+; ZX Spectrum: circle_horiz_end (&8985)
 ; One end of a horizontal fill run: seeds the registers (circle_seed_arc_regs), converts the end point (&80 + working column - radius, row from
 ; storeCalcedCircleOffsetYLo) into a bitmap address, and in fill mode aligns L to the last bytes of the 64-byte line (offset &3E).
 ce2func35:
@@ -1379,7 +1310,7 @@ ce2func35:
     ld l,a
     ld c,0x01
     ret
-; ZX Spectrum: circle_horiz_end_mirror (&89A1) 0.95
+; ZX Spectrum: circle_horiz_end_mirror (&89A1)
 ; The mirror image of circle_horiz_end for the other end: the column is reflected about &80 and L is aligned to the start of the line (offset 1).
 ce2func36:
     call ce2func38
@@ -1403,7 +1334,7 @@ ce2func36:
 ce2func37:
     ld b,0x88
     ret
-; ZX Spectrum: circle_seed_arc_regs (&89C3) 1.00
+; ZX Spectrum: circle_seed_arc_regs (&89C3)
 ; Loads BC with the working centre (storeCircleOffsetY1), DE with flags and radius (circleOffsetXhi), and sets C' = -radius, E' = 0 for the point routines.
 ce2func38:
     ld bc,(storeCircleOffsetY1)
@@ -1428,7 +1359,7 @@ ce2func39:
     jp nz,ce2func81
     inc b
     ret
-; ZX Spectrum: circle_point_addr_right (&89EF) 0.71
+; ZX Spectrum: circle_point_addr_right (&89EF)
 ; The right-hand counterpart of ce2func39: converts a point to a bitmap address and a mask for the pixels to its left.
 ce2func40:
     push af
@@ -1450,7 +1381,7 @@ ce2func40:
     ld a,c
     jp nz,ce2func83
     ret
-; ZX Spectrum: circle_run_setup_step (&8A16) 1.00
+; ZX Spectrum: circle_run_setup_step (&8A16)
 ; Sets the run's step registers: C' = &88 - centre X, E' = this row's half-chord (circleVar5). Called just before each run in the near-vertical fillers.
 ce2func41:
     ld bc,(storeCircleOffsetY1)
@@ -1462,7 +1393,7 @@ ce2func41:
     ld e,a
     exx
     ret
-; ZX Spectrum: circle_run_setup_addr (&8A25) 1.00
+; ZX Spectrum: circle_run_setup_addr (&8A25)
 ; Finishes the run set-up: in outline mode defers to ce2func85; otherwise E = L aligned to the start of the line (offset 1) and C = B = 1.
 ce2func42:
     ld a,(circlevar3)
@@ -1506,38 +1437,9 @@ ce2func44:
     inc hl
     ld sp,hl
 LineFillLoop:
+    DUP 32
     push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
+    EDUP
     djnz LineFillLoop
 ce2func45:
     ld sp,(stack2)
@@ -1562,35 +1464,9 @@ ce2func46lineinScreenMem:
 ce2func47FillCompleteLinesScrMem:
     ld sp,hl
     ld de,0xFFFF
+    DUP 29
     push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
+    EDUP
     ld ix,0x0000
     add ix,sp
     ld sp,ce2func57stack
@@ -1661,35 +1537,9 @@ ce2func53:
 ce2func54FillScreenLineWithFF:
     ld sp,hl
     ld de,0xFFFF
+    DUP 29
     push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
-    push de
+    EDUP
     ld ix,0x0000
     add ix,sp
     ld sp,ce2func57stack
@@ -1719,7 +1569,7 @@ ce2func56:
     pop de
     ret
     db 0x00,0xDD
-; ZX Spectrum: circle_half_chord (&8ACD) 1.00
+; ZX Spectrum: circle_half_chord (&8ACD)
 ; In: A = distance from the centre line, D = radius. Out: A' = floor(sqrt(radius^2 - A^2)), half the width of the disc at that row. The squares come from
 ; GetSquareforAinDE; the root is a binary search over the bits &80 down, keeping each bit while its square still fits. BC, DE, HL are kept.
 ; The label is also used as a stack address (ld sp,ce2func57stack): the bytes just below it serve as a small private stack.
@@ -1787,10 +1637,10 @@ ce2func62:
 loc_25D5:
     jr loc_25D5
     circlePushRun
-ce2func64patchmask7:
+smc_ce2func64patchmask7:
     ld (hl),0xF0
     dec hl
-ce2func65patchmask8:
+smc_ce2func65patchmask8:
     ld (hl),0xF0
     pop hl
     ld sp,0xF72E
@@ -1894,10 +1744,10 @@ ce2func73:
 loc_2687:
     jr loc_2687
     circlePushRun
-ce2func75patchmask9:
+smc_ce2func75patchmask9:
     ld (hl),0xF0
     dec hl
-ce2func76patchmask10:
+smc_ce2func76patchmask10:
     ld (hl),0xF0
     pop hl
     ld sp,0xF72E
@@ -1905,7 +1755,7 @@ loc_26BD:
     call circlecalcDetailsLeftSide
     jr ce2func72
     db 0xC3,"L&"
-; ZX Spectrum: circle_outline_edge_left (&8FB8) 1.00
+; ZX Spectrum: circle_outline_edge_left (&8FB8)
 ; Outline mode, steep diagonal edge: the counterpart of a fill run, starting at the line start with a single-pixel mask (C = 1).
 ce2func78:
     ld a,e
@@ -1959,7 +1809,6 @@ ce2func85:
 ce2func86:
     sub b
     jr nc,ce2func87
-dat_2710:
     ld h,0x9F
     ret
 ce2func87:
@@ -1981,13 +1830,13 @@ ce2func89:
 prepareCircleFillMask:
     ld b,0x14
     ld hl,CircleParmTable
-cpatchloop:
+smc_cpatchloop:
     ld e,(hl)
     inc hl
     ld d,(hl)
     inc hl
     ld (de),a
-    djnz cpatchloop
+    djnz smc_cpatchloop
     ret
 ; 20 addresses of operand bytes that prepareCircleFillMask patches (inside the disc fill routines in screen RAM and in code, so numeric).
 CircleParmTable:
@@ -2197,17 +2046,17 @@ setSplitInks:
 setInks0_1_3:
     ld bc,0x7F01   ; gate array: select pen 1
     out (c),c
-patchViewPortInk1:
+smc_patchViewPortInk1:
     ld c,0x44
     out (c),c
     ld bc,dat_7F00_2
     out (c),c
-patchViewPortInk0:
+smc_patchViewPortInk0:
     ld c,0x43
     out (c),c
     ld bc,LAB_ram_7dbc
     out (c),c
-patchviewPortInk3:
+smc_patchviewPortInk3:
     ld c,0x57
     out (c),c
 LAB_ram_28b4:
@@ -2236,22 +2085,22 @@ changeAllInks:
     ld (counter_colorsetting),a
     ld bc,dat_7F00_2
     out (c),c
-patchInk0:
+smc_patchInk0:
     ld c,0x54
     out (c),c
     ld bc,0x7F01   ; gate array: select pen 1
     out (c),c
-patchInk1:
+smc_patchInk1:
     ld c,0x57
     out (c),c
     ld bc,LAB_ram_7dbc
     out (c),c
-patchInk3:
+smc_patchInk3:
     ld c,0x5E
     out (c),c
     ld bc,0x7F02
     out (c),c
-patchInk2:
+smc_patchInk2:
     ld c,0x54
     out (c),c
     ret
@@ -2263,12 +2112,12 @@ splitcheckzoneless5:
 changeInks2and3:
     ld bc,LAB_ram_7dbc
     out (c),c
-patchSecondInk3:
+smc_patchSecondInk3:
     ld c,0x4E
     out (c),c
     ld bc,0x7F02
     out (c),c
-patchSecondInk2:
+smc_patchSecondInk2:
     ld c,0x47
     out (c),c
     ret
@@ -2307,7 +2156,7 @@ setDashboardColor:
     ret nc
     ld bc,0x7F01   ; gate array: select pen 1
     out (c),c
-patchAnotherInk1:
+smc_patchAnotherInk1:
     ld c,0x52
     out (c),c
     ld de,0x5B4C
@@ -2341,7 +2190,7 @@ IRSetInk1:
     ret nc
     ld bc,0x7F01   ; gate array: select pen 1
     out (c),c
-patchAnotherInk1_2:
+smc_patchAnotherInk1_2:
     ld c,0x58
     out (c),c
     ret
@@ -2505,7 +2354,7 @@ resetKeybuffers:
     ld (keybFlags3),a
     ld (keybFlags1),a
     ret
-; ZX Spectrum: call_d000_jump_table (&813E) 0.88
+; ZX Spectrum: call_d000_jump_table (&813E)
 ; Calls entry A of the key-function jump table in the screen-RAM page (the docked and flight key actions).
 execSelectedKeyFunctions:
     ld b,a
@@ -2572,7 +2421,7 @@ parseInputkey:
     ld a,(keybFlags3)
     and 0x80
     ret z
-    ld hl,dat_8E23
+    ld hl,keybFlags0
 ikloop:
     halt
     ld a,(pressedKey)
@@ -3062,7 +2911,7 @@ dataStockItemsBaseParameter:
     db "5",0x0F,0xC0,0x07
 Equipmentprices:
     db 0x00
-dat_2F36:
+fuelPriceByte:
     db 0x00,0x00,0x00,",",0x01,0x00,0xA0,0x0F,0x00,"p",0x17,0x00,0xA0,0x0F,0x01,0x00
     db 0x00,0x00,0x82,0x14,0x01,0x00,0x00,0x00,"(#",0x01,0x88,0x13,0x01,0x88,0x13
     db 0x05,0x00,0x00,0x06,0x00,0x00,0x00,"@",0x1F
@@ -3109,6 +2958,8 @@ initEnergyBanksLoop:
     djnz initEnergyBanksLoop
     ld a,(fuel)
     jp setFuel
+; Token strings, each ended by a zero byte. printString picks string N by counting zeros with cpir (todo_useStringtable): N is the token itself for 0x60-0x7F,
+; token + 0x72 for 0x0E-0x1F and token - 0xA0 for 0xA0 and up. Bytes 0x80-0x9F inside a string are two-letter tokens (print_two_letter_token), 0x0E-0x1F/0x60+ recurse.
 stringsTable:
     db 0x94,"UMG",0x8E,"IF",0x90,0xFB,"E",0x8C,0x00
     db "K",0x8A,0x9C,0x00
@@ -3291,21 +3142,21 @@ LAB_ram_33bc:
 SUB_ram_33cf:
     ld a,0xBF
     ld (0x34E8),a
-PatchA_1:
+smc_PatchA_1:
     ld a,0x9F
     ld (0x34EF),a
     xor a
     ld (0x34F1),a
 LAB_ram_33dd:
     call SUB_ram_34ed
-PatchAND_1:
+smc_PatchAND_1:
     and 0xBF
     ld (de),a
     inc de
     call SUB_ram_34ed
-PatchAND_2:
+smc_PatchAND_2:
     and 0x9F
-PatchOR_1:
+smc_PatchOR_1:
     or 0x80
     ld (de),a
     inc de
@@ -3373,7 +3224,7 @@ LAB_ram_344c:
     inc de
 LAB_ram_3465:
     call SUB_ram_34ed
-PatchOR_2:
+smc_PatchOR_2:
     or 0x80
 LAB_ram_346a:
     ld (de),a
@@ -3390,9 +3241,9 @@ LAB_ram_3478:
     ld (de),a
     inc de
     call SUB_ram_34ed
-PatchAND_3:
+smc_PatchAND_3:
     and 0x80
-PatchOR_3:
+smc_PatchOR_3:
     or 0x3F
     ld (de),a
     inc de
@@ -3421,7 +3272,7 @@ LAB_ram_34a5:
     inc de
     call SUB_ram_34ed
     and 0x7F
-PatchOR_4:
+smc_PatchOR_4:
     or 0x80
     jr LAB_ram_346a
 LAB_ram_34b0:
@@ -3443,7 +3294,7 @@ LAB_ram_34b0:
 LAB_ram_34d0:
     ld a,0xBF
     jr LAB_ram_34a5
-; ZX Spectrum: shuffle_particle_table (&7E6D) 1.00
+; ZX Spectrum: shuffle_particle_table (&7E6D)
 ; On a view change swaps the first two bytes (screen X and Y) of every particle record, so the star field is re-scattered.
 shuffle_particle_table:
     ld a,(dustVar5)
@@ -3550,7 +3401,7 @@ SUB_ram_35a8:
     ld a,0x04
     ld (todoUnknownStatusFlags),a
     ret
-; ZX Spectrum: dashboard_and_special_keys (&9A40) 0.97
+; ZX Spectrum: dashboard_and_special_keys (&9A40)
 ; Once per frame in a flight view: redraws the tracking and ECM icons, runs the missile arm/fire key sequence and the escape pod key handler.
 dashboard_and_special_keys:
     ld a,(Viewdirection)
@@ -3683,7 +3534,7 @@ prMessageforDestroyedEquipment:
 ; ZX Spectrum: destroy_cargo_unit (&D21F)
 ; Destroys one unit of cargo (the dashboard flash and message are set up here).
 destroy_cargo_unit:
-    ld hl,dat_38DE
+    ld hl,creditsHighWordHi
     call SetTableBegintoAofHL
     ld a,(hl)
     and a
@@ -3968,7 +3819,7 @@ chkReleaseEscapePod:
     ld (hl),a
     jp z,LAB_ram_6718
     ret
-; ZX Spectrum: launch_escape_pod (&9C1C) 0.91
+; ZX Spectrum: launch_escape_pod (&9C1C)
 ; While the launch countdown runs it is decremented each frame; at 0 the finishing sequence starts. Otherwise the escape pod key starts it.
 meLaunchEscapePod:
     ld a,(keybFlags4CounterNstringNumber)
@@ -4058,7 +3909,7 @@ currentGalaxy:
     db 0x00
 creditsHighWord:
     db 0x00
-dat_38DE:
+creditsHighWordHi:
     db 0x00
 creditsLowWord:
     db 0x00,0x00
@@ -4274,7 +4125,7 @@ dat_3B73:
     db "COL",0x9F,"IS",0x91,"EURS HU",0x8B,0x8C
     db "S",0x00
     db "HYP",0x90,0x89,"P"
-; ZX Spectrum: draw_local_chart (&EC58) 0.93
+; ZX Spectrum: draw_local_chart (&EC58)
 ; The local (short-range) chart, key O: clears the row-occupied bitmap, then calls for_each_system_in_window with the circle callback and the name callback.
 LocalChart:
     xor a
@@ -4324,7 +4175,7 @@ lcClearLoop:
     ld a,0x0D
     ld (txt_hpos),a
     jp DrawTargetReticule
-; ZX Spectrum: for_each_system_in_window (&ECD2) 0.89
+; ZX Spectrum: for_each_system_in_window (&ECD2)
 ; Patches the callback address HL into the self-modified call below, seeds the star generator from the galaxy seed and walks the 25 systems
 ; that fall inside the chart window, calling the callback for each.
 setCalltoHLnGenerate:
@@ -4374,27 +4225,27 @@ SUB_ram_3b26:
     sub b
     add a,a
     ret
-dat_3B3F:
+buf_3B3F:
     db 0x00
-dat_3B40:
+buf_3B40:
     db 0x00
-dat_3B41:
+buf_3B41:
     db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
-dat_3B49:
+buf_3B49:
     db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
-dat_3B51:
+buf_3B51:
     db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
-dat_3B61:
+buf_3B61:
     db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
-dat_3B69:
+buf_3B69:
     db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
 drawChartPlanets:
     call SUB_ram_3b26
     add a,0x60
     sub 0x03
     ld b,a
-    ld (dat_3B3F),bc
-    ld de,dat_3B41
+    ld (buf_3B3F),bc
+    ld de,buf_3B41
     xor a
     ld bc,0x0030
     call FillmemoryRegionDEwithA
@@ -4404,15 +4255,15 @@ drawChartPlanets:
     ld d,0x00
     ld e,a
     add hl,de
-    ld de,dat_3B49
+    ld de,buf_3B49
     ld bc,0x0008
     ldir
-    ld a,(dat_3B3F)
+    ld a,(buf_3B3F)
     and 0x07
     jr z,LAB_ram_3bbd
     ld (0x3CB6),a
-    ld hl,dat_3B49
-    ld de,dat_3B61
+    ld hl,buf_3B49
+    ld de,buf_3B61
     ld b,0x08
 LAB_ram_3bad:
     push bc
@@ -4429,37 +4280,37 @@ LAB_ram_3bb0:
     pop bc
     djnz LAB_ram_3bad
 LAB_ram_3bbd:
-    ld a,(dat_3B3F)
+    ld a,(buf_3B3F)
     rrca
     rrca
     rrca
     and 0x1F
     ld (charXY),a
-    ld a,(dat_3B40)
+    ld a,(buf_3B40)
     rrca
     rrca
     rrca
     and 0x1F
     ld (txtScreenOffset),a
-    ld hl,dat_3B49
+    ld hl,buf_3B49
     call SUB_ram_3bfd
     ld hl,charXY
     inc (hl)
-    ld hl,dat_3B61
+    ld hl,buf_3B61
     call SUB_ram_3bfd
     call GetYlocationofText
     ld hl,charXY
     dec (hl)
-    ld hl,dat_3B51
+    ld hl,buf_3B51
     call SUB_ram_3bfd
     ld hl,charXY
     inc (hl)
-    ld hl,dat_3B69
+    ld hl,buf_3B69
     call SUB_ram_3bfd
     jp waggleGalaxy4Times
 ; Chart helper: takes a chart text column from a buffer and subtracts a 0-7 offset, then draws the char
 SUB_ram_3bfd:
-    ld a,(dat_3B40)
+    ld a,(buf_3B40)
     and 0x07
     ld d,0x00
     ld e,a
@@ -4470,7 +4321,7 @@ SUB_ram_3bfd:
     db 0x00,0x00
 BYTE_ram_3c0e:
     db 0x00
-; ZX Spectrum: draw_system_name (&ED78) 0.96
+; ZX Spectrum: draw_system_name (&ED78)
 ; Chart callback: works out the system's screen position, builds its name from letter pairs and prints it (skipping rows that are already occupied).
 drawPlanetnames:
     call SUB_ram_3b26
@@ -4690,7 +4541,7 @@ SUB_ram_3dc6:
     call DrawTargetReticule
     call notOnAChartscreen
     jp DrawTargetReticule
-; ZX Spectrum: find_nearest_system (&DF60) 0.90
+; ZX Spectrum: find_nearest_system (&DF60)
 ; Finds the system nearest the chart cursor by walking all 256 systems, then generates its name and data and measures the real distance from the
 ; current system.
 notOnAChartscreen:
@@ -4741,7 +4592,7 @@ storedByteVariable:
     db 0x00
 ; Sets the sound-effect trigger bit when the key-click flag is set
 sfxForKeyInput:
-    ld a,(dat_8E23)
+    ld a,(keybFlags0)
     bit 7,a
     ret z
     ld a,(sfxFlags1Bitmap)
@@ -4846,7 +4697,7 @@ anotherPrintWithToken3A:
 jrPrintString3A:
     ld a,0x3A
     jr jrjpPrintString
-; ZX Spectrum: print_token_space (&E29E) 1.00
+; ZX Spectrum: print_token_space (&E29E)
 ; Prints the character or token in A and then a space.
 printTokenAndToken0x20:
     call printString
@@ -4871,7 +4722,7 @@ CursorHome:
     xor a
     ld (charXY),a
     ret
-; ZX Spectrum: tab_to_column (&E2BC) 1.00
+; ZX Spectrum: tab_to_column (&E2BC)
 ; The column to move to is an inline byte after the CALL (the return address is stepped over it); a column of &20 or more starts a new line.
 printFollowingTokenWithSpace:
     pop hl
@@ -4992,6 +4843,8 @@ LAB_ram_3fae:
     pop bc
     djnz LAB_ram_3faa
     ret
+; Alert-state icon: displayAlertStateinHeader draws these bytes as 8 rows of 4 into the screen header.
+; Part of it is decoded as instructions, so the listing shows a few ld/rrca lines inside the data.
 gfxAlertStateinHeaders:
     db 0x07,0x0F,0x0F
     ld c,0x07
@@ -5071,7 +4924,7 @@ printTokens4b4d:
     ld a,0x4D
 directPrintstring:
     jp printString
-; ZX Spectrum: commodity_is_tonnes (&E34C) 0.88
+; ZX Spectrum: commodity_is_tonnes (&E34C)
 ; Carry set when the current commodity is measured in tonnes (indices 0-12 and 16), clear for kilograms and grams.
 todoReturnPressed:
     ld a,(storedByteVariable)
@@ -5190,7 +5043,7 @@ chkvalidinput:
 LAB_ram_40ed:
     ld d,a
     ld a,(inputstrlen)
-isPatchStrlen:
+smc_isPatchStrlen:
     cp 0x0A
     jr nc,inputend
     inc a
@@ -5290,7 +5143,7 @@ RecenteronDockedPlanet:
 DrawFramedTitlebox:
     ld a,0x96
     jp printStringA
-; ZX Spectrum: add_a_to_hl (&EB3E) 1.00
+; ZX Spectrum: add_a_to_hl (&EB3E)
 SetTableBegintoAofHL:
     ld d,0x00
     ld e,a
@@ -5308,7 +5161,7 @@ digitNumber:
 sub_42C1:
     scf
     jr LAB_ram_41be
-; ZX Spectrum: print_byte (&D2E1) 0.87
+; ZX Spectrum: print_byte (&D2E1)
 ; Three entries share one body: here A is printed as a plain decimal byte; the next entry honours the carry flag as a decimal-place flag; a third
 ; prints the 16-bit value in HL. The minimum digit count is in a variable set by the caller.
 printNumber:
@@ -5325,7 +5178,7 @@ todo_SomethingwithDigits:
     ld a,0x01
     ld (singleDigit),a
     ld (digitNumber),hl
-    ld de,dat_2710
+    ld de,0x2710
     call PrintHowManyOfIt
     ld de,0x03E8
     call PrintHowManyOfIt
@@ -5352,7 +5205,7 @@ LAB_ram_41f9:
     inc a
     ld (singleDigit),a
     ret
-; ZX Spectrum: print_cash (&D32D) 0.86
+; ZX Spectrum: print_cash (&D32D)
 ; Prints the cash balance, kept as two words: whole thousands of credits and the 0-9999 remainder in tenths of a credit (thousands printed
 ; without leading zeros, then the remainder with one decimal place).
 getMoneyinHLDE:
@@ -5577,7 +5430,7 @@ CurHomeinFrame:
     call placeCursor
 LAB_ram_43a0:
     jp placeCursor
-; ZX Spectrum: sysdata_print_economy (&EEA8) 0.90
+; ZX Spectrum: sysdata_print_economy (&EEA8)
 ; System data screen: the economy line (a prosperity adjective for 0-7 plus industrial or agricultural, from the economy byte).
 printEconomy:
     ld a,0x70
@@ -5644,7 +5497,7 @@ searchTokenInStringstableLoop:
     xor a
     cpir
     jr searchTokenInStringstableLoop
-; ZX Spectrum: recursive_other_token_loop (&D48E) 1.00
+; ZX Spectrum: recursive_other_token_loop (&D48E)
 printfoundString:
     ld a,(hl)
     and a
@@ -5675,7 +5528,7 @@ LAB_ram_442c:
     xor a
     cpir
     jp LAB_ram_442c
-; ZX Spectrum: print_other_token (&D470) 1.00
+; ZX Spectrum: print_other_token (&D470)
 parseToken:
     ld b,a
     ld a,(BYTE_ram_43d7)
@@ -5810,10 +5663,10 @@ DrawCharLoop:
     or c
     ld c,a
     ld a,(de)
-dcPatchAdr1:
+smc_dcPatchAdr1:
     nop
     or c
-dcPatchAdr2:
+smc_dcPatchAdr2:
     nop
     ld (de),a
     inc e
@@ -5827,10 +5680,10 @@ dcPatchAdr2:
     or c
     ld c,a
     ld a,(de)
-dcPatchAdr3:
+smc_dcPatchAdr3:
     nop
     or c
-dcPatchAdr4:
+smc_dcPatchAdr4:
     nop
     ld (de),a
     dec e
@@ -5939,7 +5792,7 @@ loc_45B2:
     cp 0x3F
     ret z
     jp DrawASCIIChar
-; ZX Spectrum: other_token_92_to_128 (&D5B4) 1.00
+; ZX Spectrum: other_token_92_to_128 (&D5B4)
 ; Other-tokens &5B-&80: each indexes a run of five near-synonyms (synonym_group_table); text_rng picks one of the five.
 expandDescription:
     ld d,0x00
@@ -6108,7 +5961,7 @@ todo_stringend:
     db 0x00
 BYTE_ram_469a:
     db 0x00,0x00
-; ZX Spectrum: buffer_justified_char (&D6B9) 0.99
+; ZX Spectrum: buffer_justified_char (&D6B9)
 ; Word-wrap engine: every character printed while justification is on (token control code 28) is appended to the line buffer here and,
 ; when the line is full, the buffer is output with the spaces spread out.
 buffer_justified_char:
@@ -6201,7 +6054,7 @@ LAB_ram_473a:
     inc de
     djnz LAB_ram_473a
     ret
-; ZX Spectrum: begin_justified_text (&D75A) 1.00
+; ZX Spectrum: begin_justified_text (&D75A)
 ; Token control code 28: switches word-wrap buffering on, clears the word staging area and the buffer pointers, then joins buffer_justified_char.
 begin_justified_text:
     ld a,0x01
@@ -6225,7 +6078,7 @@ LAB_ram_475e:
     and a
     call nz,todoPrintAWord
     ret
-; ZX Spectrum: - (&D783) 1.00
+; ZX Spectrum: - (&D783)
 ; Word-wrap engine: steps the buffer pointer back to the previous space, counting the characters skipped in B (wrapping at the buffer start).
 SUB_ram_476b:
     ld hl,(todo_stringpointer)
@@ -6241,10 +6094,10 @@ LAB_ram_4770:
     and a
     sbc hl,de
     ret nc
-    ld hl,dat_1BE3
+    ld hl,tempString1End
     ld (todo_stringpointer),hl
     jr SUB_ram_476b
-; ZX Spectrum: - (&D7A1) 1.00
+; ZX Spectrum: - (&D7A1)
 ; Word-wrap engine: overwrites the buffer with spaces from the cursor up to the next space (stops at a zero byte).
 SUB_ram_4789:
     ld b,0x20
@@ -6259,7 +6112,7 @@ LAB_ram_478e:
     cp c
     jr nz,LAB_ram_478e
     ret
-; ZX Spectrum: sysdata_print_species (&EECE) 0.89
+; ZX Spectrum: sysdata_print_species (&EECE)
 ; System data screen: the inhabitants line, built in four parts from bit fields of the system seed (a human colony is one fixed token).
 printAlienRace:
     ld a,h
@@ -6307,7 +6160,7 @@ printRaceString:
     call SUB_ram_ff39
     pop af
     jp printString
-; ZX Spectrum: sysdata_print_radius (&EF21) 1.00
+; ZX Spectrum: sysdata_print_radius (&EF21)
 ; System data screen: average planetary radius in km: high byte = (seed bits & &0F) + 11, low byte from the seed, printed as a 5-digit number.
 printPlanetsRadius:
     ld hl,(qq5)
@@ -6321,7 +6174,7 @@ printPlanetsRadius:
     ld (numberOfDigits),a
     and a
     jp todo_SomethingwithDigits
-; ZX Spectrum: - (&EF37) 0.91
+; ZX Spectrum: - (&EF37)
 ; Compares the 6 bytes at HL with the current galaxy seed: carry clear if they are equal. Used to spot the galaxy's first system (the invasion target).
 CompareHLtoSEED:
     ld de,galaxySeed
@@ -6338,7 +6191,7 @@ LAB_ram_47ff:
 LAB_ram_4809:
     scf
     ret
-; ZX Spectrum: show_market_prices (&EF48) 0.98
+; ZX Spectrum: show_market_prices (&EF48)
 ; Key K: the market prices screen.
 MarketPrices:
     call DrawFramedTitlebox
@@ -6481,7 +6334,7 @@ SUB_ram_491a:
     call placeCursor
     ld a,0x05
     jp SUB_ram_3f25
-; ZX Spectrum: status_print_laser (&F07A) 0.87
+; ZX Spectrum: status_print_laser (&F07A)
 ; Status page: one laser mount line (HL walks the four mount bytes, &EF86 counts the mounts); nothing is printed for an empty mount.
 prListEquippedLasers:
     ld a,(laserDirections)
@@ -6650,7 +6503,7 @@ Inventory:
     ld a,(largeCargoBay)
     and a
     jr z,LAB_ram_4a72
-    ld hl,dat_58C1
+    ld hl,0x58C1
     ld a,0x05
     call printStringFollowingByte
     db "k"
@@ -6683,11 +6536,11 @@ ClearSaveGameRam:
     ld bc,0x0066
     ldir
     ret
-patch1:
+smc_patch1:
     db 0x00
 countdownnumberhypspace2:
     db 0x00
-patch3:
+smc_patch3:
     db 0x00
 msgCoordinateX:
     db 0x00
@@ -6722,7 +6575,7 @@ LAB_ram_4acd:
     ld hl,flagWhichScreenToPrint
     res 7,(hl)
     ret
-; ZX Spectrum: - (&DAB4) 1.00
+; ZX Spectrum: - (&DAB4)
 SUB_ram_4aee:
     call CountDowntoHyperJump
     call chkConditionNSetIndicatorColors
@@ -6730,7 +6583,7 @@ SUB_ram_4aee:
     ld a,(hl)
     and a
     jr nz,printFlightMessage
-    ld hl,patch3
+    ld hl,smc_patch3
     inc (hl)
     bit 0,(hl)
     jr nz,LAB_ram_4b68
@@ -6743,7 +6596,7 @@ LAB_ram_4b08:
     inc hl
     djnz LAB_ram_4b08
     ret
-; ZX Spectrum: - (&DAD7) 1.00
+; ZX Spectrum: - (&DAD7)
 LAB_ram_4b11:
     res 7,(hl)
     ld c,(hl)
@@ -6814,7 +6667,7 @@ LAB_ram_4b68:
     ld a,(flagDockingComputerOn)
     and a
     jr nz,msgDockingComputersOn
-    ld hl,patch1
+    ld hl,smc_patch1
     ld a,(hl)
     and a
     jr nz,LAB_ram_4b9a
@@ -6855,7 +6708,7 @@ setEnergyLowMessage:
     ld (flagCloakingDeviceActive),a
     ld bc,0x6409
     jr gotoSetMsgInBC
-; ZX Spectrum: - (&DB91) 1.00
+; ZX Spectrum: - (&DB91)
 resetInflightMessagesFlags:
     ld b,0x08
     ld hl,msgECMJammer
@@ -6894,7 +6747,7 @@ SUB_ram_4bd2:
     ret z
     ld a,0x02
     ld (tunnelFlag1),a
-    ld bc,dat_7406
+    ld bc,buf_7406
     jr doSpaceJumpafterCountDown
 tryHyperSpace:
     call SUB_ram_3dc6
@@ -6968,7 +6821,7 @@ contGalacticJump:
     ld (galacticHyperdrive),a
     ld a,(currentGalaxy)
     inc a
-    ld (dat_2F36),a
+    ld (fuelPriceByte),a
     and 0x07
     ld (currentGalaxy),a
     ld hl,galaxySeed
@@ -6979,7 +6832,7 @@ contGalacticJump:
     ld (legalStatus),a
     call SUB_ram_3dc6
     jp generateTargetSystemparAtHyperjump
-; ZX Spectrum: rotate_word_left (&DC83) 1.00
+; ZX Spectrum: rotate_word_left (&DC83)
 ; Rotates the 16-bit word at HL left by one bit and advances HL by 2 (one step of the galaxy seed twist).
 randomizeGalSeed:
     ld e,(hl)
@@ -7007,10 +6860,10 @@ someHyperSpaceFunctions:
     ld a,(economy)
     add a,a
     add a,b
-    ld (dat_2F36),a
+    ld (fuelPriceByte),a
     ld hl,legalStatus
     srl (hl)
-    ld a,(dat_8E23)
+    ld a,(keybFlags0)
     bit 6,a
     jr nz,todoMisJump
     ld a,(todo_varEscapepod)
@@ -7337,37 +7190,37 @@ copyCharset:
     ld bc,0x0100
     ldir
     call disableROM
-    ld hl,charPatchD628
+    ld hl,smc_charPatchD628
     ld de,0xD628
     ld bc,0x0010
     ldir
-    ld hl,charPatchD650
+    ld hl,smc_charPatchD650
     ld de,0xD650
     ld bc,0x0010
     ldir
-    ld hl,charPatchD6D8
+    ld hl,smc_charPatchD6D8
     ld de,0xD6D8
     ld bc,0x0020
     ldir
-    ld hl,charPatchD700
+    ld hl,smc_charPatchD700
     ld de,0xD700
     ld bc,0x0008
     ldir
-    ld hl,charPatchD7D8
+    ld hl,smc_charPatchD7D8
     ld de,0xD7D8
     ld bc,0x0028
     ldir
     ret
-charPatchD628:
+smc_charPatchD628:
     db 0x00,"~BBB~",0x00,0xFF,0x00,0xC0,0xF0,0xF8,0xFC,0xFC,0xFE,0xFE
-charPatchD650:
+smc_charPatchD650:
     db 0x18,0x18,0x18,0x18,0x18,0x00,0x18,0x00,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0xFF
-charPatchD6D8:
+smc_charPatchD6D8:
     db 0x00,0x00,0x1F,0x1F,0x18,0x18,0x18,0x1F,0x00,0x00,0xE0,0xE0,0x00,0x00,0x00,0xC0
     db 0x18,0x18,0x18,0x1F,0x1F,0x00,0x00,0xFF,0x00,0x00,0x00,0xE0,0xE0,0x00,0x00,0xFF
-charPatchD700:
+smc_charPatchD700:
     db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xFF
-charPatchD7D8:
+smc_charPatchD7D8:
     db 0x00,0x00,0x07,0x07,0x06,0x06,0x06,0x07,0x01,0x01,0xF1,0xF1,"1",0x01,0x01,0xF1
     db 0x00,0x00,0x06,0x07,0x07,0x00,0x00,0xFF,"111",0xF1,0xF1,0x01,0x01,0xFF
     db 0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01
@@ -7581,7 +7434,7 @@ LAB_ram_5115:
     ld a,0x01
     ld (todoActiveSlots),a
 LAB_ram_5127:
-    ld a,(dat_1B73)
+    ld a,(buf_1B73)
     and a
     jr nz,LAB_ram_5133
     ld a,(todoActiveSlots)
@@ -7696,7 +7549,7 @@ LAB_ram_5266:
     inc ix
     inc ix
     ret
-; ZX Spectrum: normalize_position_component (&9ECF) 1.00
+; ZX Spectrum: normalize_position_component (&9ECF)
 ; In: IX = an encoded position component, DE = the vector's length. Divides the magnitude by DE (div_hl_a_de), halves it, restores the sign,
 ; stores it back over the component and advances IX by 2: one step of normalising a vector.
 normalize_position_component:
@@ -7717,7 +7570,7 @@ LAB_ram_5285:
     inc ix
     inc ix
     ret
-; ZX Spectrum: approx_sqrt_16bit (&9EF1) 1.00
+; ZX Spectrum: approx_sqrt_16bit (&9EF1)
 ; In: HL. Out: HL = &100 * sqrt(HL), i.e. 8.8 fixed point (H = integer part). Inputs below &1000 are scaled up first (by 2^4 or 2^8) so
 ; sqrt_approx_core always sees H >= &10, and the root is shifted back by 2 or 4 bits. Used to normalise vectors.
 approx_sqrt_16bit:
@@ -7736,7 +7589,7 @@ LAB_ram_529a:
     srl h
     rr l
     ret
-; ZX Spectrum: sqrt_approx_rescale_256 (&9F0A) 1.00
+; ZX Spectrum: sqrt_approx_rescale_256 (&9F0A)
 ; Input fits in one byte: treat L as the high byte (x256), take the root, shift the result right 4 times.
 sqrt_approx_rescale_256:
     ld h,l
@@ -7748,7 +7601,7 @@ LAB_ram_52b0:
     rr l
     djnz LAB_ram_52b0
     ret
-; ZX Spectrum: sqrt_approx_core (&9F18) 1.00
+; ZX Spectrum: sqrt_approx_core (&9F18)
 ; Newton's method, x' = (x + N*&10000/x) / 2, from the fixed guess DE = &8000: one rough opening pass and two full steps, good to about 2
 ; in the integer part for H >= &10. The divides go through div_hl_a_de, which already scales the quotient by &100.
 sqrt_approx_core:
@@ -7781,7 +7634,7 @@ SUB_ram_52d4:
     pop hl
     add hl,bc
     ret
-; ZX Spectrum: tidy_vector (&9F41) 0.83
+; ZX Spectrum: tidy_vector (&9F41)
 todoSomethingwithSine:
     ld h,0xC7
     ld l,(ix+1)
@@ -7983,7 +7836,7 @@ rotate_orientation_vector:
     ld de,0x0006
     add ix,de
     ret
-; ZX Spectrum: combine_vector_rotation_rate (&A0FD) 0.81
+; ZX Spectrum: combine_vector_rotation_rate (&A0FD)
 todoCalcAngle:
     push de
     xor b
@@ -8014,7 +7867,7 @@ LAB_ram_54c1:
     rl e
     rra
     ret
-; ZX Spectrum: rotate_orientation_vectors (&A127) 0.95
+; ZX Spectrum: rotate_orientation_vectors (&A127)
 ; Per axis: applies pitch between nosev and roofv and roll between roofv and sidev (the BBC's MVEIT orientation step).
 calcMatrixBankingClimbing:
     ld a,(Entitypitch)
@@ -8046,7 +7899,7 @@ calcMatrixBankingClimbing:
     inc ix
     inc ix
     ret
-; ZX Spectrum: rotate_and_step_ship (&A173) 0.85
+; ZX Spectrum: rotate_and_step_ship (&A173)
 ; Moves a ship: rotates its position by the player's roll and pitch (extended-precision combine) and steps it forward along z. IX = ship record.
 MVIT:
     ld a,(inputPitch)
@@ -8175,7 +8028,7 @@ LAB_ram_560c:
     pop iy
     pop ix
     ret
-; ZX Spectrum: reshuffle_rate_bits (&A281) 1.00
+; ZX Spectrum: reshuffle_rate_bits (&A281)
 ; Rearranges the bits of a rate byte before it is combined in the extended-precision rotate: bit 0 becomes a copy of bit 6, bits 5-0 shift up one place.
 reshuffle_rate_bits:
     ld c,a
@@ -8185,10 +8038,10 @@ reshuffle_rate_bits:
     rla
     rr c
     ret
-; ZX Spectrum: draw_title_ship (&A28D) 1.00
+; ZX Spectrum: draw_title_ship (&A28D)
 ; Title screen: steps the demo ship's rotation and position one frame with fixed rates, tidies its orientation vectors and draws it.
 drawIntroShip:
-    ld ix,dat_1B51
+    ld ix,buf_1B51
     ld h,(ix+36)
     ld l,(ix+35)
     push hl
@@ -8198,10 +8051,10 @@ drawIntroShip:
     ld a,0x8C
     call applyRollandPitch
     call sub_5EE3
-    ld ix,dat_1B5A
+    ld ix,buf_1B5A
     call todoSomethingwithSine
     call todoSomethingwithSine
-    ld ix,dat_1B51
+    ld ix,buf_1B51
     jp SUB_ram_564f
 ; For views 0-3, test a ship face normal against the view direction and return early if it is hidden (probably)
 SUB_ram_564f:
@@ -8342,7 +8195,7 @@ LAB_ram_5741:
     jp nz,cache_explosion_screen_pos
     ld a,(aspMissionState)
     dec a
-dat_5860:
+buf_5860:
     jr nz,drawShipDistanceCheck
     bit 6,(ix+38)
     jp nz,chkEntityFiresLaser
@@ -8401,7 +8254,6 @@ LAB_ram_5799:
 putshippixelstoBM:
     push bc
     db 0xCD
-dat_58C1:
     sbc a,c
     ld h,a
     inc a
@@ -8454,7 +8306,7 @@ drawEnemyLaser:
     pop af
     res 3,(ix+32)
     ret
-; ZX Spectrum: cache_explosion_screen_pos (&A8AC) 1.00
+; ZX Spectrum: cache_explosion_screen_pos (&A8AC)
 cache_explosion_screen_pos:
     ld a,(pitchVal)
     ld (ix+28),a
@@ -8479,7 +8331,7 @@ LAB_ram_5830:
     ld (ix+30),a
     set 5,(ix+32)
     ret
-; ZX Spectrum: draw_laser_only (&A8DE) 1.00
+; ZX Spectrum: draw_laser_only (&A8DE)
 ; Reached from the early exits of the draw routine (ship off screen or too far to draw): if the ship should fire, draws its laser from the last
 ; projected coordinates, so laser fire stays visible when the ship itself is not drawn.
 chkEntityFiresLaser:
@@ -8582,7 +8434,7 @@ dat_59F2:
     ld (0x2725),a
     ld a,(de)
     inc de
-    ld (cpatchloop),a
+    ld (smc_cpatchloop),a
     ld a,(de)
 todo_tableforedges:
     db 0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01
@@ -8594,11 +8446,11 @@ varCoordinate:
     db 0x00,0x00
 todoCounterNextVertice:
     db 0x01
-dat_5921:
+edgeVecX:
     db 0x00,0x00
-dat_5923:
+edgeVecY:
     db 0x00,0x00
-dat_5925:
+edgeVecZ:
     db 0x00,0x00
 pitchVal:
     db 0x00
@@ -8645,7 +8497,7 @@ LAB_ram_596e:
     ld (BYTE_ram_592e),a
     pop af
     jp todoNextVertice
-; ZX Spectrum: check_face_visible (&AA10) 1.00
+; ZX Spectrum: check_face_visible (&AA10)
 ; A = the two face numbers of an edge (bits 0-3 and 4-7). Zero flag clear if either face is visible according to the face visibility table.
 getEntryfromTable:
     ld b,a
@@ -8796,7 +8648,7 @@ LAB_ram_5a6a:
     and a
     ld h,d
     ret
-; ZX Spectrum: mult_b_c_msb (&AB0B) 1.00
+; ZX Spectrum: mult_b_c_msb (&AB0B)
 ; In: B, C. Out: A = high byte of B*C (may be 1 off). Same x*x - y*y trick as mult_b_c, using only the high-byte page &C700 of the table.
 mult_b_c_msb:
     ld a,b
@@ -8815,7 +8667,7 @@ LAB_ram_5a78:
     ld a,(hl)
     sub d
     ret
-; ZX Spectrum: mult_b_coord_scaled (&AB1E) 1.00
+; ZX Spectrum: mult_b_coord_scaled (&AB1E)
 ; In: B = a vertex coordinate magnitude, IY = the ship's calculation table (IY+1 = an orientation byte). Out: HL = high byte of
 ; (B << n) * |orientation byte|. n is the shift count held in BYTE_ram_592d, chosen elsewhere to keep the most precision; the caller shifts the result back.
 mult_b_coord_scaled:
@@ -8832,7 +8684,7 @@ LAB_ram_5a88:
     ld h,0x00
     pop de
     ret
-; ZX Spectrum: mult_b_c (&AB34) 1.00
+; ZX Spectrum: mult_b_c (&AB34)
 ; In: B, C. Out: HL = B*C, with no multiply instruction. With x = (B+C)/2 and y = |B-C|/2 we have B*C = x*x - y*y, and both
 ; squares come from the table (&C600/&C700). The halving truncates, so the result is 1 low when B+C is odd.
 mult_b_c:
@@ -8904,27 +8756,27 @@ LAB_ram_5ae4:
     djnz LAB_ram_5ae4
     pop ix
     call rotate_vertex_axis_cached
-    ld (dat_5921),hl
+    ld (edgeVecX),hl
     call rotate_vertex_axis_cached
-    ld (dat_5923),hl
+    ld (edgeVecY),hl
     call rotate_vertex_axis_cached
-    ld (dat_5925),hl
+    ld (edgeVecZ),hl
     jr LAB_ram_5b1a
 LAB_ram_5b06:
     pop ix
     call face_normal_component
-    ld (dat_5921),hl
+    ld (edgeVecX),hl
     call face_normal_component
-    ld (dat_5923),hl
+    ld (edgeVecY),hl
     call face_normal_component
-    ld (dat_5925),hl
+    ld (edgeVecZ),hl
 LAB_ram_5b1a:
     xor a
     ld (BYTE_ram_5c06),a
     ld (BYTE_ram_5c07),a
     ld (BYTE_ram_5c08),a
     jp LAB_ram_5c45
-; ZX Spectrum: rotate_vertex_axis_cached (&ABC0) 1.00
+; ZX Spectrum: rotate_vertex_axis_cached (&ABC0)
 ; Rotates one vertex coordinate into the ship's orientation when the vertex has the same magnitudes as the previous one (mirrored points): reuses
 ; the three products cached at IY and only flips the sign of each whose axis sign changed. Out: HL = coordinate, IY += 6.
 rotate_vertex_axis_cached:
@@ -8946,7 +8798,6 @@ rotate_vertex_axis_cached:
     ld d,a
     ld (iy+21),d
     call add_sign_mag_bytes
-dat_5B4E:
     ld l,a
     ld e,(iy+22)
     ld d,(iy+23)
@@ -8961,7 +8812,7 @@ dat_5B4E:
     ld de,0x0006
     add iy,de
     ret
-; ZX Spectrum: face_normal_component (&AC01) 1.00
+; ZX Spectrum: face_normal_component (&AC01)
 ; In: IX = a face's normal, IY = ship calculation table (offset 0, 6 or 12 for x, y, z). Out: HL = normal_x*sidev + normal_y*roofv +
 ; normal_z*nosev (the matching component, sign-magnitude), IY += 6.
 face_normal_component:
@@ -9014,7 +8865,7 @@ face_normal_component:
     ld de,0x0006
     add iy,de
     ret
-; ZX Spectrum: div_de_h (&AC69) 0.92
+; ZX Spectrum: div_de_h (&AC69)
 ; Divides DE:C by HL:A into an 8-bit fraction in C (saturating at &FF once the dividend reaches the divisor). A and C extend the divisor and
 ; dividend by one low byte each for precision. The divisor is first shifted left until HL's top bit is set (DE:C shifts the same amount),
 ; then a plain restoring division produces the quotient.
@@ -9078,69 +8929,68 @@ LAB_ram_5c1e:
     jp z,LAB_ram_5ada
     call rotate_vertex_axis
     ld (BYTE_ram_5c06),a
-    ld (dat_5921),hl
+    ld (edgeVecX),hl
     call rotate_vertex_axis
     ld (BYTE_ram_5c07),a
-    ld (dat_5923),hl
+    ld (edgeVecY),hl
     call rotate_vertex_axis
     ld (BYTE_ram_5c08),a
-    ld (dat_5925),hl
+    ld (edgeVecZ),hl
 LAB_ram_5c45:
     xor a
     ld (BYTE_ram_592e),a
     pop iy
     pop hl
-dat_5C4C:
     ex (sp),ix
     push hl
     ld l,(ix+0)
     ld h,(ix+1)
     ld b,(ix+2)
-    ld de,(dat_5921)
+    ld de,(edgeVecX)
     ld a,(BYTE_ram_5c06)
     rla
     push af
     call SUB_ram_5ab6
-    ld (dat_5921),hl
+    ld (edgeVecX),hl
     ld (BYTE_ram_592a),a
     pop af
     ld (BYTE_ram_5c06),a
     ld l,(ix+3)
     ld h,(ix+4)
     ld b,(ix+5)
-    ld de,(dat_5923)
+    ld de,(edgeVecY)
     ld a,(BYTE_ram_5c07)
     rla
     push af
     call SUB_ram_5ab6
-    ld (dat_5923),hl
+    ld (edgeVecY),hl
     ld (BYTE_ram_592b),a
     pop af
     ld (BYTE_ram_5c07),a
     ld l,(ix+6)
     ld h,(ix+7)
     ld b,(ix+8)
-    ld de,(dat_5925)
+    ld de,(edgeVecZ)
     ld a,(BYTE_ram_5c08)
     rla
     push af
     call SUB_ram_5ab6
-    ld (dat_5925),hl
+    ld (edgeVecZ),hl
     ld (BYTE_ram_592c),a
     pop af
     ld (BYTE_ram_5c08),a
     ld a,(Viewdirection)
     bit 1,a
     jr nz,LAB_ram_5ce8
-    ld de,(dat_5921)
+    ld de,(edgeVecX)
     ld a,(BYTE_ram_5c06)
     ld c,a
     ld a,(BYTE_ram_5c08)
     call div_de_h
     ld a,c
     ld (pitchVal),a
-    ld de,(dat_5923)
-    ld hl,(dat_5925)
+    ld de,(edgeVecY)
+    ld hl,(edgeVecZ)
     ld a,(BYTE_ram_5c07)
     ld c,a
     ld a,(BYTE_ram_5c08)
@@ -9156,15 +9006,15 @@ dat_5C4C:
     jr LAB_ram_5d1b
 LAB_ram_5ce8:
     ex de,hl
-    ld hl,(dat_5921)
+    ld hl,(edgeVecX)
     ld a,(BYTE_ram_5c08)
     ld c,a
     ld a,(BYTE_ram_5c06)
     call div_de_h
     ld a,c
     ld (pitchVal),a
-    ld de,(dat_5923)
-    ld hl,(dat_5921)
+    ld de,(edgeVecY)
+    ld hl,(edgeVecX)
     ld a,(BYTE_ram_5c07)
     ld c,a
     ld a,(BYTE_ram_5c06)
@@ -9266,7 +9116,7 @@ todo_getNextEdge:
     djnz edgeParseLoop
     pop ix
     ret
-; ZX Spectrum: lookup_vertex_coords (&AE50) 1.00
+; ZX Spectrum: lookup_vertex_coords (&AE50)
 ; A = vertex number: finds its coordinates in the ship's vertex data.
 lookup_vertex_coords:
     ld b,a
@@ -9336,6 +9186,7 @@ LAB_ram_5e22:
     inc iy
     inc iy
     ret
+; Pattern data for the scanner background: cleanScanner reads it a nibble at a time and draws it into the scanner area of the screen.
 gfxdataScanner:
     db 0x01,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xDF,0xFF,0xF7,0xFF
 dat_5F55:
@@ -9648,7 +9499,7 @@ compassZ:
     db 0x00
 compassX:
     db 0x00
-; ZX Spectrum: position_tracked_markers (&81A9) 1.00
+; ZX Spectrum: position_tracked_markers (&81A9)
 ; Runs every frame: updates the two tracked objects (the planet and the station, positions in 9-byte sign-magnitude blocks) on the dashboard compass.
 ; (Fessor's name is misleading: the Spectrum disassembly reads this as the compass update.)
 chkAltitude:
@@ -9752,7 +9603,7 @@ chalt4:
     pop de
     call chalt5
     jr chalt9
-; ZX Spectrum: load_and_divide_position_component (&8271) 1.00
+; ZX Spectrum: load_and_divide_position_component (&8271)
 chalt5:
     xor a
     ld l,(ix+0)
@@ -9789,7 +9640,7 @@ chalt9:
 chalt10:
     ld (compassX),a
     jp drawCompass
-; ZX Spectrum: divide_scale_8_and_sign (&82BB) 0.86
+; ZX Spectrum: divide_scale_8_and_sign (&82BB)
 chalt11:
     ld a,(ix+0)
     ld l,(ix+1)
@@ -9813,7 +9664,7 @@ crashOnPlanet:
     ld a,0x01
     ld (GameOverFlag),a
     ret
-; ZX Spectrum: scale_distance_and_step_busy_flag (&82D7) 0.82
+; ZX Spectrum: scale_distance_and_step_busy_flag (&82D7)
 chalt15:
     push hl
     add hl,hl
@@ -10091,7 +9942,7 @@ scnCountShipslots:
     db 0x00
 todo_CleanScanCounter:
     db 0x00
-; ZX Spectrum: shift_bc_right (&96C5) 1.00
+; ZX Spectrum: shift_bc_right (&96C5)
 ; Four entries share one srl b / rr c pair: this one shifts BC right by 4 bits, the next by 3, 2 and 1.
 BCdiv16:
     srl b
@@ -10353,7 +10204,7 @@ getByteAdrinScrMem:
     rr h
     rr l
     jr circgetPixelmaskinBitmap
-; ZX Spectrum: force_loading_busy_state (&988E) 1.00
+; ZX Spectrum: force_loading_busy_state (&988E)
 force_loading_busy_state:
     ld a,(storeEntityEnergy2)
     and a
@@ -10374,7 +10225,7 @@ chkManualDocking:
     xor a
     ld (flagCorrectOrientation),a
     jr EnterStation
-; ZX Spectrum: handle_demo_fire_key (&717B) 0.91
+; ZX Spectrum: handle_demo_fire_key (&717B)
 chkCanDockStation:
     ld a,(keybFlags4CounterNstringNumber)
     ld b,a
@@ -10407,7 +10258,7 @@ EnterStation:
 LAB_ram_6718:
     call nudge_tracked_marker
     jp DockingSequence
-; ZX Spectrum: nudge_tracked_marker (&71C0) 1.00
+; ZX Spectrum: nudge_tracked_marker (&71C0)
 nudge_tracked_marker:
     ld iy,posDataSun
     ld ix,sEntityxlo
@@ -10426,14 +10277,14 @@ LAB_ram_6734:
     add iy,de
     add ix,de
     ret
-; ZX Spectrum: half_diff_ship_marker (&71E4) 1.00
+; ZX Spectrum: half_diff_ship_marker (&71E4)
 half_diff_ship_marker:
     ld h,(iy+2)
     ld l,(iy+1)
     ld d,(ix+2)
     ld e,(ix+1)
     jp minus_de_plus_hl_div_2
-; ZX Spectrum: handle_chart_cursor_keys (&71F3) 1.00
+; ZX Spectrum: handle_chart_cursor_keys (&71F3)
 handle_chart_cursor_keys:
     ld a,(Viewdirection)
     cp 0x07
@@ -10545,7 +10396,7 @@ SUB_ram_6802:
     call calcSunPlanetCoordinates
     and a
     ret
-; ZX Spectrum: set_demo_message_flag (&75C0) 0.94
+; ZX Spectrum: set_demo_message_flag (&75C0)
 todoOverheating:
     ld a,(BYTE_ram_3933)
     and a
@@ -10584,7 +10435,7 @@ moveSunNPlanet:
     call MVIT
     ld ix,posDataPlanet
     jp MVIT
-; ZX Spectrum: fly_ship0_to_origin (&7861) 1.00
+; ZX Spectrum: fly_ship0_to_origin (&7861)
 ; Flies the object in slot 0 (the planet or station on arrival) in to the origin and then marks the move as done.
 moveSpaceStation:
     ld a,(StationEnergy)
@@ -10901,7 +10752,7 @@ LAB_ram_6aa0:
     ld d,e
     ld e,b
     jr LAB_ram_6aca
-; ZX Spectrum: divide_signed (&77A0) 0.91
+; ZX Spectrum: divide_signed (&77A0)
 ; The Spectrum port of the BBC's DVID3B2. Divides a 24-bit numerator (H L C) by a 24-bit divisor (D E B), both magnitudes, into an 8-bit
 ; quotient in D. calcSunPlanetCoordinates feeds it a coordinate over the depth, so D comes back as an offset from the screen centre.
 ; Numerator and divisor are shifted left in step (the ratio is unchanged) to use the full precision. The alternate register C' counts the call
@@ -10960,7 +10811,7 @@ LAB_ram_6ae3:
 LAB_ram_6aee:
     set 2,b
     jp LAB_ram_6af9
-; ZX Spectrum: divide_underflow (&77ED) 1.00
+; ZX Spectrum: divide_underflow (&77ED)
 ; Numerator smaller than divisor (the object is within a pixel of the centre on this axis): marks bit 2 (first call) or bit 3 (second call)
 ; of B' and carries on shifting for the fraction.
 divide_underflow:
@@ -10985,7 +10836,7 @@ LAB_ram_6afe:
     dec a
     jr nz,LAB_ram_6afe
     ret
-; ZX Spectrum: divide_overflow (&780A) 0.91
+; ZX Spectrum: divide_overflow (&780A)
 ; Reached when the lockstep shift carried a 1 out of the numerator: if the quotient cannot fit in a byte the routine returns 0 (not drawable),
 ; otherwise it finishes with the top-byte divide.
 divide_overflow:
@@ -11019,7 +10870,7 @@ LAB_ram_6b32:
     scf
     rr h
     jr LAB_ram_6b3c
-; ZX Spectrum: divide_underflow_overflow (&7831) 0.87
+; ZX Spectrum: divide_underflow_overflow (&7831)
 LAB_ram_6b37:
     pop af
     jr c,LAB_ram_6b32
@@ -11752,7 +11603,7 @@ dust67:
 dust68:
     ld (dustVar9),a
     jp dust23
-; ZX Spectrum: erase_starfield (&7C92) 0.88
+; ZX Spectrum: erase_starfield (&7C92)
 ; Erases last frame's starfield by XORing the same masks again over the erase list.
 drawDustParticles:
     ld hl,dustParticleAdrTable
@@ -11806,7 +11657,7 @@ dust73:
     ld hl,0x0000
     and a
     jr dust75
-; ZX Spectrum: mul_a_by_c_loop (&7CC9) 1.00
+; ZX Spectrum: mul_a_by_c_loop (&7CC9)
 ; The shift-and-add loop of an A x C multiply: each bit of C that is set adds the running multiplicand into HL, which doubles for the next bit.
 dust74:
     add a,a
@@ -11942,7 +11793,7 @@ LAB_ram_712c:
 LAB_ram_7147:
     ld a,(workTunnleLength)
     dec a
-PatchJRZat714b:
+smc_PatchJRZat714b:
     jr z,LAB_ram_7152
     ld (workTunnleLength),a
     jr LAB_ram_712c
@@ -11950,10 +11801,10 @@ LAB_ram_7152:
     call drawViewPorttoScreen
     ld a,(BYTE_ram_720c)
     dec a
-PatchORat7159:
+smc_PatchORat7159:
     cp 0x30
     ld (BYTE_ram_720c),a
-PatchJRat715e:
+smc_PatchJRat715e:
     jr c,LAB_ram_7192
     ld a,(varTunnleLength)
     ld (workTunnleLength),a
@@ -11982,7 +11833,7 @@ LAB_ram_7192:
     ld (tunnelFlag2),a
     jr seed_starfield
     db 0xAF,"2",0xC9,"9",0xC9
-; ZX Spectrum: alt_animated_effect_reset (&9369) 1.00
+; ZX Spectrum: alt_animated_effect_reset (&9369)
 alt_animated_effect_reset:
     xor a
     ld (tunnelFlag1),a
@@ -12131,7 +11982,7 @@ launchSequence:
     or 0x10
     ld (sfxFlags2Bitmap),a
     xor a
-    ld (dfcPatchpos),a
+    ld (smc_dfcPatchpos),a
     ld (flagCorrectOrientation),a
     ld (Viewdirection),a
     ld (StationEnergy),a
@@ -12150,7 +12001,7 @@ launchSequence:
     ld a,(todo_planet3dCoordZ)
     xor 0x80
     db "2"
-dat_7406:
+buf_7406:
     ld l,0x1C
     ld hl,sEntityxlo
     ld b,0x1B
@@ -12197,7 +12048,7 @@ LAB_ram_7347:
     pop bc
     djnz LAB_ram_7347
     ld a,0xD8
-    ld (dfcPatchpos),a
+    ld (smc_dfcPatchpos),a
     xor a
     ld (flagPausemode),a
 ; Clears five tunnel/input variables and sets the following byte to 0x0C
@@ -12218,7 +12069,7 @@ LAB_ram_7379:
     inc hl
     djnz LAB_ram_7379
     ret
-; ZX Spectrum: reset_ship_slots_1_to_7 (&9509) 1.00
+; ZX Spectrum: reset_ship_slots_1_to_7 (&9509)
 ; Clears ship 0's exploding flag and resets the state byte of ship slots 1-7 (&27 = the size of a slot record).
 cleanShipSlots:
     ld ix,sEntityxlo
@@ -12248,6 +12099,8 @@ LAB_ram_738f:
     db ">",0xA9,":Qu=2QuG",0xDF,"2",0x10," ",0x11,0xDF
     db 0x1C,0x10," ",0x0C,":^u",0xFE,0x04,"0",0x05,"x",0xA7,0xCC,0x97,0x8D
     db 0xAF,"2Zu2",0x5C,"u2[u2Uu2]u"
+; Two things share this address. `ld sp,MainStackNStrings` makes it the top of the main stack, which grows down into the bytes before it.
+; From here up it is the message table that printStringA indexes in flight (zero-terminated strings, same format as stringsTable).
 MainStackNStrings:
     db 0x00,0x00,0x00,0x00,0x00,"NEUEN ",0x9A,0xC9,"LAD"
     db 0xF6,0xCE,0x00,0xE5,0xF4,"TA",0xDE,"E",0xC9,"DRUECK"
@@ -12311,7 +12164,7 @@ SUB_ram_761a:
     ld (ix+26),h
     ld (iy+13),h
     ret
-; ZX Spectrum: diff_of_products (&AF22) 0.82
+; ZX Spectrum: diff_of_products (&AF22)
 ; In: B, C = x1, x2; D, E = y1, y2, all sign-magnitude bytes. Out: HL = 2*(y1*y2 - x1*x2) as a sign-magnitude word (saturating at &FFFF).
 ; One axis of a cross product; init_ship_calculations uses it to build the side vector from the nose and roof vectors.
 diff_of_products:
@@ -12494,7 +12347,7 @@ LAB_ram_77d0:
     pop iy
     pop ix
     ret
-; ZX Spectrum: calculate_visibility (&BD5F) 1.00
+; ZX Spectrum: calculate_visibility (&BD5F)
 ; Face visibility: works out the face normal (IX) . ship orientation dot products and combines them with the ship's position.
 ; A negative result means the face points at the viewer. The BBC rotates the ship's position into the ship's own frame; this build rotates the
 ; normal instead, as the Spectrum does.
@@ -12522,7 +12375,7 @@ calculate_visibility:
 LAB_ram_7807:
     pop de
     jp de_plus_hl_div_2
-; ZX Spectrum: mult_2_A_EC (&BD95) 1.00
+; ZX Spectrum: mult_2_A_EC (&BD95)
 ; In: A = sign-magnitude byte X (bit 7 = sign), E = sign and high byte of a sign-magnitude word Y, C = its low byte.
 ; Out: H = sign of X*Y, L = magnitude of 2*X*Y/256. Used for the face visibility test.
 mult_2_A_EC:
@@ -12766,7 +12619,7 @@ mslchkNextEntity:
     ld hl,msgTargetLost
     set 7,(hl)
     ret
-; ZX Spectrum: reset_all_ships (&B618) 0.90
+; ZX Spectrum: reset_all_ships (&B618)
 ; Resets all ship slots and performs two ship actions at the start of the arrival animation.
 SpawnMyRemains:
     ld hl,sfxFlags1Bitmap
@@ -12980,7 +12833,7 @@ nothingInCrosshairDrawLaser:
     or 0x01
     ld c,a
     jp drawLaserLine
-; ZX Spectrum: rand_no (&B799) 1.00
+; ZX Spectrum: rand_no (&B799)
 ; Out: A = pseudo-random byte (a 16-bit seed folded back into itself with adc; the high byte is returned).
 getRandomNumber:
     push hl
@@ -13239,17 +13092,17 @@ manipulate_drawroutine1:
     cp 0x02
     ld hl,0x012D
     ld de,0xC624
-    jr c,md1_patchcommands
+    jr c,smc_md1_patchcommands
     jr LAB_ram_7d10
 LAB_ram_7d06:
     cp 0x0A
     ld hl,0x092C
     ld de,0xC624
-    jr c,md1_patchcommands
+    jr c,smc_md1_patchcommands
 LAB_ram_7d10:
     set 4,d
     inc e
-md1_patchcommands:
+smc_md1_patchcommands:
     ld a,h
     ld (0x815F),a
     ld (0x8192),a
@@ -13257,10 +13110,10 @@ md1_patchcommands:
     ld (dvgetscrbyte),a
     ld (dh2SetnextByteadr),a
     ld a,d
-    ld (dvpatchadr5),a
-    ld (dhpatchadr6),a
+    ld (smc_dvpatchadr5),a
+    ld (smc_dhpatchadr6),a
     ld a,e
-    ld (dvpatchadr7),a
+    ld (smc_dvpatchadr7),a
     ld (dh2nextPixellineBlock),a
     exx
     ld a,(flagDrawLaserline)
@@ -13273,17 +13126,17 @@ manipulate_drawroutine2:
     cp 0x12
     ld hl,0xC624
     ld de,0x012D
-    jr c,md2_patchcommands
+    jr c,smc_md2_patchcommands
     jr LAB_ram_7d54
 LAB_ram_7d4a:
     cp 0x1A
     ld hl,0xC624
     ld de,0x092C
-    jr c,md2_patchcommands
+    jr c,smc_md2_patchcommands
 LAB_ram_7d54:
     set 4,h
     inc l
-md2_patchcommands:
+smc_md2_patchcommands:
     ld a,h
     ld (dh1nextPixelline),a
     ld (dh3nextPixelline),a
@@ -13541,7 +13394,7 @@ LAB_ram_7ede:
     ld e,a
     pop bc
     jr LAB_ram_7ecf
-; ZX Spectrum: mult_a_c (&B2F0) 1.00
+; ZX Spectrum: mult_a_c (&B2F0)
 ; In: A, C. Out: C = A*C/256 rounded to nearest (mult_b_c, then &80 is added before taking the high byte). DE and HL are kept.
 mult_a_c:
     push de
@@ -13781,11 +13634,11 @@ dvgetscrbyte:
     inc l
 dvscrgetnextline:
     db "}"
-dvpatchadr5:
+smc_dvpatchadr5:
     add a,0x40
     ld l,a
     jr nc,drawVerticals
-dvpatchadr7:
+smc_dvpatchadr7:
     inc h
     jr drawVerticals
 drawHorizontals:
@@ -13832,7 +13685,7 @@ dh2SetnextByteadr:
     inc l
 dh2nextPixelline:
     ld a,l
-dhpatchadr6:
+smc_dhpatchadr6:
     add a,0x40
     ld l,a
     jr nc,drawHorizontalsPixelbyte2
@@ -13871,7 +13724,7 @@ dh3SetnextByteadr:
     db "DA",0x98,"d",0xCB,"Z",0xA7,0xD1
 BYTE_ram_809b:
     db 0x00
-; ZX Spectrum: ship_action (&B867) 1.00
+; ZX Spectrum: ship_action (&B867)
 ; Performs ship action A (lower nibble; the upper nibble goes to most handlers as a ship type or count): 0 weighs the local traffic and may launch a
 ; ship (spawnCommand0), 1 launches Thargoids, 5 spawns a mining splinter, and so on.
 spawnCommandParser:
@@ -13977,7 +13830,7 @@ lfsLoop:
     djnz lfsLoop
     inc b
     ret
-; ZX Spectrum: spawn_ship_at_origin (&B94A) 1.00
+; ZX Spectrum: spawn_ship_at_origin (&B94A)
 ; A = blueprint index: finds a free slot, creates the ship there and zeroes its position (origin). Callers that already have IX use the next entry.
 trySpawnAnotherEntity:
     ld c,a
@@ -13995,7 +13848,7 @@ spawnEntityAtMyPosition:
     ld (ix+6),a
     ld (ix+7),a
     ret
-; ZX Spectrum: create_ship_at_origin (&B96B) 1.00
+; ZX Spectrum: create_ship_at_origin (&B96B)
 ; Action 1: launches a group of 3 or 4 Thargoids (a random bit plus 3), each given a random z position and orientation byte.
 spawnCommand1:
     call getRandomNumber
@@ -14104,7 +13957,7 @@ switchVectors:
     inc ix
     inc ix
     ret
-; ZX Spectrum: - (&BA58) 1.00
+; ZX Spectrum: - (&BA58)
 switchNNegVectors:
     ld a,(ix+16)
     xor 0x80
@@ -14122,7 +13975,7 @@ switchNNegVectors:
     ld (ix+14),a
     ld (ix+20),b
     ret
-; ZX Spectrum: - (&BA83) 1.00
+; ZX Spectrum: - (&BA83)
 ; Sets two orientation bytes to random values masked with &87 (sign bit plus 3 low bits).
 setDirectionofEntity:
     call getRandomNumber
@@ -14132,7 +13985,7 @@ setDirectionofEntity:
     and 0x87
     ld (ix+12),a
     ret
-; ZX Spectrum: - (&BA94) 1.00
+; ZX Spectrum: - (&BA94)
 ; Action 5: a mining splinter: with bit 0 of C clear, two splinters at the parent's position; otherwise one at the origin with a random orientation.
 spawnCommand5:
     bit 0,c
@@ -14189,7 +14042,7 @@ spawnCommand7:
     ld a,0x02
     jr z,loc_84AB
     ld a,0x09
-    ld ix,dat_1B2A
+    ld ix,buf_1B2A
     call spawnEntityAtMyPosition
     call setDirectionofEntity
     ld a,0x80
@@ -14218,7 +14071,7 @@ sub_84D1:
     db 0xDD,0xE5,0xCD,0x9A,0x82,0xDD,0xE3,0xE1,0xC0,0xE5,0xDD,0xE3,0xCD,0xA3,0x83,">"
     db 0x0A,0xDD,"w&",0xDD,0xCB," ",0xB6,0xDD,0xCB,0x1D,0xFE,0xDD,0xE1,0xAF,0xC9
 loc_83AA:
-    ld ix,dat_1B51
+    ld ix,buf_1B51
     ld a,c
     add a,0x02
     call spawnShip
@@ -14243,7 +14096,7 @@ LAB_ram_83e8:
     ldi
     jp pe,LAB_ram_83e8
     ret
-; ZX Spectrum: - (&BBBA) 1.00
+; ZX Spectrum: - (&BBBA)
 ; Action 0: maybe launches a ship into the system. C = 2*slaves + 2*narcotics + firearms held (the contraband weight, used by the roll at
 ; chkSpawnAsteroid: the more contraband, the more likely a hostile). If the gate byte is clear, a random byte is below 30 and Missionflag & &42 == 2, the
 ; marked Asp of the cloaking-device mission is created (see docs/_missions.md).
@@ -14279,7 +14132,7 @@ spawnCommand0:
     jr jrEntrytoSpawnShip
 dat_8427:
     db 0xDD,0xCB,"&",0xF6,0xDD,0xCB," ",0xD6,0xC3,"'",0x86
-; ZX Spectrum: finish_ship_and_escort (&BBF2) 0.91
+; ZX Spectrum: finish_ship_and_escort (&BBF2)
 ; Two entries: &8432 (this one) rolls a random byte against C: a low roll goes to the hostile pick, a middling one makes an asteroid, a high one
 ; spawns nothing. The marked Asp's return address (dat_8427) enters at its own tail and spawns the 2-3 escort pack.
 chkSpawnAsteroid:
@@ -14299,7 +14152,7 @@ chkSpawnAsteroid:
     ld a,0xC0
     ld (ix+29),a
     ret
-; ZX Spectrum: pick_hostile_encounter (&BC21) 1.00
+; ZX Spectrum: pick_hostile_encounter (&BC21)
 ; Picks a hostile encounter from the roll left in A: a fresh jump into a new system (ThargonMissionVar-style state 4) always picks a Thargoid,
 ; a pending mission offer always picks a Python trader.
 cmd0ChkSendHostileAfterUs:
@@ -14414,7 +14267,7 @@ listFilecatalog:
     ld (BYTE_ram_8646),a
     ld (BYTE_ram_8665),a
     ld (BYTE_ram_8666),a
-    ld hl,dat_864B
+    ld hl,catalogBuf
     ld (BYTE_ram_8649),hl
     call drawFrame
     ld a,0x01
@@ -14436,7 +14289,7 @@ listFilecatalog:
     ld (BYTE_ram_85b2),a
     jp LAB_ram_0d38
 ; Patches the firmware text-draw routines to our own text output handler
-patchFWTextfunctions:
+smc_patchFWTextfunctions:
     ld a,0xC9
     ld (TXT_DRAW_CURSOR),a
     ld (TXT_UNDRAW_CURSOR),a
@@ -14515,7 +14368,7 @@ LAB_ram_85eb:
     cp 0x20
     jr nz,LAB_ram_85ff
     ld hl,(BYTE_ram_8649)
-    ld de,dat_864B
+    ld de,catalogBuf
     and a
     sbc hl,de
     ret z
@@ -14543,7 +14396,7 @@ LAB_ram_8619:
     inc (hl)
     bit 0,(hl)
     call nz,placeCursor
-    ld hl,dat_864B
+    ld hl,catalogBuf
     ld b,0x08
 LAB_ram_862f:
     push bc
@@ -14557,7 +14410,7 @@ LAB_ram_862f:
     ld a,0x0F
     ld (charXY),a
 LAB_ram_863f:
-    ld hl,dat_864B
+    ld hl,catalogBuf
     ld (BYTE_ram_8649),hl
     ret
 BYTE_ram_8646:
@@ -14568,7 +14421,7 @@ BYTE_ram_8648:
     db 0x00
 BYTE_ram_8649:
     db 0x92,0x87
-dat_864B:
+catalogBuf:
     db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
 charDot:
     db ".",0x00,0x00,0x00," ",0x00,0x00,0x00,"K"
@@ -14963,7 +14816,7 @@ LAB_ram_892e:
     ld a,(ecmActiveFlag)
     and a
     jr nz,LAB_ram_894b
-    ld hl,dat_1B73
+    ld hl,buf_1B73
     ld a,(hl)
     and a
     jr z,LAB_ram_894b
@@ -15092,7 +14945,7 @@ SUB_ram_8aaf:
     ld a,l
     and 0xC0
     ret
-; ZX Spectrum: scaled_relative_pos_component (&A53F) 1.00
+; ZX Spectrum: scaled_relative_pos_component (&A53F)
 ; Halves one coordinate of each of two ships and returns (other - this)/2 in HL: a quarter-scale difference of their positions on one axis.
 ; In: IX = this ship's coordinate triple, IY = the other's. Advances both by 3. Used by the combat AI.
 scaled_relative_pos_component:
@@ -15114,7 +14967,7 @@ scaled_relative_pos_component:
     add iy,de
     ret
     db 0xDD,"~",0x02,0xEE,0x80,0x18,0x03
-; ZX Spectrum: encode_ship_position_coord (&A568) 0.88
+; ZX Spectrum: encode_ship_position_coord (&A568)
 ; Encodes one coordinate of a ship's position: halves the 16-bit magnitude and folds the sign into bit 15 (the combat AI works on these).
 SUB_ram_8ae7:
     ld a,(ix+2)
@@ -15234,7 +15087,7 @@ doDamagetoFrontshield:
     add a,0x07
     ld (damageToFrontShield),a
     ret
-; ZX Spectrum: combat_ai_refine_dist_zone (&A686) 1.00
+; ZX Spectrum: combat_ai_refine_dist_zone (&A686)
 ; Combat AI: when the other ship is behind, leaves the distance zone alone if it is close (within 11, or 3 once a missile or pod has been launched),
 ; otherwise overwrites it with -1 or -2 by distance.
 combat_ai_refine_dist_zone:
@@ -15252,7 +15105,7 @@ LAB_ram_8c08:
 LAB_ram_8c11:
     ld (ix+28),b
     ret
-; ZX Spectrum: minus_4_a_b (&A69D) 1.00
+; ZX Spectrum: minus_4_a_b (&A69D)
 ; In: A, B = sign-magnitude bytes. Out: H = sign of -(A*B), L = 4*|A|*|B|/256 (the magnitudes are doubled and run through mult_b_c_msb).
 ; The minus sign is built in: dot_product_scale_factor adds three of these up.
 minus_4_a_b:
@@ -15266,7 +15119,7 @@ minus_4_a_b:
     pop hl
     ld l,a
     ret
-; ZX Spectrum: dot_product_scale_factor (&A6AC) 1.00
+; ZX Spectrum: dot_product_scale_factor (&A6AC)
 ; Sums -4*a*b/256 over the x, y and z high bytes of two vectors (IX and IY, bytes 1, 3, 5), saturating at &FF.
 ; Out: A = sign-magnitude result. Used when rotating a position into a ship's frame and when orthogonalising the roof vector.
 dot_product_scale_factor:
@@ -15478,9 +15331,9 @@ DockedDigrams:
     db "EDORQUANTEISRION"
 pressedKey:
     db 0xFF
-; ZX Spectrum: handle_held_key (&FCBA) 0.97
+; ZX Spectrum: handle_held_key (&FCBA)
 ; Keyboard scan: combines the row (D) and bit position (E) into a key index, looks up its code and records the key.
-dat_8E23:
+keybFlags0:
     adc a,h
     nop
     push bc
@@ -15525,7 +15378,7 @@ irki2:
     ret nc
     ld a,(keybFlags2)
     ld b,a
-    ld a,(dat_8E23)
+    ld a,(keybFlags0)
     ld c,a
     ld hl,(irki2_dat1)
     bit 0,b
@@ -15671,7 +15524,7 @@ irki2_18:
     jr nc,loc_8F6F
     ld hl,0x0000
     jp loc_8F6F
-; ZX Spectrum: clamp_speed_rate_max (&FF16) 1.00
+; ZX Spectrum: clamp_speed_rate_max (&FF16)
 ; Clamps the speed rate at its maximum after increasing it: undoes the increase when bit 5 of H is set.
 irki2_19:
     bit 5,h
@@ -15689,6 +15542,18 @@ tblKeyFlagOffsetMask:
     db 0x01,0x02,0x00,0x04,0x00," ",0x07,0x04,0x02,0x04,0x03,0x10,0x04," ",0x01,0x04
     db 0x01,0x01,0x02,"@",0x03,0x08,0x07,0x10,0x02,0x08,0x04,"@",0x03,0x04,0x03,0x80
     db 0x04,0x10,0x02,0x10,0x00,0x80,0x07,0x08,0x07,0x02,0x03,0x02,0x02," ",0x00,0x00
+; Ship blueprints, in memory order from here to shipdatViper (14 hulls; `shipGFXdataTable` indexes them). A blueprint is a 23-byte header followed by
+; the vertex, edge and face lists, which the header addresses by offset from the blueprint's first byte. Header (same layout as the ZX Spectrum build):
+;   +00 cargo: low nybble non-zero = drops a canister; high nybble = commodity index + 1 for the scooped wreck
+;   +01 size used to scale the on-screen size and to skip drawing at extreme range    +02 laser-fire weight for the AI roll
+;   +03 vertex count, +04 edge count, +05 face count    +06 max speed    +07 max energy    +08 bounty (word)
+;   +0A bit field (low 3 bits: missile count, copied into the ship's action byte)    +0B visibility distance
+;   +0C/+0E/+10 offsets (words) of the vertices, edges and faces    +12 behaviour flags (copied, masked, into the ship record; see the Viper's bits 5-6 for the legal-status rule)
+;   +13 normals scale    +14 gun vertex    +15 score value (word)
+; Vertex: x, y, z magnitudes, then sign bits (7-5) with visibility distance (4-0), then four face numbers as nybbles.
+; Edge: visibility distance, start vertex, end vertex, two face numbers as nybbles. Face: normal x, y, z magnitudes, then sign bits (7-5) with visibility distance (4-0).
+; Blueprint: Asp Mk II - 19 vertices, 28 edges, 12 faces, max speed 40, max energy 150, bounty 200
+shipdatAspMk2:
     db 0x00,"<",0xFA,0x13,0x1C,0x0C,"(",0x96,0xC8,0x00,0x01,0x18,0x17,0x00,0x89,0x00
     db 0xF9,0x00,0x8C,0x01,0x08,"@",0x03,0x00,0x12,0x00,"V",0x01,0x22,0x00,0x09,"-"
     db 0x7F,0x12,0xBB,"+",0x00,"-?",0x16,0xBB,"E",0x03,0x00,"_",0x16,"y+"
@@ -15709,8 +15574,14 @@ tblKeyFlagOffsetMask:
     db 0x01,"6",0x00
     db "+",0x13,0x1F,0x06,0x1C,0x02,0xBF,0x06,0x1C,0x02,"?;@",0x1F,"_;"
     db "@",0x1F,0xDF,"P.2",0x1F,"P.2",0x9F,0x00
-    db 0x00,"Z?",0x07,"PP",0x09,0x15,0x0E,0x1E,0xB4,0x00,0x00,"R2."
-    db 0x00,"d",0x00,0xB8,0x00,0xA1,0x01,0x00,0x00,0x01,0x00,"P",0x00,0x09,0x15,0x0E
+    db 0x00,"Z?"
+; Blueprint: rock hermit - 9 vertices, 21 edges, 14 faces, max speed 30, max energy 180, bounty 0
+shipdatRockHermit:
+    db 0x07,"PP",0x09,0x15,0x0E,0x1E,0xB4,0x00,0x00,"R2."
+    db 0x00,"d",0x00,0xB8,0x00,0xA1,0x01,0x00,0x00,0x01
+; Blueprint: asteroid - 9 vertices, 21 edges, 14 faces, max speed 30, max energy 60, bounty 5
+shipdatAsteroid:
+    db 0x00,"P",0x00,0x09,0x15,0x0E
     db 0x1E,"<",0x05,0x00
     db 0x00,"2",0x17,0x00,"M",0x00,0xA1,0x00,0x00,0x01,0x00,0x19,0x00,0x00,"P",0x00
     db 0x1F,0xFF,0xFF,"P",0x0A,0x00
@@ -15729,7 +15600,10 @@ tblKeyFlagOffsetMask:
     db 0x08,0x98,0x09,"BQ",0x1F,0x09,"BQ_H@",0x1F,0x9F,"@I"
     db "/",0xDF,"-OA_",0x87,0x0F,"#",0x1F,"&LF",0x1F,"B;"
     db "'",0xBF,"C",0x0F,"P",0xFF,"B",0x0E,"K",0x7F,"FP(",0xFF,":f"
-    db "3",0x7F,"Q",0x09,"C?/^??",0x00
+    db "3",0x7F,"Q",0x09,"C?/^??"
+; Blueprint: cargo canister - 10 vertices, 15 edges, 7 faces, max speed 15, max energy 17, bounty 0
+shipdatCargo:
+    db 0x00
     db 0x14,0x00,0x0A,0x0F,0x07,0x0F,0x11,0x00,0x00,0x00,0x0C,0x17,0x00,"S",0x00,0x8F
     db 0x00,0x00,0x02,0x00,0x1F,0x00,0x18,0x10,0x00,0x1F,0x10,"U",0x18,0x05,0x0F,0x1F
     db 0x10,0x22,0x18,0x0D,0x09,"_ 3",0x18,0x0D,0x09,0x7F,"0D",0x18,0x05
@@ -15745,7 +15619,10 @@ tblKeyFlagOffsetMask:
     db "3",0x00
     db "_",0x00,0x12,"0",0x7F,0x00,")",0x1E,"?`",0x00,0x00,0x9F,0x03,"_",0x8C
     db 0x1C,"&",0x0D,0x1C,0x96,0x00,0x00,0x04,"2.",0x00,0xD6,0x00,"n",0x01,0xA0
-    db 0x01,0x15,0x00,0x02,0x01,"_",0xA0,0x1C,"&",0x0D,0x1C,0x96,0xAF,0x00,0x02,"2"
+    db 0x01,0x15,0x00,0x02
+; Blueprint: Cobra Mk III (pirate and trader) - 28 vertices, 38 edges, 13 faces, max speed 28, max energy 150, bounty 175
+shipdatCobraMk3Pirate:
+    db 0x01,"_",0xA0,0x1C,"&",0x0D,0x1C,0x96,0xAF,0x00,0x02,"2"
     db 0x17,0x00,0xBF,0x00,"W",0x01,0x8C,0x0A,0x15,0x80,0x03," ",0x00,"L",0x1F,0xFF
     db 0xFF," ",0x00,"L",0x9F,0xFF,0xFF,0x00,0x1A,0x18,0x1F,0xFF,0xFF,"x",0x03,0x08
     db 0xFF,"s",0xAA,"x",0x03,0x08,0x7F,0x84,0xCC,"X",0x10,"(",0xBF,0xFF,0xFF,"X"
@@ -15772,13 +15649,19 @@ tblKeyFlagOffsetMask:
     db 0x0E,0x9F,0x10,"4",0x0E,0x1F,0x0E,"/",0x00
     db 0x9F,0x0E,"/",0x00,0x1F,"=f",0x00,0x9F,"=f",0x00,0x1F,0x00,0x00,"P"
     db "?",0x07,"*",0x09,0xDF,0x00
-    db 0x1E,0x06,"_",0x07,"*",0x09,"_ ",0x10,0xFF,0x04,0x06,0x04,0x08,0x11,0x00
+    db 0x1E,0x06,"_",0x07,"*",0x09,"_"
+; Blueprint: escape capsule - 4 vertices, 6 edges, 4 faces, max speed 8, max energy 17, bounty 0
+shipdatCapsule:
+    db " ",0x10,0xFF,0x04,0x06,0x04,0x08,0x11,0x00
     db 0x00,0x00,0x08,0x17,0x00,"/",0x00,"G",0x00,0x01,0x04,0x00,"2",0x00,0x07,0x00
     db "$",0x9F,0x12,"3",0x07,0x0E,0x0C,0xFF,0x02,"3",0x07,0x0E,0x0C,0xBF,0x01,"3"
     db 0x15,0x00,0x00,0x1F,0x01,0x22,0x1F,0x00,0x01,"#",0x1F,0x01,0x02,0x03,0x1F,0x02
     db 0x03,0x01,0x1F,0x03,0x00,0x12,0x1F,0x00,0x02,0x13,0x1F,0x03,0x01,0x02,"4",0x00
     db "z?'g",0x1E,0x1F,"'g",0x1E,"_p",0x00
-    db 0x00,0x9F,0x00,"(",0xFF,0x13,0x1B,0x0A,0x1E,0xA0,0x00,0x00,0x02,0x1E,0x17,0x00
+    db 0x00,0x9F
+; Blueprint: Fer-de-Lance - 19 vertices, 27 edges, 10 faces, max speed 30, max energy 160, bounty 0
+shipdatFerDeLance:
+    db 0x00,"(",0xFF,0x13,0x1B,0x0A,0x1E,0xA0,0x00,0x00,0x02,0x1E,0x17,0x00
     db 0x89,0x00,0xF5,0x00,0x82,0x01,0x00,0x00,0x03,0x00,0x0E,"l_",0x01,"Y("
     db 0x0E,0x04,0xFF,0x12,0x99,0x0C,0x0E,"4",0xFF,"#",0x99,0x0C,0x0E,"4",0x7F,"4"
     db 0x99,"(",0x0E,0x04,0x7F,"E",0x99,"(",0x0E,0x04,0xBC,0x01,"&",0x0C,0x02,"4"
@@ -15799,7 +15682,10 @@ tblKeyFlagOffsetMask:
     db "?",0x00
     db "%?D",0x00
     db 0x18,0x1F,0x0C,".",0x13,0xBC,0x00,"-",0x16,0xBC,0x0C,".",0x16,"<",0x00,0x1C
-    db 0x00,"_",0x00,"(",0x00,0x11,0x18,0x09,",",0x02,0x00,0x00,0x00,0x0E,0x17,0x00
+    db 0x00,"_"
+; Blueprint: missile - 17 vertices, 24 edges, 9 faces, max speed 44, max energy 2, bounty 0
+shipdatMissile:
+    db 0x00,"(",0x00,0x11,0x18,0x09,",",0x02,0x00,0x00,0x00,0x0E,0x17,0x00
     db "}",0x00,0xDD,0x00,0x00,0x02,0x00,0xC0,0x01,0x00,0x00,"D",0x1F,0x10,"2",0x08
     db 0x08,"$_!T",0x08,0x08,"$",0x1F,"2t",0x08,0x08,"$",0x9F,"0"
     db "v",0x08,0x08,"$",0xDF,0x10,"e",0x08,0x08,",?t",0x88,0x08,0x08,","
@@ -15815,12 +15701,18 @@ tblKeyFlagOffsetMask:
     db 0x09,0x0F,"t",0x08,0x0A,0x10,"T",0x08,0x0C,0x0D,"v",0x08,0x0B,0x0E,"e@"
     db 0x00,0x10,0x9F,0x00,"@",0x10,"_@",0x00,0x10,0x1F,0x00,"@",0x10,0x1F," "
     db 0x00,0x00,0x1F,0x00," ",0x00,"_ ",0x00,0x00,0x9F,0x00," ",0x00,0x1F,0x00
-    db 0x00,0xB0,"?",0x80,0x0A,0x00,0x04,0x04,0x00,0x10,0x10,0x00,0x00,0x00,0x0C,0x17
+    db 0x00,0xB0,"?"
+; Blueprint: alloy plate - 4 vertices, 4 edges, 0 faces, max speed 16, max energy 16, bounty 0
+shipdatAlloy:
+    db 0x80,0x0A,0x00,0x04,0x04,0x00,0x10,0x10,0x00,0x00,0x00,0x0C,0x17
     db 0x00,"/",0x00,0x00,0x00,0x00,0x03,0x00," ",0x00,0x0F,0x16,0x09,0xFF,0xFF,0xFF
     db 0x0F,"&",0x09,0xBF,0xFF,0xFF,0x13," ",0x0B,0x14,0xFF,0xFF,0x0A,".",0x06,"T"
     db 0xFF,0xFF,0x1F,0x00,0x01,0xFF,0x10,0x01,0x02,0xFF,0x14,0x02,0x03,0xFF,0x10,0x03
     db 0x00,0xFF,0x05,"P",0x82,0x0B,0x1A,0x0D,0x14,0xFA,0x00,0x00,0x00,"(.",0x00
-    db "p",0x00,0xD8,0x00,0xA0,0x00,0x00,0x00,0x02,0x02,"P",0x96,0x0B,0x1A,0x0D,0x14
+    db "p",0x00,0xD8,0x00,0xA0,0x00,0x00,0x00,0x02
+; Blueprint: Python (pirate and trader) - 11 vertices, 26 edges, 13 faces, max speed 20, max energy 250, bounty 200
+shipdatPythonPirate:
+    db 0x02,"P",0x96,0x0B,0x1A,0x0D,0x14
     db 0xFA,0xC8,0x00,0x00,"(",0x17,0x00,"Y",0x00,0xC1,0x00,0x8C,0x00,0x00,0x80,0x03
     db 0x00,0x00,0xE0,0x1F,0x10,"2",0x00,"00",0x1F,0x10,"T`",0x00,0x10,"?"
     db 0xFF,0xFF,"`",0x00,0x10,0xBF,0xFF,0xFF,0x00,"0 ?T",0x98,0x00,0x18
@@ -15853,7 +15745,10 @@ tblKeyFlagOffsetMask:
     db 0x05,"T",0x0F,0x06,0x07,"3",0x0C,0x07,0x08,"3",0x0C,0x06,0x09,"3",0x0C,0x08
     db 0x09,"3",0x00
     db " ",0x08,0x1F,0x0C,"/",0x06,0x9F,0x0C,"/",0x06,0x1F,0x00,0x00,"p?",0x0C
-    db "/",0x06,0xDF,0x00," ",0x08,"_",0x0C,"/",0x06,"_",0x00,0xA0,0x00,0x10,0x1C
+    db "/",0x06,0xDF,0x00," ",0x08,"_",0x0C,"/",0x06,"_"
+; Blueprint: Coriolis station - 16 vertices, 28 edges, 14 faces, max speed 0, max energy 240, bounty 0
+shipdatCoriolis:
+    db 0x00,0xA0,0x00,0x10,0x1C
     db 0x0E,0x00,0xF0,0x00,0x00,0x06,"x",0x17,0x00,"w",0x00,0xE7,0x00,0x00,0x00,0x00
     db 0x00,0x00,0xA0,0x00,0xA0,0x1F,0x10,"b",0x00,0xA0,0xA0,0x1F," ",0x83,0xA0,0x00
     db 0xA0,0x9F,"0t",0x00
@@ -15874,12 +15769,18 @@ tblKeyFlagOffsetMask:
     db "k_kkk",0x1F,"kkk",0x9F,"kkk",0xDF,0x00,0xA0
     db 0x00,"_",0xA0,0x00,0x00,0x1F,0xA0,0x00,0x00,0x9F,0x00,0xA0,0x00,0x1F,"kk"
     db "k",0xFF,"kkk",0x7F,"kkk?kkk",0xBF,0x00
-    db 0x00,0xA0,"?",0xB0,0x10,0x00,0x04,0x06,0x04,0x0A,0x14,0x00,0x00,0x00,0x0A,0x17
+    db 0x00,0xA0,"?"
+; Blueprint: splinter - 4 vertices, 6 edges, 4 faces, max speed 10, max energy 20, bounty 0
+shipdatSplinter:
+    db 0xB0,0x10,0x00,0x04,0x06,0x04,0x0A,0x14,0x00,0x00,0x00,0x0A,0x17
     db 0x00,"/",0x00,"G",0x00,0x00,0x05,0x00,0x1E,0x00,0x18,0x19,0x10,0xDF,0x12,"3"
     db 0x00,0x0C,0x0A,"?",0x02,"3",0x0B,0x06,0x02,"_",0x01,"3",0x0C,"*",0x07,0x1F
     db 0x01,0x22,0x1F,0x00,0x01,"#",0x1F,0x01,0x02,0x03,0x1F,0x02,0x03,0x01,0x1F,0x03
     db 0x00,0x12,0x1F,0x00,0x02,0x13,0x1F,0x03,0x01,0x02,0xB1,0x0C,0x94,"?d",0x19
-    db 0xD5,"_",0xCA,"h",0x22,0xBF,0x02,"3J",0xFF,0x00
+    db 0xD5,"_",0xCA,"h",0x22,0xBF,0x02,"3J",0xFF
+; Blueprint: Thargoid - 20 vertices, 26 edges, 10 faces, max speed 39, max energy 240, bounty 500
+shipdatThargoid:
+    db 0x00
     db "c",0xFF,0x14,0x1A,0x0A,"'",0xF0,0xF4,0x01,"67",0x17,0x00
     db 0x8F,0x00,0xF7,0x00,0x0C,0x02,0x0F,0x00,0x08," 00_@",0x88," "
     db "D",0x00
@@ -15922,7 +15823,10 @@ tblKeyFlagOffsetMask:
     db 0x06,0x08,0x0A,0x00,0x09,0x07,0x09,"3",0x06,0x08,0x09,"3",0x08,0x0B,0x0D,"D"
     db 0x08,0x0D,0x0C,"D",0x07,0x0C,0x0B,"D",0x07,0x0E,0x0F,"U",0x08,0x0F,0x10,"U"
     db 0x08,0x10,0x0E,"U",0x03,0x18,0x03,0x1F,0x03,0x18,0x03,"_",0x03,0x18,0x03,0xDF
-    db 0x03,0x18,0x03,0x9F,"&",0x00,"M?&",0x00,"M",0xBF,0xF0,"(x",0x0A
+    db 0x03,0x18,0x03,0x9F,"&",0x00,"M?&",0x00,"M",0xBF
+; Blueprint: Thargon - 10 vertices, 15 edges, 7 faces, max speed 30, max energy 20, bounty 50
+shipdatThargon:
+    db 0xF0,"(x",0x0A
     db 0x0F,0x07,0x1E,0x14,"2",0x00
     db 0x01,0x14,0x17,0x00,"S",0x00,0x8F,0x00,0x04,0x02,0x00,"d",0x00,0x09,0x00,"("
     db 0x9F,0x01,"U",0x09,"&",0x0C,0xDF,0x01,0x22,0x09,0x18," ",0xFF,0x02,"3",0x09
@@ -15934,7 +15838,10 @@ tblKeyFlagOffsetMask:
     db 0x08,"C",0x1F,0x04,0x09,"E",0x1F,0x05,0x06,"a",0x1F,0x06,0x07,"b",0x1F,0x07
     db 0x08,"c",0x1F,0x08,0x09,"d",0x1F,0x09,0x05,"e$",0x00,0x00,0x9F,0x14,0x05
     db 0x07,"_.*",0x0E,0x7F,"$",0x00,"h?.*",0x0E,"?",0x14,0x05
-    db 0x07,0x1F,"$",0x00,0x00,0x1F,0x00,"Kx",0x0F,0x14,0x07," ",0x8C,0x00,0x00
+    db 0x07,0x1F,"$",0x00,0x00,0x1F
+; Blueprint: Viper - 15 vertices, 20 edges, 7 faces, max speed 32, max energy 140, bounty 0
+shipdatViper:
+    db 0x00,"Kx",0x0F,0x14,0x07," ",0x8C,0x00,0x00
     db 0x02,0x17,0x17,0x00,"q",0x00,0xC1,0x00,0xC2,0x01,0x00,"P",0x00,0x00,0x00,"H"
     db 0x1F,"!C",0x00
     db 0x10,0x18,0x1E,0x10,0x22,0x00,0x10,0x18,"^CU0",0x00,0x18,"?B"
@@ -15970,4 +15877,4 @@ tblKeyFlagOffsetMask:
     db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
 ce2func63 equ 0x25D6   ; inside the instruction at 0x25D5 (patched or jumped into)
 ce2func74 equ 0x2688   ; inside the instruction at 0x2687 (patched or jumped into)
-dat_3A6C equ 0x3A6C   ; inside the instruction at 0x3A6B (patched or jumped into)
+buf_3A6C equ 0x3A6C   ; inside the instruction at 0x3A6B (patched or jumped into)

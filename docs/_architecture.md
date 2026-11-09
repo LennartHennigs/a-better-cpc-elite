@@ -134,7 +134,7 @@ filter, so the result is a lower bound. 17 chains (846 bytes) pass; reading them
   `LAB_ram_53cf`, `SUB_ram_5dcf`, `execSpawncmd4` (`&8242`), `LAB_ram_89f4`, `LAB_ram_8a10`, `chkCloak`, `handleEntitys`, and
   `spawnCommand0` or `loadLARGEAXX` (one run each) all fired; `spawnAtEntityCoordinates` (`&8364`) did not (rare spawn command). Candidates:
   `alt_animated_effect_reset` (`&719D`) fired (hyperspace tunnel, key `e`); `altJrPoint3` (`&7198`) did not, but it is one of three
-  targets of the self-patched `jr` at `PatchJRat715e`/`PatchJRZat714b` (see "Dynamic labels"), so it is live by design; `LAB_ram_8aaa`
+  targets of the self-patched `jr` at `smc_PatchJRat715e`/`smc_PatchJRZat714b` (see "Dynamic labels"), so it is live by design; `LAB_ram_8aaa`
   (`&8AAA`) did not fire, but three `jr` instructions inside the `&89F4` chain target it (`&8A70`, `&8A78`, `&8A80`). Only
   `unusedGetFlightMode` (`&204E`) and `unusedGetCloakFlag` (`&2053`) (10 bytes, no references of any kind) never fired.
   A write breakpoint on the free tail showed the stack at `&A000` pushing an interrupt return at `&9FFE-&9FFF` (as described below);
@@ -147,29 +147,29 @@ of `unusedGet*`. (`unusedViewBorderFill`, `&1FD2-&1FF0`, 31 bytes with no refere
 
 ## Dynamic labels (found 2026-11-08, for later reference)
 
-Labels whose bytes change at runtime, or that sit inside an instruction. Static dead-code and free-space claims must not touch them.
+Labels whose bytes change at runtime, or that sit inside an instruction. Since 2026-11-09 the patched operands and instructions carry the prefix `smc_` (`smc_patchInk0`) and the runtime buffers `buf_` (`buf_5860`); the names below use them. Static dead-code and free-space claims must not touch them.
 Sources: the `equ` aliases at the end of `src/elite/*.asm`, the patch-named labels, and a diff of `&1A40-&9FFF` after 700 random key
 presses in cpcxray (`changed_ranges` in `traces/dead_run*.json`; the diff shows only bytes that changed in that run, so rarely used
 patches are missing from the "seen" lists).
 - **Labels inside instructions** (`equ` aliases, patched or jumped into): `ce2func63` `&25D6`, `ce2func74` `&2688`, `loc_3A88`,
   `loc_5958`, `sub_61B5`, `sub_6953`, `sub_71CB`, `loc_7873`, `loc_86F7` in `commonxx`; `LAB_ram_f638`, `LAB_ram_f6ea` in `common2x`.
-- **Self-modified operands seen changing in flight:** circle-drawing masks `ce2func64patchmask7` `&2603`, `ce2func65patchmask8`
-  `&2606`, `ce2func75patchmask9` `&26B5`, `ce2func76patchmask10` `&26B8`; viewport inks `patchInk0` `&28E3`, `patchInk1` `&28EC`,
-  `patchInk3` `&28F5`, `patchInk2` `&28FE`, `patchSecondInk3` `&2911`, `patchAnotherInk1` `&2953`, `patchAnotherInk1_2` `&2993`;
-  line plotters `PatchAND_1` `&33E1`, `PatchAND_2` `&33E8`, `PatchOR_2` `&3469`, `PatchOR_4` `&34AD`; `isPatchStrlen` `&40F2`, `patch1`
+- **Self-modified operands seen changing in flight:** circle-drawing masks `smc_ce2func64patchmask7` `&2603`, `smc_ce2func65patchmask8`
+  `&2606`, `smc_ce2func75patchmask9` `&26B5`, `smc_ce2func76patchmask10` `&26B8`; viewport inks `smc_patchInk0` `&28E3`, `smc_patchInk1` `&28EC`,
+  `smc_patchInk3` `&28F5`, `smc_patchInk2` `&28FE`, `smc_patchSecondInk3` `&2911`, `smc_patchAnotherInk1` `&2953`, `smc_patchAnotherInk1_2` `&2993`;
+  line plotters `smc_PatchAND_1` `&33E1`, `smc_PatchAND_2` `&33E8`, `smc_PatchOR_2` `&3469`, `smc_PatchOR_4` `&34AD`; `smc_isPatchStrlen` `&40F2`, `smc_patch1`
   `&4AAA`, `smcIndicatorPatch1` `&6161`; `dvRotatePixmask` `&8018`, `dh2RotatePixmask` `&804B`, `dh1nextPixelline` `&8030` and the
   other `dh*`/`dv*` operands `&801B-&806B`; `LAB_ram_3b07 .. SUB_ram_3b1a` operands `&3B08-&3B1C`; `LAB_ram_3bae` `&3BAF`; `CallHL` `&2AEA`;
   `irds22` `&2CCD`, `irds_dat7/9` `&2DB4/&2DB7`.
-- **Self-modified, not seen changing in 700 presses (patch-named, listing only):** `PatchA_1`, `PatchAND_3`, `PatchOR_1`, `PatchOR_3`,
-  `dcPatchAdr1..4`, `commandsPatchTable` targets, `patch3`, `charPatchD628/D650/D6D8/D700/D7D8`, `smcIndicatorPatch2`, `md1_patchcommands`,
-  `md2_patchcommands`, `dvpatchadr5/7`, `dhpatchadr6`, `patchFWTextfunctions`, `patchmask1..6`, `patchmask11..16`, `patchJr`, `patchJr1`,
-  `dfcPatchpos` (`common2x`), `cpatchloop`, `patchViewPortInk0/1`, `patchviewPortInk3`.
-- **Self-patched jumps:** `PatchJRZat714b` and `PatchJRat715e` (hyperspace tunnel) choose among `altJrPoint1`, `altJrPoint2`, `altJrPoint3`
-  and `LAB_ram_7192`; `PatchORat7159` patches the compare value. So `altJrPoint*` look unreferenced statically but are live.
+- **Self-modified, not seen changing in 700 presses (patch-named, listing only):** `smc_PatchA_1`, `smc_PatchAND_3`, `smc_PatchOR_1`, `smc_PatchOR_3`,
+  `smc_dcPatchAdr1..4`, `commandsPatchTable` targets, `smc_patch3`, `smc_charPatchD628/D650/D6D8/D700/D7D8`, `smcIndicatorPatch2`, `smc_md1_patchcommands`,
+  `smc_md2_patchcommands`, `smc_dvpatchadr5/7`, `smc_dhpatchadr6`, `smc_patchFWTextfunctions`, `smc_patchmask1..6`, `smc_patchmask11..16`, `smc_patchJr`, `smc_patchJr1`,
+  `smc_dfcPatchpos` (`common2x`), `smc_cpatchloop`, `smc_patchViewPortInk0/1`, `smc_patchviewPortInk3`.
+- **Self-patched jumps:** `smc_PatchJRZat714b` and `smc_PatchJRat715e` (hyperspace tunnel) choose among `altJrPoint1`, `altJrPoint2`, `altJrPoint3`
+  and `LAB_ram_7192`; `smc_PatchORat7159` patches the compare value. So `altJrPoint*` look unreferenced statically but are live.
 - **Runtime buffers inside the code image:** entity slots `&1A40-&1B01` (and the zero area to `&1B7A`), `&1C02-&1C39` flight state,
-  `tblDustCoordinates` `&34F4-&3544`, `dat_3A6C` `&3A6C-&3A83` (24), `dat_3B3F/3B49/3B61` chart buffers, `qq3`..`travelDistance`
-  `&3D22-&3D63`, `dat_5860` `&5860-&589B` (60 bytes; written at runtime, so it is a buffer, not the dead block the TODO suspected),
-  `todo_tableforedges`/`tableUnkownFacedata` `&58EA-&592D`, dust tables `&6BED-&6C2D`, `dataShortTunnle` `&721D-&7224`, `dat_7406`
+  `tblDustCoordinates` `&34F4-&3544`, `buf_3A6C` `&3A6C-&3A83` (24), `buf_3B3F/3B49/3B61` chart buffers, `qq3`..`travelDistance`
+  `&3D22-&3D63`, `buf_5860` `&5860-&589B` (60 bytes; written at runtime, so it is a buffer, not the dead block the TODO suspected),
+  `todo_tableforedges`/`tableUnkownFacedata` `&58EA-&592D`, dust tables `&6BED-&6C2D`, `dataShortTunnle` `&721D-&7224`, `buf_7406`
   `&7407-&7496` (about 140 bytes, `loc_745B`), `LAB_ram_7734+10` `&773E-&7749`, sound tables `&2D6C-&2DC9`, `FilenameNOTMUSIC` `&8830`,
   `dataFromPPI`/`keybFlags*` `&8D34-&8D8B`, `irki2_dat2/3` `&8F5C`, private stacks `ce2stack4` `&2727`, `stack5` `&2997-&29FD`, `stack1`
   `&4644`, and the variable block `&38C1-&3949`.
@@ -187,7 +187,7 @@ screen; it was the "disk drawing routine" shared with *Gyron* and Spectrum Elite
 - Entry `todoDrawFilledCircle` `&E787` / `clearCircle` `&E795` (`common2x.asm`), called from `drawPlanetnSun` and `drawPlanet`.
   Parameters: `circleOffsetY` `&20C7`, `circleOffsetXlo` `&20C8`, flags `circleOffsetXhi` `&20C9` (bit 0 x sign, bit 1 y sign,
   bit 2 x overflow, bit 3 y overflow; set by `calcSunPlanetCoordinates`/`SUB_ram_6aa6`), `drawradius` `&20CA`.
-  `dfcPatchpos` `&E7AE` is `ret c`: in flight discs of radius under 9 are skipped; it is a `nop` during launch and docking.
+  `smc_dfcPatchpos` `&E7AE` is `ret c`: in flight discs of radius under 9 are skipped; it is a `nop` during launch and docking.
 - `CircleEntrypoint2` (`&20FB`) is a case tree on the centre being on or off screen (`ce2func1`..`ce2func33`); the edge cases fill whole
   lines through `ce2func43FillCompleteLinesinBM` (`&243A`): it points SP at a bitmap line (`ld sp,hl`) and runs `push de` 32 times (64
   bytes, one line of the off-screen bitmap `&A000-&BFFF`, 64 bytes per line) per `djnz LineFillLoop`, with SP as the write pointer.
@@ -213,7 +213,7 @@ snapshot at `&1C82` is the wrong state: there `&0038` still jumps to `&B941`, in
 - Why Spectrum and *Gyron* did not show it: unconfirmed; on the Spectrum the memory below the screen is ROM (writes are ignored).
 
 What the test does not cover: the unclamped path to the screen (`ce2func46`, used for the charts, `cirGetScrAddr`), radii under 9
-(launch and docking, when `dfcPatchpos` is a `nop`), a finer grid at the screen edges, writes at `&C000` and above, and an
+(launch and docking, when `smc_dfcPatchpos` is a `nop`), a finer grid at the screen edges, writes at `&C000` and above, and an
 independent check on real hardware. The ISR's worst-case stack depth was not measured (one invocation wrote nothing below `&A000`).
 
 ## German build (`src/elite_de/`, done 2026-11-07)
