@@ -2531,7 +2531,12 @@ jpPrintCleartext:
     jp printCleartext
 LAB_ram_ff81:
     call printFollowingTokenWithSpace
+titleTab:
+    IFDEF ENHANCED
+    db 0x02                         ; control code 8: the headline starts in column 3 (was 0x04)
+    ELSE
     db 0x04
+    ENDIF
 LAB_ram_ff85:
     ld a,0x00
     ld (0x3949),a

@@ -5379,7 +5379,12 @@ SetTableBegintoAofHL:
 printFlightToken:
     push af
     call printFollowingTokenWithSpace
+chartTitleCol:
+    IFDEF ENHANCED
+    db 0x02                         ; chart headlines start in column 3 (was 0x06)
+    ELSE
     db 0x06
+    ENDIF
     pop af
     jp printPlanetname
 digitNumber:
@@ -6466,7 +6471,7 @@ CommanderStatus:
     call printFollowingTokenWithSpace
 statusTitleCol:
     IFDEF ENHANCED
-    db 0x04                         ; the title starts in column 5 like the other headlines (was 0x06)
+    db 0x02                         ; the title starts in column 3 like the other headlines (was 0x06)
     ELSE
     db 0x06
     ENDIF

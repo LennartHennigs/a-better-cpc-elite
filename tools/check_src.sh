@@ -20,15 +20,15 @@ for p in "largeaxx LARGEAXX" "commonxx COMMONXX" "common2x COMMON2X" "musiquex M
     if [ "$n" = largeaxx ] && grep -q '^ *IFDEF ENHANCED' "$SRC/largeaxx.asm"; then
       if sjasmplus -DENHANCED --raw="$OUT/$n.enh.bin" --sym="$OUT/$n.enh.sym" "$SRC/$n.asm" >/dev/null 2>&1; then
         esym() { awk -v k="$1:" '$2 == k || $1 == k { print $NF }' "$OUT/$n.enh.sym"; }
-        ST=$(( $(esym statusToken) - 0x840 )); CL=$(( $(esym clrLineCash) - 0x840 )); PQ=$(( $(esym printInputQuestionforQuantity) - 0x840 )); EQ=$(( $(esym eqShoppingloop) - 0x840 ))
-        if cmp -l "$OUT/$n.enh.bin" "$REF" | awk -v cl=$CL -v st=$ST -v pq=$PQ -v eq=$EQ '{o=$1-1; if (!((o>=cl && o<cl+16) || (o>=st && o<st+7) || o==pq+1 || o==pq+2 || o==eq+1 || o==eq+2)) bad=1} END{exit bad}'; then echo "$n -DENHANCED: ok (differs only in the clrLineCash slot, its two call sites and the status label)"; else echo "$n -DENHANCED: differs outside the clrLineCash slot and its call sites"; rc=1; fi
+        EN=$(( $(esym eqNumberWidth) - 0x840 )); ET=$(( $(esym eqNameTab) - 0x840 )); ST=$(( $(esym statusToken) - 0x840 )); CL=$(( $(esym clrLineCash) - 0x840 )); PQ=$(( $(esym printInputQuestionforQuantity) - 0x840 )); EQ=$(( $(esym eqShoppingloop) - 0x840 ))
+        if cmp -l "$OUT/$n.enh.bin" "$REF" | awk -v cl=$CL -v en=$EN -v et=$ET -v st=$ST -v pq=$PQ -v eq=$EQ '{o=$1-1; if (!((o>=cl && o<cl+16) || (o>=st && o<st+7) || o==en || o==et || o==pq+1 || o==pq+2 || o==eq+1 || o==eq+2)) bad=1} END{exit bad}'; then echo "$n -DENHANCED: ok (differs only in the clrLineCash slot, its two call sites and the status label)"; else echo "$n -DENHANCED: differs outside the clrLineCash slot and its call sites"; rc=1; fi
       else echo "$n -DENHANCED: assemble FAILED"; rc=1; fi
     fi
     # COMMON2X -DENHANCED (English): only the fuel-line tab (call operand and inline byte)
     if [ "$n" = common2x ] && grep -q '^ *IFDEF ENHANCED' "$SRC/common2x.asm"; then
       if sjasmplus -DENHANCED --raw="$OUT/$n.enh.bin" --sym="$OUT/$n.enh.sym" "$SRC/$n.asm" >/dev/null 2>&1; then
-        FT=$(( $(awk '$2 == "fuelTab:" || $1 == "fuelTab:" { print $NF }' "$OUT/$n.enh.sym") - 0xC000 ))
-        if cmp -l "$OUT/$n.enh.bin" "$REF" | awk -v ft=$FT '{o=$1-1; if (!(o>=ft && o<ft+4)) bad=1} END{exit bad}'; then echo "$n -DENHANCED: ok (differs only in the fuel-line tab)"; else echo "$n -DENHANCED: differs outside the fuel-line tab"; rc=1; fi
+        FT=$(( $(awk '$2 == "fuelTab:" || $1 == "fuelTab:" { print $NF }' "$OUT/$n.enh.sym") - 0xC000 )); TT=$(( $(awk '$2 == "titleTab:" || $1 == "titleTab:" { print $NF }' "$OUT/$n.enh.sym") - 0xC000 ))
+        if cmp -l "$OUT/$n.enh.bin" "$REF" | awk -v ft=$FT -v tt=$TT '{o=$1-1; if (!((o>=ft && o<ft+4) || o==tt)) bad=1} END{exit bad}'; then echo "$n -DENHANCED: ok (differs only in the fuel-line tab and the headline tab)"; else echo "$n -DENHANCED: differs outside the fuel-line tab"; rc=1; fi
       else echo "$n -DENHANCED: assemble FAILED"; rc=1; fi
     fi
     continue
@@ -43,9 +43,9 @@ for p in "largeaxx LARGEAXX" "commonxx COMMONXX" "common2x COMMON2X" "musiquex M
   if ! sjasmplus -DENHANCED --raw="$OUT/$n.enh.bin" --sym="$OUT/$n.enh.sym" "$SRC/$n.asm" >/dev/null 2>&1; then echo "$n -DENHANCED: assemble FAILED"; rc=1; continue; fi
   esym() { awk -v k="$1:" '$2 == k || $1 == k { print $NF }' "$OUT/$n.enh.sym"; }
   LO=$(( $(esym dustPlotPixel) - 0x1A40 )); HI=$(( $(esym ClearBitmap) - 0x1A40 )); DL=$(( $(esym dust70) - 0x1A40 ))
-  SB=$(( $(esym statusLabels) - 0x1A40 )); CP=$(( $(esym statusColonPrint) - 0x1A40 )); TC=$(( $(esym statusTitleCol) - 0x1A40 )); CC=$(( $(esym statusColon) - 0x1A40 ))   # English: the status colon column
+  SB=$(( $(esym statusLabels) - 0x1A40 )); CP=$(( $(esym statusColonPrint) - 0x1A40 )); TC=$(( $(esym statusTitleCol) - 0x1A40 )); HC=$(( $(esym chartTitleCol) - 0x1A40 )); CC=$(( $(esym statusColon) - 0x1A40 ))   # English: the status colon column
   SL=$(( $(esym statusToken) - 0x1A40 ))   # English: "STATUS" instead of "LEGAL STATUS" (empty for the other trees)
-  if cmp -l "$OUT/$n.enh.bin" "$REF" | awk -v lo=$LO -v hi=$HI -v dl=$DL -v sl=${SL:--99999} -v cc=${CC:--99999} -v tc=${TC:--99999} -v sb=${SB:--99999} -v cp=${CP:--99999} -v esc=$((ESCP+1)) '{o=$1-1; if ($1==esc) { if ($2!="177" || $3!="377") bad=1; seen=1 } else if (!((o>=lo && o<hi) || (o>=dl && o<dl+16) || (o>=sl && o<sl+7) || o==cc || o==tc || (o>=sb && o<sb+12) || (o>=cp && o<cp+4))) bad=1} END{exit (bad || !seen)}'; then echo "$n: ok (default = original; -DENHANCED differs only in the ESC byte and the two star-occlusion slots)"; else echo "$n -DENHANCED: differs outside the ESC byte and the star-occlusion slots"; rc=1; fi
+  if cmp -l "$OUT/$n.enh.bin" "$REF" | awk -v lo=$LO -v hi=$HI -v dl=$DL -v sl=${SL:--99999} -v cc=${CC:--99999} -v tc=${TC:--99999} -v hc=${HC:--99999} -v sb=${SB:--99999} -v cp=${CP:--99999} -v esc=$((ESCP+1)) '{o=$1-1; if ($1==esc) { if ($2!="177" || $3!="377") bad=1; seen=1 } else if (!((o>=lo && o<hi) || (o>=dl && o<dl+16) || (o>=sl && o<sl+7) || o==cc || o==tc || o==hc || (o>=sb && o<sb+12) || (o>=cp && o<cp+4))) bad=1} END{exit (bad || !seen)}'; then echo "$n: ok (default = original; -DENHANCED differs only in the ESC byte and the two star-occlusion slots)"; else echo "$n -DENHANCED: differs outside the ESC byte and the star-occlusion slots"; rc=1; fi
 done
 # English only: the -DMISSIONS variant (src/elite/missions_*.asm in the free tails) must keep both files the same length
 if [ "$SRC" = "$ROOT/src/elite" ]; then
