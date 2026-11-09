@@ -6804,17 +6804,6 @@ printViewPortLabel:
 LAB_ram_4acd:
     ld hl,flagWhichScreenToPrint
     set 7,(hl)
-    IFDEF ENHANCED
-viewTitleSlot:
-    ld hl,0x010C                    ; "FRONT", "REAR", "LEFT", "RIGHT" without the " VIEW" token (&AF), so a little right of the old column
-    ld (charXY),hl
-    ld a,0x01
-    ld (todoSomePrintFlag),a        ; the next letter is a capital: "Front", not "front"
-    ld a,(Viewdirection)
-    add a,0x60
-    call printString
-viewTitleEnd:
-    ELSE
     ld hl,0x010A
     ld (charXY),hl
     ld a,(Viewdirection)
@@ -6822,7 +6811,6 @@ viewTitleEnd:
     call printString
     ld a,0xAF
     call CallprintString
-    ENDIF
     call SUB_ram_4aee
     ld hl,flagWhichScreenToPrint
     res 7,(hl)
