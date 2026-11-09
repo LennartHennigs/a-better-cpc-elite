@@ -6590,7 +6590,12 @@ LAB_ram_4942:
 todo_printlabeledVar:
     ex af,af'
     call printFollowingTokenWithSpace
+statusColon:
+    IFDEF ENHANCED
+    db 0x12                         ; column of the colon on the status screen, close to "Hyperspace System" (was 0x15)
+    ELSE
     db 0x15
+    ENDIF
     call printStringFollowingByte
     db ":"
     ex af,af'
