@@ -69,6 +69,9 @@ character address) keeps a numeric operand. Run `bash tools/check_src.sh` after 
   draws on change only needs a replay or copy once the screen is double-buffered (`docs_other/_double_buffer_experiment.md`).
 - **Screen address.** The game's screen is 256 pixels wide, 64 bytes per line, not the firmware's 80: byte address = base + (y mod 8) x `&800` + (y / 8) x 64. Stepping down a line is `H += 8`, and wrapping to the next
   character row relied on the carry out of H with base `&C000`; at base `&4000` the test must be bit 7 of H (the source of the relocation bugs in the double-buffer experiment).
+- **Frame time (measured in flight, front view with the planet in sight, double-buffer experiment build; stock has the same clear and copy).** One frame is 12 vsyncs, 240 ms: `ClearBitmap` 20 ms, 3D work before the copy 102 ms,
+  bitmap copy plus viewport frame 55 ms, the rest (vsync wait, scanner, bars) 62 ms. So clear and copy are about a third of a frame and the 3D work 43%; drawing straight into the screen would save the copy (about 55 ms, one vsync step
+  at best) and free `&A000-&BFFF`. Details and method: `docs_other/_double_buffer_experiment.md`.
 - **Timing.** The Gate Array stretches every Z80 instruction to a multiple of 1 us (effective 3.3 MHz), so use CPC timings (NOPs), not datasheet T-states.
 
 ### Entry point `&1C82` (read from the first boot in cpcxray, interpretation of the loop unconfirmed)
