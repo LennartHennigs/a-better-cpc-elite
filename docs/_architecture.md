@@ -55,6 +55,22 @@ character address) keeps a numeric operand. Run `bash tools/check_src.sh` after 
   because Elite copies the firmware area with the floppy routines.
 - Missions in stock: the Asp/cloaking-device mission and the supernova mission only; the BBC's Constrictor and Thargoid plans are missing (we add them: `_missions_built.md`).
 
+### CPC graphics (what the code relies on)
+
+- **Mode 1 all the time, no mode split.** The "split screen" is a palette split: the 300 Hz ISR (`myVBL`, `doColorSplit`) writes Gate Array pen/ink registers (`&7F00+pen`, then the colour) while the beam is
+  at the view/dashboard boundary. The only other Gate Array writes are the lower-ROM toggles `enableROM`/`disableROM` (`&7F89`/`&7F8D`, mode bits stay 01). Mode 1 shows 4 inks at once, so view and dashboard each get
+  their own set of four.
+- **ISR counter.** The Gate Array raises 6 interrupts per frame (every 52 HSyncs; the counter restarts at VSync). `doColorSplit` detects the frame start from the PPI VSync bit (`&F5`) and sets the view inks
+  (`setDashboardInks`, counter 0), then per interrupt: 1 = inks 2/3 for views 5+ (after `splitDelay`), 2 = same for view 4 (`splitcheckzone4`), 3 = keyboard and sound (`IRSound`), 4 = dashboard colours (`setDashboardColor`), 5 = `IRSetInk1`.
+  Views 4 and up (charts, status, market) use one ink set for the whole screen (`changeAllInks`). `splitDelay` is a busy loop that places the change on the right scanline: it depends on exact timing, so it moves if code
+  runs with interrupts off or the CRTC timing changes.
+- **Colours** are hardware numbers (`&40`-`&5F`, 27 distinct colours; the firmware numbers 0-26 are a different ordering, table on the [CPCWiki Gate Array page](https://www.cpcwiki.eu/index.php/Gate_Array)).
+- **No sprites.** Everything is drawn by the CPU: the 3D view into the bitmap, the cockpit (bars, scanner, compass, text) straight into screen RAM, the Trumbles in our missions by software blits. Anything that
+  draws on change only needs a replay or copy once the screen is double-buffered (`docs_other/_double_buffer_experiment.md`).
+- **Screen address.** The game's screen is 256 pixels wide, 64 bytes per line, not the firmware's 80: byte address = base + (y mod 8) x `&800` + (y / 8) x 64. Stepping down a line is `H += 8`, and wrapping to the next
+  character row relied on the carry out of H with base `&C000`; at base `&4000` the test must be bit 7 of H (the source of the relocation bugs in the double-buffer experiment).
+- **Timing.** The Gate Array stretches every Z80 instruction to a multiple of 1 us (effective 3.3 MHz), so use CPC timings (NOPs), not datasheet T-states.
+
 ### Entry point `&1C82` (read from the first boot in cpcxray, interpretation of the loop unconfirmed)
 
 Calls `&4F22` and `&877C` (setup), programs the CRTC (R7=`&1D`, R1=`&20`, R2=`&2A`, R6=`&18`), calls `&1EC7` with A=`&14`, sets `SP=&7497` (stored at `&1C7F`), more
