@@ -506,23 +506,13 @@ listAvailableEquipmentloop:
     and a
     jr nz,LAB_ram_0b6e
 LAB_ram_0b3c:
-    IFDEF EQ_COLUMNS                ; opt-in: these two bytes are inside the 104-byte save key (EquipShip), so the flag changes the key and old saves stop loading
-    ld a,0x01                       ; item numbers start in column 1 (width 1; was 3)
-    ELSE
     ld a,0x03
-    ENDIF
-eqNumberWidth equ $ - 1
     ld (0x3947),a
     ld a,(varEquipmentNumber)
     inc a
     call printNumber
     call printFollowingTokenWithSpace
-eqNameTab:
-    IFDEF EQ_COLUMNS
-    db 0x02                         ; item names start in column 3 (was 0x04), the price column stays
-    ELSE
     db 0x04
-    ENDIF
     ld b,0x69
     ld a,(varEquipmentNumber)
     add a,b

@@ -10,7 +10,7 @@ Every difference between our builds and the original game, with why it exists, w
 | CPC+ keyboard fix | none (always on) | English, French (German disk already has it) | 1 (`ED 79` -> `ED 49` in `getPPI_Input`) | 0 |
 | Escape leaves buy, sell and equipment prompts | `ESC_KEYCODE` / `ENHANCED` | all three | 1 (`FF` -> `7F` in `tblKeyboardmatrix`) | 0 |
 | Stars stay behind planet and sun | `STAR_OCCLUDE` / `ENHANCED` | all three | 16 bytes of the dust loop | 11 bytes in dead `unusedViewBorderFill` |
-| Station-screen headlines in column 2 (equipment list two columns left only with the opt-in `-DEQ_COLUMNS`, which changes the save key) | `ENHANCED` | English | 4 operand bytes, no new code | 0 |
+| Station-screen headlines in column 2 | `ENHANCED` | English | 4 operand bytes, no new code | 0 |
 | Key pre-delay 0.43 s -> 0.16 s (`sub_403E`, 1 operand byte) | `ENHANCED` | all | 1 byte, no new code | 0 |
 | Status screen: "Status" label, fuel number in column 9 | `ENHANCED` | English | 7 bytes in each of two string tables (same length), 4 bytes in `COMMON2X` | 0 |
 | Cash on the quantity line of buy, sell and equip | `ENHANCED` | English | two 3-byte call operands (`clrLine0x15` -> `clrLineCash`) | 16 dead bytes in `LARGEAXX` (`&08E7`) and 7 in the dead block of `COMMONXX` (`cashHome`, `&1FEA`) |
@@ -71,7 +71,7 @@ What they change in the stock game:
 ## Trainer, save tools and disks
 
 - `CHEAT.BAS` (ours, replaces the Firebird disk's): interactive trainer with prompts for each of the original pokes plus no pirate boarding, unlimited hold, own cloak, cash, stock mission stage, kills, jumps and added-mission presets;
-  `SHOWSAVE.BAS` / `EDITSAVE.BAS` show and edit a commander save on the CPC; `tools/saveedit.py` does the same on the host and converts saves between UK, French and German builds. `_cheats.md`, `_savegame.md`.
+  `EDITSAVE.BAS` edits and `LISTSAVE.BAS` lists commander saves on the CPC; `tools/saveedit.py` does the same on the host and converts saves between UK, French and German builds. `_cheats.md`, `_savegame.md`.
 - The original `CHEAT.BAS` has a wrong cloak entry (it only lists the device; `POKE &202B,0` makes the cloak work); ours sets the ownership bit instead.
 - Built disks show only `.BAS` and `.TXT` files in `CAT`, like the original protected disk; `RUN`, `LOAD` and the game's own loads still find the hidden files.
 

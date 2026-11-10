@@ -38,7 +38,7 @@ Besides the missions, the build has a few changes that make the game nicer to pl
 - **Stars stay behind the planet and sun.** The stars used to be drawn over the planet and sun discs, so they shone through them. Now they only appear against empty space (switch `STAR_OCCLUDE`, in all three languages). Ships are still wireframes, so you see stars between their edges, as in the original.
 - **Browse the ships on the "Press Space" screen.** Cursor left and right, or the joystick, step the demo ship through eight hulls (Viper, Asp, Cobra Mk III, Fer-de-Lance, Sidewinder, Krait, Rock Hermit, Thargoid), so you can look at all of them (it only changes the demo ship, not the one you fly) (switch `TITLESEL`, English and German; the disks from `tools/build_dsk.py` include it). In the English build the press-space screen shows the ship's name, in the ship colour, where the ELITE title stood.
 - **Cash on the quantity line.** The buy, sell and equipment prompts show your credits at the bottom right, on the row where you type the quantity, and refresh after every purchase (`-DENHANCED`, English only so far).
-- **Improved readability.** The station screens line up: every headline starts in column 2, the status screen reads "System:", "Target:", "Fuel:", "Cash:", "Status:" and "Rating:" with the values in one column ("Legal Status" is now just "Status"), and the hyperspace countdown moved to column 6 so it no longer covers the headline (`-DENHANCED`, English only so far). The equipment list can start two columns further left with the opt-in `-DEQ_COLUMNS`, but two of its bytes are part of the save key, so it makes old saves unreadable and is off by default.
+- **Improved readability.** The station screens line up: every headline starts in column 2, the status screen reads "System:", "Target:", "Fuel:", "Cash:", "Status:" and "Rating:" with the values in one column ("Legal Status" is now just "Status"), and the hyperspace countdown moved to column 6 so it no longer covers the headline (`-DENHANCED`, English only so far).
 
 ## The commented code
 
@@ -62,7 +62,7 @@ python3 -I tools/build_dsk.py --missions     # combined build: work/elite_missio
 bash tools/build_cheat.sh            # trainer and save tools onto work/firebird_cheat.dsk, work/missions_cheat.dsk, work/de_cheat.dsk and work/fr_cheat.dsk
 ```
 
-Boot the disk and `RUN"ELITE`. `RUN"CHEAT.BAS` starts the trainer (it has prompts for kills, jumps and mission presets, so the added missions can be reached without hours of play); `RUN"SHOWSAVE.BAS` shows the build (UK, French or German), kills and jumps of a save; `RUN"EDITSAVE.BAS` edits one. On the host, `tools/saveedit.py` does the same and can convert a save between the three builds.
+Boot the disk and `RUN"ELITE`. `RUN"CHEAT.BAS` starts the trainer (it has prompts for kills, jumps and mission presets, so the added missions can be reached without hours of play); `RUN"EDITSAVE.BAS` edits a save; `RUN"LISTSAVE.BAS` (on the German saves disk) lists the saves on a disk with build, kills and cash. On the host, `tools/saveedit.py` does the same and can convert a save between the three builds.
 
 ## Build switches
 
@@ -81,7 +81,6 @@ Underneath, a plain `sjasmplus` run gives the **stock** game (`bash tools/check_
 |---|---|---|
 | `ENHANCED` | turns on `STAR_OCCLUDE` and `ESC_KEYCODE=0x7F` together, and the cash display, the readability tabs, the shorter key delay and the escape-pod cargo fix (the "small improvements" above) | `commonxx.asm`, `largeaxx.asm` |
 | `STAR_OCCLUDE` | stars stay behind planet and sun (`=1`/`=0`, overrides `ENHANCED`) | `commonxx.asm` |
-| `EQ_COLUMNS` | equipment list two columns left (changes two bytes of the save key: old saves stop loading) | `largeaxx.asm` |
 | `ESC_KEYCODE` | key code of Escape in the keyboard table (`0x7F` = Escape leaves the prompts, `0xFF` = stock) | `commonxx.asm` |
 | `TITLESEL` | choose the demo ship on the title screen | `commonxx.asm`, `musiquex.asm` |
 | `MISSIONS` | the added missions (`missions_*.asm`, overlay stub, hooks) | `largeaxx.asm`, `commonxx.asm` |

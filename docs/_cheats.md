@@ -71,13 +71,13 @@ label + offset in the three source trees (`sjasmplus --sym`) and checked byte by
 | galaxy-gate byte | `&4E5D` | `&4F71` | `&4FAF` |
 | `setFuel` operand | `&4F02` | `&5016` | `&5054` |
 
-`work/de_savegames.dsk` (built by the same script) is `work/de_cheat.dsk` (German game, `CHEAT.BAS`, `SHOWSAVE.BAS`, `EDITSAVE.BAS`) plus `LISTSAVE.BAS` and the four saves of `Elite_DE_savegames.dsk`; all find the build from the save's key, so they work on any of the three builds' saves. The saves stay visible on this disk: `LISTSAVE` lists them by running `CAT` and reading the screen back, and `CAT` does not show System files. It only loads files `CAT` shows as 1K (a save is 232 bytes with its header), so large `.BIN` files are skipped; the key and checksum test still decides what is a save.
+`work/de_savegames.dsk` (built by the same script) is `work/de_cheat.dsk` (German game, `CHEAT.BAS`, `EDITSAVE.BAS`) plus `LISTSAVE.BAS` and the four saves of `Elite_DE_savegames.dsk`; all find the build from the save's key, so they work on any of the three builds' saves. The saves stay visible on this disk: `LISTSAVE` lists them by running `CAT` into a hidden screen buffer and reading it back, and `CAT` does not show System files. It only loads files `CAT` shows as 1K (a save is 232 bytes with its header), so large `.BIN` files are skipped; the key and checksum test still decides what is a save.
 
 Tested in cpcxray on all three disks with every cheat on, cash 5000, mission 2, kills 300, jumps 40: all pokes landed, the title screen came
 up. The added-mission pokes (`+50`, `+51`) only mean something in the English `-DMISSIONS` build.
  Edit `src/cheats/CHEAT.ASC` (ASCII); `CHEAT.BAS` is the tokenised file with AMSDOS header, `CHEAT.BAS.txt` its listing.
 `bash tools/build_cheat.sh` rebuilds them and the disks (the CPC's own BASIC tokenises, via headless cpcxray), and also writes
-`work/missions_cheat.dsk` (the mission build plus `CHEAT.BAS` and `SHOWSAVE.BAS`).
+`work/missions_cheat.dsk` (the mission build plus `CHEAT.BAS` and `EDITSAVE.BAS`).
 
 Prompts (Y or ENTER = yes, N = no):
 
@@ -120,8 +120,11 @@ BASIC pitfalls (Locomotive BASIC 1.1):
   stage, cloak, the added-mission chain (`--added 0-4`), raw mission bytes, Trumbles. It reads the key from a game disk, recomputes both
   checksums, never writes without `-o`, and replaces a file in a copy of a disk image (or adds it). `--to-key-disk` converts a save between
   UK, French and German. The round trip is byte-identical on `PETER`, `PETE`, `LEN` (German) and `1.BIN` (UK).
-- `src/cheats/SHOWSAVE.BAS` (from `tools/mk_showsave.py`, 1.5 KB): `RUN"SHOWSAVE.BAS`, type the save name; prints origin (UK, FRENCH,
-  GERMAN: the key whose checksums verify), name, kills, jumps, cash, galaxy. Tested on one save per build.
+- `src/cheats/LISTSAVE.BAS` (from `tools/mk_listsave.py`, 2.1 KB): `RUN"LISTSAVE.BAS` lists every save on the disk in drive A (File, Build = UK, FRENCH or GERMAN: the key whose checksums
+  verify, Kills, Cash Cr). One page, no `CLS`, no colour changes, no catalogue on screen. BASIC cannot read the directory any other way than `CAT`, so the program prints it into
+  a hidden screen buffer: `MEMORY &3FFF` frees `&4000-&7FFF`, a 6-byte stub (`ld a,&40 / call &BC08` = SCR SET BASE `/ ret`, `&9000`; the same with `&C0` at `&9006`) points the
+  firmware's text output there, two `OUT`s keep the CRTC displaying `&C000`, `CAT` runs, `COPYCHR$` reads the rows back and the second stub switches back. Only files `CAT`
+  shows as 1K are loaded (to `&9100`, keys at `&9200`). `SHOWSAVE.BAS` (one save by name) was removed: the saves are not the files one sees in `CAT`.
 - `src/cheats/EDITSAVE.BAS` (from `tools/mk_editsave.py`, about 2.8 KB): `RUN"EDITSAVE.BAS`, type the save name. It detects the build,
   shows name, kills, jumps, cash, legal status and both mission bytes, asks for new values (Enter keeps one; cloak y/n, added-mission preset
   0-4), recomputes checksums, encrypts and `SAVE`s. **Use a copy of the disk**: AMSDOS keeps the old file as `NAME.BAK`, and the new header
@@ -131,4 +134,4 @@ BASIC pitfalls (Locomotive BASIC 1.1):
   from `saveedit.py` and loaded kills, cash, mission byte and name. cpcxray key timing: title-screen `y` held 1.4 s, `1` held 1.4 s (it also
   types a `1` into the name prompt: delete it with two `del` taps), then each letter and `return` tapped 0.33 s (longer types it twice, 0.25 s misses).
 
-Screenshots (cpcxray, Mode 1): `docs/img/trainer_prompts.png`, `showsave_uk.png`, `showsave_fr.png`, `showsave_de.png`, `editsave_fr.png`.
+Screenshots (cpcxray, Mode 1): `docs/img/trainer_prompts.png`, `showsave_uk.png`, `showsave_fr.png`, `showsave_de.png` (from the removed `SHOWSAVE`), `editsave_fr.png`.

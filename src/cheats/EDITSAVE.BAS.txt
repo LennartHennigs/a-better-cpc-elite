@@ -1,5 +1,5 @@
 10 MODE 1:PRINT"EDIT SAVE (work on a copy of the disk)":PRINT
-20 INPUT"Save file (e.g. PETER.BIN)";f$
+20 INPUT"Save file (e.g. PETER.BIN)";f$:f$=UPPER$(f$)
 30 MEMORY &5FFF:DIM p(103),k(103):ON ERROR GOTO 900
 40 LOAD f$,&6000:ON ERROR GOTO
 50 RESTORE:FOR b=1 TO 3:READ n$,k$

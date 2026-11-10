@@ -2,18 +2,18 @@
 """Generate src/cheats/EDITSAVE.ASC: a CPC BASIC save editor (the on-CPC counterpart of tools/saveedit.py).
 
 It loads a commander save, finds the build (UK, French or German) whose key makes both checksums verify, shows kills, jumps, cash, legal status and the added-mission state, asks for new values (Enter keeps the old one),
-recomputes both checksums, encrypts again and writes the file back with SAVE (AMSDOS keeps the old file as .BAK). Use a copy of the disk. Keys come from the game disks as in tools/mk_showsave.py.
+recomputes both checksums, encrypts again and writes the file back with SAVE (AMSDOS keeps the old file as .BAK). Use a copy of the disk. Keys come from the game disks as in tools/savekeys.py.
 usage: python3 -I tools/mk_editsave.py        (then bash tools/build_cheat.sh)
 """
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import mk_showsave  # noqa: E402
+import savekeys  # noqa: E402
 
 lines = [
     '10 MODE 1:PRINT"EDIT SAVE (work on a copy of the disk)":PRINT',
-    '20 INPUT"Save file (e.g. PETER.BIN)";f$',
+    '20 INPUT"Save file (e.g. PETER.BIN)";f$:f$=UPPER$(f$)',
     '30 MEMORY &5FFF:DIM p(103),k(103):ON ERROR GOTO 900',
     '40 LOAD f$,&6000:ON ERROR GOTO 0',
     '50 RESTORE:FOR b=1 TO 3:READ n$,k$',
@@ -39,4 +39,4 @@ lines = [
     '270 SAVE f$,b,&6000,104:PRINT"Saved ";f$:END',
     '900 PRINT"Cannot load or save ";f$:END',
 ]
-mk_showsave.write_asc("EDITSAVE", lines + mk_showsave.key_data_lines())
+savekeys.write_asc("EDITSAVE", lines + savekeys.key_data_lines())
