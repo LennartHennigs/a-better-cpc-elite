@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""Extract a SparkFS archive: sparkx.py FILE OUTDIR. Handles stored (2), crunched (8, 0x88), squashed (9) and compress (0x7f).
-Writes NAME,load-exec-less plain files; prints the methods and a CRC-16 check."""
+"""Extract a SparkFS archive: sparkx.py FILE OUTDIR. Prints every entry with its method and a CRC-16 check.
+Works for stored (2) and compress (0x7F, Spark 0xFF) entries, both CRC-verified on ArcElite's archives. Crunched (8) and squashed (9) are
+attempted with the same LZW routine but fail ("bad code") on real files. Load/exec addresses are not kept."""
 import os, struct, sys
 
 def crc16(b):
@@ -11,12 +12,10 @@ def crc16(b):
             c = (c >> 1) ^ 0xA001 if c & 1 else c >> 1
     return c
 
-def lzw(data, maxbits, unix_align):
+def lzw(data, maxbits):
     out = bytearray(); bits = 9; free = 257
     tab = {}; prev = None
     pos = 0; nbits = len(data) * 8
-    codes_in_group = 0
-    first = True
     while pos + bits <= nbits:
         code = 0
         for i in range(bits):
@@ -24,8 +23,6 @@ def lzw(data, maxbits, unix_align):
         pos += bits
         if code == 256:
             bits = 9; free = 257; prev = None; tab = {}
-            if unix_align:
-                pos = (pos + bits * 8 - 1) // (bits * 8) * (bits * 8) if False else pos
             continue
         if prev is None:
             s = bytes([code]); out += s; prev = s; continue
@@ -69,16 +66,16 @@ def walk(d, path):
         csize, date, tm, crc, osize = struct.unpack('<IHHHI', d[p + 15:p + 29])
         hl = 41 if m >= 0x80 else 29
         full = os.path.join(stack[-1], name)
-        if m == 0x82 and csize == osize and d[p + hl:p + hl + 2] != b'' and is_dir(d, p, hl, csize):
+        if m == 0x82 and csize == osize and is_dir(d, p, hl, csize):
             stack.append(full); p += hl; continue
         body = d[p + hl:p + hl + csize]
         p += hl + csize
         meth = m & 0x7F
         try:
             if meth in (1, 2): raw = body
-            elif meth == 8: raw = unrle(lzw(body, 12, False))
-            elif meth == 9: raw = lzw(body, 13, False)
-            elif meth == 0x7F: raw = lzw(body[1:], body[0] & 0x1F, True)
+            elif meth == 8: raw = unrle(lzw(body, 12))
+            elif meth == 9: raw = lzw(body, 13)
+            elif meth == 0x7F: raw = lzw(body[1:], body[0] & 0x1F)
             else: raw = None; print('unsupported method', hex(m), full)
         except Exception as e:
             raw = None; print('decode failed', hex(m), full, e)
@@ -91,6 +88,6 @@ def is_dir(d, p, hl, csize):
     # a directory is followed by another entry header; a stored file of the same method is data
     # (heuristic: the next bytes look like a header whose name is printable and whose end marker 1A 00 lies inside csize)
     q = p + hl
-    return d[q] == 0x1A and d[q + 1] in (0x82, 0x88, 0x89, 0xFF, 0x81, 0x80, 0x89) and d.find(b'\x1a\x00', q) != -1 and d[q + 2:q + 3].isalnum() | (d[q + 2] in b'!$_')
+    return d[q] == 0x1A and d[q + 1] in (0x80, 0x81, 0x82, 0x88, 0x89, 0xFF) and d.find(b'\x1a\x00', q) != -1 and d[q + 2:q + 3].isalnum() | (d[q + 2] in b'!$_')
 
 walk(open(sys.argv[1], 'rb').read(), sys.argv[2])

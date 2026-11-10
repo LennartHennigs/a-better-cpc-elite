@@ -10,9 +10,8 @@ def imm(w):  # ARM modified immediate
 d = bytearray(open(sys.argv[1], 'rb').read())
 base = 0x8000
 w = lambda a: struct.unpack_from('<I', d, a - base)[0]
-a = base + len(d) - 0x48           # innermost-to-outer: the outermost layer is the one at the file end
+# the outermost layer is the last `mov r0,#0x8000` (e3a00902) in the file
 a = None
-# find outermost layer start: first word `mov r0,#0x8000` (e3a00902) after the data
 for o in range(len(d) - 4, 0, -4):
     if struct.unpack_from('<I', d, o)[0] == 0xE3A00902:
         a = base + o; break

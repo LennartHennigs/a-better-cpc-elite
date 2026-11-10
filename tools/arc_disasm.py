@@ -35,7 +35,7 @@ SWI_OTHER = {0x400C0: 'Wimp_Initialise', 0x400C1: 'Wimp_CreateWindow', 0x400C4: 
              0x400D2: 'Wimp_GetWindowState', 0x400DA: 'Wimp_SetPointerShape', 0x40140: 'Sound_Configure',
              0x40141: 'Sound_Enable', 0x40142: 'Sound_Stereo', 0x40143: 'Sound_Speaker', 0x40144: 'Sound_Mode',
              0x40145: 'Sound_LinearHandler', 0x40146: 'Sound_SampleRate', 0x40147: 'Sound_Volume',
-             0x4B380: 'Bonus??'}
+            }
 
 def swi_name(n):
     x = n & 0x20000; n &= ~0x20000
@@ -92,7 +92,7 @@ for a, i in ins.items():
                 labels[t] = 'fn'
             else:
                 labels.setdefault(t, 'l')
-labels[BASE + 0xC + 8 + (struct.unpack_from('<i', d, 0xC)[0] & 0xFFFFFF) * 4 - 0 if False else 0x59944] = 'entry'
+labels[BASE + 0xC + 8 + (word(BASE + 0xC) & 0xFFFFFF) * 4] = 'entry'   # the bl at &800C
 
 def lab(t):
     k = labels.get(t)
