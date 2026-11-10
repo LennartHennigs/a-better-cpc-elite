@@ -585,14 +585,22 @@ titleNameEnd:
 titleNameLine:
     ld b,60                         ; columns 1-30
 titleNameBlue:
-    ld a,(hl)                       ; background pixels are pen 1 (bit set in the low nibble), text pixels pen 0
+    ld a,(hl)                       ; background is pen 1 (low nibble 1111), text pen 0 (both planes clear); ship lines (pen 3) must stay
+    ld e,a
+    rrca
+    rrca
+    rrca
+    rrca
+    or e
     cpl
-    and 0x0F                        ; text pixels
+    and 0x0F                        ; pixels with both planes clear = text
+    ld d,a
     rlca
     rlca
     rlca
     rlca
-    or 0x0F                         ; text becomes pen 3, the pen of the ship lines and the frame
+    or d
+    or e                            ; text becomes pen 3, the pen of the ship lines and the frame; everything else is unchanged
     ld (hl),a
     inc hl
     djnz titleNameBlue

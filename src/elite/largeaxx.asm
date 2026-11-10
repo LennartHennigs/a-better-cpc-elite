@@ -37,7 +37,7 @@ longDelay equ 0x4042
 bufferCharXY equ 0x4048
 clrLine0x15 equ 0x404F
 getMoneyinHLDE equ 0x4209
-cashHome equ 0x1FEA                  ; commonxx.asm, end of the dead block (CASH_CORNER)
+cashHome equ 0x1FEA                  ; commonxx.asm, end of the dead block (-DENHANCED)
 clrLine0x16 equ 0x405B
 restoreCharXY equ 0x406C
 InputString equ 0x40AB
@@ -153,7 +153,7 @@ LAB_ram_08db:
 loc_08E4:
     jp Inventory
     IFDEF ENHANCED
-; Cash on the quantity line (CASH_CORNER): the 16 dead bytes here (a ZX Spectrum attribute fill, never called) hold clrLine0x15 plus the balance
+; Cash on the quantity line (-DENHANCED): the 16 dead bytes here (a ZX Spectrum attribute fill, never called) hold clrLine0x15 plus the balance
 ; at the right of the line below the prompt, where the typed quantity appears (8 characters, ends at column 30). cashHome puts the cursor back on row &15.
 clrLineCash:
     call clrLine0x15
@@ -506,7 +506,7 @@ listAvailableEquipmentloop:
     and a
     jr nz,LAB_ram_0b6e
 LAB_ram_0b3c:
-    IFDEF ENHANCED
+    IFDEF EQ_COLUMNS                ; opt-in: these two bytes are inside the 104-byte save key (EquipShip), so the flag changes the key and old saves stop loading
     ld a,0x01                       ; item numbers start in column 1 (width 1; was 3)
     ELSE
     ld a,0x03
@@ -518,7 +518,7 @@ eqNumberWidth equ $ - 1
     call printNumber
     call printFollowingTokenWithSpace
 eqNameTab:
-    IFDEF ENHANCED
+    IFDEF EQ_COLUMNS
     db 0x02                         ; item names start in column 3 (was 0x04), the price column stays
     ELSE
     db 0x04

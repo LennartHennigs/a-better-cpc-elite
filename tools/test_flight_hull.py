@@ -91,7 +91,7 @@ async def main():
                 await c("memory_write", {"address": ix + off, "data": "%02X" % val})
             flag = (await c("memory_read", {"address": ix + 32, "length": 1}))["hex"]
             await c("memory_write", {"address": ix + 32, "data": "%02X" % (int(flag, 16) & ~0x40)})   # res 6,(ix+32): spawnShip sets it, the game re-places such ships (loc_83AA clears it)
-            await c("memory_write", {"address": 0x1A40 + 7, "data": "70"})   # push the planet (slot 0) far away: the view is full of it and a ship ahead would be inside it
+            await c("memory_write", {"address": 0x1C2F, "data": "00 FF 80  00 00 00  B6 7C 01"})   # posDataPlanet far to the left (as `far` in test_star_occlusion.py): the view is full of the planet otherwise and a ship ahead would be inside it
             print("  after writes:", (await c("memory_read", {"address": ix, "length": 9}))["hex"])
             await call(0x82B8, ix=ix)
             print("  after setDirectionofEntity:", (await c("memory_read", {"address": ix, "length": 9}))["hex"])                     # setDirectionofEntity: builds the orientation, without it the ship is not drawn

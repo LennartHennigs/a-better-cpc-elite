@@ -52,8 +52,30 @@ Other known variables: laser temperature `&1C0F`, frame counter `&1DA8`, hypersp
 
 ## Our interactive trainer (`CHEAT.BAS`, from `src/cheats/CHEAT.ASC`)
 
-`RUN"CHEAT` on `work/firebird_cheat.dsk` (the Firebird disk plus this file; built, not shipped). It asks, loads the game and applies only
-what you chose. Edit `src/cheats/CHEAT.ASC` (ASCII); `CHEAT.BAS` is the tokenised file with AMSDOS header, `CHEAT.BAS.txt` its listing.
+`RUN"CHEAT` on `work/firebird_cheat.dsk` (the Firebird disk plus this file; built, not shipped), `work/de_cheat.dsk` (German) or
+`work/fr_cheat.dsk` (French): the same file runs on the UK, German and French builds (and on the mission build). It asks, loads the game
+and applies only what you chose.
+
+Two stages (the BASIC program and its variables must fit under `&83F`, one program with the three address tables did not): `CHEAT.BAS`
+asks and converts the answers to numbers, then `CHAIN"cheatb.bin"`. `CHEATB.BAS` (disk file `CHEATB.BIN`, so it stays hidden; built from
+`src/cheats/CHEATB.ASC`) loads the game, finds the build and pokes. CHAIN keeps the variables but puts HIMEM back to `&A000`, so stage two
+repeats `OPENOUT"d":MEMORY &83F:CLOSEOUT` before the `LOAD`s (without it: "Memory full in 2"). Build detection: the byte pattern around the
+shield-clamp operand (`cp &47 / jr c,+2` at `setFuel`+1) and the missile-v-station operand (`cp 4 / jr nz,&13`), looked up at each build's
+address; nothing matches = no pokes, the game just starts. The per-build addresses (13 per build, `DATA` lines 800-820 of `CHEATB.ASC`) are
+the nine patch groups, the galaxy-gate byte (`&4E5D` in UK) and the start of the default commander block (`&39C7` in UK), found as
+label + offset in the three source trees (`sjasmplus --sym`) and checked byte by byte:
+
+| | UK | German | French |
+|---|---|---|---|
+| default commander block (kills at +13, jumps +15, cash +18, mission bytes +50, flags +92) | `&39C7` | `&3ACE` | `&3A98` |
+| galaxy-gate byte | `&4E5D` | `&4F71` | `&4FAF` |
+| `setFuel` operand | `&4F02` | `&5016` | `&5054` |
+
+`work/de_savegames.dsk` (built by the same script) is `work/de_cheat.dsk` (German game, `CHEAT.BAS`, `SHOWSAVE.BAS`, `EDITSAVE.BAS`) plus `LISTSAVE.BAS` and the four saves of `Elite_DE_savegames.dsk`; all find the build from the save's key, so they work on any of the three builds' saves. The saves stay visible on this disk: `LISTSAVE` lists them by running `CAT` and reading the screen back, and `CAT` does not show System files. It only loads files `CAT` shows as 1K (a save is 232 bytes with its header), so large `.BIN` files are skipped; the key and checksum test still decides what is a save.
+
+Tested in cpcxray on all three disks with every cheat on, cash 5000, mission 2, kills 300, jumps 40: all pokes landed, the title screen came
+up. The added-mission pokes (`+50`, `+51`) only mean something in the English `-DMISSIONS` build.
+ Edit `src/cheats/CHEAT.ASC` (ASCII); `CHEAT.BAS` is the tokenised file with AMSDOS header, `CHEAT.BAS.txt` its listing.
 `bash tools/build_cheat.sh` rebuilds them and the disks (the CPC's own BASIC tokenises, via headless cpcxray), and also writes
 `work/missions_cheat.dsk` (the mission build plus `CHEAT.BAS` and `SHOWSAVE.BAS`).
 
@@ -83,7 +105,7 @@ bit 0 and `FlightMode` 1 in galaxy 0; 65,000,000 Cr shows correctly. Not checked
 
 BASIC pitfalls (Locomotive BASIC 1.1):
 - Program, variables and strings must fit in `&170-&83E` (about 1.7 KB) because `MEMORY &83F` protects the game area; the file is
-  1,536 bytes, so new prompts need shortening elsewhere. Questions come first, loads later.
+  1,536 bytes, so new prompts need shortening elsewhere. That is why the trainer is split in two stages (see above). Questions come first, loads later.
 - `MEMORY &A000` (kept from the original loaders) always fails with "Memory full"; the `ON ERROR GOTO` handler continues to the
   `common2x` load. Do not put `ON ERROR GOTO 0` in the handler: it re-raises the pending error.
 - Strings are not safe after `MEMORY &A000`; the poke phase uses only numbers (choices in `DIM f(9)`).

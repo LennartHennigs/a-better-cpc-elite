@@ -10,7 +10,8 @@ Every difference between our builds and the original game, with why it exists, w
 | CPC+ keyboard fix | none (always on) | English, French (German disk already has it) | 1 (`ED 79` -> `ED 49` in `getPPI_Input`) | 0 |
 | Escape leaves buy, sell and equipment prompts | `ESC_KEYCODE` / `ENHANCED` | all three | 1 (`FF` -> `7F` in `tblKeyboardmatrix`) | 0 |
 | Stars stay behind planet and sun | `STAR_OCCLUDE` / `ENHANCED` | all three | 16 bytes of the dust loop | 11 bytes in dead `unusedViewBorderFill` |
-| Station-screen headlines in column 2, equipment list two columns left | `ENHANCED` | English | 4 operand bytes, no new code | 0 |
+| Station-screen headlines in column 2 (equipment list two columns left only with the opt-in `-DEQ_COLUMNS`, which changes the save key) | `ENHANCED` | English | 4 operand bytes, no new code | 0 |
+| Key pre-delay 0.43 s -> 0.16 s (`sub_403E`, 1 operand byte) | `ENHANCED` | all | 1 byte, no new code | 0 |
 | Status screen: "Status" label, fuel number in column 9 | `ENHANCED` | English | 7 bytes in each of two string tables (same length), 4 bytes in `COMMON2X` | 0 |
 | Cash on the quantity line of buy, sell and equip | `ENHANCED` | English | two 3-byte call operands (`clrLine0x15` -> `clrLineCash`) | 16 dead bytes in `LARGEAXX` (`&08E7`) and 7 in the dead block of `COMMONXX` (`cashHome`, `&1FEA`) |
 | Title screen ship choice, ship name on the press-space screen | `TITLESEL` | English, German (name: English only) | three call operands (two in German) plus one `call printELITE` in `COMMONXX` (same length) | about 280 bytes in the tail of `MUSIQUEX` |
@@ -61,7 +62,7 @@ What they change in the stock game:
 - **Hook sites** (each a 3-byte `call` replacement, so no stock routine moves): `spawnShip` (`mxShipTable`, ship type 19), `spawnCommand0` (`mxSpawnCheck`), `todo_killedsomeone` (`mxKillHook`, replaces `call getBounty`),
   `applyLaserDamagetoEntity` (`mxLaserHook`), `RechargeEnergy` (`mxRecharge`), the docking sequence (`&1714` replaces `chkMissions`), `launchSequence` (`mxLaunchEntry`), `setShipvarsAtArrival` (`mxArrive`), `todoOverheating` (`mxSun`),
   the Inventory loop (`mxInvHook`), the `call transferBuffertoScreen` in `Spaceflight` at `&1E4D` (`mxFlightDraw`, the Trumble sprites) and the escape-pod launch (`mxPodHook`).
-- **Unused save bytes** carry the state (`&38FD`, `&38FE`, `&3905-&3906`), so the save layout and the code-keyed encryption are unchanged and old saves still load.
+- **Unused save bytes** carry the state (`&38FD`, `&38FE`, `&3905-&3906`), so the save layout and the code-keyed encryption are unchanged and old saves still load (`check_src.sh` checks the key window).
 - **Free space:** the 812-byte tail of `LARGEAXX` and the 610-byte tail of `COMMONXX` (`_memory_map.md`); the missions load their code from overlay and image files, one at a time.
 - **Behaviour you can notice outside the missions:** an escape pod now ends the Trumbles quest (the original leaves 1-7 aboard); a docking costs nothing extra unless a mission can act (an overlay load is about 2 s of disk time); a launch swaps the
   flight image only when it differs (about 2 s more).
@@ -78,7 +79,7 @@ What they change in the stock game:
 
 | Bug | Where | Status |
 |---|---|---|
-| Escape-pod cargo clear starts at `&38E1` (the market random byte) and keeps alien items (`&38F2`); `cargoSpaceFree` is reset to full capacity | `mleCleanInvLoop`; fix: start the loop at `&38E2` | not applied; no reward depends on it (`_missions.md` section 3) |
+| Escape-pod cargo clear starts at `&38E1` (the market random byte) and keeps alien items (`&38F2`); `cargoSpaceFree` is reset to full capacity | `mleCleanInvLoop`; fixed with `-DENHANCED` (`podCleanOperand`: the loop starts at `cargoHold`, `&38E2`) | no reward depends on it (`_missions.md` section 3) |
 | The random witchspace mis-jump looks unreachable (the seed byte is compared with `0x40` then `0x20`) | `someHyperSpaceFunctions`; only the pause-menu toggle (bit 6 of `keybFlags0`) forces it | not applied (`_gameplay.md`) |
 | The station-kill code does `SET 3,(HL)` on `&3926` instead of `Missionflag` | invasion mission | left as is |
 | Large planets off screen can overwrite memory below the bitmap if the line-count clamp at `&245B` is missing | disc fill | stock build is safe (131,072-input sweep); the cassette release presumably lacked the clamp (`_architecture.md`) |

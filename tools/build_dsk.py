@@ -28,6 +28,8 @@ if DE and MISSIONS:
     sys.exit("--de and --missions cannot be combined: the missions exist for the English build only (src/elite)")
 args = [a for a in sys.argv[1:] if a not in ("--missions", "--de")]
 OUT = Path(args[0]) if args else ROOT / "work" / ("elite_de_rebuilt.dsk" if DE else "elite_missions.dsk" if MISSIONS else "elite_rebuilt.dsk")
+if OUT.resolve() == BASE.resolve() or OUT.resolve().parent == ROOT:   # CLAUDE.md: never modify the original disks in the project root
+    sys.exit(f"{OUT}: refusing to write a disk into the project root (the originals live there); use work/")
 SJASM = Path.home() / ".local/bin/sjasmplus"
 FILES = {"LARGEAXX": [] if DE else ["-DFIREBIRD"], "COMMONXX": ["-DTITLESEL"], "COMMON2X": [], "MUSIQUEX": ["-DTITLESEL"]}   # TITLESEL: cursor keys change the title ship
 

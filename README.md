@@ -34,10 +34,11 @@ Besides the missions, the build has a few changes that make the game nicer to pl
 
 - **The keyboard works on a CPC464+/6128+.** The original game's keyboard is dead on a Plus machine; one byte in the keyboard scan (`getPPI_Input`, `ED 79` -> `ED 49`, found by diffing Redbox's patched disk) fixes it. It is not a switch, and the German stock disk already has it. Not tried on real Plus hardware; details in `docs/_cpcplus.md`.
 - **Escape leaves the buy, sell and equipment prompts.** Escape now backs out of them (switch `ESC_KEYCODE`; the stock game ignores that key there).
+- **The keyboard reacts faster.** Before every key read the game waited 128 interrupts, which is 0.43 s on the CPC (the interrupt fires six times per frame, so the "128 frames" in the old comment were never frames). With `-DENHANCED` it waits 48, about 0.16 s (one operand byte in `sub_403E`, measured in the emulator: 425 ms against 160 ms), so menus, quantity prompts and Press Space feel quicker.
 - **Stars stay behind the planet and sun.** The stars used to be drawn over the planet and sun discs, so they shone through them. Now they only appear against empty space (switch `STAR_OCCLUDE`, in all three languages). Ships are still wireframes, so you see stars between their edges, as in the original.
 - **Browse the ships on the "Press Space" screen.** Cursor left and right, or the joystick, step the demo ship through eight hulls (Viper, Asp, Cobra Mk III, Fer-de-Lance, Sidewinder, Krait, Rock Hermit, Thargoid), so you can look at all of them (it only changes the demo ship, not the one you fly) (switch `TITLESEL`, English and German; the disks from `tools/build_dsk.py` include it). In the English build the press-space screen shows the ship's name, in the ship colour, where the ELITE title stood.
 - **Cash on the quantity line.** The buy, sell and equipment prompts show your credits at the bottom right, on the row where you type the quantity, and refresh after every purchase (`-DENHANCED`, English only so far).
-- **Improved readability.** The station screens line up: every headline starts in column 2, the status screen reads "System:", "Target:", "Fuel:", "Cash:", "Status:" and "Rating:" with the values in one column ("Legal Status" is now just "Status"), and the equipment list starts two columns further left with the prices where they were (`-DENHANCED`, English only so far).
+- **Improved readability.** The station screens line up: every headline starts in column 2, the status screen reads "System:", "Target:", "Fuel:", "Cash:", "Status:" and "Rating:" with the values in one column ("Legal Status" is now just "Status"), and the hyperspace countdown moved to column 6 so it no longer covers the headline (`-DENHANCED`, English only so far). The equipment list can start two columns further left with the opt-in `-DEQ_COLUMNS`, but two of its bytes are part of the save key, so it makes old saves unreadable and is off by default.
 
 ## The commented code
 
@@ -58,7 +59,7 @@ Requirements: Python 3, [sjasmplus](https://github.com/z00m128/sjasmplus), iDSK 
 ```bash
 bash tools/check_src.sh              # stock English source == original bytes, -DENHANCED differs only where documented (also: de, fr)
 python3 -I tools/build_dsk.py --missions     # combined build: work/elite_missions.dsk (from the Firebird disk)
-bash tools/build_cheat.sh            # trainer and save tools onto work/firebird_cheat.dsk and work/missions_cheat.dsk
+bash tools/build_cheat.sh            # trainer and save tools onto work/firebird_cheat.dsk, work/missions_cheat.dsk, work/de_cheat.dsk and work/fr_cheat.dsk
 ```
 
 Boot the disk and `RUN"ELITE`. `RUN"CHEAT.BAS` starts the trainer (it has prompts for kills, jumps and mission presets, so the added missions can be reached without hours of play); `RUN"SHOWSAVE.BAS` shows the build (UK, French or German), kills and jumps of a save; `RUN"EDITSAVE.BAS` edits one. On the host, `tools/saveedit.py` does the same and can convert a save between the three builds.
@@ -78,8 +79,9 @@ Underneath, a plain `sjasmplus` run gives the **stock** game (`bash tools/check_
 
 | Switch | What it does | Files |
 |---|---|---|
-| `ENHANCED` | turns on `STAR_OCCLUDE` and `ESC_KEYCODE=0x7F` together, and the cash display (the "small improvements" above) | `commonxx.asm`, `largeaxx.asm` |
+| `ENHANCED` | turns on `STAR_OCCLUDE` and `ESC_KEYCODE=0x7F` together, and the cash display, the readability tabs, the shorter key delay and the escape-pod cargo fix (the "small improvements" above) | `commonxx.asm`, `largeaxx.asm` |
 | `STAR_OCCLUDE` | stars stay behind planet and sun (`=1`/`=0`, overrides `ENHANCED`) | `commonxx.asm` |
+| `EQ_COLUMNS` | equipment list two columns left (changes two bytes of the save key: old saves stop loading) | `largeaxx.asm` |
 | `ESC_KEYCODE` | key code of Escape in the keyboard table (`0x7F` = Escape leaves the prompts, `0xFF` = stock) | `commonxx.asm` |
 | `TITLESEL` | choose the demo ship on the title screen | `commonxx.asm`, `musiquex.asm` |
 | `MISSIONS` | the added missions (`missions_*.asm`, overlay stub, hooks) | `largeaxx.asm`, `commonxx.asm` |

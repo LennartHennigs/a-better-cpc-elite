@@ -154,6 +154,8 @@ def write_out(out_spec, data_with_header):
         Path(name).write_bytes(data_with_header)
         print("wrote", name, f"({len(data_with_header)} bytes with header)")
         return
+    if disk.resolve().parent == ROOT:   # CLAUDE.md: never modify the original disks in the project root
+        raise SystemExit(f"{disk}: refusing to write into a disk in the project root; copy it to work/ first")
     d = bytearray(disk.read_bytes())
     secs = dskx.sector_offsets(d)
     first = min(r for (t, r) in secs if t == 0)

@@ -713,8 +713,11 @@ STAR_OCCLUDE equ 1
 STAR_OCCLUDE equ 0
       ENDIF
     ENDIF
+    IFDEF ENHANCED
+    ASSERT STAR_OCCLUDE, "-DENHANCED needs STAR_OCCLUDE: cashHome (&1FEA, called by largeaxx.asm) lives in the dead block that STAR_OCCLUDE frees"
+    ENDIF
     IFDEF MISSIONS
-MISSIONS_POD equ STAR_OCCLUDE        ; the escape-pod hook (mxPodHook) lives in the dead block, which only exists with STAR_OCCLUDE
+MISSIONS_POD equ STAR_OCCLUDE       ; the escape-pod hook (mxPodHook) lives in the dead block, which only exists with STAR_OCCLUDE
     ELSE
 MISSIONS_POD equ 0
     ENDIF
@@ -743,7 +746,7 @@ mxPodHook:
     IFDEF ENHANCED
     ASSERT $ <= 0x1FEA
     DS 0x1FEA-$
-; Cash on the quantity line (CASH_CORNER, clrLineCash in largeaxx.asm): back to the start of the prompt row after the balance is printed
+; Cash on the quantity line (-DENHANCED, clrLineCash in largeaxx.asm): back to the start of the prompt row after the balance is printed
 cashHome:
     ASSERT cashHome == 0x1FEA            ; largeaxx.asm calls it by address
     ld hl,0x1500
@@ -4044,7 +4047,12 @@ meLaunchEscapePod:
     xor a
     ld (legalStatus),a
     ld (escapePod),a
+    IFDEF ENHANCED
+    ld hl,cargoHold                 ; the 17 hold items start at cargoHold (&38E2); the original started one byte early and kept the alien items
+    ELSE
     ld hl,dat_38E1
+    ENDIF
+podCleanOperand equ $ - 2
     ld b,0x11
 mleCleanInvLoop:
     ld (hl),a
@@ -5165,7 +5173,12 @@ loc_403C:
     ret
 ; Short delay of 128 frames (halt loop); falls into longDelay's loop with B = 0x80
 sub_403E:
+    IFDEF ENHANCED
+    ld b,0x30                       ; halt resumes on every interrupt (6 per frame), so 0x80 was about 0.43 s before each key read; 0x30 is about 0.16 s
+    ELSE
     ld b,0x80
+    ENDIF
+predelayOperand equ $ - 1
     jr loopDelay
 ; Waits 240 frames (halt loop)
 longDelay:
@@ -7050,7 +7063,12 @@ CountDowntoHyperJump:
     ld b,a
     ld a,0x02
     ld (numberOfDigits),a
+    IFDEF ENHANCED
+    ld hl,0x0105                    ; the count starts at column 6: the station headlines now begin in column 2 and the count (printed in every frame) covered their first letters
+    ELSE
     ld hl,0x0101
+    ENDIF
+hyperCountPos equ $ - 2
     ld (charXY),hl
     ld a,b
     srl a

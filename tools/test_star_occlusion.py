@@ -54,7 +54,7 @@ async def main():
                     await c("memory_write", {"address": lo, "data": new[lo - base:hi - base].hex()})
             await c("run", {"max_us": 6_000_000, "timeout_s": 60})
             if FAR:
-                await c("memory_write", {"address": 0x1A40 + 7, "data": "70"})
+                await c("memory_write", {"address": 0x1C2F, "data": "00 FF 80  00 00 00  B6 7C 01"})   # posDataPlanet: far to the side (x = -&FF00; `sun` uses &7000 for a planet that stays in the view edge) (&1A40+7 is the scratch entity, not the planet)
             if SUN:
                 await c("memory_write", {"address": 0x1C26, "data": "00 00 00  00 00 00  00 00 03"})
                 await c("memory_write", {"address": 0x1C2F, "data": "00 70 80  00 00 00  B6 7C 01"})

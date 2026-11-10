@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Disassemble the German or French build into sjasmplus source (src/elite_de, src/elite_fr) and verify the round trip.
 
-usage: python3 -I tools/disasm_locale.py german|french [OUTDIR]   (wrappers: disasm_german.py, disasm_french.py)
-       run tools/map_locale.py first (it writes work/<lang>_map.json); default OUTDIR is src/<SRCDIR> of that language
+usage: python3 -I tools/disasm_locale.py german|french OUTDIR [--force]   (wrappers: disasm_german.py, disasm_french.py)
+       run tools/map_locale.py first (it writes work/<lang>_map.json); OUTDIR is required (a scratch directory: src/<SRCDIR> is hand-edited; --force writes into src/)
 
 Names and comments come from the English source (src/elite): every English label whose code or data reference tools/map_locale.py
 could pair with a target-language address is used for it, and the comment block above the English label is copied over (comments are
@@ -136,4 +136,4 @@ def main(outdir):
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1] if len(sys.argv) > 1 else ROOT / "src" / SRCDIR))
+    sys.exit(main(D.outdir_arg(f"usage: disasm_locale.py {LANG} OUTDIR [--force]")))

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Disassemble the stock Elite CPC binaries into sjasmplus source and verify the round trip.
 
-usage: disasm_stock.py [OUTDIR]        (default src/elite)
+usage: disasm_stock.py OUTDIR [--force]        (OUTDIR is required; src/ is refused without --force: src/elite is hand-edited)
 
 Inputs (all produced earlier in this project):
   work/stock_bin/*.BIN, work/bin_stock/*.BIN   stock binaries, header stripped (tools/dskx.py)
@@ -410,5 +410,17 @@ def main(outdir):
     return 0 if ok_all else 1
 
 
+def outdir_arg(usage):
+    """The OUTDIR argument. It is required, and a directory inside src/ is refused unless --force is given: src/elite*
+    are hand-edited, and a regeneration overwrites every name, comment and flag block in them."""
+    args = [a for a in sys.argv[1:] if a != "--force"]
+    if len(args) != 1:
+        sys.exit(usage + "\nOUTDIR is required; use a scratch directory (src/elite* are hand-edited), or --force to write into src/")
+    out = Path(args[0]).resolve()
+    if (ROOT / "src") in (out, *out.parents) and "--force" not in sys.argv:
+        sys.exit(f"{args[0]} is inside src/, which holds hand-edited sources; pass --force to overwrite them")
+    return out
+
+
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1] if len(sys.argv) > 1 else ROOT / "src" / "elite"))
+    sys.exit(main(outdir_arg("usage: disasm_stock.py OUTDIR [--force]")))

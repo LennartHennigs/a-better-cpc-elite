@@ -10,8 +10,12 @@ set -e
 cd "$(dirname "$0")/.."
 export PATH="$HOME/.local/bin:$PATH"
 D=src/cheats
+# add FILE to DISK (BASIC, binary type 2, overwrite) and stop with a message when iDSK fails; set -e alone would exit silently
+idsk_add() {
+  if ! out=$(iDSK "$1" -i "$2" -t 2 -f 2>&1); then echo "iDSK failed adding $2 to $1:" >&2; echo "$out" >&2; exit 1; fi
+}
 DISK=Elite_UK_Firebird_cracked_trainer.dsk
-PROGS="CHEAT SHOWSAVE EDITSAVE TRUMBLE"
+PROGS="CHEAT CHEATB SHOWSAVE EDITSAVE LISTSAVE TRUMBLE"
 DISKPROGS="CHEAT SHOWSAVE EDITSAVE"   # TRUMBLE.BAS is built into src/cheats/ but not put on the disks (the squeak is settled)
 for P in $PROGS; do
   rm -f work/tmp_asc.dsk work/xray/disk/tmp_asc.dsk work/xray/disk/tmp_tok.dsk
@@ -26,15 +30,42 @@ for P in $PROGS; do
   echo "built $D/$P.BAS ($(wc -c < $D/$P.BAS) bytes with header)"
 done
 cp $DISK work/firebird_cheat.dsk
-for P in $DISKPROGS; do iDSK work/firebird_cheat.dsk -i $D/$P.BAS -t 2 -f >/dev/null 2>&1; done
+cp $D/CHEATB.BAS work/CHEATB.BIN
+for P in $DISKPROGS; do idsk_add work/firebird_cheat.dsk $D/$P.BAS; done
+idsk_add work/firebird_cheat.dsk work/CHEATB.BIN
 python3 -I tools/hide_files.py work/firebird_cheat.dsk
 cp work/firebird_cheat.dsk work/xray/disk/firebird_cheat.dsk
+# the mission build is rebuilt every time: a leftover work/elite_missions.dsk could hold an older game than src/
+python3 -I tools/build_dsk.py --missions >/dev/null   # a failed build stops the script (set -e)
 if [ -f work/elite_missions.dsk ]; then
   cp work/elite_missions.dsk work/missions_cheat.dsk
-  for P in $DISKPROGS; do iDSK work/missions_cheat.dsk -i $D/$P.BAS -t 2 -f >/dev/null 2>&1; done
+  for P in $DISKPROGS; do idsk_add work/missions_cheat.dsk $D/$P.BAS; done
+  idsk_add work/missions_cheat.dsk work/CHEATB.BIN
   python3 -I tools/hide_files.py work/missions_cheat.dsk
   cp work/missions_cheat.dsk work/xray/disk/missions_cheat.dsk
   echo "also built work/missions_cheat.dsk (mission build + trainer + save viewer)"
 fi
 rm -rf work/tmp_asc.dsk work/tmp_tok work/xray/disk/tmp_asc.dsk work/xray/disk/tmp_tok.dsk
+# the same CHEAT.BAS detects the build, so it also goes onto copies of the German and French disks
+for V in "de Elite_DE_cracked.dsk" "fr Elite (1985)(Firebird Software)(fr).dsk"; do
+  L=${V%% *}; SRCD=${V#* }
+  cp "$SRCD" work/${L}_cheat.dsk
+  for P in CHEAT SHOWSAVE EDITSAVE; do idsk_add work/${L}_cheat.dsk $D/$P.BAS; done
+  idsk_add work/${L}_cheat.dsk work/CHEATB.BIN
+  python3 -I tools/hide_files.py work/${L}_cheat.dsk
+  cp work/${L}_cheat.dsk work/xray/disk/${L}_cheat.dsk
+  echo "also built work/${L}_cheat.dsk (trainer + save viewer and editor)"
+done
+# one German disk with everything: the game, the trainer, the save tools and the four commander saves of Elite_DE_savegames.dsk
+# (work/de_cheat.dsk plus the saves and LISTSAVE). The saves stay visible (no hide_files after adding them): LISTSAVE finds
+# them through CAT, which does not show System files, and the game's save/load lists them too.
+cp work/de_cheat.dsk work/de_savegames.dsk
+rm -rf work/de_saves_tmp; mkdir work/de_saves_tmp work/de_saves_tmp/raw
+python3 -I tools/dskx.py Elite_DE_savegames.dsk work/de_saves_tmp >/dev/null
+for F in work/de_saves_tmp/*.raw; do cp "$F" "work/de_saves_tmp/raw/$(basename "${F%.raw}")"; done
+for F in work/de_saves_tmp/raw/*; do idsk_add work/de_savegames.dsk "$F"; done
+idsk_add work/de_savegames.dsk $D/LISTSAVE.BAS
+rm -rf work/de_saves_tmp
+cp work/de_savegames.dsk work/xray/disk/de_savegames.dsk
+echo "also built work/de_savegames.dsk (German game + trainer + save tools + the four saves, visible)"
 echo "built work/firebird_cheat.dsk"
