@@ -21,7 +21,7 @@ for p in "largeaxx LARGEAXX" "commonxx COMMONXX" "common2x COMMON2X" "musiquex M
     if [ "$n" = largeaxx ] && grep -q '^ *IFDEF ENHANCED' "$SRC/largeaxx.asm"; then
       if sjasmplus -DENHANCED --raw="$OUT/$n.enh.bin" --sym="$OUT/$n.enh.sym" "$SRC/$n.asm" >/dev/null 2>&1; then
         esym() { awk -v k="$1:" '$2 == k || $1 == k { print $NF }' "$OUT/$n.enh.sym"; }
-        ST=$(( $(esym statusToken) - 0x840 )); STE=$(( ${ST} + 7 )); [ -n "$(esym statusTokenEnd)" ] && STE=$(( $(esym statusTokenEnd) - 0x840 )); CL=$(( $(esym clrLineCash) - 0x840 )); PQ=$(( $(esym printInputQuestionforQuantity) - 0x840 )); EQ=$(( $(esym eqShoppingloop) - 0x840 ))
+        ST=$(( $(esym statusToken) - 0x840 )); STE=$(( ST + 7 )); [ -n "$(esym statusTokenEnd)" ] && STE=$(( $(esym statusTokenEnd) - 0x840 )); CL=$(( $(esym clrLineCash) - 0x840 )); PQ=$(( $(esym printInputQuestionforQuantity) - 0x840 )); EQ=$(( $(esym eqShoppingloop) - 0x840 ))
         # the 104 bytes at EquipShip are the save key: any change breaks every existing save 
         KW=$(( $(esym EquipShip) - 0x840 ))
         if ! cmp -s <(dd if="$OUT/$n.enh.bin" bs=1 skip=$KW count=104 2>/dev/null) <(dd if="$REF" bs=1 skip=$KW count=104 2>/dev/null); then echo "$n -DENHANCED: save key window (EquipShip, 104 bytes) CHANGED: old saves will not load"; rc=1; fi

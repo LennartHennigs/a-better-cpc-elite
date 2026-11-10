@@ -8,7 +8,6 @@ Boots the disk, starts a new commander (N, then Space), then writes output/stati
 import asyncio
 import json
 import sys
-from pathlib import Path
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
