@@ -26,6 +26,7 @@ Local clones live under `work/` (untracked).
 | NES | https://github.com/markmoxon/nes-elite-beebasm | `work/ext_nes/repo` |
 | BBC cassette | https://github.com/markmoxon/cassette-elite-beebasm | |
 | C64 (Trumbles code: `TBRIEF`, `MVTRIBS`, `TRIBTA`, `TRIBMA`, `spritp`) | https://github.com/markmoxon/elite-source-code-commodore-64, https://elite.bbcelite.com/c64/ | Forks: https://github.com/ataribaby42/elite-source-code-commodore-64 (blocks buying a ship with Trumbles), full disassembly https://github.com/Kroc/elite-harmless |
+| Elite-A (Angus Duggan, BBC) | https://github.com/markmoxon/elite-a-source-code-bbc-micro | `work/ext_elitea/repo` (shallow clone, copyrighted, read-only); `1-source-files/main-sources/`, Angus's own files in `original-sources/` |
 | Apple II | https://6502disassembly.com/a2-elite/Elite.html | |
 | All annotated versions | https://github.com/markmoxon/elite-source-code-library, https://www.bbcelite.com/ | |
 | C port | Christian Pinder, *Elite: The New Kind* | |
@@ -37,6 +38,8 @@ Local clones live under `work/` (untracked).
   https://www.lemon64.com/forum/viewtopic.php?t=6158, https://www.atari-forum.com/viewtopic.php?t=5985,
   https://www.tales-from-darkenedroom.com/post/elite-plus-missions-galaxy-9, NES quest list on GameFAQs
   (https://gamefaqs.gamespot.com/nes/581795-elite/answers/635813-can-anyone-give-me-a-full-list-of-quests-for-the-nes-version-with-their-triggers)
+- ArcElite (Archimedes): https://wiki.alioth.net/index.php/ArcElite_missions (four missions with triggers; checked against the code in `docs/_arcelite.md`), game and ship tables from
+  http://www.iancgbell.clara.net/elite/arc/index.htm, commander file format in EliteCheat (Jon Ribbens)
 - Elite Plus decompilation: https://github.com/rembish/elite-plus-revamp
 
 ## Algorithms (Mark Moxon's BBC deep dives, https://elite.bbcelite.com/deep_dives/)

@@ -23,7 +23,7 @@ states. "wiki" means only a forum or wiki list, not code.
 | Stolen police ship | no | no | no | no | no | no | no | no | wiki: yes (4,000 Cr) |
 | Asteroid bombardment | no | no | no | no | no | no | no | no | wiki: yes (6,000 Cr) |
 
-The Apple II is a BBC-disc derivative (same two missions, same `TP` bit layout). Elite-A's generated delivery missions are out of scope.
+ArcElite (Archimedes) has a different set of four (section 5). The Apple II is a BBC-disc derivative (same two missions, same `TP` bit layout). Elite-A's generated delivery missions are out of scope.
 
 **MSX state table** (TI-99/4A source `src/main-code.a99`): five missions run in order via `next_mission` (1-5, 6 = done) when `jumps_to_next_mission` reaches 0;
 it counts down on every hyperspace jump **outside the first galaxy** while no mission is under way, reset to 64. The state byte's high nibble is the mission,
@@ -251,6 +251,20 @@ difficulty mode and a lower Elite kill count, and lists a masking device and a s
 (not checked). `3D 2C 01` occurs three times (`0x7455`, `0x7B51`, `0x82DF`, all `cmp ax,0x12C` after a random call, 300/65536): `0x7455` is the galactic jump (after galaxy 8 a 300/65536 roll keeps the ninth galaxy, otherwise it wraps to 0; `stc` makes it
 certain; likely, not proven, to be the patched one), `0x7B51` the mission-6 Viper spawn roll, `0x82DF` a per-tick Cobra-class roll.
 
+### Unconfirmed features, checked (2026-11-10)
+
+Source of the claims: [AFE FAQ2](https://wiki.alioth.net/index.php/AFE_FAQ2) (sections 2.1, 2.2.2, 2.2.3, 2.4).
+
+- **9th galaxy in Elite Plus: confirmed in the EXE, and it is reachable.** The string `Welcome to the 9th Galaxy!` is at `DS:829D` and is chosen at `0x73DD` when the galaxy byte `DS:8315` is 8 (after a galactic jump, flag `DS:AE24`).
+  The jump routine `0x7439`: at 8 it wraps to 0; otherwise it increments, and when the new value is 8 it calls the random routine and keeps 8 only if `ax < 0x12C` (300 of 65536, about 0.46 % per jump from galaxy 8), else wraps to 0.
+  The wiki's "no-one has found a way" is therefore a probability, not a missing path, unless the hacked EXE differs from the original (unexamined); the forum hex patch `3D 2C 01` -> `90 90 F9` (carry set) makes it certain. The digit shown is `'1' + galaxy`, so a '9' is printed.
+- **ArcElite also has nine galaxy names** (index 8 "Trojane"; `docs/_arcelite.md`); how that index is reached was not found.
+- **Generation ships, dredgers:** the wiki gives the Space Trader's manual (p. 30, "more than seventy thousand") and a rumour that Ian Bell said none were ever implemented; for dredgers "no confirmed sightings". Our check: no string `generation`, `dredger`, `carrier` or `destroyer` in the CPC
+  binaries (English, German), the Elite Plus image (its ship list: Dodo, Coriolis, Boa, Anaconda, Cobra Mk I, Asteroid, Boulder, Thargon, Shuttle, Transporter, Worm, Splinter, Plate, Gecko, Moray, Adder, Mamba, Cargo Canister, Constrictor,
+  Cougar, Missile, Escape Pod, Thargoid, Ferdelance, Asp, Sidewinder, Cobra Mk III, Krait, Viper, Python) or ArcElite, and none in the cloned ST/Amiga, NES, MSX and C64 trees. So the claim holds for those builds; it says nothing about builds we do not have. The wiki's ArcElite "mystery ship" is held to be the Urutu (not checked).
+- **Elite A destroyer and battle carrier:** Mark Moxon's annotated Elite-A source ([repo](https://github.com/markmoxon/elite-a-source-code-bbc-micro), cloned to `work/ext_elitea/repo`) has no string or blueprint named destroyer or carrier. Its 37 ship blueprints (plus the missile) are the classic ones plus Adder, Bushmaster, Chameleon, Dragon,
+  Ghavial, Iguana, Monitor, Ophidian, Rattler, Shuttle Mk II and Asp Mk II (no Dredger, no generation ship). So the "destroyer under test" and "battle carrier" are hints in the printed documentation only, not ships in the code; the wiki guesses the destroyer is the Constrictor.
+
 ### Elite Plus missions 4, 5 and 6, read again (2026-11-08, static)
 
 Method: capstone on `work/elite plus/extracted/ELITE.img`, every `cmp byte [0x83A0],n` site, offer (`0x98EB`), debrief (`0x9AC4`), spawn (`0x7A66-0x7C8F`), kill (`0xAD4F`). Offer texts: 4 "stolen by Thargoid infiltrators", 5 "plans for a new Thargoid invasion
@@ -272,3 +286,19 @@ mission the CPC already has. (d) Blueprint rows are 10 bytes; byte 0 is the ship
 blueprint byte 18, the stolen one has both clear, which also answers the legal-status question: the CPC kill code only tests bits 5 and 6 of `ix+33`). The asteroid mission counts asteroid kills at the target with no marker.
 
 CPC consequence (built, `docs/_missions_built.md`): a state byte instead of a `Missionflag` bit, no Y/N prompt, a flag-pattern marker for the Viper, the jump wait before the offer.
+
+## 5. ArcElite (Acorn Archimedes, 1991)
+
+The Archimedes version has four missions of its own: none is a Constrictor, plans (as in the 6502 versions), Trumbles, supernova or Elite Plus mission, and no other port has them. No source is public; the game was unpacked and read in 2026-11
+(method, files and global variables: `docs/_arcelite.md`). Values are from the code, checked against the [wiki](https://wiki.alioth.net/index.php/ArcElite_missions) (one difference: mission 1 starts at 450 kills, not 550).
+
+| ArcElite | Start | Reward |
+|---|---|---|
+| Genesis capsule: Razaar (167), Ordima (236), drop low over Xeaan (80) | galaxy 1, kills > 450, cash > 1200 Cr | 500 Cr |
+| Zartid (MTA) hunt ("running plans to Thargoids"): system 116, Mamba convoy, fails after about 20 docks | kills > 1450, cash > 4000 Cr | yaw boosters, offences cleared |
+| Zurid Pino: stolen MisLoc and stealth Cobra, ten taunts | kills > 2600 (second message > 2650) | MisLoc missile system |
+| Groigan disease: four compounds from systems 170-173, mix at 174 | galaxy index > 4 (galaxies 6-9), kills > 4600, offences < 1000, system mod 3 = 1 | 2000 Cr |
+
+Design points: mission state is one word per mission (`88888` failed, `99999` done, -999..-995 pending outcome codes written by the destroy handler or the jettison code, small positive values as progress bits); a single scheduler runs on
+every dock and returns 1 when it showed a message; chatter lines are random per dock and shown once each (a separate bit array); the kill thresholds sit in the rating bands. The Zartid mission is the nearest relative of the 6502 plans mission
+(a despot flying plans to the Thargoids), and the Pino hunt of the CPC stolen police ship (a marked ship that must be killed). ArcElite has nine galaxy names (index 8, "Trojane"); see `docs/_arcelite.md`. The ArcElite set is unrelated to the set built here (`docs/_missions_built.md`).
