@@ -44,7 +44,7 @@ Cursor left/right and joystick left/right step the demo ship on the press-space 
 not fit the window). The code, about 120 bytes with its table, lives in the zero tail of `MUSIQUEX.BIN` (`&6E21-&6FFF`), which is resident only while the title screens run. `COMMONXX` reaches it through hooks of unchanged byte length:
 `TITLE_SCREEN2` replaces the `transferBuffertoScreen` call in the press-space loop, `TITLE_NEXT` replaces the automatic pick before that screen (it now selects the Cobra Mk III) (English also `TITLE_NAME`, below). `splash2Shipnr` (`&1DA8`) holds
 the ship index (bits 0-2) and "a key was already down" (bit 7), so a held key steps once and the choice carries over between screens and restarts. The raw PPI rows (`dataFromPPI`) are read because `irki2` rewrites `keybFlags2` into roll values.
-The six `COMMONXX` addresses `musiquex.asm` hard-codes are checked by `check_src.sh`. Test: `tools/test_title_ships.py [de]`.
+The eleven `COMMONXX` addresses `musiquex.asm` hard-codes are checked by `check_src.sh`. Test: `tools/test_title_ships.py [de]`.
 
 **Ship name (English only).** A fifth hook, `TITLE_NAME` (`&6E2D`), replaces `call printELITE` in `printPressSpace`: `titleName` prints the name of the ship on show (table `titleNames`, 16 bytes per name, in `titleShips` order) centred on text row 1 in capitals (`todoPrintFlag3948` forced to 1 while printing). It then recolours that row of the off-screen bitmap from pen 0 to pen 3, the pen of the ship lines and frame: the background byte is `&0F`, text pixels have both planes clear, so `byte := &0F | (~byte & &0F) << 4`.
 
