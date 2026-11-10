@@ -65,6 +65,7 @@ Spectrum use a marked Asp Mk II with 2-3 Sidewinder/Krait escorts and no bounty.
   one shared byte as a state machine and mark the Asp by a flag; that byte also steers the Spectrum's energy-regeneration throttle (`$A2D8`) and the spawn throttle,
   so resetting it is a side effect of other code (which is why a scooped random canister at state 3 also gives the cloak).
 - The CPC can lose the cloak by ramming or a non-laser kill (gate back to 0, spawns again later); the ST ends the mission at the first removal of the Cougar.
+- Traced 2026-11-10 (`tools/test_cloak_asp.py`, stock code, Asp spawned ahead with the marker bit and `aspMissionState` = 1): the wireframe is not drawn in the front view, but the scanner still shows its blip, because `UpdateScanner` plots every slot in range with no marker test. So the Asp is hidden from the view, not from the radar.
 - Read from source, not traced: the laser-only draw test and the "other route" reset (`aspGateClearIfBlueprint1E` guards state 3, `aspGateReset` clears 1/2).
 - The MSX (`main-code.a99`, ricbit's `code.asm`) matches the ST: Cougar type `$1E`, flickering draw, `SCOOP_CLOAK_REWARD` (`$8BA6`) sets `CLOAK_FITTED`, `Y` toggles `CLOAK_ACTIVE`.
 
