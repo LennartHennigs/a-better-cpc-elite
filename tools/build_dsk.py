@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Assemble src/elite and write the four code files into a copy of the Firebird DSK, keeping the AMSDOS headers.
 
-usage: python3 -I tools/build_dsk.py [--missions | --de] [OUT.dsk]      (default work/elite_rebuilt.dsk; base is Elite_UK_Firebird_cracked_trainer.dsk;
-       --de assembles src/elite_de into a copy of Elite_DE_cracked.dsk, default work/elite_de_rebuilt.dsk)
+usage: python3 -I tools/build_dsk.py [--missions | --de | --fr] [OUT.dsk]      (default work/elite_rebuilt.dsk; base is Elite_UK_Firebird_cracked_trainer.dsk;
+       --de assembles src/elite_de into a copy of Elite_DE_cracked.dsk, default work/elite_de_rebuilt.dsk;
+       --fr assembles src/elite_fr into a copy of the French Firebird disk, default work/elite_fr_rebuilt.dsk)
 
 The base disk is never modified. Each file keeps its 128-byte AMSDOS header and its size: the new bytes must have the
 same length as the old ones (the build is byte-exact apart from the CPC+ fix), otherwise the script stops.
@@ -21,17 +22,20 @@ from hide_files import hide_entries  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 DE = "--de" in sys.argv
-BASE = ROOT / ("Elite_DE_cracked.dsk" if DE else "Elite_UK_Firebird_cracked_trainer.dsk")
-SRC = ROOT / ("src/elite_de" if DE else "src/elite")
+FR = "--fr" in sys.argv
+if DE and FR:
+    sys.exit("--de and --fr cannot be combined")
+BASE = ROOT / ("Elite_DE_cracked.dsk" if DE else "Elite (1985)(Firebird Software)(fr).dsk" if FR else "Elite_UK_Firebird_cracked_trainer.dsk")
+SRC = ROOT / ("src/elite_de" if DE else "src/elite_fr" if FR else "src/elite")
 MISSIONS = "--missions" in sys.argv   # assemble LARGEAXX and COMMONXX with -DMISSIONS (src/elite/missions_*.asm in the free tails)
-if DE and MISSIONS:
-    sys.exit("--de and --missions cannot be combined: the missions exist for the English build only (src/elite)")
-args = [a for a in sys.argv[1:] if a not in ("--missions", "--de")]
-OUT = Path(args[0]) if args else ROOT / "work" / ("elite_de_rebuilt.dsk" if DE else "elite_missions.dsk" if MISSIONS else "elite_rebuilt.dsk")
+if (DE or FR) and MISSIONS:
+    sys.exit("--de/--fr and --missions cannot be combined: the missions exist for the English build only (src/elite)")
+args = [a for a in sys.argv[1:] if a not in ("--missions", "--de", "--fr")]
+OUT = Path(args[0]) if args else ROOT / "work" / ("elite_de_rebuilt.dsk" if DE else "elite_fr_rebuilt.dsk" if FR else "elite_missions.dsk" if MISSIONS else "elite_rebuilt.dsk")
 if OUT.resolve() == BASE.resolve() or OUT.resolve().parent == ROOT:   # CLAUDE.md: never modify the original disks in the project root
     sys.exit(f"{OUT}: refusing to write a disk into the project root (the originals live there); use work/")
 SJASM = Path.home() / ".local/bin/sjasmplus"
-FILES = {"LARGEAXX": [] if DE else ["-DFIREBIRD"], "COMMONXX": ["-DTITLESEL"], "COMMON2X": [], "MUSIQUEX": ["-DTITLESEL"]}   # TITLESEL: cursor keys change the title ship
+FILES = {"LARGEAXX": [] if DE or FR else ["-DFIREBIRD"], "COMMONXX": ["-DTITLESEL"], "COMMON2X": [], "MUSIQUEX": ["-DTITLESEL"]}   # TITLESEL: cursor keys change the title ship
 
 
 def add_file(d, secs, first, name, ext, data, load):

@@ -69,6 +69,7 @@ TSYMS=""; TFLAGS=()
 case "$SRC" in
   "$ROOT/src/elite")    TSYMS="setCommandsCPL:4531 setCommandsNOP:4535 transferBuffertoScreen:1ED1 spawnCommandParser:809C dataFromPPI:8D2D splash2Shipnr:1DA8"; TFLAGS=("-DMISSIONS" "-DENHANCED -DMISSIONS");;
   "$ROOT/src/elite_de") TSYMS="setCommandsCPL:463E setCommandsNOP:4642 transferBuffertoScreen:1ED1 spawnCommandParser:81E3 dataFromPPI:8E75 splash2Shipnr:1DA8";;
+  "$ROOT/src/elite_fr") TSYMS="setCommandsCPL:4664 setCommandsNOP:4668 transferBuffertoScreen:1ED1 spawnCommandParser:823C dataFromPPI:8ECC splash2Shipnr:1DA8";;
 esac
 if [ -n "$TSYMS" ]; then
   for fl in "" ${TFLAGS[@]+"${TFLAGS[@]}"}; do

@@ -180,4 +180,4 @@ resident only while the title screens run, and a failed load is retried by `load
 `TITLE_SCREEN2`, `TITLE_NEXT`, `TITLE_SHOW`) is called from four places in `COMMONXX` that keep their byte length. `splash2Shipnr` (`&1DA8`) holds the ship index in bits 0-2 and
 "direction key already down" in bit 7; the eight hulls are in `titleShips` (spawn actions, high nibble = ship type - 2). The raw PPI rows (`dataFromPPI`) are read because `irki2`
 rewrites `keybFlags2` into roll values. `tools/check_src.sh` checks the six `COMMONXX` addresses `musiquex.asm` hard-codes (plain and `-DMISSIONS`); test `tools/test_title_ships.py`.
-The press-space screen opens on the Cobra Mk III (index 2); the arrows step through this list from there. English and German (the German `musiquex.asm` differs only in the six equates); French is not done.
+The press-space screen opens on the Cobra Mk III (index 2); the arrows step through this list from there. English, German and French (their `musiquex.asm` differ only in the six equates).

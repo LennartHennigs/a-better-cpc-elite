@@ -14,7 +14,7 @@ Every difference between our builds and the original game, with why it exists, w
 | Key pre-delay 0.43 s -> 0.16 s (`sub_403E`, 1 operand byte) | `ENHANCED` | all | 1 byte, no new code | 0 |
 | Status screen: "Status" label, fuel number in column 9 | `ENHANCED` | English | 7 bytes in each of two string tables (same length), 4 bytes in `COMMON2X` | 0 |
 | Cash on the quantity line of buy, sell and equip | `ENHANCED` | English | two 3-byte call operands (`clrLine0x15` -> `clrLineCash`) | 16 dead bytes in `LARGEAXX` (`&08E7`) and 7 in the dead block of `COMMONXX` (`cashHome`, `&1FEA`) |
-| Title screen ship choice, ship name on the press-space screen | `TITLESEL` | English, German (name: English only) | three call operands (two in German) plus one `call printELITE` in `COMMONXX` (same length) | about 280 bytes in the tail of `MUSIQUEX` |
+| Title screen ship choice, ship name on the press-space screen | `TITLESEL` | English, German, French (name: English only) | three call operands (two in German and French) plus one `call printELITE` in `COMMONXX` (same length) | about 280 bytes in the tail of `MUSIQUEX` |
 | Added missions | `MISSIONS` (+ `FL_*`, `OVL_*`) | English | about a dozen 3-byte call replacements (hook sites) | both zero tails, plus overlay and image files on disk |
 | Trainer and save tools | none (BASIC programs, host scripts) | UK, French, German saves | none | none |
 

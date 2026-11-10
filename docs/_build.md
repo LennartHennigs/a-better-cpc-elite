@@ -20,7 +20,7 @@ How to assemble the sources, what the switches do, what `check_src.sh` proves, a
 |---|---|---|
 | `src/elite/` | stock English (`LARGEAXX`, `COMMONXX`, `COMMON2X`, `MUSIQUEX`) | all |
 | `src/elite_de/` | German | `ENHANCED`, `STAR_OCCLUDE`, `ESC_KEYCODE`, `TITLESEL` (its `musiquex.asm` differs only in six equates) |
-| `src/elite_fr/` | French | `ENHANCED`, `STAR_OCCLUDE`, `ESC_KEYCODE`; no `TITLESEL`, no `MISSIONS` |
+| `src/elite_fr/` | French | `ENHANCED`, `STAR_OCCLUDE`, `ESC_KEYCODE`, `TITLESEL` (no ship name); no `MISSIONS` |
 
 Each file starts with an `org` (`largeaxx` `&0840`, `commonxx` `&1A40`, `common2x` `&C000`, `musiquex` `&6000`) and assembles with plain `sjasmplus --raw=OUT.bin FILE.asm`. `INDICATO.BIN` and `PICTURE.BIN` are pixel data without source.
 
@@ -45,7 +45,7 @@ What each change does in the game: `_my_changes.md`.
 
 ```bash
 make stock            # work/build/stock/{en,de,fr}/      original bytes   (LOC=de or LOC=fr)
-make enhanced         # work/build/enhanced/{...}/        -DENHANCED, plus -DTITLESEL except French
+make enhanced         # work/build/enhanced/{...}/        -DENHANCED, plus -DTITLESEL
 make missions         # python3 -I tools/build_dsk.py --missions work/elite_missions.dsk
 make check            # check_src.sh for en, de, fr
 ```
@@ -73,7 +73,8 @@ All disk builders start from a **copy** of a base disk and refuse to modify the 
 |---|---|---|---|
 | `python3 -I tools/build_dsk.py` | `Elite_UK_Firebird_cracked_trainer.dsk` | `work/elite_rebuilt.dsk` | the four files with `-DENHANCED -DTITLESEL` (LARGEAXX with `-DFIREBIRD`), AMSDOS headers kept, sizes must not change |
 | `... --missions` | same | `work/elite_missions.dsk` | adds the mission overlays and flight images (assembled per tag), `README.TXT` |
-| `... --de` | `Elite_DE_cracked.dsk` | `work/elite_de_rebuilt.dsk` | `--de --missions` is refused; there is no `--fr` |
+| `... --de` | `Elite_DE_cracked.dsk` | `work/elite_de_rebuilt.dsk` | `--de --missions` is refused |
+| `... --fr` | `Elite (1985)(Firebird Software)(fr).dsk` | `work/elite_fr_rebuilt.dsk` | `--fr --missions` is refused; boot with `RUN"EL` |
 | `bash tools/build_cheat.sh` | Firebird disk, mission disk | `work/firebird_cheat.dsk`, `work/missions_cheat.dsk` | tokenises `src/cheats/*.ASC` with the CPC's own BASIC (headless cpcxray), adds `CHEAT`, `EDITSAVE` (and `LISTSAVE` on `work/de_savegames.dsk`); `TRUMBLE.BAS` is built but not put on the disks |
 | `python3 -I tools/hide_files.py DISK` | | in place | refuses a disk in the project root |
 

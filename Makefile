@@ -3,14 +3,14 @@
 #   make enhanced   star occlusion, Escape in the menus, title-screen ship choice  -> work/build/enhanced/
 #   make missions   enhanced plus the added missions (English only): bootable disk -> work/elite_missions.dsk
 #   make check      bash tools/check_src.sh for en, de and fr
-# LOC=de or LOC=fr picks the German or French tree (stock and enhanced only; no TITLESEL in French).
+# LOC=de or LOC=fr picks the German or French tree (stock and enhanced).
 SJASM ?= $(HOME)/.local/bin/sjasmplus
 LOC   ?= en
 TREE_en = src/elite
 TREE_de = src/elite_de
 TREE_fr = src/elite_fr
 TREE    = $(TREE_$(LOC))
-TITLE   = $(if $(filter fr,$(LOC)),,-DTITLESEL)
+TITLE   = -DTITLESEL
 OUT     = work/build
 
 .PHONY: stock enhanced missions check

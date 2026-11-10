@@ -343,6 +343,10 @@ CMDRLoadExtensions:
     call drawFrame
     call drawDashboard
 branchNewCommander:
+    IFDEF TITLESEL
+    call TITLE_NEXT                 ; musiquex.asm: next ship in its list, spawned
+    ds 20
+    ELSE
     ld hl,splash2Shipnr
     inc (hl)
     ld a,(hl)
@@ -358,6 +362,7 @@ loc_1D1E:
     add a,a
     add a,0x09
     call spawnCommandParser
+    ENDIF
     call setCommandsCPL
     call ClearBitmap
     call printPressSpace
@@ -371,7 +376,11 @@ loc_1D3C:
     call ClearBitmap
     call printPressSpace
     call drawIntroShip
+    IFDEF TITLESEL
+    call TITLE_SCREEN2              ; musiquex.asm: cursor left/right change the ship, then transferBuffertoScreen
+    ELSE
     call transferBuffertoScreen
+    ENDIF
     ld a,(pressedKey)
     cp 0x20
     jr nz,loc_1D3C
@@ -15246,6 +15255,10 @@ ESC_KEYCODE equ 0x7F                ; tools/check_src.sh compares the -DENHANCED
       ELSE
 ESC_KEYCODE equ 0xFF                ; the original bytes
       ENDIF
+    ENDIF
+    IFDEF TITLESEL
+TITLE_SCREEN2 equ 0x6E21            ; jump table at the start of the music file's zero tail (src/elite_fr/musiquex.asm)
+TITLE_NEXT equ 0x6E24
     ENDIF
 tblKeyboardmatrix:
     db 0xFF,0xFF,0xFF,"963",0x0D,".",0xFF,0xFF,"785120"
