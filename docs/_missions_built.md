@@ -1,7 +1,7 @@
 # Implemented missions (combined build, 2026-11-08)
 
 What is built, how it works, what it costs and how it is tested. The research behind each mission (other versions, source reading, Elite Plus code) is in `docs/_missions.md`.
-Everything lives on branch `addon-missions` (stacked on `missions-foundation`, `mission-constrictor`, `mission-plans`, `mission-trumbles`, `escape-menus`; `master` is its ancestor).
+Everything lives on branch `addon-missions` (the former branches `missions-foundation`, `mission-constrictor`, `mission-plans`, `mission-trumbles`, `escape-menus` are merged into it and deleted; `master` is its ancestor).
 `python3 -I tools/build_dsk.py --missions` writes `work/elite_missions.dsk`: the four code files plus the overlay and image files below. The stock build stays byte-exact (`bash tools/check_src.sh`, also `de` and `fr`).
 **Status:** booted from the DSK with `RUN"ELITE` in cpcxray; every mission is tested with forced states and direct calls, none has been played through.
 
