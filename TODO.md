@@ -21,7 +21,7 @@ Open work, most useful first. `CLAUDE.md` keeps the short list; details live in 
 - [ ] Space: the stub plus Constrictor overlay (now 0 spare) and the Constrictor flight image (now ends at &9FFE, the limit set by an ASSERT for the interrupt push at &9FFE-&9FFF; 0 spare) need trimming before any further change there.
 - [x] Fessor's Constrictor hull: he confirmed by private mail that the hull and his names and findings may be used; credited in `missions_hull.asm`, `README.md` and `docs/_references.md` (his source and beta stay out of the repo).
 - [ ] Optional: furs when the Trumbles die in a sun. Idea: when the sun brings the count to 0, add a fixed 4 t of furs (good 11, `cargoHold+11`), capped by `cargoSpaceFree`. Costs about 24 bytes in `mxSunImpl` (Trumbles image has 8 spare, limit `&9FFE`), so 16 bytes must be freed: cutting the sprite from 14 to 10 rows does it (drop rows 0, 6, 12, 13 of `missions_trumble_art.txt`, `ld c,10` in `mxBlit`). Once per commander (the offer is made once), so no trading exploit. A scaled amount (peak count) needs a stored byte and more space. Also a death sound for the sun: reuse an existing effect via a bit in `sfxFlags2Bitmap` (about 5 bytes), pick by ear with `TRUMBLE.BAS`.
-- [ ] Merge `addon-missions` into `master` (the repo has no `main` yet); check `check_src.sh de` and `fr`.
+- [ ] Merge `addon-missions` into `main`; check `check_src.sh de` and `fr`.
 - [ ] Name the last `dat_` variables by tracing (`tools/trace_unknowns.py`; `dat_2F36` and `dat_38E1` were not hit, need a run with a real galactic jump and the inventory screen); the seed byte `dat_3D2D` is rewritten by `waggle_galaxy`.
 - [ ] Optional: comments for `chardefs1-7` (`common2x`, never referenced by label) and `sEntityunknown` as a named field of the ship record (byte `+0x26`).
 - [ ] Optional: strip the screen-address remarks from the German and French copies of the scanner and alert icon comments (not checked there).
@@ -100,7 +100,7 @@ Open work, most useful first. `CLAUDE.md` keeps the short list; details live in 
 - [x] Trumble sprites built (up to six, pen 3, `missions_trumble_art.txt`); count thresholds are in. [ ] Still open: a CPC colour option for the fur.
 - [x] Constrictor flight image: now 609 of 610 bytes; trimming is tracked under Missions above ("Space").
 - [x] Trumbles sound done (effect 13). [ ] Open: an end condition other than the sun, interplay with the escape pod and with selling.
-- [x] Branches are merged into one: `addon-missions` contains all of them; only its merge into `master` is open (see Missions above).
+- [x] Branches are merged into one: `addon-missions` contains all of them; only its merge into `main` is open (see Missions above).
 - [ ] (superseded) Evaluate the mission overlay scheme (load missions one at a time, random order per commander): loader size, disk space, save-load restore.
 
 ## Space savings (review 2026-11-07)

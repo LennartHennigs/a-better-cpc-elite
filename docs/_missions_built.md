@@ -1,7 +1,7 @@
 # Implemented missions (combined build, 2026-11-08)
 
 What is built, how it works, what it costs and how it is tested. The research behind each mission (other versions, source reading, Elite Plus code) is in `docs/_missions.md`.
-Everything lives on branch `addon-missions` (the former branches `missions-foundation`, `mission-constrictor`, `mission-plans`, `mission-trumbles`, `escape-menus` are merged into it and deleted; `master` is its ancestor).
+Everything lives on branch `addon-missions` (the former branches `missions-foundation`, `mission-constrictor`, `mission-plans`, `mission-trumbles`, `escape-menus` are merged into it and deleted; `main` is its ancestor).
 `python3 -I tools/build_dsk.py --missions` writes `work/elite_missions.dsk`: the four code files plus the overlay and image files below. The stock build stays byte-exact (`bash tools/check_src.sh`, also `de` and `fr`).
 **Status:** booted from the DSK with `RUN"ELITE` in cpcxray; every mission is tested with forced states and direct calls, none has been played through.
 
@@ -86,7 +86,7 @@ All run in cpcxray (`work/xray`, `~/.local/share/uv/tools/cpcxray/bin/python -I 
 - Tuning: 20 asteroids, 50% and 22% spawn rates, Birera as the police target. The Trumble squeak is settled (effect 13, chosen with `TRUMBLE.BAS`).
 - A Trumbles end condition other than a sun; the Cobra Mk III that Elite Plus adds to the asteroid mission; the Constrictor's ECM and missiles (from the hull header, unchecked).
 - A random per-commander order is not built: the last two missions are encoded differently and the stub plus Constrictor overlay has no room.
-- Merging `addon-missions` into `master` (the repo still has `master`, not `main`).
+- Merging `addon-missions` into `main`.
 
 ## 7. Pokes to start each mission (for testing)
 
