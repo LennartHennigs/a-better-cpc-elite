@@ -21,11 +21,11 @@ for p in "largeaxx LARGEAXX" "commonxx COMMONXX" "common2x COMMON2X" "musiquex M
     if [ "$n" = largeaxx ] && grep -q '^ *IFDEF ENHANCED' "$SRC/largeaxx.asm"; then
       if sjasmplus -DENHANCED --raw="$OUT/$n.enh.bin" --sym="$OUT/$n.enh.sym" "$SRC/$n.asm" >/dev/null 2>&1; then
         esym() { awk -v k="$1:" '$2 == k || $1 == k { print $NF }' "$OUT/$n.enh.sym"; }
-        ST=$(( $(esym statusToken) - 0x840 )); CL=$(( $(esym clrLineCash) - 0x840 )); PQ=$(( $(esym printInputQuestionforQuantity) - 0x840 )); EQ=$(( $(esym eqShoppingloop) - 0x840 ))
+        ST=$(( $(esym statusToken) - 0x840 )); STE=$(( ${ST} + 7 )); [ -n "$(esym statusTokenEnd)" ] && STE=$(( $(esym statusTokenEnd) - 0x840 )); CL=$(( $(esym clrLineCash) - 0x840 )); PQ=$(( $(esym printInputQuestionforQuantity) - 0x840 )); EQ=$(( $(esym eqShoppingloop) - 0x840 ))
         # the 104 bytes at EquipShip are the save key: any change breaks every existing save 
         KW=$(( $(esym EquipShip) - 0x840 ))
         if ! cmp -s <(dd if="$OUT/$n.enh.bin" bs=1 skip=$KW count=104 2>/dev/null) <(dd if="$REF" bs=1 skip=$KW count=104 2>/dev/null); then echo "$n -DENHANCED: save key window (EquipShip, 104 bytes) CHANGED: old saves will not load"; rc=1; fi
-        if cmp -l "$OUT/$n.enh.bin" "$REF" | awk -v cl=$CL -v st=$ST -v pq=$PQ -v eq=$EQ '{o=$1-1; if (!((o>=cl && o<cl+16) || (o>=st && o<st+7) || o==pq+1 || o==pq+2 || o==eq+1 || o==eq+2)) bad=1} END{exit bad}'; then echo "$n -DENHANCED: ok (differs only in the clrLineCash slot, its two call sites and the status label)"; else echo "$n -DENHANCED: differs outside the clrLineCash slot and its call sites"; rc=1; fi
+        if cmp -l "$OUT/$n.enh.bin" "$REF" | awk -v cl=$CL -v st=$ST -v ste=$STE -v pq=$PQ -v eq=$EQ '{o=$1-1; if (!((o>=cl && o<cl+16) || (o>=st && o<ste) || o==pq+1 || o==pq+2 || o==eq+1 || o==eq+2)) bad=1} END{exit bad}'; then echo "$n -DENHANCED: ok (differs only in the clrLineCash slot, its two call sites and the status label)"; else echo "$n -DENHANCED: differs outside the clrLineCash slot and its call sites"; rc=1; fi
       else echo "$n -DENHANCED: assemble FAILED"; rc=1; fi
     fi
     # COMMON2X -DENHANCED (English): only the fuel-line tab (call operand and inline byte)
@@ -51,8 +51,12 @@ for p in "largeaxx LARGEAXX" "commonxx COMMONXX" "common2x COMMON2X" "musiquex M
   LO=$(off dustPlotPixel); HI=$(off ClearBitmap); DL=$(off dust70)
   SB=$(off statusLabels); CP=$(off statusColonPrint); TC=$(off statusTitleCol); HC=$(off chartTitleCol); CC=$(off statusColon)
   SL=$(off statusToken)   # English: "STATUS" instead of "LEGAL STATUS"
+  # slot lengths: English 7 (status token) and 12 (status labels); the German and French trees mark longer slots with statusTokenEnd, statusLabelsEnd and fuelToken..fuelTokenEnd
+  SLN=7; [ "$(off statusTokenEnd)" -gt 0 ] && SLN=$(( $(off statusTokenEnd) - SL ))
+  SBN=12; [ "$(off statusLabelsEnd)" -gt 0 ] && SBN=$(( $(off statusLabelsEnd) - SB ))
+  FU=$(off fuelToken); FUN=0; [ "$(off fuelTokenEnd)" -gt 0 ] && FUN=$(( $(off fuelTokenEnd) - FU ))
   CH=$(off cashHome); PC=$(off podCleanOperand); PD=$(off predelayOperand); HP=$(off hyperCountPos)   # English: cashHome (&1FEA, 7 bytes); all trees: the pod cargo clear start (low operand byte)
-  if cmp -l "$OUT/$n.enh.bin" "$REF" | awk -v lo=$LO -v hi=$HI -v dl=$DL -v sl=$SL -v cc=$CC -v tc=$TC -v hc=$HC -v sb=$SB -v cp=$CP -v ch=$CH -v pc=$PC -v pd=$PD -v hp=$HP -v esc=$((ESCP+1)) '{o=$1-1; if ($1==esc) { if ($2!="177" || $3!="377") bad=1; seen=1 } else if (!((o>=lo && o<hi) || (o>=dl && o<dl+16) || (o>=sl && o<sl+7) || o==cc || o==tc || o==hc || (o>=sb && o<sb+12) || (o>=cp && o<cp+4) || (o>=ch && o<ch+7) || o==pc || o==pd || o==hp)) bad=1} END{exit (bad || !seen)}'; then echo "$n: ok (default = original; -DENHANCED differs only in the ESC byte, the star-occlusion slots, the status/title tabs and labels, cashHome, the pod cargo clear, the key pre-delay and the hyperspace count position)"; else echo "$n -DENHANCED: differs outside the documented slots"; rc=1; fi
+  if cmp -l "$OUT/$n.enh.bin" "$REF" | awk -v lo=$LO -v hi=$HI -v dl=$DL -v sl=$SL -v sln=$SLN -v sbn=$SBN -v fu=$FU -v fun=$FUN -v cc=$CC -v tc=$TC -v hc=$HC -v sb=$SB -v cp=$CP -v ch=$CH -v pc=$PC -v pd=$PD -v hp=$HP -v esc=$((ESCP+1)) '{o=$1-1; if ($1==esc) { if ($2!="177" || $3!="377") bad=1; seen=1 } else if (!((o>=lo && o<hi) || (o>=dl && o<dl+16) || (o>=sl && o<sl+sln) || (o>=fu && o<fu+fun) || o==cc || o==tc || o==hc || (o>=sb && o<sb+sbn) || (o>=cp && o<cp+4) || (o>=ch && o<ch+7) || o==pc || o==pd || o==hp)) bad=1} END{exit (bad || !seen)}'; then echo "$n: ok (default = original; -DENHANCED differs only in the ESC byte, the star-occlusion slots, the status/title tabs and labels, cashHome, the pod cargo clear, the key pre-delay and the hyperspace count position)"; else echo "$n -DENHANCED: differs outside the documented slots"; rc=1; fi
 done
 # English only: the -DMISSIONS variant (src/elite/missions_*.asm in the free tails) must keep both files the same length
 if [ "$SRC" = "$ROOT/src/elite" ]; then

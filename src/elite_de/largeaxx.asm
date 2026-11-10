@@ -46,6 +46,8 @@ sub_403E equ 0x4145
 longDelay equ 0x4149
 bufferCharXY equ 0x414F
 clrLine0x15 equ 0x4156
+getMoneyinHLDE equ 0x4310
+cashHome equ 0x1FEA                  ; commonxx.asm, end of the dead block (-DENHANCED)
 clrLine0x16 equ 0x4162
 restoreCharXY equ 0x4173
 InputString equ 0x41B2
@@ -160,7 +162,19 @@ LAB_ram_08db:
     jr c,mbloopEntries
 loc_08E4:
     jp Inventory
+    IFDEF ENHANCED
+; Cash on the quantity line (-DENHANCED): the 16 dead bytes here (a ZX Spectrum attribute fill, never called) hold clrLine0x15 plus the balance
+; at the right of the line below the prompt, where the typed quantity appears (8 characters, ends at column 30). cashHome puts the cursor back on row &15.
+clrLineCash:
+    call clrLine0x15
+    ld hl,0x1616
+    ld (charXY),hl
+    call getMoneyinHLDE
+    jp cashHome
+    db 0x00
+    ELSE
     db "!",0x00,"X",0xCD,0xF0,0x08,0xCD,0xF0,0x08,0x06,0x00,"w#",0x10,0xFC,0xC9
+    ENDIF
 LAB_ram_08f7:
     call ClearCharAtpos
     call restore_trade_state
@@ -331,7 +345,11 @@ restore_trade_state:
     ret
 ; Clears the prompt line and prints the quantity question for the chosen good
 printInputQuestionforQuantity:
+    IFDEF ENHANCED
+    call clrLineCash
+    ELSE
     call clrLine0x15
+    ENDIF
     ld a,0x01
     ld (todoSomePrintFlag),a
     call printStringFollowingByte
@@ -529,7 +547,11 @@ LAB_ram_0b6e:
     cp b
     jr nz,listAvailableEquipmentloop
 eqShoppingloop:
+    IFDEF ENHANCED
+    call clrLineCash
+    ELSE
     call clrLine0x15
+    ENDIF
     call printStringFollowingByte
     db 0x7F
     ld a,0x3F
@@ -1219,8 +1241,20 @@ stringsTable2:
     db "BRUTTO",0xEB,"ZI",0xE4,"PRODUK"
     db "T",0x00
     db "WIRTSCHAFT",0x00
-    db 0xDE,0xF8,"F",0xF2,"G",0x98,0xF4,0x00
-    db "E",0xF0,0xDE,"UF",0xAF,0x00
+statusToken:
+    IFDEF ENHANCED
+    db "STATUS",0x14                 ; "STATUS" (was "STRAFREGISTER"), padded with the no-op code &14
+    ELSE
+    db 0xDE,0xF8,"F",0xF2,"G",0x98,0xF4
+    ENDIF
+    db 0x00
+    IFDEF ENHANCED
+    db "KLASSE"                        ; "KLASSE" (was "EINSTUFUNG"), the same 6 bytes
+    ELSE
+    db "E",0xF0,0xDE,"UF",0xAF
+    ENDIF
+statusTokenEnd:
+    db 0x00
     db "W",0xED,"P",0xF6,0x00
     db "MOTT",0xF6,0x00
     db "W",0xEE

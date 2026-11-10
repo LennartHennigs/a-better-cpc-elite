@@ -2463,7 +2463,14 @@ jpprintCash:
 SUB_ram_ff39:
     ld a,0x00
     jr LAB_ram_ffbc
-    db ">i",0xCD,0x03,"@",0xCD,0xE5,"D :",0x00
+    db ">i",0xCD,0x03,"@"
+fuelTab:
+    IFDEF ENHANCED
+    db 0xCD,0x28,0x40,0x08           ; call printFollowingTokenWithSpace / db 8: the number starts in column 9
+    ELSE
+    db 0xCD,0xE5,"D "
+    ENDIF
+    db ":",0x00
     db ":",0xCD,0xC1,"B>",0xC3
 todojpPrintStringB:
     jp CallprintString
@@ -2484,7 +2491,14 @@ jpPrintPlanetname:
     db 0xCD,0x8B,0xFF,"!Q>",0x18,0x06,0xCD,0x8B,0xFF,"!Z>"
 jpPrintCleartext:
     jp printCleartext
-    db 0xCD,"(@",0x06,">",0x00
+    db 0xCD,"(@"
+titleTab:
+    IFDEF ENHANCED
+    db 0x01                         ; control code 8: the headline starts in column 2 (was 0x06)
+    ELSE
+    db 0x06
+    ENDIF
+    db ">",0x00
     db "2P:",0xC9
 ; Sets the flag byte at &394A to 1
 jptodoSetUnknownFlag:

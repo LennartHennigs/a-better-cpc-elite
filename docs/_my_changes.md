@@ -10,10 +10,10 @@ Every difference between our builds and the original game, with why it exists, w
 | CPC+ keyboard fix | none (always on) | English, French (German disk already has it) | 1 (`ED 79` -> `ED 49` in `getPPI_Input`) | 0 |
 | Escape leaves buy, sell and equipment prompts | `ESC_KEYCODE` / `ENHANCED` | all three | 1 (`FF` -> `7F` in `tblKeyboardmatrix`) | 0 |
 | Stars stay behind planet and sun | `STAR_OCCLUDE` / `ENHANCED` | all three | 16 bytes of the dust loop | 11 bytes in dead `unusedViewBorderFill` |
-| Station-screen headlines in column 2 | `ENHANCED` | English | 4 operand bytes, no new code | 0 |
+| Station-screen headlines in column 2 | `ENHANCED` | all three | 4 operand bytes, no new code | 0 |
 | Key pre-delay 0.43 s -> 0.16 s (`sub_403E`, 1 operand byte) | `ENHANCED` | all | 1 byte, no new code | 0 |
-| Status screen: "Status" label, fuel number in column 9 | `ENHANCED` | English | 7 bytes in each of two string tables (same length), 4 bytes in `COMMON2X` | 0 |
-| Cash on the quantity line of buy, sell and equip | `ENHANCED` | English | two 3-byte call operands (`clrLine0x15` -> `clrLineCash`) | 16 dead bytes in `LARGEAXX` (`&08E7`) and 7 in the dead block of `COMMONXX` (`cashHome`, `&1FEA`) |
+| Status screen: short labels, values and fuel number in column 9 | `ENHANCED` | English, German (new labels), French (all but the "Statut Legal" label) | the label strings in both string tables (same length), 4 bytes in `COMMON2X`, two bytes in `COMMONXX` | 0 |
+| Cash on the quantity line of buy, sell and equip | `ENHANCED` | all three | two 3-byte call operands (`clrLine0x15` -> `clrLineCash`) | 16 dead bytes in `LARGEAXX` (`&08E7`) and 7 in the dead block of `COMMONXX` (`cashHome`, `&1FEA`) |
 | Title screen ship choice, ship name on the press-space screen | `TITLESEL` | English, German, French (ship names are English in all three) | three call operands (two in German and French) plus one `call printELITE` in `COMMONXX` (same length) | about 280 bytes in the tail of `MUSIQUEX` |
 | Added missions | `MISSIONS` (+ `FL_*`, `OVL_*`) | English | about a dozen 3-byte call replacements (hook sites) | both zero tails, plus overlay and image files on disk |
 | Trainer and save tools | none (BASIC programs, host scripts) | UK, French, German saves | none | none |
@@ -46,12 +46,12 @@ not fit the window). The code, about 120 bytes with its table, lives in the zero
 the ship index (bits 0-2) and "a key was already down" (bit 7), so a held key steps once and the choice carries over between screens and restarts. The raw PPI rows (`dataFromPPI`) are read because `irki2` rewrites `keybFlags2` into roll values.
 The eleven `COMMONXX` addresses `musiquex.asm` hard-codes are checked by `check_src.sh`. Test: `tools/test_title_ships.py [de]`.
 
-**Ship name (English only).** A fifth hook, `TITLE_NAME` (`&6E2D`), replaces `call printELITE` in `printPressSpace`: `titleName` prints the name of the ship on show (table `titleNames`, 16 bytes per name, in `titleShips` order) centred on text row 1 in capitals (`todoPrintFlag3948` forced to 1 while printing). It then recolours that row of the off-screen bitmap from pen 0 to pen 3, the pen of the ship lines and frame: the background byte is `&0F`, text pixels have both planes clear, so `byte := &0F | (~byte & &0F) << 4`.
+**Ship name.** A fifth hook, `TITLE_NAME` (`&6E27`), replaces `call printELITE` in `printPressSpace`: `titleName` prints the name of the ship on show (table `titleNames`, 16 bytes per name, in `titleShips` order) centred on text row 1 in capitals (`todoPrintFlag3948` forced to 1 while printing). It then recolours that row of the off-screen bitmap from pen 0 to pen 3, the pen of the ship lines and frame: the background byte is `&0F`, text pixels have both planes clear, so `byte := &0F | (~byte & &0F) << 4`.
 
 ## Cash on the quantity line (`ENHANCED`)
 
 The buy, sell and equipment prompts show the balance at the right end of text row `&16`, the row below the prompt where the typed quantity appears (8 characters ending at column 30, one decimal, space-padded by `printDeciCredit`). `clrLineCash` replaces `clrLine0x15` at two sites (`printInputQuestionforQuantity`, used by buy and sell, and `eqShoppingloop`): it clears the two rows, prints `getMoneyinHLDE` at `(22, &16)` and jumps to `cashHome`, which puts `charXY` back on `&1500` so the prompt prints as before. Because the prompt runs before every row, the balance is fresh after each purchase.
-`clrLineCash` sits in 16 dead bytes of `LARGEAXX` (`&08E7`, a ZX Spectrum attribute fill nothing calls), `cashHome` (7 bytes, `&1FEA`) at the end of the star-occlusion dead block in `COMMONXX`; `largeaxx.asm` calls it by address and `commonxx.asm` asserts it. `check_src.sh` requires the default `LARGEAXX` to equal the original and the `-DENHANCED` one to differ only in that slot and the two call operands. German and French not ported.
+`clrLineCash` sits in 16 dead bytes of `LARGEAXX` (`&08E7`, a ZX Spectrum attribute fill nothing calls), `cashHome` (7 bytes, `&1FEA`) at the end of the star-occlusion dead block in `COMMONXX`; `largeaxx.asm` calls it by address and `commonxx.asm` asserts it. `check_src.sh` requires the default `LARGEAXX` to equal the original and the `-DENHANCED` one to differ only in that slot and the two call operands. 
 
 ## The added missions (`MISSIONS`)
 
@@ -83,3 +83,12 @@ What they change in the stock game:
 | The random witchspace mis-jump looks unreachable (the seed byte is compared with `0x40` then `0x20`) | `someHyperSpaceFunctions`; only the pause-menu toggle (bit 6 of `keybFlags0`) forces it | not applied (`_gameplay.md`) |
 | The station-kill code does `SET 3,(HL)` on `&3926` instead of `Missionflag` | invasion mission | left as is |
 | Large planets off screen can overwrite memory below the bitmap if the line-count clamp at `&245B` is missing | disc fill | stock build is safe (131,072-input sweep); the cassette release presumably lacked the clamp (`_architecture.md`) |
+
+## Status screen labels in German and French (`ENHANCED`)
+
+The English tidy-up shortens the labels so that every value starts in column 9. The same needs shorter words in the other languages; the byte length of each token string must stay, and the padding must be a token that prints nothing.
+German: "System:", "Ziel:" (were "Derzeitiges System", "Hyperraum-Ziel"), "Tank:" (the main-table token `&69`, was "Treibstoff"; it also names the fuel item in the equipment list), "Status:" (was "Strafregister") and "Klasse:" (was "Einstufung"), padded with code `&14` in the
+message table and token `&68` in the main table. Konto stays, so the balance starts one column further right than the other values. French: "Syst.:" and "Cible:" (were "Systeme Present" and "Systeme Hyperespace"); "Fuel", "Argent" and "Niveau" already fit.
+**French "Statut Legal" is unchanged**: it needs four padding bytes, and every candidate code in the French message table prints something (`&14` an e-acute, `&0C` line breaks, `&11`-`&17` variables such as the planet name, `&06` flips a print flag and corrupts the screen), so its value stays in column 15.
+All three trees share the labels `statusLabels`/`statusLabelsEnd`, `statusColon`, `statusColonPrint`, `statusTitleCol`, `chartTitleCol`, `titleTab`, `fuelTab` (and `statusToken`/`statusTokenEnd`, `fuelToken`/`fuelTokenEnd` where a longer slot exists); `check_src.sh` takes the slot lengths from them.
+Screenshots: `tools/test_station_screens.py en|de|fr` writes `work/xray/output/station_<loc>_{status,chart,inventory,buy}.png` (the commander status page is key `9`, the market `8`).

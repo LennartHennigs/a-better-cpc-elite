@@ -660,6 +660,9 @@ STAR_OCCLUDE equ 1
 STAR_OCCLUDE equ 0
       ENDIF
     ENDIF
+    IFDEF ENHANCED
+    ASSERT STAR_OCCLUDE, "-DENHANCED needs STAR_OCCLUDE: cashHome (&1FEA, called by largeaxx.asm) lives in the dead block that STAR_OCCLUDE frees"
+    ENDIF
     IF STAR_OCCLUDE
 ; Plots one star pixel into the off-screen bitmap: DE = byte address, C = pixel mask (hi plane bit + lo plane bit). The background is 0x0F, so
 ; (byte XOR 0x0F) AND mask is zero only while the pixel is still background; anything drawn earlier (disc, lines) is left alone.
@@ -674,6 +677,16 @@ dustPlotPixel:
     cpl
     ld (de),a
     ret
+    IFDEF ENHANCED
+    ASSERT $ <= 0x1FEA
+    DS 0x1FEA-$
+; Cash on the quantity line (-DENHANCED, clrLineCash in largeaxx.asm): back to the start of the prompt row after the balance is printed
+cashHome:
+    ASSERT cashHome == 0x1FEA            ; largeaxx.asm calls it by address
+    ld hl,0x1500
+    ld (charXY),hl
+    ret
+    ENDIF
     DS 0x1FF1-$                      ; pad to ClearBitmap (unusedViewBorderFill's 31 bytes)
     ELSE
 ; Probably dead (nothing calls or jumps here): paints the two left and two right bytes of each of the 16 64-byte
@@ -3053,7 +3066,15 @@ stringsTable:
     db "WEIT",0x90,0xFB,0x87,", ",0xFC,"*",0x00
     db 0x92,0x90,"GIEAKK",0x88,0x00
     db "Z",0x88,0x91,"Z-",0x00
-    db 0x00,"T",0x8E,"IBSTOFF",0x00,0x94,"KE",0x9C,0x00
+    db 0x00
+fuelToken:
+    IFDEF ENHANCED
+    db "TANK",0x68,0x68,0x68,0x68,0x68     ; "TANK" (was "TREIBSTOFF"), padded with token &68 (an empty string) so the table keeps its token numbers
+    ELSE
+    db "T",0x8E,"IBSTOFF"
+    ENDIF
+fuelTokenEnd:
+    db 0x00,0x94,"KE",0x9C,0x00
     db "g",0xCE,0x00,"E.C.M.SYS",0x9C,"M",0x00,"I"
     db "MPULS",0xBB,0x00
     db 0xCB,0x94,"H",0x81,"N",0xBB,0x00
@@ -3068,8 +3089,15 @@ stringsTable:
     db "G",0x00
     db 0x00,0x00,0x95,"NDE-COMPUT",0x90,0xFB,"E"
     db 0x8C,0x00,0x80,0x81,0x00,"T",0x8A,"NMECH",0x9B,0x9D,"M",0x88
-    db 0x00,0x06,0x0D," ",0x04,0x08,0x09,0x09,"D",0x90,"ZEI",0x97,0x83,"S"
-    db " SYS",0x9C,"M",0x09,0xBD,"-ZIEL",0x09,0x00
+    db 0x00,0x06,0x0D," ",0x04,0x08,0x09,0x09
+statusLabels:
+    IFDEF ENHANCED
+    db "SYSTEM:       ",0x09,"ZIEL: ",0x09      ; "System:" and "Ziel:" (were "Derzeitiges System" and "Hyperraum-Ziel"), 22 bytes like the original
+    ELSE
+    db "D",0x90,"ZEI",0x97,0x83,"S"," SYS",0x9C,"M",0x09,0xBD,"-ZIEL",0x09
+    ENDIF
+statusLabelsEnd:
+    db 0x00
     db 0x00,"LL",0x00,0x10," ",0x0B,0x09,"  ",0xFB,0x9D,"T",0xFB,0x9B,0x83
     db "G",0x9E,"FF",0x92,0xFB,"W",0x99,"D",0x92,"*",0x00
     db 0x8B,"YDAY*",0x00
@@ -5162,7 +5190,12 @@ SetTableBegintoAofHL:
 printFlightToken:
     push af
     call printFollowingTokenWithSpace
+chartTitleCol:
+    IFDEF ENHANCED
+    db 0x01                         ; chart headlines start in column 2 (was 0x06)
+    ELSE
     db 0x06
+    ENDIF
     pop af
     jp printPlanetname
 digitNumber:
@@ -6241,7 +6274,12 @@ CommanderStatus:
     call setColors
     call displayAlertStateinHeader
     call printFollowingTokenWithSpace
+statusTitleCol:
+    IFDEF ENHANCED
+    db 0x01                         ; the title starts in column 2 like the other headlines (was 0x06)
+    ELSE
     db 0x06
+    ENDIF
     call printStringFollowingByte
     db "~"
     ld a,0x03
@@ -6374,9 +6412,19 @@ loc_4A45:
 todo_printlabeledVar:
     ex af,af'
     call printFollowingTokenWithSpace
+statusColon:
+    IFDEF ENHANCED
+    db 0x08                         ; the system names start in column 9, like the other lines (was 0x15); the colon is part of the label now
+    ELSE
     db 0x15
+    ENDIF
+statusColonPrint:
+    IFDEF ENHANCED
+    ds 4                            ; nops: no colon (the 4 bytes of `call printStringFollowingByte / db ":"`)
+    ELSE
     call printStringFollowingByte
     db ":"
+    ENDIF
     ex af,af'
     jp CallprintString
 ; Return the commander rank index in A by scanning the rank thresholds against the kill score
@@ -12131,8 +12179,20 @@ MainStackNStrings:
     db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,"BRUTTO"
     db 0xEB,"ZI",0xE4,"PRODUKT",0x00
     db "WIRTSCHAFT",0x00
-    db 0xDE,0xF8,"F",0xF2,"GIST",0xF4,0x00
-    db "E",0xF0,0xDE,"UFUNG",0x00
+statusToken:
+    IFDEF ENHANCED
+    db "STATUS",0x14,0x14,0x14       ; "STATUS" (was "STRAFREGISTER"), padded with the no-op code &14
+    ELSE
+    db 0xDE,0xF8,"F",0xF2,"GIST",0xF4
+    ENDIF
+    db 0x00
+    IFDEF ENHANCED
+    db "KLASSE",0x14,0x14                  ; "KLASSE" (was "EINSTUFUNG"), the value then starts in column 9 like the others
+    ELSE
+    db "E",0xF0,0xDE,"UFUNG"
+    ENDIF
+statusTokenEnd:
+    db 0x00
     db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
     db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
     db 0x00,0x00,0x00,0x09,0x0B,0x01,0x08,0x00,0x00,0x00,0x00,"COM",0xEF,"N"
