@@ -98,11 +98,11 @@ async def main():
             await tap("cursor_right")
             ib, pb = await state()
             check("the first screen ignores the arrows", ib == ia and pb == pa, f"index {ib:02X}, blueprint &{pb:04X}")
-            await tap("n", 1.4)       # to the press-space screen, which steps the ship by one
+            await tap("n", 1.4)       # to the press-space screen, which opens on the Cobra Mk III
             await c("run", {"max_us": 3_000_000, "timeout_s": 60})
             i0, p0 = await state()
             seen[i0] = p0
-            check("press-space screen advanced the ship by one", (i0 & 7) == (ia + 1) & 7, f"{ia & 7} -> {i0 & 7}, blueprint &{p0:04X}")
+            check("press-space screen opens on the Cobra Mk III", (i0 & 7) == COBRA_AT_START, f"{ia & 7} -> {i0 & 7}, blueprint &{p0:04X}")
             await tap("cursor_right")
             i1, p1 = await state()
             check("right steps +1", (i1 & 7) == (i0 + 1) & 7 and p1 != p0, f"index {i1:02X}, blueprint &{p1:04X}")

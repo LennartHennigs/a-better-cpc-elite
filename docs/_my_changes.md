@@ -42,7 +42,7 @@ the default build to equal the original and the `-DENHANCED` build to differ onl
 
 Cursor left/right and joystick left/right step the demo ship on the press-space screen (the first screen keeps the fixed Cobra Mk III and ignores the arrows) through eight hulls: Viper, Asp, Cobra Mk III, Fer-de-Lance, Sidewinder, Krait, Rock Hermit, Thargoid (the Python, big trader and Coriolis do
 not fit the window). The code, about 120 bytes with its table, lives in the zero tail of `MUSIQUEX.BIN` (`&6E21-&6FFF`), which is resident only while the title screens run. `COMMONXX` reaches it through hooks of unchanged byte length:
-`TITLE_SCREEN2` replaces the `transferBuffertoScreen` call in the press-space loop, `TITLE_NEXT` replaces the automatic pick before that screen (English also `TITLE_NAME`, below). `splash2Shipnr` (`&1DA8`) holds
+`TITLE_SCREEN2` replaces the `transferBuffertoScreen` call in the press-space loop, `TITLE_NEXT` replaces the automatic pick before that screen (it now selects the Cobra Mk III) (English also `TITLE_NAME`, below). `splash2Shipnr` (`&1DA8`) holds
 the ship index (bits 0-2) and "a key was already down" (bit 7), so a held key steps once and the choice carries over between screens and restarts. The raw PPI rows (`dataFromPPI`) are read because `irki2` rewrites `keybFlags2` into roll values.
 The six `COMMONXX` addresses `musiquex.asm` hard-codes are checked by `check_src.sh`. Test: `tools/test_title_ships.py [de]`.
 

@@ -475,12 +475,12 @@ todoSomePrintFlag equ 0x3949
 titleScreen2:
     call titleArrows
     jp transferBuffertoScreen
-; Next ship on entering the press-space screen
+; The press-space screen opens with the Cobra Mk III, as the first screen does
 titleNext:
     ld hl,splash2Shipnr
     ld a,(hl)
-    inc a
-    and 0x87
+    and 0x80                        ; keep "key is down"
+    or 2                            ; always start on the Cobra Mk III (index 2)
     ld (hl),a
     jr titleShow
 ; Step the ship on a fresh left or right press. The raw PPI rows are read because irki2 rewrites keybFlags2 into roll values.
