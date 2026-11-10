@@ -67,9 +67,9 @@ fi
 # hard-codes for COMMONXX must be the real ones (English also with -DMISSIONS)
 TSYMS=""; TFLAGS=()
 case "$SRC" in
-  "$ROOT/src/elite")    TSYMS="setCommandsCPL:4531 setCommandsNOP:4535 transferBuffertoScreen:1ED1 spawnCommandParser:809C dataFromPPI:8D2D splash2Shipnr:1DA8"; TFLAGS=("-DMISSIONS" "-DENHANCED -DMISSIONS");;
-  "$ROOT/src/elite_de") TSYMS="setCommandsCPL:463E setCommandsNOP:4642 transferBuffertoScreen:1ED1 spawnCommandParser:81E3 dataFromPPI:8E75 splash2Shipnr:1DA8";;
-  "$ROOT/src/elite_fr") TSYMS="setCommandsCPL:4664 setCommandsNOP:4668 transferBuffertoScreen:1ED1 spawnCommandParser:823C dataFromPPI:8ECC splash2Shipnr:1DA8";;
+  "$ROOT/src/elite")    TSYMS="setCommandsCPL:4531 setCommandsNOP:4535 transferBuffertoScreen:1ED1 spawnCommandParser:809C dataFromPPI:8D2D splash2Shipnr:1DA8 printString:43DC charXY:38C4 flagWhichScreenToPrint:454E todoPrintFlag3948:3948 todoSomePrintFlag:3949"; TFLAGS=("-DMISSIONS" "-DENHANCED -DMISSIONS");;
+  "$ROOT/src/elite_de") TSYMS="setCommandsCPL:463E setCommandsNOP:4642 transferBuffertoScreen:1ED1 spawnCommandParser:81E3 dataFromPPI:8E75 splash2Shipnr:1DA8 printString:44E9 charXY:39CB flagWhichScreenToPrint:465B todoPrintFlag3948:3A4F todoSomePrintFlag:3A50";;
+  "$ROOT/src/elite_fr") TSYMS="setCommandsCPL:4664 setCommandsNOP:4668 transferBuffertoScreen:1ED1 spawnCommandParser:823C dataFromPPI:8ECC splash2Shipnr:1DA8 printString:44FD charXY:3995 flagWhichScreenToPrint:4681 todoPrintFlag3948:3A19 todoSomePrintFlag:3A1A";;
 esac
 if [ -n "$TSYMS" ]; then
   for fl in "" ${TFLAGS[@]+"${TFLAGS[@]}"}; do

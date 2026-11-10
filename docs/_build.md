@@ -19,8 +19,8 @@ How to assemble the sources, what the switches do, what `check_src.sh` proves, a
 | Tree | Build | Switches that apply |
 |---|---|---|
 | `src/elite/` | stock English (`LARGEAXX`, `COMMONXX`, `COMMON2X`, `MUSIQUEX`) | all |
-| `src/elite_de/` | German | `ENHANCED`, `STAR_OCCLUDE`, `ESC_KEYCODE`, `TITLESEL` (its `musiquex.asm` differs only in six equates) |
-| `src/elite_fr/` | French | `ENHANCED`, `STAR_OCCLUDE`, `ESC_KEYCODE`, `TITLESEL` (no ship name); no `MISSIONS` |
+| `src/elite_de/` | German | `ENHANCED`, `STAR_OCCLUDE`, `ESC_KEYCODE`, `TITLESEL` (its `musiquex.asm` differs from the others only in the eleven equates) |
+| `src/elite_fr/` | French | `ENHANCED`, `STAR_OCCLUDE`, `ESC_KEYCODE`, `TITLESEL`; no `MISSIONS` |
 
 Each file starts with an `org` (`largeaxx` `&0840`, `commonxx` `&1A40`, `common2x` `&C000`, `musiquex` `&6000`) and assembles with plain `sjasmplus --raw=OUT.bin FILE.asm`. `INDICATO.BIN` and `PICTURE.BIN` are pixel data without source.
 
@@ -60,7 +60,7 @@ Assembles the four files of one tree and compares with `work/bin_stock` / `bin_g
 2. `commonxx` without flags equals the original, with the CPC+ byte (`getPPI_Input` + 20 = `ED 49`) applied to the reference (not for German).
 3. `commonxx -DENHANCED` differs from it only in the ESC byte (`tblKeyboardmatrix` + 66: `&7F` instead of `&FF`), the star-occlusion slots (`dustPlotPixel`'s space up to `ClearBitmap`, 16 bytes of the dust loop `dust70`), the English status/title labels and tabs, `cashHome` and the start operand of the escape-pod cargo clear (`podCleanOperand`, all three trees); `largeaxx -DENHANCED` (English) differs only in the 16-byte `clrLineCash` slot (`&08E7`), the operands of its two call sites and the status label, and its 104-byte save-key window (`EquipShip`) must equal the stock bytes. `-DENHANCED` without `STAR_OCCLUDE` is refused by an `ASSERT` (`cashHome` lives in the block it frees).
 4. English: `-DMISSIONS` and `-DENHANCED -DMISSIONS` (the disk build) keep the lengths of `LARGEAXX` and `COMMONXX`.
-5. English and German: `-DTITLESEL` (English also with `-DMISSIONS` and `-DENHANCED -DMISSIONS`) keeps the lengths, and the six `COMMONXX` addresses that `musiquex.asm` hard-codes (`setCommandsCPL`, `setCommandsNOP`, `transferBuffertoScreen`, `spawnCommandParser`, `dataFromPPI`, `splash2Shipnr`) are the real ones (English also with `-DMISSIONS`).
+5. All three trees: `-DTITLESEL` (English also with `-DMISSIONS` and `-DENHANCED -DMISSIONS`) keeps the lengths, and the six `COMMONXX` addresses that `musiquex.asm` hard-codes (`setCommandsCPL`, `setCommandsNOP`, `transferBuffertoScreen`, `spawnCommandParser`, `dataFromPPI`, `splash2Shipnr`) are the real ones (English also with `-DMISSIONS`).
 6. The three trees agree on the `ESC_KEYCODE` value.
 
 It does **not** catch a rename that matched nothing; confirm with a grep count. Run it after every batch of edits, and `check_src.sh de` / `fr` after any rename that is applied to the other trees.

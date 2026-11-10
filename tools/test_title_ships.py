@@ -104,6 +104,7 @@ async def main():
             await c("run", {"max_us": 3_000_000, "timeout_s": 60})
             i0, p0 = await state()
             seen[i0] = p0
+            await c("screen_image", {"path": "output/title_%s.png" % ("fr" if "fr" in sys.argv[1:] else "de" if "de" in sys.argv[1:] else "en")})   # look at it: the ship name replaces the ELITE title
             check("press-space screen opens on the Cobra Mk III", (i0 & 7) == COBRA_AT_START, f"{ia & 7} -> {i0 & 7}, blueprint &{p0:04X}")
             await tap("cursor_right")
             i1, p1 = await state()
