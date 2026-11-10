@@ -104,20 +104,20 @@ def make_header(name, ext, load, length, exe=0):
 
 
 def add_payload(d, secs, first, name, ext, payload, records):
-    """Add a new file whose bytes (header included) are `payload` to the image `d`: free directory entry, free 1 KB blocks, one extent of `records` 128-byte records."""
+    """Add a new file whose bytes (header included) are `payload` to the image `d`: free directory entries, free 1 KB blocks, one extent (16 KB = 128 records,
+    16 blocks) per 16 KB of the file."""
     entries = [secs[(0, first + i // 16)][0] + (i % 16) * 32 for i in range(64)]
-    used, free_entry = {0, 1}, None
+    used, free_entries = {0, 1}, []
     for i, off in enumerate(entries):
         e = d[off:off + 32]
         if e[0] == 0xE5:
-            free_entry = i if free_entry is None else free_entry
+            free_entries.append(i)
         else:
             used.update(x for x in e[16:32] if x)
-    if free_entry is None:
-        raise SystemExit("no free directory entry")
-    if records > 128:
-        raise SystemExit(f"{name}: more than one extent needed")
     nblocks = -(-len(payload) // 1024)
+    nextents = -(-nblocks // 16)
+    if len(free_entries) < nextents:
+        raise SystemExit("no free directory entry")
     blocks = [x for x in range(2, 180) if x not in used][:nblocks]
     if len(blocks) < nblocks:
         raise SystemExit("disk full")
@@ -127,12 +127,15 @@ def add_payload(d, secs, first, name, ext, payload, records):
             ls = blk * 2 + half
             pos, _size = secs[(ls // 9, first + ls % 9)]
             d[pos:pos + 512] = payload[k * 1024 + half * 512:k * 1024 + half * 512 + 512]
-    e = bytearray(32)
-    e[1:9] = name.ljust(8).encode()
-    e[9:12] = ext.ljust(3).encode()
-    e[15] = records
-    e[16:16 + len(blocks)] = bytes(blocks)
-    d[entries[free_entry]:entries[free_entry] + 32] = e
+    for x in range(nextents):
+        e = bytearray(32)
+        e[1:9] = name.ljust(8).encode()
+        e[9:12] = ext.ljust(3).encode()
+        e[12] = x                                       # extent number
+        e[15] = min(128, records - 128 * x)             # records in this extent
+        chunk = blocks[x * 16:(x + 1) * 16]
+        e[16:16 + len(chunk)] = bytes(chunk)
+        d[entries[free_entries[x]]:entries[free_entries[x]] + 32] = e
     return blocks
 
 
