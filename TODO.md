@@ -8,14 +8,17 @@ Open work, most useful first. `CLAUDE.md` keeps the short list; details live in 
 - [x] Key pre-delay 0.43 s -> 0.16 s (`sub_403E`, `-DENHANCED`, 2026-11-10); play-tested by the user, feels faster.
 - [ ] Optional speed: `drawViewportFrame` redraws a constant frame each frame (about 1.5% of the frame); unroll or draw the edge bytes once. Needs free bytes in flight, so low priority.
 - [ ] radar (scanner) flicker. Measured 2026-11-09 (cpcxray, in flight): a game frame is about 200 ms; `UpdateScanner` takes about 24 ms, of which `cleanScanner` (blank the area, rebuild the background from `gfxdataScanner` with `exx`-heavy loops, drawn straight on the visible screen) is about 21.7 ms and the ship dots about 2 ms. That is longer than one video frame, so the beam always crosses a half-drawn scanner. Ruled out: a hidden-row off-screen copy (rows 24-31 of the screen RAM, `&C600-&C7FF` etc., hold the square and other lookup tables) and an erase list for the dots (an `or`-plotted pixel cannot be restored without saved bytes, up to about 650). Free space: 20 bytes in the dead block, 10 in `unusedGet*`; the Constrictor and Trumble flight images leave 1 byte in the tail. Left: rewrite `cleanScanner` in place to about 14 ms (tight nibble-split loop) and sync `UpdateScanner` to just after the beam has passed the scanner (ISR counter), so the blank period (about 16 ms) falls between two passes; cannot be verified in cpcxray (no beam), only by eye.
-- [ ] align the station screens in the German and French builds like the English one (`-DENHANCED`, `CHANGELOG.md` 2026-11-09): headlines in column 2 (`titleTab`, `statusTitleCol`, `chartTitleCol`), status labels and values in column 9 (`statusLabels`, `statusColon`, `fuelTab`; the label texts need translating, e.g. "System:"/"Target:"), plus the cash on the quantity line (`clrLineCash`, `cashHome`) and the ship name on the press-space screen (`TITLE_NAME`, German). Extend `tools/check_src.sh` for the new slots.
+- [ ] Added missions (Constrictor, plans, stolen ship, asteroids, Trumbles) are English only: no translated texts, and the mission disk and hooks are built only from `src/elite` (`build_dsk.py --missions` refuses `--de`/`--fr`). The biggest gap between the builds.
+- [ ] Status screen tidy-up in German and French (`-DENHANCED`, `CHANGELOG.md` 2026-11-09): the "Status" label and the fuel number in column 9 (`statusToken`, `fuelTab`), plus "System:"/"Target:" labels (`statusLabels`, `statusColon`) need translating.
+- [ ] Station headlines in column 2 in German and French (`titleTab`, `statusTitleCol`, `chartTitleCol`, `hyperCountPos`).
+- [ ] Cash on the quantity line in German and French (`clrLineCash`, `cashHome`; buy, sell and equipment prompts).
 - [x] stars no longer shine through the planet and sun (`STAR_OCCLUDE`, `CHANGELOG.md`)
 - [ ] ships are still see-through (stars between the edges): options in `docs/_ship_occlusion.md`; try the bounding box (B) first, after measuring the free bytes in the `-DMISSIONS` build
 - [ ] test the star patch in cpcxray on the German disk (`work/elite_de_rebuilt.dsk`) and the French build (only the English snapshot was shown so far)
-- [ ] `tools/build_dsk.py --fr` (no French disk can be built yet; needs a base disk decision)
+- [x] `tools/build_dsk.py --fr` builds `work/elite_fr_rebuilt.dsk` from the French Firebird disk (2026-11-10)
 - [ ] more than one color for moving stars?
 - [ ] or other color for asteroids?
-- [x] show different ships on load, arrow keys left/right for next (`TITLESEL`, English and German; French not done)
+- [x] show different ships on load, arrow keys left/right for next (`TITLESEL`, all three builds, with the ship name; the press-space screen opens on the Cobra Mk III)
   
 ## Missions (branch `addon-missions`, overview in `docs/_missions_built.md`)
 - [ ] Real playthrough of the whole chain with save and load (so far only forced states, direct calls, the trainer pokes and a booted disk). A real docking triggering each offer has not been seen in the running game.
