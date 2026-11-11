@@ -705,3 +705,117 @@ ibLM:   db 0xFF, 0x77, 0x33, 0x11
 ibRM:   db 0x88, 0xCC, 0xEE, 0xFF
 fillEnd:
     ASSERT fillEnd <= 0x4F00
+    ASSERT fillEnd <= 0x4400
+    DS 0x4400-$
+
+; --- page flip (runs here, in RAM bank 6, so that the resident glue stays small): called through dbFlipTail (commonxx.asm) with config C6 and the resident stack ---
+; The addresses of the resident variables and of dbCopy come from the build (tools/check_src128.sh).
+    IFNDEF DB_CURCFG
+DB_CURCFG   equ 0
+DB_ON       equ 0
+DB_SHOWN    equ 0
+DB_CNT      equ 0
+DB_COPY     equ 0
+    ENDIF
+VIEWDIR     equ 0x1C02
+; Flight views: wait for the vertical sync, point the CRTC at the bank just drawn (R12 &1C = bank 1, &3C = bank 3), make the other bank the draw bank, then copy what the game
+; writes straight to the screen (cockpit rows 16-23 of each scan line block, two 16-byte variable areas in the gaps) from the shown bank to the new draw bank.
+; The first call after a non-flight view copies the whole page. Charts and docked screens draw into the displayed bank (dbIsr in the ISR).
+dbFlip6:
+    ld a,(VIEWDIR)
+    cp 4
+    ret nc
+    ld a,(DB_ON)
+    and a
+    jr nz,dbfFlip
+    inc a
+    ld (DB_ON),a
+    ld a,(DB_CURCFG)                    ; entering: the draw bank is the one on screen; the other one gets a full copy
+    call dbBases
+    ld a,64
+    ld (DB_CNT),a
+dbfAll:
+    ld bc,256
+    call DB_COPY
+    ld a,(DB_CNT)
+    dec a
+    ld (DB_CNT),a
+    jr nz,dbfAll
+dbfFlip:
+    ld bc,0xF500
+dbfw1:
+    in a,(c)
+    rra
+    jr c,dbfw1                          ; wait until the frame is not in vsync
+dbfw2:
+    in a,(c)
+    rra
+    jr nc,dbfw2                         ; and until the next one starts
+    di
+    ld a,(DB_CURCFG)
+    ld (DB_SHOWN),a
+    and 2
+    add a,a
+    add a,a
+    add a,a
+    add a,a
+    add a,0x1C
+    ld bc,0xBC0C
+    out (c),c
+    ld b,0xBD
+    out (c),a
+    ld a,(DB_SHOWN)
+    xor 2                               ; C1 <-> C3
+    ld (DB_CURCFG),a
+    ei
+    ld a,(DB_SHOWN)
+    call dbBases
+    ld bc,0x0400
+    add hl,bc
+    ex de,hl
+    add hl,bc
+    ex de,hl
+    ld a,8
+    ld (DB_CNT),a
+dbfRows:
+    ld bc,256
+    call DB_COPY
+    ld bc,256
+    call DB_COPY
+    ld bc,0x0600
+    add hl,bc
+    ex de,hl
+    add hl,bc
+    ex de,hl
+    ld a,(DB_CNT)
+    dec a
+    ld (DB_CNT),a
+    jr nz,dbfRows
+    ld a,(DB_SHOWN)
+    call dbBases
+    ld bc,0x0E00
+    add hl,bc
+    ex de,hl
+    add hl,bc
+    ex de,hl
+    ld bc,16
+    call DB_COPY
+    ld a,(DB_SHOWN)
+    call dbBases
+    ld bc,0x2FF0
+    add hl,bc
+    ex de,hl
+    add hl,bc
+    ex de,hl
+    ld bc,16
+    jp DB_COPY
+; A = config of the bank to copy from; returns HL = its address and DE = the other bank's address in the C0 configuration
+dbBases:
+    bit 1,a
+    ld hl,0x4000
+    ld de,0xC000
+    ret z
+    ex de,hl
+    ret
+dbFlip6End:
+    ASSERT dbFlip6End <= 0x4F00

@@ -771,8 +771,7 @@ tfScrMemNextLine:
     pop hl
     pop de
     pop bc
-    pop af
-    ret
+    jp dbFlipTail                       ; 128K build: pop af, then flip the screens (dbFlip in bank 7) and return
 tbmLoopCounter:
     db "O"
 ; Redraw the dashboard if the screen's first byte is not 0x0F, i.e. the dashboard is not yet on screen
@@ -2339,8 +2338,8 @@ splitcheckzone4:
     jr changeInks2and3
 IRSound:
     call IRKeyboardInput
-    ld a,(flagMusicLoaded)              ; 128K build: no music player is ever loaded, so the flag stays 0 and the branch to loc_293F was dead; its `and a` and `jp nz` (4 bytes)
-    jp IRdrivenSound                    ; pay for the bytes the screen-wrap fixes added above, so every label from here on stays at its stock address
+    call dbIsr                          ; 128K build: no music player is ever loaded, so the flag test and the branch to loc_293F were dead (4 bytes of them pay for the screen-wrap fixes above, so every label from here on stays at its stock address); dbIsr follows the displayed bank in the non-flight views
+    jp IRdrivenSound
 loc_293F:
     ld a,(flagToggleMusic)
     and a
@@ -7589,7 +7588,7 @@ bankInitGo:
     out (c),c
     ld hl,bankInitStageFill
     ld de,0x4000
-    ld bc,0x0400
+    ld bc,0x0600
     ldir
     ld hl,bankInitStageData
     ld de,0x6000
@@ -8090,6 +8089,82 @@ mxLettersOverlay:
     db "CPTR"
 mxLettersFlight:
     db "0CPTSR"
+; --- page flip (128K build), resident part: dbFlip itself is in bank 7 (common2x.asm) ---
+; dbShown: config value (C1 or C3) of the bank the CRTC displays. In flight the game draws into the other one (curCfg), dbFlip swaps them after each transferBuffertoScreen.
+dbShown:
+    db 0xC1
+dbCnt:
+    db 0
+dbOn:
+    db 0                                ; 1 while flipping (flight views); the ISR clears it when a non-flight view is shown
+dbFlip6Entry equ 0x4400                 ; fill.asm: dbFlip6
+dbFlipTail:
+    pop af
+    ld (hullSaveSP),sp                  ; like hullDraw: the game stack is in bank 7, which RAM bank 6 (config C6) hides
+    ld sp,hullStackTop
+    push af
+    push bc
+    push de
+    push hl
+    ld bc,0x7FC6
+    out (c),c
+    call dbFlip6Entry
+    mapMain
+    pop hl
+    pop de
+    pop bc
+    pop af
+    ld sp,(hullSaveSP)
+    ret
+; Called by the ISR (IRSound). In the non-flight views (Viewdirection >= 4) the game draws straight to the curCfg bank, so that bank is the one to display.
+dbIsr:
+    ld a,(Viewdirection)
+    cp 4
+    ret c
+    ld hl,curCfg
+    ld a,(dbShown)
+    cp (hl)
+    ret z
+    ld a,(hl)
+    ld (dbShown),a
+    xor a
+    ld (dbOn),a
+    ld a,(hl)
+    and 2
+    add a,a
+    add a,a
+    add a,a
+    add a,a
+    add a,0x1C                          ; R12: &1C = bank 1 at &4000, &3C = bank 3 at &C000
+    ld bc,0xBC0C
+    out (c),c
+    ld b,0xBD
+    out (c),a
+    ret
+; Copies BC bytes from HL to DE through the C0 configuration (bank 1 at &4000, bank 3 at &C000), interrupts off meanwhile; the alternate registers carry the port and are saved.
+; Only called from the flip code in bank 6: returns in config C6, with HL, DE advanced.
+dbCopy:
+    exx
+    push bc
+    push de
+    push hl
+    exx
+    di
+    exx
+    ld bc,0x7FC0
+    out (c),c
+    exx
+    ldir
+    exx
+    ld a,0xC6                           ; back to the flip code in bank 6
+    ld b,0x7F
+    out (c),a
+    pop hl
+    pop de
+    pop bc
+    exx
+    ei
+    ret
     ASSERT $ <= 0x9D9E, "the mission bank routines do not fit in front of the flight tail"
     DS 0x9D9E-$
 ; Free tail of COMMONXX (&9D9E-&9FFF, 610 bytes, flight time; the stack pushes at the top). Build with -DMISSIONS to add mission code

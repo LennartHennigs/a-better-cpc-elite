@@ -1,4 +1,8 @@
 SCREEN equ 0x4000            ; the screen page (the 128K layout); the block below runs in RAM bank 7 at &C000
+curCfg equ 0x9865   ; generated: label of commonxx
+dbCopy equ 0x9D4B   ; generated: label of commonxx
+dbOn equ 0x9CFD   ; generated: label of commonxx
+dbShown equ 0x9CFB   ; generated: label of commonxx
 ActDeponEnergy equ 0x881C   ; generated: label of commonxx
 AddDEtoKillScore equ 0x39A5   ; generated: label of commonxx
 Altitude equ 0x1C11   ; generated: label of commonxx
@@ -67,9 +71,9 @@ dataSpaceStationPosZl equ 0x1C36   ; generated: label of commonxx
 displayAlertStateinHeader equ 0x3F97   ; generated: label of commonxx
 dockingComputer equ 0x3903   ; generated: label of commonxx
 dot_product_scale_factor equ 0x8C08   ; generated: label of commonxx
-drawDashboard equ 0x1F8B   ; generated: label of commonxx
+drawDashboard equ 0x1F8C   ; generated: label of commonxx
 drawradius equ 0x20CA   ; generated: label of commonxx
-dustPlotPixel equ 0x1FD4   ; generated: label of commonxx
+dustPlotPixel equ 0x1FD5   ; generated: label of commonxx
 ecmEquipped equ 0x38FC   ; generated: label of commonxx
 economy equ 0x3D5E   ; generated: label of commonxx
 emptyDefaultsave equ 0x39C7   ; generated: label of commonxx
