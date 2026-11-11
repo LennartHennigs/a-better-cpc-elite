@@ -46,7 +46,7 @@ async def run(sort):
             await c("run", {"max_us": 4_000_000, "timeout_s": 60})
             if not sort:
                 await c("memory_write", {"address": sym["hullBegin"] + 1, "data": "00"})
-            safe = (await c("breakpoint_add", {"address": 0x5066, "kind": "pc"}))["id"]
+            safe = (await c("breakpoint_add", {"address": 0xCF68, "kind": "pc"}))["id"]
             rep = await c("run", {"max_us": 10_000_000, "timeout_s": 60})
             assert rep.get("reason") == "breakpoint", rep
             await c("breakpoint_remove", {"breakpoint_id": safe})

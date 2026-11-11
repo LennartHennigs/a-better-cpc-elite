@@ -41,7 +41,7 @@ async def main():
             await c("disk_insert", {"drive": "A", "path": DISK})
             await c("sna_load", {"path": SNA})
             await c("run", {"max_us": 4_000_000, "timeout_s": 60})
-            bp = (await c("breakpoint_add", {"address": 0x5066, "kind": "pc"}))["id"]
+            bp = (await c("breakpoint_add", {"address": 0xCF68, "kind": "pc"}))["id"]
             rep = await c("run", {"max_us": 10_000_000, "timeout_s": 60})
             assert rep.get("reason") == "breakpoint", rep
             if TYPE is not None:

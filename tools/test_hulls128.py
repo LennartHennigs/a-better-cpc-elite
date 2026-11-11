@@ -41,7 +41,7 @@ async def main():
             await c("disk_insert", {"drive": "A", "path": os.environ.get("DISK128", "disk/elite128.dsk")})
             await c("sna_load", {"path": "output/flight128.sna"})
             await c("run", {"max_us": 4_000_000, "timeout_s": 60})
-            safe = (await c("breakpoint_add", {"address": 0x5066, "kind": "pc"}))["id"]
+            safe = (await c("breakpoint_add", {"address": 0xCF68, "kind": "pc"}))["id"]
             rep = await c("run", {"max_us": 10_000_000, "timeout_s": 60})
             assert rep.get("reason") == "breakpoint", rep
             await c("breakpoint_remove", {"breakpoint_id": safe})
@@ -66,7 +66,7 @@ async def main():
                 print(f"type {t:2d}: pc=&{reg['pc']:04X} sp=&{reg['sp']:04X}", flush=True)
                 await c("memory_write", {"address": ix + 34, "data": "00"})                              # empty the slot
                 await c("run", {"max_us": 300_000, "timeout_s": 60})
-                rep = await c("run_until", {"address": 0x5066, "max_us": 3_000_000})
+                rep = await c("run_until", {"address": 0xCF68, "max_us": 3_000_000})
                 saved = await c("registers_get")
 
 
