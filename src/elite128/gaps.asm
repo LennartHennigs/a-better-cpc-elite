@@ -1198,7 +1198,8 @@ cidrawframe:
     ld a,h
     add a,0x08
     ld h,a
-    jr nc,cidrawframe
+    bit 7,h                           ; 128K layout: loop while inside the screen page &4000-&7FFF (it was the carry out of H at &C000)
+    jr z,cidrawframe
     push bc
     ld bc,0xC040   ; +0x40 and wrap: next character row of the 64-byte-wide view
     add hl,bc

@@ -1,125 +1,131 @@
 SCREEN equ 0x4000            ; the screen page: &C000 in the 64K layout, &4000 in the 128K one (docs: src/elite128/README.md)
-AskMissionThargonInvasion equ 0xC873   ; generated: label of common2x
-BYTE_ram_43d7 equ 0xC29D   ; generated: label of common2x
-ClearSaveGameRam equ 0xC964   ; generated: label of common2x
-ColorsGalChart equ 0xC43D   ; generated: label of common2x
-ColorsLocalChart equ 0xC442   ; generated: label of common2x
-CommanderStatus equ 0xC70D   ; generated: label of common2x
-CountDownNumberForHyperspace equ 0xCA97   ; generated: label of common2x
-DataonPlanet equ 0xC195   ; generated: label of common2x
-DistanceToPlanet equ 0xC000   ; generated: label of common2x
-DockingSequence equ 0xF0EB   ; generated: label of common2x
-DrawSpaceDust equ 0xEB00   ; generated: label of common2x
-DrawTargetReticule equ 0xC0F9   ; generated: label of common2x
-InitVariables equ 0xF22F   ; generated: label of common2x
-Inventory equ 0xC906   ; generated: label of common2x
-LAB_ram_57d0 equ 0xD696   ; generated: label of common2x
-LAB_ram_6718 equ 0xE5DE   ; generated: label of common2x
-MainStackNStrings equ 0xF35D   ; generated: label of common2x
-MapCrossHairDown equ 0xC026   ; generated: label of common2x
-MapCrossHairLeft equ 0xC039   ; generated: label of common2x
-MapCrossHairRight equ 0xC049   ; generated: label of common2x
-MapCrossHairUp equ 0xC014   ; generated: label of common2x
-MarketPrices equ 0xC6D1   ; generated: label of common2x
-RecenteronDockedPlanet equ 0xC05A   ; generated: label of common2x
-SUB_ram_4bd2 equ 0xCA98   ; generated: label of common2x
-SetTableBegintoAofHL equ 0xC070   ; generated: label of common2x
-SpawnMyRemains equ 0xF887   ; generated: label of common2x
-ThargonMissionFinished equ 0xC8A1   ; generated: label of common2x
-UpdateIndicatorBars equ 0xDF67   ; generated: label of common2x
-UpdateScanner equ 0xE3FF   ; generated: label of common2x
-Witchspace equ 0xEF87   ; generated: label of common2x
-add_sign_mag_bytes equ 0xD928   ; generated: label of common2x
-adrOfCoordinatesTable equ 0xEAB5   ; generated: label of common2x
-approx_sqrt_16bit equ 0xD156   ; generated: label of common2x
-aspMissionState equ 0xCF13   ; generated: label of common2x
-bountyforShip equ 0xC975   ; generated: label of common2x
-buf_5860 equ 0xD726   ; generated: label of common2x
-chkAltitude equ 0xE076   ; generated: label of common2x
-chkLocalJump equ 0xEA20   ; generated: label of common2x
-chkManualDocking equ 0xE59F   ; generated: label of common2x
-chkPlotOnChart equ 0xCEE1   ; generated: label of common2x
-cirGetBMAdress equ 0xE545   ; generated: label of common2x
-cirGetScrAddr equ 0xE564   ; generated: label of common2x
-cleanShipSlots equ 0xF244   ; generated: label of common2x
-copyCharset equ 0xCDE8   ; generated: label of common2x
-countShipsLaunchedByStation equ 0xCF22   ; generated: label of common2x
-damageToFrontShield equ 0xCF1F   ; generated: label of common2x
-damageToRearShield equ 0xCF20   ; generated: label of common2x
-destroyedEquipmentNumber equ 0xC977   ; generated: label of common2x
-dh3nextPixelline equ 0xFF2C   ; generated: label of common2x
-doDrawChar0xc000 equ 0xC397   ; generated: label of common2x
-drawFrame equ 0xC50C   ; generated: label of common2x
-drawHorLineofFrame equ 0xC554   ; generated: label of common2x
-drawIntroShip equ 0xD4EA   ; generated: label of common2x
-drawPlanetnSun equ 0xE64F   ; generated: label of common2x
-drawReticule equ 0xCEAC   ; generated: label of common2x
-drawTitleBoxframe equ 0xC518   ; generated: label of common2x
-dust54 equ 0xEE1F   ; generated: label of common2x
-dustByte6BFD equ 0xEAC3   ; generated: label of common2x
-dustPitch equ 0xEAB2   ; generated: label of common2x
-dustPixelMask equ 0xEAC1   ; generated: label of common2x
-dustVar10 equ 0xEABB   ; generated: label of common2x
-dustVar5 equ 0xEABE   ; generated: label of common2x
-dustVar9 equ 0xEAB9   ; generated: label of common2x
-ecmActiveFlag equ 0xCF1D   ; generated: label of common2x
-flagEnergyBombActivated equ 0xCF17   ; generated: label of common2x
-flagWhichScreenToPrint equ 0xC414   ; generated: label of common2x
-force_loading_busy_state equ 0xE58B   ; generated: label of common2x
-gcMaxY equ 0xCEAB   ; generated: label of common2x
-gcMinY equ 0xCEAA   ; generated: label of common2x
-getByteAddressinBitmap equ 0xE54B   ; generated: label of common2x
-getMoneyinHLDE equ 0xC0CF   ; generated: label of common2x
-getRandomNumber equ 0xFA07   ; generated: label of common2x
-gfxdataScanner equ 0xDCF7   ; generated: label of common2x
-handleEntitys equ 0xCF2C   ; generated: label of common2x
-handleLaser equ 0xFA22   ; generated: label of common2x
-handle_chart_cursor_keys equ 0xE617   ; generated: label of common2x
-heResume equ 0xCF2F   ; generated: label of common2x
-hullDrawResume equ 0xD699   ; generated: label of common2x
-loc_604A equ 0xDF10   ; generated: label of common2x
-minus_de_plus_hl_div_2 equ 0xF5DD   ; generated: label of common2x
-moveSpaceStation equ 0xE713   ; generated: label of common2x
-moveSunNPlanet equ 0xE705   ; generated: label of common2x
-mult_b_c_msb equ 0xD938   ; generated: label of common2x
-normalize_position_vector equ 0xD0D8   ; generated: label of common2x
-placeCrossHairPrintDistance equ 0xC003   ; generated: label of common2x
-printBoardedByMessage equ 0xC844   ; generated: label of common2x
-printCharAtLocationXY equ 0xC36F   ; generated: label of common2x
-printCharofDigram equ 0xC18E   ; generated: label of common2x
-printCount equ 0xC080   ; generated: label of common2x
-printFlightToken equ 0xC075   ; generated: label of common2x
-printNumber equ 0xC083   ; generated: label of common2x
-printString equ 0xC2A2   ; generated: label of common2x
-printStringA equ 0xC2DC   ; generated: label of common2x
-printStringFollowingByte equ 0xC29E   ; generated: label of common2x
-printViewPortLabel equ 0xC978   ; generated: label of common2x
-removeFuel equ 0xCDBA   ; generated: label of common2x
-resetInflightMessagesFlags equ 0xCA87   ; generated: label of common2x
-setColors equ 0xC415   ; generated: label of common2x
-setCommandsCPL equ 0xC3F7   ; generated: label of common2x
-setCommandsNOP equ 0xC3FB   ; generated: label of common2x
-setFuel equ 0xCDC5   ; generated: label of common2x
-setViewColors equ 0xCBF1   ; generated: label of common2x
-shipInCrosshair equ 0xCF19   ; generated: label of common2x
-storePresPlanetX equ 0xCF0F   ; generated: label of common2x
-storePresPlanetY equ 0xCF10   ; generated: label of common2x
-sub_4622 equ 0xC4E8   ; generated: label of common2x
-text_rng equ 0xC4AC   ; generated: label of common2x
-titleNames equ 0xFF41   ; generated: label of common2x
-titleShips equ 0xFF39   ; generated: label of common2x
-todoActiveSlots equ 0xCF1B   ; generated: label of common2x
-todoDrawExplosions equ 0xE74A   ; generated: label of common2x
-todoLaserVar3 equ 0xCF1E   ; generated: label of common2x
-todoOverheating equ 0xE6D8   ; generated: label of common2x
-todoSunRadius equ 0xE64E   ; generated: label of common2x
-todo_CleanScanCounter equ 0xE3EA   ; generated: label of common2x
-todo_SomethingwithDigits equ 0xC087   ; generated: label of common2x
-todo_parseEdges equ 0xDC2D   ; generated: label of common2x
-todo_stringpointer equ 0xC55C   ; generated: label of common2x
-todoclearCounter equ 0xF239   ; generated: label of common2x
-tokenToPrint equ 0xC974   ; generated: label of common2x
-txt_hpos equ 0xCF11   ; generated: label of common2x
+STAGE equ 0xC000                ; the window page as a copy in RAM bank 3: visible at &C000 whenever a bank is mapped over the window (&4000-&7FFF is the screen page)
+    macro mapMain
+    ld a,(curCfg)                       ; back to the draw configuration (C1: bank 1 at &4000, C3: bank 3 at &4000; bank 7 at &C000 in both). Clobbers A and B. Never use push, pop,
+    ld b,0x7F                           ; call or ret while a bank is mapped over the window: the game stack is in bank 7, which a window configuration hides.
+    out (c),a
+    endm
+AskMissionThargonInvasion equ 0xC8AF   ; generated: label of common2x
+BYTE_ram_43d7 equ 0xC2D7   ; generated: label of common2x
+ClearSaveGameRam equ 0xC9A0   ; generated: label of common2x
+ColorsGalChart equ 0xC477   ; generated: label of common2x
+ColorsLocalChart equ 0xC47C   ; generated: label of common2x
+CommanderStatus equ 0xC749   ; generated: label of common2x
+CountDownNumberForHyperspace equ 0xCAD3   ; generated: label of common2x
+DataonPlanet equ 0xC1CF   ; generated: label of common2x
+DistanceToPlanet equ 0xC03A   ; generated: label of common2x
+DockingSequence equ 0xF129   ; generated: label of common2x
+DrawSpaceDust equ 0xEB3E   ; generated: label of common2x
+DrawTargetReticule equ 0xC133   ; generated: label of common2x
+InitVariables equ 0xF26D   ; generated: label of common2x
+Inventory equ 0xC942   ; generated: label of common2x
+LAB_ram_57d0 equ 0xD6D2   ; generated: label of common2x
+LAB_ram_6718 equ 0xE61C   ; generated: label of common2x
+MainStackNStrings equ 0xF39B   ; generated: label of common2x
+MapCrossHairDown equ 0xC060   ; generated: label of common2x
+MapCrossHairLeft equ 0xC073   ; generated: label of common2x
+MapCrossHairRight equ 0xC083   ; generated: label of common2x
+MapCrossHairUp equ 0xC04E   ; generated: label of common2x
+MarketPrices equ 0xC70D   ; generated: label of common2x
+RecenteronDockedPlanet equ 0xC094   ; generated: label of common2x
+SUB_ram_4bd2 equ 0xCAD4   ; generated: label of common2x
+SetTableBegintoAofHL equ 0xC0AA   ; generated: label of common2x
+SpawnMyRemains equ 0xF8C5   ; generated: label of common2x
+ThargonMissionFinished equ 0xC8DD   ; generated: label of common2x
+UpdateIndicatorBars equ 0xDFA3   ; generated: label of common2x
+UpdateScanner equ 0xE43D   ; generated: label of common2x
+Witchspace equ 0xEFC5   ; generated: label of common2x
+add_sign_mag_bytes equ 0xD964   ; generated: label of common2x
+adrOfCoordinatesTable equ 0xEAF3   ; generated: label of common2x
+approx_sqrt_16bit equ 0xD192   ; generated: label of common2x
+aspMissionState equ 0xCF4F   ; generated: label of common2x
+bountyforShip equ 0xC9B1   ; generated: label of common2x
+buf_5860 equ 0xD762   ; generated: label of common2x
+chkAltitude equ 0xE0B2   ; generated: label of common2x
+chkLocalJump equ 0xEA5E   ; generated: label of common2x
+chkManualDocking equ 0xE5DD   ; generated: label of common2x
+chkPlotOnChart equ 0xCF1D   ; generated: label of common2x
+cirGetBMAdress equ 0xE583   ; generated: label of common2x
+cirGetScrAddr equ 0xE5A2   ; generated: label of common2x
+cleanShipSlots equ 0xF282   ; generated: label of common2x
+copyCharset equ 0xCE24   ; generated: label of common2x
+countShipsLaunchedByStation equ 0xCF5E   ; generated: label of common2x
+damageToFrontShield equ 0xCF5B   ; generated: label of common2x
+damageToRearShield equ 0xCF5C   ; generated: label of common2x
+destroyedEquipmentNumber equ 0xC9B3   ; generated: label of common2x
+dh3nextPixelline equ 0xFF6A   ; generated: label of common2x
+doDrawChar0xc000 equ 0xC3D1   ; generated: label of common2x
+drawFrame equ 0xC548   ; generated: label of common2x
+drawHorLineofFrame equ 0xC590   ; generated: label of common2x
+drawIntroShip equ 0xD526   ; generated: label of common2x
+drawPlanetnSun equ 0xE68D   ; generated: label of common2x
+drawReticule equ 0xCEE8   ; generated: label of common2x
+drawTitleBoxframe equ 0xC554   ; generated: label of common2x
+dust54 equ 0xEE5D   ; generated: label of common2x
+dustByte6BFD equ 0xEB01   ; generated: label of common2x
+dustPitch equ 0xEAF0   ; generated: label of common2x
+dustPixelMask equ 0xEAFF   ; generated: label of common2x
+dustVar10 equ 0xEAF9   ; generated: label of common2x
+dustVar5 equ 0xEAFC   ; generated: label of common2x
+dustVar9 equ 0xEAF7   ; generated: label of common2x
+ecmActiveFlag equ 0xCF59   ; generated: label of common2x
+flagEnergyBombActivated equ 0xCF53   ; generated: label of common2x
+flagWhichScreenToPrint equ 0xC44E   ; generated: label of common2x
+force_loading_busy_state equ 0xE5C9   ; generated: label of common2x
+gcMaxY equ 0xCEE7   ; generated: label of common2x
+gcMinY equ 0xCEE6   ; generated: label of common2x
+getByteAddressinBitmap equ 0xE589   ; generated: label of common2x
+getMoneyinHLDE equ 0xC109   ; generated: label of common2x
+getRandomNumber equ 0xFA45   ; generated: label of common2x
+gfxdataScanner equ 0xDD33   ; generated: label of common2x
+handleEntitys equ 0xCF68   ; generated: label of common2x
+handleLaser equ 0xFA60   ; generated: label of common2x
+handle_chart_cursor_keys equ 0xE655   ; generated: label of common2x
+heResume equ 0xCF6B   ; generated: label of common2x
+hullDrawResume equ 0xD6D5   ; generated: label of common2x
+loc_604A equ 0xDF4C   ; generated: label of common2x
+minus_de_plus_hl_div_2 equ 0xF61B   ; generated: label of common2x
+moveSpaceStation equ 0xE751   ; generated: label of common2x
+moveSunNPlanet equ 0xE743   ; generated: label of common2x
+mult_b_c_msb equ 0xD974   ; generated: label of common2x
+normalize_position_vector equ 0xD114   ; generated: label of common2x
+placeCrossHairPrintDistance equ 0xC03D   ; generated: label of common2x
+printBoardedByMessage equ 0xC880   ; generated: label of common2x
+printCharAtLocationXY equ 0xC3A9   ; generated: label of common2x
+printCharofDigram equ 0xC1C8   ; generated: label of common2x
+printCount equ 0xC0BA   ; generated: label of common2x
+printFlightToken equ 0xC0AF   ; generated: label of common2x
+printNumber equ 0xC0BD   ; generated: label of common2x
+printString equ 0xC2DC   ; generated: label of common2x
+printStringA equ 0xC316   ; generated: label of common2x
+printStringFollowingByte equ 0xC2D8   ; generated: label of common2x
+printViewPortLabel equ 0xC9B4   ; generated: label of common2x
+removeFuel equ 0xCDF6   ; generated: label of common2x
+resetInflightMessagesFlags equ 0xCAC3   ; generated: label of common2x
+setColors equ 0xC44F   ; generated: label of common2x
+setCommandsCPL equ 0xC431   ; generated: label of common2x
+setCommandsNOP equ 0xC435   ; generated: label of common2x
+setFuel equ 0xCE01   ; generated: label of common2x
+setViewColors equ 0xCC2D   ; generated: label of common2x
+shipInCrosshair equ 0xCF55   ; generated: label of common2x
+storePresPlanetX equ 0xCF4B   ; generated: label of common2x
+storePresPlanetY equ 0xCF4C   ; generated: label of common2x
+sub_4622 equ 0xC522   ; generated: label of common2x
+text_rng equ 0xC4E6   ; generated: label of common2x
+titleNames equ 0xFF7F   ; generated: label of common2x
+titleShips equ 0xFF77   ; generated: label of common2x
+todoActiveSlots equ 0xCF57   ; generated: label of common2x
+todoDrawExplosions equ 0xE788   ; generated: label of common2x
+todoLaserVar3 equ 0xCF5A   ; generated: label of common2x
+todoOverheating equ 0xE716   ; generated: label of common2x
+todoSunRadius equ 0xE68C   ; generated: label of common2x
+todo_CleanScanCounter equ 0xE428   ; generated: label of common2x
+todo_SomethingwithDigits equ 0xC0C1   ; generated: label of common2x
+todo_parseEdges equ 0xDC69   ; generated: label of common2x
+todo_stringpointer equ 0xC598   ; generated: label of common2x
+todoclearCounter equ 0xF277   ; generated: label of common2x
+tokenToPrint equ 0xC9B0   ; generated: label of common2x
+txt_hpos equ 0xCF4D   ; generated: label of common2x
 ; Elite (Amstrad CPC) COMMONXX.BIN, stock build: generated by tools/disasm_stock.py
 ; load address 0x1A40, 34240 bytes. Names come from Fessor's reconstruction where known,
 ; otherwise sub_ (call target), loc_ (jump target), dat_ (data/variable reference).
@@ -744,7 +750,8 @@ tfScrMemNextLine:
     ld a,d
     add a,0x08
     ld d,a
-    jp nc,tfloopNextLine
+    bit 7,d                           ; 128K layout: loop while inside the screen page &4000-&7FFF (it was the carry out of D at &C000)
+    jp z,tfloopNextLine
     push bc
     ex de,hl
     ld bc,0xC040   ; +0x40 and wrap: next character row of the 64-byte-wide view
@@ -1210,7 +1217,7 @@ ce2func13:
 ; The circle code and the multiply routines below all work from this table: no multiply instruction is ever used.
 GetSquareforAinDE:
     push hl
-    ld h,0xC6
+    ld h,(SCREEN+0x600)>>8              ; quarter-square table in the screen gap
     ld l,a
     ld e,(hl)
     inc h
@@ -1720,7 +1727,8 @@ ce2func54FillScreenLineWithFF:
     ld a,h
     add a,0x08
     ld h,a
-    jr nc,ce2func55
+    bit 7,h                           ; 128K layout: loop while inside the screen page &4000-&7FFF (it was the carry out of H at &C000)
+    jr z,ce2func55
     ld de,0xC040   ; +0x40 and wrap: next character row of the 64-byte-wide view
     add hl,de
 ce2func55:
@@ -1991,7 +1999,7 @@ ce2func88:
     add a,b
     cp 0x80
     jr c,ce2func89
-    ld h,0xC0
+    ld h,SCREEN>>8
     ret
 ce2func89:
     ld c,0xF8
@@ -2131,7 +2139,8 @@ cdl5:
     ld a,h
     add a,0x08
     ld h,a
-    jr nc,cdl6
+    bit 7,h                           ; 128K layout: loop while inside the screen page &4000-&7FFF (it was the carry out of H at &C000)
+    jr z,cdl6
     push bc
     ld bc,0xC040   ; +0x40 and wrap: next character row of the 64-byte-wide view
     add hl,bc
@@ -5213,6 +5222,11 @@ gfxAlertStateinHeaders:
     INCLUDE "gaps.asm"
 hullQ:                                  ; &8000-&8072 are free since the line drawing code moved to bank 7 with the block
     ds 8 * 6                            ; per entry of the deferred hull list: IX, IY (words), B, key (0xFF = drawn)
+hullStack:
+    ds 32                               ; resident stack for the calls into RAM bank 6: the game stack (bank 7) is hidden by the window configurations
+hullStackTop:
+hullSaveSP:
+    dw 0
     ds 0x8073 - $
 shipEntityInitMatrixdata:
     db 0x00,"2",0x00,0x00,"2",0x00,0x00,"2",0x00,0x00,0x00,0x00,0x00,0xFF,0xFF,0x00
@@ -7324,7 +7338,8 @@ SUB_ram_405e:
     ld a,d
     add a,0x08
     ld d,a
-    jr nc,SUB_ram_405e
+    bit 7,d                           ; 128K layout: loop while inside the screen page &4000-&7FFF (it was the carry out of D at &C000)
+    jr z,SUB_ram_405e
     ret
 ; Restores the cursor position saved by bufferCharXY; no callers found (probably unused)
 restoreCharXY:
@@ -7444,6 +7459,8 @@ fillHullEntry equ 0x4000
 fillInitEntry equ 0x4003
 hullType:
     db 0
+curCfg:
+    db 0xC1                             ; RAM configuration the CPU draws with (C1: screen A = bank 1 at &4000, C3: screen B = bank 3)
 hullDummy:
     ds 8
 hullDraw:
@@ -7464,13 +7481,16 @@ hullDraw:
     xor a
     ld (flagToggleMusic),a
     ld a,(hullType)
+    ld (hullSaveSP),sp                  ; the game stack is in bank 7, which RAM bank 6 at &4000 (config C6) hides: use the resident stack for the call
+    ld sp,hullStackTop
     ld bc,0x7FC6                        ; RAM bank 6 at &4000
     out (c),c
     call fillHullEntry                              ; fillHull (src/elite128/fill.asm): carry set = no fill record for this type
     sbc a,a
-    ld bc,0x7FC0                        ; back to the normal map (before anything is popped: the stack is in the window)
-    out (c),c
-    ld c,a
+    ld d,a
+    mapMain                             ; back to the draw configuration
+    ld sp,(hullSaveSP)
+    ld c,d
     ld a,(hullSaveMusic)
     ld (flagToggleMusic),a
     ld a,c
@@ -7507,8 +7527,8 @@ hftFound:
     ret
 ; Once, at the start of Init_: the loader put the fill module and its records into blank screen bytes of COMMON2X (tools/build_dsk128.py), which are still
 ; visible at &C000 when bank 6 is mapped at &4000 (config C6 leaves bank 3 at &C000). Copy them to bank 6 and build the module's tables (fillInit, &4003).
-bankInitStageFill  equ SCREEN+0x800
-bankInitStageData  equ SCREEN+0x1000
+bankInitStageFill  equ STAGE+0x800
+bankInitStageData  equ STAGE+0x1000
 bankInit:
     di
     ld hl,0x4000                        ; is there a second 64 KB? write &A5 here, &5A with bank 4 mapped here, read here again with the normal map (a 464/664 ignores the port)
@@ -7547,8 +7567,20 @@ bankMsgLoop:
 bankHalt:
     jr bankHalt
 bankNoRamMsg:
-    db "THIS VERSION NEEDS A 128K CPC (6128).",13,10,0
+    db "128K CPC (6128) REQUIRED",13,10,0
 bankInitGo:
+    ld bc,0x7FC7                        ; the code block (COMMON2X.BIN, loaded at &C000 = RAM bank 3) into RAM bank 7: config C7 shows bank 7 at &4000 and leaves bank 3 at &C000
+    out (c),c
+    ld hl,0xC000
+    ld de,0x4000
+    ld bc,0x4000
+    ldir
+    ld bc,0x7FC0                        ; the window page (COMMONXX.BIN &4000-&7FFF, RAM bank 1) as a copy in bank 3: the second screen, and the stage areas for the banks below
+    out (c),c
+    ld hl,0x4000
+    ld de,0xC000
+    ld bc,0x4000
+    ldir
     ld bc,0x7FC6
     out (c),c
     ld hl,bankInitStageFill
@@ -7568,7 +7600,7 @@ bankInitGo:
     dw bankNameIndicator
     ld bc,0x7FC0
     out (c),c
-    di                                  ; loadFile ends with installVBL: put the firmware's interrupt vector back, so that the installVBL of Init_ saves the right one (twice would chain myVBL to itself)
+    di                                  ; loadFile ends with installVBL: put the firmware's interrupt vector back, so that the installVBL of Init_ saves the right one
     ld hl,(oldIRHandler)
     ld (0x0039),hl
     ld bc,0x7FC4                        ; LARGEAXX is still where the BASIC loader put it (&0840): keep a copy in bank 4 at offset 0x900 for every later docking
@@ -7578,35 +7610,58 @@ bankInitGo:
     ld bc,0x1200
     ldir
     IFDEF MISSIONS
-    ld bc,0x7FC4                        ; the overlays into bank 4 (slots 0 and 1 from &D800, 2 and 3 from &E000), then the flight images into bank 5 (&E800, &F000, &F800: two each)
+    ld bc,0x7FC4                        ; the overlays into bank 4 (slots 0 and 1 from stage &D800, 2 and 3 from &E000), then the flight images into bank 5 (&E800, &F000, &F800: two each)
     out (c),c
-    ld hl,SCREEN+0x1800
+    ld hl,STAGE+0x1800
     ld de,0x4000
     ld bc,0x0480
     ldir
-    ld hl,SCREEN+0x2000
+    ld hl,STAGE+0x2000
     ld de,0x4480
     ld bc,0x0480
     ldir
     ld bc,0x7FC5
     out (c),c
-    ld hl,SCREEN+0x2800
+    ld hl,STAGE+0x2800
     ld de,0x4000
     ld bc,0x04C0
     ldir
-    ld hl,SCREEN+0x3000
+    ld hl,STAGE+0x3000
     ld de,0x44C0
     ld bc,0x04C0
     ldir
-    ld hl,SCREEN+0x3800
+    ld hl,STAGE+0x3800
     ld de,0x4980
     ld bc,0x04C0
     ldir
     ENDIF
-    ld bc,0x7FC0
+    ld bc,0x7FC1                        ; draw into screen A (bank 1 at &4000), bank 7 (the code block) at &C000
+    out (c),c
+    ld a,0xC1
+    ld (curCfg),a
+    ld bc,0xBC0C                        ; the screen is the page at &4000: CRTC R12 = &1C (the second page, bank 3 at &C000, is &3C), R13 = 0 (the firmware has &30 / 0)
+    out (c),c
+    ld bc,0xBD1C
+    out (c),c
+    ld bc,0xBC0D
+    out (c),c
+    ld bc,0xBD00
     out (c),c
     ei
-    jp copyCharset
+    call copyCharset                    ; writes the character set into the window page (bank 1)
+    jp pageSync                         ; ... which has to reach screen B (bank 3) as well
+; Copies the whole window page from RAM bank 1 to RAM bank 3 (C0 shows both) and returns to the draw configuration. Interrupts off, no stack use while C0 is on (the stack is in bank 7).
+pageSync:
+    di
+    ld bc,0x7FC0
+    out (c),c
+    ld hl,0x4000
+    ld de,0xC000
+    ld bc,0x4000
+    ldir
+    mapMain
+    ei
+    ret
 ; Hull draw order (128K build): filled hulls overwrite each other, so ships must be drawn far to near, but the entity loop of handleEntitys draws in slot order. While the loop
 ; runs (hullDefer = 1) the tail of the ship draw routine (parseFaces, vertices, hull, enemy laser) is queued instead of run: IX, IY, B and a depth key (high byte of the ship's
 ; position along the view axis, larger = farther). hullFlush, called after the loop, runs the queue far to near; nothing is queued outside the loop (title screen, tunnels).
@@ -7770,7 +7825,7 @@ bkLoop:
     di
     ld a,(bankDir)
     and a
-    ld a,0xC0
+    ld a,(curCfg)
     jr z,bkMap1                         ; direction 0: the source is main RAM
     ld a,(bankCfg)
 bkMap1:
@@ -7786,7 +7841,7 @@ bkMap1:
     and a
     ld a,(bankCfg)
     jr z,bkMap2                         ; direction 0: the destination is the bank
-    ld a,0xC0
+    ld a,(curCfg)
 bkMap2:
     ld c,a
     ld b,0x7F
@@ -7796,8 +7851,7 @@ bkMap2:
     ld bc,0x0040
     ldir
     ld (bankDst),de
-    ld bc,0x7FC0
-    out (c),c
+    mapMain
     ei
     ld hl,bankN
     dec (hl)
@@ -7982,8 +8036,7 @@ bankLargeaxx:                           ; LARGEAXX (4608 bytes) from bank 4 offs
     ld de,0x0840
     ld bc,0x1200
     ldir
-    ld bc,0x7FC0
-    out (c),c
+    mapMain
     ei
     ret
 mxBankOverlayImpl:                      ; DE = destination (mxOverlayBase, a LARGEAXX label)
@@ -7997,8 +8050,7 @@ mxBankOverlayImpl:                      ; DE = destination (mxOverlayBase, a LAR
     out (c),c
     ld bc,0x0240
     ldir
-    ld bc,0x7FC0
-    out (c),c
+    mapMain
     ei
     ret
 mxBankFlightImpl:
@@ -8011,8 +8063,7 @@ mxBankFlightImpl:
     out (c),c
     ld bc,0x0260
     ldir
-    ld bc,0x7FC0
-    out (c),c
+    mapMain
     ei
     ret
 mxBankSlot:                             ; A = letter, HL = letter string, DE = slot size -> HL = 0x4000 + index * size

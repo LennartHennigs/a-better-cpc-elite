@@ -457,17 +457,17 @@ MUSIQUEX6170:
 ; Left and right cursor keys (raw keyboard rows, joystick too) step the ship shown; splash2Shipnr holds the index
 ; (bits 0-2) and, in bit 7, "an arrow key was already down" so a held key steps once.
  IFDEF TITLESEL
-setCommandsCPL equ 0xC3F7
-setCommandsNOP equ 0xC3FB
+setCommandsCPL equ 0xC431
+setCommandsNOP equ 0xC435
 transferBuffertoScreen equ 0x1ED1
 spawnCommandParser equ 0x809C
 dataFromPPI equ 0x8D11
 splash2Shipnr equ 0x1DA8
-printString equ 0xC2A2
-charXY equ 0x38C4
-flagWhichScreenToPrint equ 0xC414
-todoPrintFlag3948 equ 0x3948
-todoSomePrintFlag equ 0x3949
+printString equ 0xC2DC
+charXY equ 0x38C8
+flagWhichScreenToPrint equ 0xC44E
+todoPrintFlag3948 equ 0x394C
+todoSomePrintFlag equ 0x394D
     ASSERT $ == 0x6E21
     jp titleScreen2                 ; +0  replaces call transferBuffertoScreen (press-space screen)
     jp titleNext                    ; +3  replaces the automatic ship pick before the press-space screen

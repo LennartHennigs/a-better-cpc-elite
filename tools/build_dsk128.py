@@ -6,7 +6,7 @@ usage: python3 -I tools/build_dsk128.py [--missions] [OUT.dsk]    (default work/
        as tools/build_dsk.py does (README.TXT included).
 
 Needs the generated inputs of tools/check_src128.sh (it makes them): work/elite128/shipdata128.asm, fill.bin (assembled with the address of hullVertexBuf) and fill128.bin.
-The fill module and its records ride in blank screen bytes of COMMON2X (the loader puts COMMON2X at &C000): fill.bin at &C800, fill128.bin at &D000; bankInit
+In the relocated layout COMMON2X.BIN is the code block for RAM bank 7 (loaded at &C000, copied by bankInit) and the window page (&4000-&7FFF of COMMONXX.BIN) carries the stage areas: the fill module and its records ride in its blank screen rows: fill.bin at +&800, fill128.bin at +&1000; bankInit
 (commonxx.asm) copies them into RAM bank 6 at the start of Init_. Each file keeps its size and AMSDOS header. Hides everything but .BAS and .TXT (CLAUDE.md rule).
 """
 import subprocess
@@ -28,7 +28,7 @@ if OUT.resolve() == BASE.resolve() or OUT.resolve().parent == ROOT:
     sys.exit(f"{OUT}: refusing to write a disk into the project root (the originals live there); use work/")
 SJASM = Path.home() / ".local/bin/sjasmplus"
 SRC = ROOT / "src/elite128"
-FILES = {"LARGEAXX": ["-DFIREBIRD"], "COMMONXX": ["-DTITLESEL"], "COMMON2X": [], "MUSIQUEX": ["-DTITLESEL"]}
+FILES = {"LARGEAXX": ["-DFIREBIRD"], "COMMONXX": ["-DTITLESEL"], "COMMON2X": ["-DTITLESEL"], "MUSIQUEX": ["-DTITLESEL"]}
 STAGE_FILL, STAGE_DATA = 0x0800, 0x1000          # offsets in COMMON2X (&C800, &D000); the mission overlays and images use &D800-&FDFF
 
 
@@ -89,7 +89,8 @@ def main():
             if r.returncode:
                 sys.exit(f"{n}: assemble failed\n{r.stdout[-400:]}{r.stderr[-400:]}")
             new = bytearray(out.read_bytes())
-            if n == "COMMON2X":
+            if n == "COMMONXX":
+                PAGE = 0x4000 - 0x1A40                       # the window page inside COMMONXX.BIN: blank screen rows that bankInit finds at &C000+offset in RAM bank 3
                 stage = [(STAGE_FILL, fill), (STAGE_DATA, data)]
                 if MISSIONS:      # overlays (bank 4: slots of 0x240 at &D800, &DC80, &E000, &E480) and flight images (bank 5: 0x260 at &E800, &EC60, &F000, &F460, &F800, &FC60); bankInit copies them
                     for i, tag in enumerate("CPTR"):
@@ -102,8 +103,8 @@ def main():
                         assert len(blob) <= 0x260, (tag, len(blob))
                         stage.append((0x2800 + (i // 2) * 0x800 + (i % 2) * 0x260, blob))
                 for off, blob in stage:
-                    assert not any(new[off:off + len(blob)]), f"COMMON2X is not blank at +{off:04X}"
-                    new[off:off + len(blob)] = blob
+                    assert not any(new[PAGE + off:PAGE + off + len(blob)]), f"the window page is not blank at +{off:04X}"
+                    new[PAGE + off:PAGE + off + len(blob)] = blob
             slots, total = file_slots(f"{n}.BIN")
             hdr = bytes(d[slots[0]:slots[0] + 128])
             h = amsdos_header(hdr)
