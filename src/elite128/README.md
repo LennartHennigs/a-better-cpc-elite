@@ -59,14 +59,14 @@ stock wireframe, the Cobra seen from behind looks right. Axis maps (`tools/ship1
 
 `tools/test_soak128.py`: 10 minutes of emulated flight, no reset. `tools/test_frametime.py`: one Cobra ahead, mean frame 232 ms for the stock wireframe against 254 ms for the filled hull
 (+9.5%, gate +25%). `bankInit` tests for the second 64 KB first (writes `&A5` at `&4000`, `&5A` with bank 4 mapped, reads back) and on a 464/664 clears the screen and prints
-"THIS VERSION NEEDS A 128K CPC (6128)." (checked on cpcxray's 664 config).
+"128K CPC (6128) REQUIRED". (checked on cpcxray's 664 config).
 
 ## Status after Phase 1 and 2 (2026-11-11)
 
-Working on this branch (`elite128`, nothing committed yet): filled hulls from bank 6 (all 19 ship types, wireframe fallback for the alloy plate), `bankInit` (128K check, fill module, LARGEAXX copy into bank 4,
+Working on this branch (`elite128`): filled hulls from bank 6 (all 19 ship types, wireframe fallback for the alloy plate), `bankInit` (128K check, fill module, LARGEAXX copy into bank 4,
 mission overlays into bank 4 and flight images into bank 5 for `-DMISSIONS`), docking loads LARGEAXX and the mission overlay from RAM, launch copies the flight image from RAM (checked in cpcxray:
 Constrictor briefing shows, image C lands in the tail with `mxFlightId` = "C"). Disk builds: `bash tools/check_src128.sh && python3 -I tools/build_dsk128.py [--missions]`.
-Still read from disk: saves only. MUSIQUEX, NOTMUSIC (a copy of the `COMMONXX` slice at `&6000`) and INDICATO live in banks 4 and 5 (`bankInit` loads them once with the firmware while the bank is mapped; `bankChunk` copies them through a 256-byte buffer because the window shows either the bank or main RAM at `&4000-&7FFF`).
+Still read from disk: saves only. The title music and the `NOTMUSIC` swap are gone in the relocated layout (the player slot at `&6000` is the screen window now): `loadMusicnIndicator` only loads INDICATO, which `bankInit` reads once into bank 5 (`bankIndicator`/`bankChunk` copy it through a 64-byte buffer because the window shows either a bank or main RAM). See "Relocated layout" and "Page flip" below for the current state.
 Open in Phase 1: ship draw order across entities (deferred draw list), shading and pen choice, title Cobra overlapping the prompt.
 **Phase 3 (screens at `&4000`, page flip) is not started.** Finding from the audit: the block `&3F60-&7D5D` that has to move to `&C000` contains 38 `db` runs that hide `push ix`/`pop ix`
 routines (the disassembler cannot decode them) and 908 `db` lines in all; their absolute operands that point into the block would have to be turned into labels first (extend `tools/z80dis.py`

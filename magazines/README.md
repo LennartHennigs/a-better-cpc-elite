@@ -10,4 +10,4 @@ Period magazine scans about the CPC version of Elite. Reference only; copyrighte
 
 Each PDF holds only the relevant pages. The text files come from
 `pdftotext -layout FILE.pdf text/FILE.txt`; the columns are interleaved and the Amstrad Action scan is garbled
-by OCR, so check the PDF before quoting. The findings are summarised in `notes.md`, "Magazine sources".
+by OCR, so check the PDF before quoting. The findings are summarised in `docs/_references.md`.

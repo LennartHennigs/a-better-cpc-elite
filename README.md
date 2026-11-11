@@ -92,9 +92,9 @@ Underneath, a plain `sjasmplus` run gives the **stock** game (`bash tools/check_
 
 | Where | Size | What lives there | Left |
 |---|---|---|---|
-| zero tail of `LARGEAXX` (`&1714-&1A3F`, reloaded from disk at every docking) | 812 | resident mission stub (251) plus the one docked overlay that is loaded on demand (largest: Constrictor, 561) | **0** |
+| zero tail of `LARGEAXX` (`&1714-&1A3F`, reloaded from disk at every docking) | 812 | resident mission stub (251) plus the one docked overlay that is loaded on demand (largest: 561) | **0** |
 | zero tail of `COMMONXX` (`&9D9E-&9FFF`) | 610 | vector table, launch hook and one flight image, picked at every launch (largest: 608; the image must end at `&9FFE` or below, because an interrupt can push at `&9FFE-&9FFF`, which an `ASSERT` checks) | **0** |
-| dead `unusedViewBorderFill` (`&1FD2-&1FF0`) | 31 | `dustPlotPixel` for star occlusion (11 bytes), `mxPodHook`, which zeroes the Trumble count when an escape pod is used (10 bytes), and `cashHome` for the cash display (7 bytes) | 3 |
+| dead `unusedViewBorderFill` (`&1FD2-&1FF0`) | 31 | `dustPlotPixel` for star occlusion (11 bytes), `mxPodHook`, a small escape-pod hook (10 bytes), and `cashHome` for the cash display (7 bytes) | 3 |
 
 Changes to existing stock bytes are small: the CPC+ keyboard fix and the Escape key code (one byte each), 16 bytes of the dust loop for star occlusion, and a handful of 3-byte call replacements at the mission hook sites. Nothing else moves. With the switches off only the CPC+ byte differs from the original, and `tools/check_src.sh` checks every one of these claims. So there are 0 spare bytes in each of the two tails: a further mission or change to the largest ones has to trim something first (sizes per mission in `docs/_missions_built.md`).
 
@@ -114,7 +114,7 @@ Without `-DMISSIONS` you get the improvements only; without any flag, the origin
 
 ## Tests
 
-The missions are tested in an emulator driven from Python (`tools/test_*.py`): the docked stub and overlays, the launch image picker, the spawn and kill hooks of every mission, the Trumble sprites and the save tools. The tests force game states and call routines directly. They do not replace playing through the whole game with save and load, which is still open.
+The missions are tested in an emulator driven from Python (`tools/test_*.py`): the docked stub and overlays, the launch image picker, the spawn and kill hooks of every mission, the sprites and the save tools. The tests force game states and call routines directly. They do not replace playing through the whole game with save and load, which is still open.
 
 ## More
 

@@ -24,9 +24,7 @@ and override a wrong pick in AXIS_OVERRIDE.
 """
 import importlib.util
 import itertools
-import re
 import subprocess
-import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -54,7 +52,8 @@ def stock_image():
 
 def symbols():
     sym = OUT / "c.sym"
-    if not sym.exists():
+    src = ROOT / "src/elite/commonxx.asm"
+    if not sym.exists() or sym.stat().st_mtime < src.stat().st_mtime:      # regenerate when the stock source changed
         OUT.mkdir(parents=True, exist_ok=True)
         subprocess.run([str(Path.home() / ".local/bin/sjasmplus"), f"--raw={OUT / 'c.bin'}", f"--sym={sym}", str(ROOT / "src/elite/commonxx.asm")], check=True, capture_output=True)
     out = {}
@@ -62,6 +61,8 @@ def symbols():
         p = l.split()
         if p and p[0].lower().startswith("shipdat"):
             out[p[0].rstrip(":")] = int(p[-1], 16)
+        if p and p[0].rstrip(":") == "shipGFXdataTable":
+            assert int(p[-1], 16) == TABLE, "TABLE is out of date"
     return out
 
 
@@ -73,12 +74,6 @@ def stock_points(m, a):
         v = m[a + vo + 6 * i:a + vo + 6 * i + 6]
         pts.append((-v[0] if v[3] & 0x80 else v[0], -v[1] if v[3] & 0x40 else v[1], -v[2] if v[3] & 0x20 else v[2]))
     return pts
-
-
-def transforms():
-    for perm in itertools.permutations(range(3)):
-        for sg in itertools.product((1, -1), repeat=3):
-            yield perm, sg
 
 
 def apply(p, perm, sg):
@@ -204,6 +199,7 @@ def main():
         pat = {c: PATTERNS[i % len(PATTERNS)] for i, c in enumerate(cols)}
         hdr = bytearray(m[a:a + 23])
         hdr[3], hdr[4], hdr[5] = len(q), 0, 0
+        hdr[20] = max(range(len(q)), key=lambda i: (q[i][2], -abs(q[i][0])))    # gun vertex (lookup_vertex_coords): the nose, the vertex furthest along +z
         vo = 23
         vert = b"".join(vertex_bytes(p) for p in q)
         end_off = vo + len(vert)
@@ -218,7 +214,7 @@ def main():
     for stub, donor in STUB_OF.items():
         hdr = bytearray(m[sym[stub]:sym[stub] + 23])
         d = blobs[donor]
-        hdr[3], hdr[4], hdr[5] = d[3], 0, 0
+        hdr[3], hdr[4], hdr[5], hdr[20] = d[3], 0, 0, d[20]
         hdr[12:14] = (23 + 23).to_bytes(2, "little")
         # the donor's header sits right after the stub (23 bytes) and its geometry follows it, so the stub's offsets are relative to the stub: 23 + len(donor)
         hdr[14:16] = (23 + len(d)).to_bytes(2, "little")

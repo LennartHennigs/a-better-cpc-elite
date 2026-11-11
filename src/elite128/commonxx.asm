@@ -7455,8 +7455,6 @@ inputWaitForCR:
     jp clearKeyBuffer
 hullVertexBuf:
     ds 84                               ; 28 vertices x 3 bytes
-hullSaveMusic:
-    db 0
 ; the fill module's entry points in the RAM bank 6 window (src/elite128/fill.asm); window addresses, not code of this file
 fillHullEntry equ 0x4000
 fillInitEntry equ 0x4003
@@ -7479,11 +7477,8 @@ hullDraw:
     ld hl,buf_5860
     ld de,hullVertexBuf
     ldir
-    ld a,(flagToggleMusic)              ; the ISR would call the music player at &6000, which the window hides
-    ld (hullSaveMusic),a
-    xor a
-    ld (flagToggleMusic),a
     ld a,(hullType)
+    push iy                             ; the fill reuses IY; the caller needs the blueprint pointer for the gun vertex
     ld (hullSaveSP),sp                  ; the game stack is in bank 7, which RAM bank 6 at &4000 (config C6) hides: use the resident stack for the call
     ld sp,hullStackTop
     ld bc,0x7FC6                        ; RAM bank 6 at &4000
@@ -7493,45 +7488,16 @@ hullDraw:
     ld d,a
     mapMain                             ; back to the draw configuration
     ld sp,(hullSaveSP)
+    pop iy
     ld c,d
-    ld a,(hullSaveMusic)
-    ld (flagToggleMusic),a
     ld a,c
     and a
     jp nz,todo_parseEdges               ; no record: wireframe
     ret
-hullFindType:
-    push iy
-    pop de                              ; DE = blueprint address
-    ld hl,shipGFXdataTable+1
-    ld b,19
-    ld c,0
-hftLoop:
-    ld a,(hl)
-    cp e
-    jr nz,hftNext
-    inc hl
-    ld a,(hl)
-    dec hl
-    cp d
-    jr z,hftFound
-hftNext:
-    inc hl
-    inc hl
-    inc hl
-    inc hl
-    inc c
-    djnz hftLoop
-    scf
-    ret
-hftFound:
-    ld a,c
-    or a
-    ret
-; Once, at the start of Init_: the loader put the fill module and its records into blank screen bytes of COMMON2X (tools/build_dsk128.py), which are still
-; visible at &C000 when bank 6 is mapped at &4000 (config C6 leaves bank 3 at &C000). Copy them to bank 6 and build the module's tables (fillInit, &4003).
 bankInitStageFill  equ STAGE+0x800
 bankInitStageData  equ STAGE+0x1000
+; Once, at the start of Init_: the loader put the fill module and its records into blank screen bytes of COMMON2X (tools/build_dsk128.py), which are still
+; visible at &C000 when bank 6 is mapped at &4000 (config C6 leaves bank 3 at &C000). Copy them to bank 6 and build the module's tables (fillInit, &4003).
 bankInit:
     di
     ld hl,0x4000                        ; is there a second 64 KB? write &A5 here, &5A with bank 4 mapped here, read here again with the normal map (a 464/664 ignores the port)
@@ -7706,7 +7672,12 @@ hullDeferEntry:
     inc hl
     ld (hl),d
     inc hl
-    ld (hl),b
+    ld a,b                              ; the laser flag (bit 3 of ix+32) is cleared by handleEntitys before the flush: carry it in bit 7 of B
+    bit 3,(ix+32)
+    jr z,hullNoLaser
+    or 0x80
+hullNoLaser:
+    ld (hl),a
     inc hl
     ld a,(Viewdirection)
     bit 1,a
@@ -7787,7 +7758,13 @@ hullNc:
     ld b,(hl)
     inc hl
     ld (hl),0xFF                        ; mark drawn
+    bit 7,b
+    jr z,hullNoLaser2
+    res 7,b
+    set 3,(ix+32)                       ; the tail draws the enemy laser when this bit is set
+hullNoLaser2:
     call LAB_ram_57d0
+    res 3,(ix+32)
     jr hullPick
 hullFlushEnd:
     xor a
@@ -8176,6 +8153,35 @@ dbCopy:
     pop bc
     exx
     ei
+    ret
+; moved here from the filled-hull glue to make room there (labels are free in this part)
+hullFindType:
+    push iy
+    pop de                              ; DE = blueprint address
+    ld hl,shipGFXdataTable+1
+    ld b,19
+    ld c,0
+hftLoop:
+    ld a,(hl)
+    cp e
+    jr nz,hftNext
+    inc hl
+    ld a,(hl)
+    dec hl
+    cp d
+    jr z,hftFound
+hftNext:
+    inc hl
+    inc hl
+    inc hl
+    inc hl
+    inc c
+    djnz hftLoop
+    scf
+    ret
+hftFound:
+    ld a,c
+    or a
     ret
     ASSERT $ <= 0x9D9E, "the mission bank routines do not fit in front of the flight tail"
     DS 0x9D9E-$

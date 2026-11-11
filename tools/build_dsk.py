@@ -9,7 +9,6 @@ The base disk is never modified. Each file keeps its 128-byte AMSDOS header and 
 same length as the old ones (the build is byte-exact apart from the CPC+ fix), otherwise the script stops.
 LARGEAXX is assembled with -DFIREBIRD, because the Firebird disk carries that one-byte variant (largeaxx.asm).
 """
-import struct
 import subprocess
 import sys
 import tempfile

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Assemble src/elite128 (the 128K fork, docs: plan in ~/.claude/plans or docs/_128k.md) and report each file's size next to the same file from src/elite.
+# Assemble src/elite128 (the 128K fork, src/elite128/README.md) and report each file's size next to the same file from src/elite.
 # usage: bash tools/check_src128.sh [--strict]
 #   Smoke test, not a byte compare: the fork is meant to diverge. Without --strict it only needs every file to assemble (exit 1 otherwise).
 #   --strict also requires the output to equal src/elite's (useful right after forking, before the first change).
@@ -8,6 +8,7 @@ set -u
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 STRICT=0; [ "${1:-}" = "--strict" ] && STRICT=1
 OUT="$(mktemp -d)"
+trap 'rm -rf "$OUT"' EXIT
 export PATH="$HOME/.local/bin:$PATH"
 rc=0
 # generated, third-party derived inputs (work/elite128/, never committed): the blueprints that commonxx.asm includes and the bank 6 fill records
