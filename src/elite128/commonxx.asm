@@ -2005,7 +2005,7 @@ ce2func88:
     add a,b
     cp 0x80
     jr c,ce2func89
-    ld h,SCREEN>>8
+    ld h,0xC0                            ; end of the off-screen bitmap (&A000-&BFFF), not the screen page
     ret
 ce2func89:
     ld c,0xF8
@@ -2025,12 +2025,12 @@ smc_cpatchloop:
     ld (de),a
     djnz smc_cpatchloop
     ret
-; 20 addresses of operand bytes that prepareCircleFillMask patches (inside the disc fill routines in screen RAM and in code, so numeric).
+; 20 addresses of operand bytes that prepareCircleFillMask patches (inside the disc fill routines in the screen page, SCREEN+offset, and in code, so numeric).
 CircleParmTable:
-    dw 0xCE84,0xCEBF,0xCEC2,0xCF43,0xCF7E
-    dw 0xCF81,0x2605,0x2608,0x26B7,0x26BA
-    dw 0xF62A,0xF665,0xF668,0xF6DC,0xF717
-    dw 0xF71A,0xF72E,0xF72F,0x20D8,0x20D9
+    dw SCREEN+0x0E84,SCREEN+0x0EBF,SCREEN+0x0EC2,SCREEN+0x0F43,SCREEN+0x0F7E
+    dw SCREEN+0x0F81,0x2605,0x2608,0x26B7,0x26BA
+    dw SCREEN+0x362A,SCREEN+0x3665,SCREEN+0x3668,SCREEN+0x36DC,SCREEN+0x3717
+    dw SCREEN+0x371A,SCREEN+0x372E,SCREEN+0x372F,0x20D8,0x20D9
 ; Reset the disc-fill shadow registers, store A in circlevar7 and return with Z set if circlevar3 is 0
 SUB_ram_275e:
     exx
