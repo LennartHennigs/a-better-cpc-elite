@@ -8095,6 +8095,10 @@ dbShown:
     db 0xC1
 dbCnt:
     db 0
+dbScanPrev:
+    db 0
+dbScanFlag:
+    db 0
 dbOn:
     db 0                                ; 1 while flipping (flight views); the ISR clears it when a non-flight view is shown
 dbFlip6Entry equ 0x4400                 ; fill.asm: dbFlip6
@@ -8106,6 +8110,14 @@ dbFlipTail:
     push bc
     push de
     push hl
+    ld a,(todo_CleanScanCounter)        ; scanner busy: a ship was drawn this frame (the counter is 1 until the clean-up) or ECM runs
+    ld hl,ecmActiveFlag
+    or (hl)
+    ld hl,dbScanPrev
+    ld c,(hl)
+    ld (hl),a
+    or c                                ; one more frame for the clean-up
+    ld (dbScanFlag),a
     ld bc,0x7FC6
     out (c),c
     call dbFlip6Entry

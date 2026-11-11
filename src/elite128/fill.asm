@@ -716,6 +716,10 @@ DB_ON       equ 0
 DB_SHOWN    equ 0
 DB_CNT      equ 0
 DB_COPY     equ 0
+DB_SCAN     equ 0
+DB_MISS     equ 0
+DB_VARS     equ 0
+DB_VLEN     equ 0
     ENDIF
 VIEWDIR     equ 0x1C02
 ; Flight views: wait for the vertical sync, point the CRTC at the bank just drawn (R12 &1C = bank 1, &3C = bank 3), make the other bank the draw bank, then copy what the game
@@ -768,7 +772,44 @@ dbfw2:
     xor 2                               ; C1 <-> C3
     ld (DB_CURCFG),a
     ei
-    ld a,(DB_SHOWN)
+    ; what changed in the cockpit since the last flip, found without hooks in the drawing routines:
+    ;  gauges (bars, missiles, speed digit, text): the player variables the bars are drawn from (DB_VARS, with their "last drawn" copies) and the missile count, compared with a
+    ;  snapshot; every 8th frame in any case (alert light, station and ECM letters are drawn on events that have no variable of their own here)
+    ;  scanner: busy while a ship is in range or ECM runs, one frame longer for the clean-up (dbScanFlag, computed by dbFlipTail)
+    ;  compass: every frame
+    ld c,0
+    ld hl,DB_VARS
+    ld de,dbSnap
+    ld b,DB_VLEN
+dbfCmp:
+    ld a,(de)
+    cp (hl)
+    jr z,dbfSame
+    ld a,(hl)
+    ld (de),a
+    ld c,1
+dbfSame:
+    inc hl
+    inc de
+    djnz dbfCmp
+    ld a,(DB_MISS)
+    ld hl,dbSnapM
+    cp (hl)
+    jr z,dbfM
+    ld (hl),a
+    ld c,1
+dbfM:
+    ld hl,dbTick
+    inc (hl)
+    ld a,(hl)
+    and 7
+    jr nz,dbfNoTick
+    ld c,1
+dbfNoTick:
+    ld a,c
+    and a
+    jr z,dbfPart
+    ld a,(DB_SHOWN)                     ; everything: the 8 cockpit rows of every scan line block
     call dbBases
     ld bc,0x0400
     add hl,bc
@@ -791,6 +832,16 @@ dbfRows:
     dec a
     ld (DB_CNT),a
     jr nz,dbfRows
+    jr dbfGaps
+dbfPart:
+    ld a,(DB_SCAN)
+    and a
+    ld hl,dbZScanner
+    jr nz,dbfZ
+    ld hl,dbZCompass
+dbfZ:
+    call dbZone
+dbfGaps:
     ld a,(DB_SHOWN)
     call dbBases
     ld bc,0x0E00
@@ -809,6 +860,82 @@ dbfRows:
     ex de,hl
     ld bc,16
     jp DB_COPY
+; HL = zone descriptor: offset in the page of the first strip (word), width (byte), rows (byte), step to the next row = 64 - width (word), step to the next scan line block (word).
+; Copies rows x width bytes in each of the 8 scan line blocks from the shown bank to the draw bank.
+dbZone:
+    ld e,(hl)
+    inc hl
+    ld d,(hl)
+    inc hl
+    ld c,(hl)
+    inc hl
+    ld b,(hl)
+    inc hl
+    ld (zWR),bc                         ; C = width, B = rows
+    ld c,(hl)
+    inc hl
+    ld b,(hl)
+    inc hl
+    ld (zRowStep),bc
+    ld c,(hl)
+    inc hl
+    ld b,(hl)
+    ld (zBlkStep),bc
+    ld (zOff),de
+    ld a,(DB_SHOWN)
+    call dbBases
+    ld bc,(zOff)
+    add hl,bc
+    ex de,hl
+    add hl,bc
+    ex de,hl
+    ld a,8
+    ld (zBlk),a
+dbzBlk:
+    ld a,(zWR+1)
+    ld (zRow),a
+dbzRow:
+    ld a,(zWR)
+    ld c,a
+    ld b,0
+    call DB_COPY
+    ld bc,(zRowStep)
+    add hl,bc
+    ex de,hl
+    add hl,bc
+    ex de,hl
+    ld a,(zRow)
+    dec a
+    ld (zRow),a
+    jr nz,dbzRow
+    ld bc,(zBlkStep)
+    add hl,bc
+    ex de,hl
+    add hl,bc
+    ex de,hl
+    ld a,(zBlk)
+    dec a
+    ld (zBlk),a
+    jr nz,dbzBlk
+    ret
+; compass: columns 42-47 of rows 17-19; scanner, ECM letter and compass: columns 16-47 of rows 17-23
+dbZCompass:
+    dw 17*64+42
+    db 6, 3
+    dw 64-6, 0x0800-3*64
+dbZScanner:
+    dw 17*64+16
+    db 32, 7
+    dw 64-32, 0x0800-7*64
+zWR:        dw 0
+zRowStep:   dw 0
+zBlkStep:   dw 0
+zOff:       dw 0
+zBlk:       db 0
+zRow:       db 0
+dbTick:     db 0
+dbSnapM:    db 0
+dbSnap:     ds 40
 ; A = config of the bank to copy from; returns HL = its address and DE = the other bank's address in the C0 configuration
 dbBases:
     bit 1,a

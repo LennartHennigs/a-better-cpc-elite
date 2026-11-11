@@ -1,7 +1,7 @@
 SCREEN equ 0x4000            ; the screen page (the 128K layout); the block below runs in RAM bank 7 at &C000
 curCfg equ 0x9865   ; generated: label of commonxx
-dbCopy equ 0x9D4B   ; generated: label of commonxx
-dbOn equ 0x9CFD   ; generated: label of commonxx
+dbCopy equ 0x9D5D   ; generated: label of commonxx
+dbOn equ 0x9CFF   ; generated: label of commonxx
 dbShown equ 0x9CFB   ; generated: label of commonxx
 ActDeponEnergy equ 0x881C   ; generated: label of commonxx
 AddDEtoKillScore equ 0x39A5   ; generated: label of commonxx
@@ -5180,7 +5180,7 @@ getPrevScreenLineAdr:
     ld a,h
     sub 0x08
     ld h,a
-    cp 0xC0
+    cp 0x40                             ; 128K layout: the screen page is &4000-&7FFF (it was cp 0xC0 for &C000-&FFFF)
     ret nc
     add a,0x40
     ld h,a
