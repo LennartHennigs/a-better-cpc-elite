@@ -4564,7 +4564,7 @@ SUB_ram_3bfd:
     and a
     sbc hl,de
     push hl
-    jp doDrawCharSCREEN
+    jp doDrawChar0xc000
     db 0x00,0x00
 BYTE_ram_3c0e:
     db 0x00
@@ -5886,7 +5886,7 @@ dcNextStep:
     ld a,(flagWhichScreenToPrint)
     rla
     jr c,doDrawCharatBitmap
-doDrawCharSCREEN:
+doDrawChar0xc000:
     ld a,(txtScreenOffset)
     ld l,a
     ld h,0x03
@@ -6207,7 +6207,7 @@ LAB_ram_4686:
     dec c
     jr nz,LAB_ram_4671
     ret
-drawHorLineAtSCREEN+0x1880:
+drawHorLineAt0xd880:
     ld hl,SCREEN+0x1880
     ex de,hl
 ; Fill 64 bytes at DE with &F0 to draw one horizontal frame line

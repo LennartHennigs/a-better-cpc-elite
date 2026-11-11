@@ -31,7 +31,7 @@ for f in ("commonxx", "largeaxx", "common2x"):
             if v == 0xC000 and re.search(r"ld\s+sp\s*,", code, re.I):
                 return m.group(0)                     # ClearBitmap: the end of the off-screen bitmap, which does not move
             return "SCREEN" if v == 0xC000 else "SCREEN+0x%03X" % (v - 0xC000)
-        new = re.sub(r"0x([0-9A-Fa-f]{4})\b", sub, code)
+        new = re.sub(r"(?<![A-Za-z0-9_])0x([0-9A-Fa-f]{4})\b", sub, code)
         if new != code:
             n += 1
             lines[i] = new + sep + cmt
