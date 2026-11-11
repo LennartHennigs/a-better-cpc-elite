@@ -245,8 +245,11 @@ def main():
             target.write_text("\n".join(src))
             raise SystemExit(f"assembly failed after the edit, target restored (the edited text is in work/elite128/relo/relabel_failed.asm):\n{e}")
     if t1 != t0:
+        (ROOT / "work/elite128/relo/relabel_failed.asm").write_text("\n".join(out))
         target.write_text("\n".join(src))
-        raise SystemExit("the edited tree no longer assembles to the same bytes: target restored")
+        v = next(i for i in range(len(t0)) if t0[i] != t1[i])
+        d = next((i for i in range(min(len(t0[v]), len(t1[v]))) if t0[v][i] != t1[v][i]), None)
+        raise SystemExit(f"the edited tree no longer assembles to the same bytes (variant {v}, first difference at offset {d}, sizes {len(t0[v])} / {len(t1[v])}): target restored; edited text in work/elite128/relo/relabel_failed.asm")
     backup.unlink()
     print(f"written: {len(plans)} runs replaced, {len(unresolved)} labels added; both variants assemble to the same bytes as before")
 

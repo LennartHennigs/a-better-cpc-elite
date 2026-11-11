@@ -55,6 +55,7 @@ async def main():
                 bps[rep["id"]] = (a, b)
             print(len(bps), "breakpoints", flush=True)
             hits = []
+            keep = 0
 
             async def drain(max_us):
                 while True:
@@ -78,6 +79,21 @@ async def main():
                 await drain(1_300_000)
                 await c("key_release", {"key": k})
                 await drain(500_000)
+                if len(hits) - keep > 40:              # a run that crashed into data executes garbage for a long time: more than 40 new addresses in one press are not code
+                    del hits[keep:]                    # drop them and start again from the snapshot, with the breakpoints rebuilt around the confirmed hits
+                    for i in list(bps):
+                        await c("breakpoint_remove", {"breakpoint_id": i})
+                    bps.clear()
+                    await c("sna_load", {"path": sna})
+                    for a, b in ranges:
+                        pieces = [(a, b)]
+                        for h in sorted(hits):
+                            pieces = [q for lo, hi in pieces for q in (((lo, h - 1), (h + 1, hi)) if lo <= h <= hi else ((lo, hi),)) if q[0] <= q[1]]
+                        for lo, hi in pieces:
+                            bps[(await c("breakpoint_add", {"address": lo, "end": hi, "kind": "pc"}))["id"]] = (lo, hi)
+                    print(f"press {n + 1}: crashed run discarded, snapshot reloaded", flush=True)
+                else:
+                    keep = len(hits)
                 out.write_text(json.dumps({"hits": sorted(set(hits)), "sna": sna, "presses": n + 1}))
                 if n % 10 == 0:
                     print(f"press {n + 1}: {len(set(hits))} distinct hits", flush=True)
