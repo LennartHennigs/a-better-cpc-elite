@@ -8,7 +8,7 @@
 - Method: own Z80 decoder (`tools/z80dis.py`, round-trip checked on all five binaries), recursive descent from Fessor's code labels, the
   entry `&1C82`, `ld`-loaded addresses and runs of 3+ words pointing at plausible code. Inline data after `printStringFollowingByte`,
   `printFollowingTokenWithSpace`, `todo_printroutinew` (1 byte each) and after `rst 1,2,3,5` (a word) is skipped. Unreached bytes are `db`;
-  text runs are strings. `tools/z80dis.py` cannot decode `push ix`/`push iy`, so such routines stay `db`.
+  text runs are strings. `tools/z80dis.py` decodes `push ix`/`push iy` since 2026-11-11 (before, the `uses_hl` test lacked `push`, so every such routine stayed `db`); the committed `src/elite` still has those runs, a fresh `disasm_stock.py` run into a scratch dir does not (49 `push ix/iy` instructions, round trip still identical).
 - All four files assemble to the original bytes. Code share: `commonxx` 69%, `largeaxx` 39%, `common2x` 13% (blank hidden-screen bytes and the
   character set), `musiquex` 7% (score data). `NOTMUSIC.BIN` equals `COMMONXX` `&6000-&6FFF`; `MUSIQUEX` labels come from Fessor's `musiquep.asm`
   (patched build = stock - `&363`), saved as `work/musiquex.sym`.
@@ -112,7 +112,7 @@ Goal: find bytes a mission port can reclaim. **Conclusion: there is no reclaimab
    `loadLARGEAXX` and by nothing else in the trace, so the mission stub uses it); the firmware copy area `&0040-&083F` while docked.
 4. **Code-shaped chains in `db` runs** (`tools/dbcode.py`: chains of at least 12 bytes ending in `ret`/`jp`/`jr` that call only source labels; 17 chains, 846 bytes).
    *Not code:* the zero entity area `&1A40-&1B7A`, variable blocks `&38C1-&3929`/`&392A-&3937`, tables `&1B81-&1B9A` and `&939D-&93A8`, tails of live routines
-   (`&2997`, `&3D7B`, `&522A`, `&6BEB`, `&838B`). *Live (static check and cpcxray, 2026-11-08), not the "130-155 bytes of dead code" first claimed:* each is the tail of a routine
+   (`&2997`, `&3D7B`, `&522A`, `&6BEB`, `&838B`). *Live (static check and cpcxray, 2026-11-08; with the fixed decoder 2026-11-11 these tails decode as code, `tools/exec_in_data.py` runs the game with breakpoints on every remaining data range), not the "130-155 bytes of dead code" first claimed:* each is the tail of a routine
    starting with `push ix`/`push iy`: `&53D7` in `LAB_ram_53cf` (`move_ship_forward` three times), `&5DD2` in `SUB_ram_5dcf` (called from `&51CC`, `&563C`), `&8243` in
    `execSpawncmd4`, `&8365` in `spawnAtEntityCoordinates`, `&89F5` in `LAB_ram_89f4`/`LAB_ram_8a10`; `&6C0A` is in the runtime buffer `dustParticleAdrTable`; `&9751-&97A0` is filler.
 5. **Trace** (`tools/dead_trace.py`, two runs of 700 random 1.3 s key presses from `firebird_in_flight.sna`, docking and cloak/Thargoid states forced every 25 presses;

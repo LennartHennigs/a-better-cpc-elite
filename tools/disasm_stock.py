@@ -11,6 +11,7 @@ Method: recursive descent from labelled code and the game entry; calls to routin
 bytes (printStringFollowingByte etc.) skip those bytes. Everything not reached is data. Every file is
 assembled with sjasmplus and compared byte for byte with the original; a mismatch is an error.
 """
+import json
 import re
 import subprocess
 import sys
@@ -365,7 +366,11 @@ def main(outdir):
     inline_callees = {a: 1 for a, n in names.items() if n.lower() in INLINE_CALLEES}
     code_names = {a for a, n in names.items() if kinds.get(n.lower()) == "code" and tags[a] != "delta"}
     ok_all = True
+    dyn = {}                                   # extra code seeds found by running the game (tools/exec_in_data.py): traces/dyn_seeds.json {"commonxx": [addr, ...], ...}
+    if (ROOT / "traces/dyn_seeds.json").exists():
+        dyn = json.loads((ROOT / "traces/dyn_seeds.json").read_text())
     for name, base, fname, extra in FILES:
+        extra = list(extra) + [int(a) for a in dyn.get(name, [])]
         data = (work / "bin_stock" / fname).read_bytes()
         end = base + len(data)
         if name == "musiquex":

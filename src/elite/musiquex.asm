@@ -50,8 +50,15 @@ MusicEventroutine:
     push bc
     push de
     push hl
-    db 0xFD,0xE5,0xDD,0xE5,":`a*aa",0xFE,0x00
-    db " ",0xDE,">",0x07,0x0E,"8",0xCD,"9a"
+    push iy
+    push ix
+    ld a,(BYTE_ram_6160)
+    ld hl,(MUSIQUEX6161)
+    cp 0x00
+    jr nz,LAB_ram_603a
+    ld a,0x07
+    ld c,0x38
+    call SUB_ram_6139
 LAB_ram_6063:
     inc hl
     ld a,(hl)

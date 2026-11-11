@@ -87,6 +87,8 @@ def _base(b, pc, op, ix=None, extra=0):
             uses_hl = (q == 0 and p == 2) or (q == 1 and p in (2, 3))
         elif z == 3:
             uses_hl = y in (4,)
+        elif z == 5:
+            uses_hl = q == 0 and p == 2     # push ix / push iy (this case was missing: every push ix/iy came back invalid and stayed a db run)
     if ix and not uses_hl:
         return _bad(1)          # prefix has no effect: caller emits the prefix as data
 
@@ -247,7 +249,8 @@ def _idx(b, pc, ix):
 if __name__ == "__main__":      # tiny self-test against known encodings
     tests = [("3E05", "ld a,0x05"), ("CD3412", "call {A}"), ("DD7E05", "ld a,(ix+5)"), ("FD21FFFF", "ld iy,{A}"),
              ("DDCB06FE", "set 7,(ix+6)"), ("ED5B7201", "ld de,({A})"), ("1805", "jr {R}"), ("E9", "jp (hl)"),
-             ("DD36020A", "ld (ix+2),0x0A"), ("DD84", "add a,ixh"), ("FD6E00", "ld l,(iy+0)"), ("EDB0", "ldir")]
+             ("DD36020A", "ld (ix+2),0x0A"), ("DD84", "add a,ixh"), ("FD6E00", "ld l,(iy+0)"), ("EDB0", "ldir"),
+             ("DDE5", "push ix"), ("FDE5", "push iy"), ("DDE1", "pop ix"), ("FDE1", "pop iy"), ("DDE3", "ex (sp),ix"), ("FDE3", "ex (sp),iy"), ("DDF9", "ld sp,ix")]
     for h, want in tests:
         m = bytearray.fromhex(h) + bytes(8)
         i = decode(m, 0)

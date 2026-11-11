@@ -2070,8 +2070,18 @@ myVBL:
     push bc
     push de
     push hl
-    db 0xDD,0xE5,0xFD,0xE5,0xCD,"2(",0xFD,0xE1,0xDD,0xE1,0xE1,0xD1,0xC1,0xF1,0xED
-    db "{",0x97,")",0xFB,0xC9
+    push ix
+    push iy
+    call doColorSplit
+    pop iy
+    pop ix
+    pop hl
+    pop de
+    pop bc
+    pop af
+    ld sp,(stack5)
+    ei
+    ret
 doColorSplit:
     ld b,0xF5
     in a,(c)
@@ -7790,8 +7800,13 @@ LAB_ram_51c3:
 LAB_ram_51c8:
     call SUB_ram_531d
     call SUB_ram_5dcf
-    db 0xDD,0xE5,0x11,0x09,0x00,0xDD,0x19,0xCD,0xE0,"R",0xCD,0xE0,"R",0xCD,0xE0,"R"
-    db 0xDD,0xE1
+    push ix
+    ld de,0x0009
+    add ix,de
+    call todoSomethingwithSine
+    call todoSomethingwithSine
+    call todoSomethingwithSine
+    pop ix
 LAB_ram_51e0:
     call TryScoopGood
     call SUB_ram_564f
@@ -7820,9 +7835,25 @@ LAB_ram_51fb:
 ; (approx_sqrt_16bit) = the vector's length, then divides each component by it (normalize_position_component): the vector becomes a unit vector in place.
 ; Out: DE = the approximate length. The bytes are still a db run: z80dis cannot decode push ix / pop ix.
 normalize_position_vector:
-    db 0xDD,0xE5,0xCD,"7R",0xE5,0xCD,"7R",0xE5,0xCD,"7R",0xD1,0x19,0xD1
-    db 0x19,0xDD,0xE1,0xCD,0x90,"R",0xEB,0xDD,0xE5,0xCD,"nR",0xCD,"nR",0xCD
-    db "nR",0xDD,0xE1,0xC9
+    push ix
+    call square_position_component
+    push hl
+    call square_position_component
+    push hl
+    call square_position_component
+    pop de
+    add hl,de
+    pop de
+    add hl,de
+    pop ix
+    call approx_sqrt_16bit
+    ex de,hl
+    push ix
+    call normalize_position_component
+    call normalize_position_component
+    call normalize_position_component
+    pop ix
+    ret
 ; ZX Spectrum: square_position_component (&9E98)
 ; In: IX = an encoded position component (15-bit magnitude, sign in bit 7 of the high byte). Out: HL = magnitude squared / 256 (hi*hi + 2*hi*lo + lo*lo,
 ; the cross term through mult_b_c, the rest from the squares table), IX += 2.
@@ -7830,8 +7861,19 @@ square_position_component:
     ld b,(ix+1)
     ld c,(ix+0)
     res 7,b
-    db 0xDD,0xE5,0xDD,"!",0x00,0x00,0xCD,0x9B,"Z",0xAF,"W)",0xCB,0x12,0x5C,0xDD
-    db 0x19,"eo",0xE5,"&",0xC6
+    push ix
+    ld ix,0x0000
+    call mult_b_c
+    xor a
+    ld d,a
+    add hl,hl
+    rl d
+    ld e,h
+    add ix,de
+    ld h,l
+    ld l,a
+    push hl
+    ld h,0xC6
     ld l,b
     ld e,(hl)
     inc h
@@ -7997,7 +8039,7 @@ LAB_ram_5337:
     jr nz,LAB_ram_5330
     ld hl,(inputRoll)
     ld (Entityroll),hl
-    db 0xDD,0xE5
+    push ix
     ld de,0x0009
     add ix,de
     call rotate_orientation_vector
@@ -8041,8 +8083,20 @@ LAB_ram_5390:
 ; Store A as the entity's pitch and rotate its orientation vectors by roll and pitch (probably)
 applyRollandPitch:
     ld (Entitypitch),a
-    db 0xDD,0xE5,0xCD,0xC5,"T",0xCD,0xC5,"T",0xCD,0xC5,"T",0xDD,0xE1,0xDD,"~",0x1C
-    db 0xA7,"(",0x1F,0xDD,"F",0x1B,0x80,0xCB,0x7F,"(",0x03,0xAF,0x18,0x11
+    push ix
+    call calcMatrixBankingClimbing
+    call calcMatrixBankingClimbing
+    call calcMatrixBankingClimbing
+    pop ix
+    ld a,(ix+28)
+    and a
+    jr z,LAB_ram_53cf
+    ld b,(ix+27)
+    add a,b
+    bit 7,a
+    jr z,LAB_ram_53bb
+    xor a
+    jr LAB_ram_53cc
 LAB_ram_53bb:
     ld c,(iy+6)
     bit 0,(ix+33)
@@ -8056,8 +8110,17 @@ LAB_ram_53c8:
 LAB_ram_53cc:
     ld (ix+27),a
 LAB_ram_53cf:
-    db 0xDD,0xE5,0xFD,0xE5,0xDD,"N",0x1B,0xDD,0xE5,0xFD,0xE1,0xCD,0xE8,"S",0xCD,0xE8
-    db "S",0xCD,0xE8,"S",0xFD,0xE1,0xDD,0xE1,0xC9
+    push ix
+    push iy
+    ld c,(ix+27)
+    push ix
+    pop iy
+    call move_ship_forward
+    call move_ship_forward
+    call move_ship_forward
+    pop iy
+    pop ix
+    ret
 ; ZX Spectrum: move_ship_forward (&A04B)
 ; Called once per axis: position += speed (C) * the matching nosev component, i.e. the ship moves along its nose by its speed (the MVEIT step).
 move_ship_forward:
@@ -8280,10 +8343,42 @@ LAB_ram_557c:
     ret
 ; Ship vertex projection helper, still a db blob (sign-magnitude scale and add of coordinates, probably)
 SUB_ram_5583:
-    db 0xDD,0xE5,0xDD,0xE5,0xFD,0xE3,0xDD,0x19,0xEB,0xFD,0x19,0xDD,"~",0x02,0xDD,"V"
-    db 0x01,0xDD,"^",0x00,"G",0xA9,0xE6,0x80,0xF5,0xCB,0xB9,0xCB,0xB8,0xD5,0xCD,0x9B
-    db "Z",0xD1,0xE5,"B",0xD5,0xCD,0x9B,"Z",0xD1,"C}l&",0x00
-    db 0xD1,0x19,"_",0xE5,0xCD,"rZ",0x83,0xE1,"0",0x01,"#"
+    push ix
+    push ix
+    ex (sp),iy
+    add ix,de
+    ex de,hl
+    add iy,de
+    ld a,(ix+2)
+    ld d,(ix+1)
+    ld e,(ix+0)
+    ld b,a
+    xor c
+    and 0x80
+    push af
+    res 7,c
+    res 7,b
+    push de
+    call mult_b_c
+    pop de
+    push hl
+    ld b,d
+    push de
+    call mult_b_c
+    pop de
+    ld b,e
+    ld a,l
+    ld l,h
+    ld h,0x00
+    pop de
+    add hl,de
+    ld e,a
+    push hl
+    call mult_b_c_msb
+    add a,e
+    pop hl
+    jr nc,LAB_ram_55bd
+    inc hl
 LAB_ram_55bd:
     ld b,a
     ld a,h
@@ -8383,8 +8478,12 @@ SUB_ram_564f:
     ld b,a
     cp 0x04
     ret nc
-    db 0xDD,0xE5,0xE1,0xCB,"O ",0x04,0x11,0x06,0x00
-    db 0x19
+    push ix
+    pop hl
+    bit 1,a
+    jr nz,LAB_ram_5661
+    ld de,0x0006
+    add hl,de
 LAB_ram_5661:
     ld e,(hl)
     inc hl
@@ -8587,8 +8686,17 @@ LAB_ram_57b2:
     pop bc
     ret
 LAB_ram_57bc:
-    db 0xFD,0xE5,0xCD,0x1A,"v",0xFD,0xE1,"*",0x1E,"Y)",0x06,0x1F,"8",0x05,"|"
-    db 0xB8,"0",0x01,"D"
+    push iy
+    call SUB_ram_761a
+    pop iy
+    ld hl,(varCoordinate)
+    add hl,hl
+    ld b,0x1F
+    jr c,LAB_ram_57d0
+    ld a,h
+    cp b
+    jr nc,LAB_ram_57d0
+    ld b,h
 LAB_ram_57d0:
     ld a,b
     sub 0x02
@@ -8776,8 +8884,14 @@ BYTE_ram_592e:
     db 0x00
 ; Walk the ship's vertex list and test each vertex against the visible-face table (probably)
 todo_parseVertices:
-    db 0xFD,0xE5,0xFD,0xE5,0xFD,"~",0x03,0xDD,0xE3,0xFD,"V",0x0D,0xFD,"^",0x0C,0xDD
-    db 0x19,0xFD,"!",0xFA,"X"
+    push iy
+    push iy
+    ld a,(iy+3)
+    ex (sp),ix
+    ld d,(iy+13)
+    ld e,(iy+12)
+    add ix,de
+    ld iy,tableUnkownFacedata
 pvLoop:
     push af
     ld a,(todoCounterNextVertice)
@@ -9054,7 +9168,9 @@ LAB_ram_5acd:
 LAB_ram_5ada:
     ld a,(BYTE_ram_592e)
     and a
-    db 0xDD,0xE5," $",0x06,0x03
+    push ix
+    jr nz,LAB_ram_5b06
+    ld b,0x03
 LAB_ram_5ae4:
     ld a,(ix+0)
     cp (ix-6)
@@ -9224,8 +9340,14 @@ BYTE_ram_5c07:
 BYTE_ram_5c08:
     db 0x00
 LAB_ram_5c09:
-    db 0xFD,0xE5,":",0x1E,"Y",0xFE,0x04,0xD2,0xDA,"Z",0xDD,"~",0x00
-    db 0xDD,0xB6,0x01,0xDD,0xB6,0x02,0x06,0xFF
+    push iy
+    ld a,(varCoordinate)
+    cp 0x04
+    jp nc,LAB_ram_5ada
+    ld a,(ix+0)
+    or (ix+1)
+    or (ix+2)
+    ld b,0xFF
 LAB_ram_5c1e:
     inc b
     add a,a
@@ -9386,7 +9508,9 @@ todo_parseEdges:
     ld e,(iy+14)
     ld d,(iy+15)
     ld b,(iy+4)
-    db 0xFD,0xE5,0xDD,0xE3,0xDD,0x19
+    push iy
+    ex (sp),ix
+    add ix,de
 edgeParseLoop:
     push bc
     ld a,(ix+0)
@@ -9450,9 +9574,21 @@ LAB_ram_5dc7:
     ret
 ; Re-orthogonalise the ship orientation by running add_scaled_nosev_to_roofv on three components (probably)
 SUB_ram_5dcf:
-    db 0xDD,0xE5,0xDD,0xE5,0xFD,0xE3,0x11,0x09,0x00,0xDD,0x19,0x1E,0x0F,0xFD,0x19,0xCD
-    db "$",0x8C,"_",0xCD,0xF0,"]",0xCD,0xF0,"]",0xCD,0xF0,"]",0xFD,0xE1,0xDD,0xE1
-    db 0xC9
+    push ix
+    push ix
+    ex (sp),iy
+    ld de,0x0009
+    add ix,de
+    ld e,0x0F
+    add iy,de
+    call dot_product_scale_factor
+    ld e,a
+    call add_scaled_nosev_to_roofv
+    call add_scaled_nosev_to_roofv
+    call add_scaled_nosev_to_roofv
+    pop iy
+    pop ix
+    ret
 ; roofv += E * nosev for one component (a sign-magnitude multiply-and-add through mult_b_c_msb, saturating at &FF), stored back at (IY+1).
 ; In: IX = nosev component, IY = roofv component, E = scale. Advances IY by 2. Part of keeping the orientation vectors perpendicular.
 add_scaled_nosev_to_roofv:
@@ -10765,8 +10901,19 @@ sub_689D:
     ld (circleOffsetXhi),hl
     ld c,0x0F
 LAB_ram_68c1:
-    db 0xDD,0xE5,0xC5,0xCD,"L",0xE7,0xC1,0xDD,0xE1,":",0xCA," ",0xC6,0x02,"2",0xCA
-    db " ",0x0D," ",0xEC,":",0xE8,"h2",0xB1,"(",0xDD,0xCB," ",0xA6
+    push ix
+    push bc
+    call SUB_ram_e74c
+    pop bc
+    pop ix
+    ld a,(drawradius)
+    add a,0x02
+    ld (drawradius),a
+    dec c
+    jr nz,LAB_ram_68c1
+    ld a,(CirclePixelMask)
+    ld (0x28B1),a
+    res 4,(ix+32)
 LAB_ram_68df:
     ld de,0x0027
     add ix,de
@@ -12080,7 +12227,11 @@ smc_PatchJRat715e:
     call ClearBitmap
 altJrPoint1:
     jr LAB_ram_7129
-    db ":",0x0C,"r=2",0x0C,"r()",0xC9
+    ld a,(BYTE_ram_720c)
+    dec a
+    ld (BYTE_ram_720c),a
+    jr z,alt_animated_effect_reset
+    ret
 altJrPoint2:
     xor a
     ld (tunnelFlag2),a
@@ -12637,9 +12788,12 @@ LAB_ram_7734:
     ret z
     set 7,h
     ret
+dat_773E:
     db 0x00,0x00
 zoom:
-    db 0x00,0x00,0x00
+    db 0x00
+dat_7741:
+    db 0x00,0x00
 workY:
     db 0x00,0x00
 workZ:
@@ -12652,8 +12806,16 @@ workZsign:
     db 0x00
 ; Ship face visibility loop (partly in a db run): decides which faces of a ship are drawn
 parseFaces:
-    db 0xDD,0xE5,0xFD,0xE5,0xFD,0xE5,0xDD,0xE3,0xE1,0x22,">w",0xDD,"V",0x11,0xDD
-    db "^",0x10,0xDD,0x19,0x11,0xEA,"X"
+    push ix
+    push iy
+    push iy
+    ex (sp),ix
+    pop hl
+    ld (dat_773E),hl
+    ld d,(ix+17)
+    ld e,(ix+16)
+    add ix,de
+    ld de,todo_tableforedges
 SUB_ram_7761:
     ld a,(iy+19)
     ld (zoom),a
@@ -12679,10 +12841,30 @@ LAB_ram_7775:
     xor a
     jr LAB_ram_77c5
 LAB_ram_778b:
-    db 0xFD,0xE5,"*>w",0xE5,0xCD,"*x2Gw",0x22,"Aw",0xCD
-    db "*x2Hw",0x22,"Cw",0xCD,"*x2Iw",0x22,"E"
-    db "w",0xE1,0xDD,0xE5,0xFD,"!Aw",0xDD,"!Gw",0xCD,0xD5,"w",0xDD
-    db 0xE1,0xFD,0xE1,0xD1,0xAF,0xCB,"$0",0x01,"<"
+    push iy
+    ld hl,(dat_773E)
+    push hl
+    call line_of_sight_vector_component
+    ld (workXsign),a
+    ld (dat_7741),hl
+    call line_of_sight_vector_component
+    ld (workYsign),a
+    ld (workY),hl
+    call line_of_sight_vector_component
+    ld (workZsign),a
+    ld (workZ),hl
+    pop hl
+    push ix
+    ld iy,dat_7741
+    ld ix,workXsign
+    call calculate_visibility
+    pop ix
+    pop iy
+    pop de
+    xor a
+    sla h
+    jr nc,LAB_ram_77c5
+    inc a
 LAB_ram_77c5:
     ld (de),a
     inc de
@@ -12941,8 +13123,10 @@ collisionDamagesFronshield:
 chkEntityWasMissiletarget:
     ld a,(missileTargetEntityNr)
     ld h,a
-    db 0xFD,0xE5,0xFD,"!@",0x1A,0x11,"'",0x00
-    db 0x06,0x07
+    push iy
+    ld iy,sEntityxlo
+    ld de,0x0027
+    ld b,0x07
 mslchkTargetLoop:
     add iy,de
     ld a,(iy+34)
@@ -14171,8 +14355,20 @@ spwnIsNoPirate:
 ; Looks for a free slot and spawns the ship there if one exists (mostly in a db run)
 TrySpawntoFreeSlot:
     ld c,a
-    db 0xDD,0xE5,0xCD,"k",0x81,0xE1,0xC0,0xE5,"y",0xCD,0xCD,0x80,0xE1,0xDD,0xE5,0xD1
-    db 0x01,0x1B,0x00,0xED,0xB0,0xAF,0xC9
+    push ix
+    call lookforFreeSlot
+    pop hl
+    ret nz
+    push hl
+    ld a,c
+    call spawnShip
+    pop hl
+    push ix
+    pop de
+    ld bc,0x001B
+    ldir
+    xor a
+    ret
 ; Scans ship slots 1-6 for a free one; returns Z with IX at it, NZ if none
 lookforFreeSlot:
     ld ix,sEntityxlo
@@ -14294,14 +14490,28 @@ loc_821C:
     jr z,execSpawncmd4
     ld a,0x11
 execSpawncmd4:
-    db 0xDD,0xE5,0xCD,"S",0x81,0xFD,0xE1,0xC0,0xFD,0xCB,"&V",0xCC,0x5C,0x82,0xFD
-    db 0xCB,"!V",0xC8,0xDD,0xCB,"!",0xD6,0xAF,0xC9
+    push ix
+    call TrySpawntoFreeSlot
+    pop iy
+    ret nz
+    bit 2,(iy+38)
+    call z,correctItsOrientation
+    bit 2,(iy+33)
+    ret z
+    set 2,(ix+33)
+    xor a
+    ret
 correctItsOrientation:
     ld a,(BYTE_ram_809b)
     xor 0x01
     ld (BYTE_ram_809b),a
     jr z,switchNNegVectors
-    db 0xDD,0xE5,0xCD,"t",0x82,0xCD,"t",0x82,0xCD,"t",0x82,0xDD,0xE1,0xC9
+    push ix
+    call switchVectors
+    call switchVectors
+    call switchVectors
+    pop ix
+    ret
 switchVectors:
     ld a,(ix+10)
     ld b,(ix+16)
@@ -14416,8 +14626,21 @@ spawnCommand7:
     xor a
     ret
 spawnAtEntityCoordinates:
-    db 0xDD,0xE5,0xCD,"S",0x81,0xDD,0xE3,0xE1,0xC0,0xE5,0xDD,0xE3,0xDD,0xCB," ",0xB6
-    db ">",0x0A,0xDD,"w&>",0x80,0xDD,"w",0x1D,0xAF,0xDD,0xE1,0xC9
+    push ix
+    call TrySpawntoFreeSlot
+    ex (sp),ix
+    pop hl
+    ret nz
+    push hl
+    ex (sp),ix
+    res 6,(ix+32)
+    ld a,0x0A
+    ld (ix+38),a
+    ld a,0x80
+    ld (ix+29),a
+    xor a
+    pop ix
+    ret
 spawnCommand8:
     ld a,0x05
     call spSplinter
@@ -14425,8 +14648,21 @@ spawnCommand8:
     ld a,0x05
 ; Spawns a splinter/rock from a destroyed ship using the old one's data (mostly a db run)
 spSplinter:
-    db 0xDD,0xE5,0xCD,"S",0x81,0xDD,0xE3,0xE1,0xC0,0xE5,0xDD,0xE3,0xCD,0x5C,0x82,">"
-    db 0x0A,0xDD,"w&",0xDD,0xCB," ",0xB6,0xDD,0xCB,0x1D,0xFE,0xDD,0xE1,0xAF,0xC9
+    push ix
+    call TrySpawntoFreeSlot
+    ex (sp),ix
+    pop hl
+    ret nz
+    push hl
+    ex (sp),ix
+    call correctItsOrientation
+    ld a,0x0A
+    ld (ix+38),a
+    res 6,(ix+32)
+    set 7,(ix+29)
+    pop ix
+    xor a
+    ret
 loc_83AA:
     ld ix,buf_1B51
     ld a,c
@@ -14447,7 +14683,14 @@ loc_83AA:
     inc a
     inc a
     ld (ix+7),a
-    db 0xDD,0xE5,0xE1,0x11,0x09,0x00,"BK",0x19,0xEB,"!",0x92,0x80
+    push ix
+    pop hl
+    ld de,0x0009
+    ld b,d
+    ld c,e
+    add hl,de
+    ex de,hl
+    ld hl,MatrixInitData1
 LAB_ram_83e8:
     inc de
     ldi
@@ -15039,7 +15282,9 @@ FilenameLARGEAXX:
 FilenameMUSIQUEX:
     db "MUSIQUEX"
 FilenameNOTMUSIC:
-    db "NOTMUSIC",0x00
+    db 0x4E,0x4F,0x54,0x4D,0x55,0x53,0x49,0x43
+dat_8830:
+    db 0x00
     db 0x00
 todosomeypos:
     db 0x00,0x00
@@ -15150,8 +15395,10 @@ LAB_ram_88e4:
     ld a,(iy+18)
     cp 0x04
     jr nz,stationOperations
-    db 0xDD,0xE5,0xDD,"!@",0x1A,0x11,"'",0x00
-    db 0x06,0x06
+    push ix
+    ld ix,sEntityxlo
+    ld de,0x0027
+    ld b,0x06
 LAB_ram_88f6:
     add ix,de
     ld a,(ix+34)
@@ -15220,7 +15467,12 @@ todoSelectShipx24:
     ld a,0x24
 ; Saves IX and IY around a call to the spawn command parser (in a db run)
 todo_SpawnCmdParserSaveIXIY:
-    db 0xFD,0xE5,0xDD,0xE5,0xCD,0x9C,0x80,0xDD,0xE1,0xFD,0xE1,0xC9
+    push iy
+    push ix
+    call spawnCommandParser
+    pop ix
+    pop iy
+    ret
 ; Checks whether a ship is closer than DE on each axis (carry set if within range)
 todoReduceDistancetome:
     ld h,(ix+1)
@@ -15275,11 +15527,26 @@ LAB_ram_89e7:
     jr nc,LAB_ram_8a10
     set 7,(ix+37)
 LAB_ram_89f4:
-    db 0xDD,0xE5,0xCD,0xE7,0x8A,0x22,"0",0x88,0xCD,0xE7,0x8A,0x22,"2",0x88,0xCD,0xE7
-    db 0x8A,0x22,"4",0x88,0xDD,0xE1,0xDD,0xCB,"&",0xEE,0x18,0x1A
+    push ix
+    call SUB_ram_8ae7
+    ld (dat_8830),hl
+    call SUB_ram_8ae7
+    ld (todosomeypos),hl
+    call SUB_ram_8ae7
+    ld (todosomezpos),hl
+    pop ix
+    set 5,(ix+38)
+    jr LAB_ram_8a2a
 LAB_ram_8a10:
-    db 0xDD,0xE5,0xCD,0xE0,0x8A,0x22,"0",0x88,0xCD,0xE0,0x8A,0x22,"2",0x88,0xCD,0xE0
-    db 0x8A,0x22,"4",0x88,0xDD,0xE1,0xDD,0xCB,"&",0xAE
+    push ix
+    call SUB_ram_8ae0
+    ld (dat_8830),hl
+    call SUB_ram_8ae0
+    ld (todosomeypos),hl
+    call SUB_ram_8ae0
+    ld (todosomezpos),hl
+    pop ix
+    res 5,(ix+38)
 LAB_ram_8a2a:
     jp LAB_ram_8aff
 ; Handles a missile when ECM is active: destroys it, else tests its target and the ship's state
@@ -15294,15 +15561,46 @@ LAB_ram_8a3c:
     ld a,(ix+37)
     and a
     jr z,LAB_ram_8a10
-    db 0xFD,0xE5,0xFD,"!",0x19,0x1A,0x11,"'",0x00,0xD6,0x0A,"/G"
+    push iy
+    ld iy,0x1A19
+    ld de,0x0027
+    sub 0x0A
+    cpl
+    ld b,a
 LAB_ram_8a4f:
     add iy,de
     djnz LAB_ram_8a4f
-    db 0xDD,0xE5,0xFD,0xE5,0xCD,0xB7,0x8A,0x22,"0",0x88,0xCD,0xB7,0x8A,0x22,"2",0x88
-    db 0xCD,0xB7,0x8A,0x22,"4",0x88,0xFD,0xE1,0xDD,0xE1,0xCD,0xAF,0x8A," 8*"
-    db "2",0x88,0xCD,0xAF,0x8A," 0*0",0x88,0xCD,0xAF,0x8A," (",0xFD
-    db 0xCB,"&V(",0x17,"!&9~",0xFE,0x04," ",0x13,0xCB,0xDE,"-"
-    db 0xAF,"w",0x11,0xFF,0xFF,0xCD,0xA5,"9",0xFD,0xCB,"&",0xFE
+    push ix
+    push iy
+    call scaled_relative_pos_component
+    ld (dat_8830),hl
+    call scaled_relative_pos_component
+    ld (todosomeypos),hl
+    call scaled_relative_pos_component
+    ld (todosomezpos),hl
+    pop iy
+    pop ix
+    call SUB_ram_8aaf
+    jr nz,LAB_ram_8aaa
+    ld hl,(todosomeypos)
+    call SUB_ram_8aaf
+    jr nz,LAB_ram_8aaa
+    ld hl,(dat_8830)
+    call SUB_ram_8aaf
+    jr nz,LAB_ram_8aaa
+    bit 2,(iy+38)
+    jr z,LAB_ram_8a9f
+    ld hl,ThargonMissionVar
+    ld a,(hl)
+    cp 0x04
+    jr nz,LAB_ram_8aa3
+    set 3,(hl)
+    dec l
+    xor a
+    ld (hl),a
+    ld de,0xFFFF
+    call AddDEtoKillScore
+    set 7,(iy+38)
 LAB_ram_8a9f:
     set 4,(iy+32)
 LAB_ram_8aa3:
@@ -15361,12 +15659,44 @@ LAB_ram_8aea:
     add ix,de
     ret
 LAB_ram_8aff:
-    db 0xFD,0xE5,0xFD,"!0",0x88,0xDD,0xE5,0xDD,"!0",0x88,0xCD,0x12,"R",0xDD
-    db 0xE1,0xED,"S6",0x88,0xDD,0xE5,0x11,0x09,0x00
-    db 0xDD,0x19,0xCD,"$",0x8C,0x11,0x06,0x00,0xDD,0x19,"g",0xE5,0xCD,"$",0x8C,0xE1
-    db "o",0xE5,0x11,0x06,0x00,0xDD,0x19,0xCD,"$",0x8C,0xE1,0xDD,0xE1,0xFD,0xE1,"W"
-    db 0xE6,0x7F,"(",0x22,"O",0xCB,"9",0xCB,"9",0xCB,"9",0x89,0xCB,"?",0xCB,"?"
-    db 0xFE,0x0F,"8",0x02,">",0x0F
+    push iy
+    ld iy,dat_8830
+    push ix
+    ld ix,dat_8830
+    call normalize_position_vector
+    pop ix
+    ld (BYTE_ram_8836),de
+    push ix
+    ld de,0x0009
+    add ix,de
+    call dot_product_scale_factor
+    ld de,0x0006
+    add ix,de
+    ld h,a
+    push hl
+    call dot_product_scale_factor
+    pop hl
+    ld l,a
+    push hl
+    ld de,0x0006
+    add ix,de
+    call dot_product_scale_factor
+    pop hl
+    pop ix
+    pop iy
+    ld d,a
+    and 0x7F
+    jr z,LAB_ram_8b5f
+    ld c,a
+    srl c
+    srl c
+    srl c
+    adc a,c
+    srl a
+    srl a
+    cp 0x0F
+    jr c,LAB_ram_8b4f
+    ld a,0x0F
 LAB_ram_8b4f:
     ld b,a
     ld a,d
@@ -16265,6 +16595,7 @@ missionsFlightTail:
     ENDIF
     ASSERT $ <= 0xA000
     DS 0xA000-$
+SUB_ram_e74c equ missionsFlightTail + 18862   ; inside the instruction at &9D9E
 ce2func63 equ 0x25D6   ; inside the instruction at 0x25D5 (patched or jumped into)
 ce2func74 equ 0x2688   ; inside the instruction at 0x2687 (patched or jumped into)
 loc_3A88 equ 0x3A88   ; inside the instruction at 0x3A87 (patched or jumped into)
