@@ -1,4 +1,8 @@
 SCREEN equ 0x4000            ; the screen page: &C000 in the 64K layout, &4000 in the 128K one (docs: src/elite128/README.md)
+ActionsAtEndOfMessage equ 0xC8A0   ; generated: label of common2x
+LAB_ram_442c equ 0xC32C   ; generated: label of common2x
+colorsThargonMissionAccepted equ 0xC933   ; generated: label of common2x
+getRandomNumber equ 0xFA45   ; generated: label of common2x
 ColorsEquipShip equ 0xC472   ; generated: label of common2x
 ColorsFilemenu equ 0xC495   ; generated: label of common2x
 ColorsMarketBuyGoods equ 0xC468   ; generated: label of common2x
@@ -72,10 +76,10 @@ smc_patchFWTextfunctions equ 0x8542
 loadFile equ 0x8667
 SaveSavegame equ 0x8693
 DrawCircle equ 0x673D
-getMoney equ 0x7E58
-AddDEtoMoney equ 0x7E6C
-SbcDEfromMoney equ 0x7E74
-tryPayForGood equ 0x7E82
+getMoney equ 0x7E56
+AddDEtoMoney equ 0x7E6A
+SbcDEfromMoney equ 0x7E72
+tryPayForGood equ 0x7E80
 
  org 0x0840
 

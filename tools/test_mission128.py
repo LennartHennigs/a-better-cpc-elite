@@ -4,8 +4,7 @@
 Build first:  python3 -I tools/build_dsk128.py --missions ; cp work/elite128_missions.dsk work/xray/disk/
 usage (from work/xray):  DISK128=disk/elite128_missions.dsk PATH=$HOME/.local/bin:$PATH ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_mission128.py
 Boots, starts a new commander (N, space: docked at Lave), sets 256 kill points and the Constrictor state "hunting, all hints" (&71), calls the docking hook (&1714) and takes a
-screenshot (output/mission128_docked.png: the overlay was copied from bank 4); then launches (f1) with the state still "hunting" and checks that the flight tail &9D9E holds the C image
-(mxFlightId &9DB9 = "C", copied from bank 5). Prints bytes read back so a failure is visible. Long: start it detached.
+screenshot (output/mission128_docked.png: the overlay was copied from bank 4); the launch check is tools/test_launch128.py. Prints bytes read back so a failure is visible. Long: start it detached.
 """
 import asyncio
 import json
@@ -58,13 +57,7 @@ async def main():
             await c("run", {"max_us": 4_000_000, "timeout_s": 120})
             print("overlay area after the hook:", (await rd(0x17FD, 8)).hex(" "))
             await c("screen_image", {"path": "output/mission128_docked.png"})
-            await c("memory_write", {"address": 0x38FD, "data": "71"})      # Constrictor: hunting, all hints
-            await press("space", 1.4)
-            await c("run", {"max_us": 3_000_000, "timeout_s": 120})
-            await press("f1", 1.4)
-            await c("run", {"max_us": 8_000_000, "timeout_s": 120})
-            print("flight id (&9DB9):", chr((await rd(0x9DB9))[0]), " tail:", (await rd(0x9D9E, 12)).hex(" "))
-            await c("screen_image", {"path": "output/mission128_flight.png"})
+            # The hook was injected with a return address at TRAP (&9F00, zeros), so it cannot be left by a key press: the launch part is test_launch128.py (state &71, image C copied from bank 5).
             reg = await c("registers_get")
             print(f"pc=&{reg['pc']:04X} sp=&{reg['sp']:04X}")
 
