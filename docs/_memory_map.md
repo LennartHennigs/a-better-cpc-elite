@@ -103,6 +103,8 @@ Details, sizes and tests: `_missions_built.md`.
 
 ## Gate Array and banking (128K)
 
+- The 128K fork (`src/elite128`, branch `elite128`) uses these banks: 6 = fill module and records at `&4000` (config `&C6`), 4 = `LARGEAXX` copy and mission overlays, 5 = mission flight images (copied back by `bankLargeaxx`, `mxBankOverlay`, `mxBankFlight` at `&9C80`); its `README.md` has the map and the findings (ISR stays in banks 0/2, the game stack at `&7497` lives inside the `&4000` window).
+
 - The CRTC/Gate Array fetch video only from the base 64K (banks 0-3). The RAM banking register (`&7Fxx`, `11xxxyyy`) changes what the CPU sees, never what is displayed, so the extra banks 4-7 cannot be shown.
   Source: [CPCWiki Gate Array](https://www.cpcwiki.eu/index.php/Gate_Array) ("The Video RAM is always located in the first 64K").
 - Configs used by the double-buffer experiment: C0 = banks 0,1,2,3; C1 = 0,1,2,7; C3 = 0,3,2,7. C1/C3 show bank 7 at `&C000`, so code kept there stays visible while the CPU draws at `&4000` (bank 1 or 3);

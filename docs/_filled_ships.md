@@ -1,6 +1,6 @@
 # Filled ships (polygons) on a 6128: prototype and findings
 
-Status 2026-11-10: a standalone prototype exists, nothing is in the game. This file keeps what the prototype measured, what it showed about the 128K banks, and what it would take to put filled hulls into
+Status 2026-11-11: the fill is in the game in the 128K fork (`src/elite128/fill.asm`, bank 6; hulls from `tools/ship128.py`; `src/elite128/README.md`); `src/elite` (64K) has none. The text below is the 2026-11-10 analysis and the prototype: a standalone prototype exists. This file keeps what the prototype measured, what it showed about the 128K banks, and what it would take to put filled hulls into
 `src/elite/`. The prototype lives in `tools/proto_fill/` (`gen.py`, `fill.asm`, `flip.asm`, `run.py`, `mkdsk.py`); its data is generated into `work/proto_fill/` and stays out of the repo (see "ArcElite data" below).
 
 ## What the prototype is
