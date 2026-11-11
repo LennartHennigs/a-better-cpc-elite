@@ -87,3 +87,13 @@ At start `bankInit` first calls `installVBL` (the `setFilemenuColors` of `loadFi
 boot-time load jumped into game code), loads MUSIQUEX (bank 4 window `&5B00`) and INDICATO (bank 5 `&5000`) with the bank mapped, puts the firmware vector back, and copies NOTMUSIC to bank 4 `&6B00`.
 A boot-time `loadFile` ends with `installVBL` again, so calling it twice would chain `myVBL` to itself. Also: filled hulls are drawn far to near (`hullDefer`/`hullFlush`, deferred list in `handleEntitys`),
 the title text is printed after the ship, the hull patterns skip the background pen, and `tools/relo_numbers.py --write` must not touch the glue (it had turned `call 0x4000/0x4003` into `label+k`; they are `fillHullEntry`/`fillInitEntry` now).
+
+## Relocated layout: docking, launch and flight run (2026-11-11)
+
+Pitfalls found while getting the relocated build (screen at `&4000`, block in bank 7) to run; check these first when something resets to BASIC:
+- Pointer tables and self-patch targets must be labels, not numbers: the control-code jump table (`gaps.asm`), `commandsPatchTable`, the colour tables named in `largeaxx.asm`, `CircleParmTable` (gap addresses are `SCREEN+offset`), and the line-routine patches (`label+1`, e.g. `dh2RotatePixmask+1`).
+- Resident `commonxx` labels from `&293F` up must stay at their stock addresses, because the sources use raw numbers for variables (`0x38CB`, `0x3D28`, ...). The screen-wrap fixes add bytes: `IRSound` pays them back by dropping its dead music branch. Compare label addresses against `src/elite` (`stock.sym` vs the new symbol file) after any size change.
+- Constants that merely look like screen addresses stay literal: `0xC624` (opcode bytes `&C6`/`&24` patched into the line routines), the bitmap-end clamp `ld h,0xC0` (the bitmap is still at `&A000-&BFFF`).
+- Symbols for tests and breakpoints must come from the same flags as the disk (`build_dsk128.py --missions` uses `-DMISSIONS`; the default disk does not, and `sync_equs.py` uses the missions flags): use the missions disk for tests.
+- cpcxray: resuming a `run` while stopped on a PC breakpoint re-triggers it; remove the breakpoint and `step` first. A write breakpoint shows the writer's PC after the instruction.
+Open: the first ship in flight resets the game (found by `test_soak128.py` after 90 s and by `test_hulls128.py`): the vertex pass sees a corrupted byte at `&F51E` (`FD` read as `FF`), which looks like code running while bank 3, not bank 7, is mapped at `&C000`. The hull path (`hullDraw`, `bankChunk`, `mapMain`) is the suspect.
