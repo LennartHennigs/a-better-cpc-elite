@@ -66,7 +66,7 @@ stock wireframe, the Cobra seen from behind looks right. Axis maps (`tools/ship1
 Working on this branch (`elite128`, nothing committed yet): filled hulls from bank 6 (all 19 ship types, wireframe fallback for the alloy plate), `bankInit` (128K check, fill module, LARGEAXX copy into bank 4,
 mission overlays into bank 4 and flight images into bank 5 for `-DMISSIONS`), docking loads LARGEAXX and the mission overlay from RAM, launch copies the flight image from RAM (checked in cpcxray:
 Constrictor briefing shows, image C lands in the tail with `mxFlightId` = "C"). Disk builds: `bash tools/check_src128.sh && python3 -I tools/build_dsk128.py [--missions]`.
-Still read from disk: the music files (`loadMusicnIndicator`, `loadNotMusique`), `INDICATO.BIN` (`loadIndicator`), saves.
+Still read from disk: saves only. MUSIQUEX, NOTMUSIC (a copy of the `COMMONXX` slice at `&6000`) and INDICATO live in banks 4 and 5 (`bankInit` loads them once with the firmware while the bank is mapped; `bankChunk` copies them through a 256-byte buffer because the window shows either the bank or main RAM at `&4000-&7FFF`).
 Open in Phase 1: ship draw order across entities (deferred draw list), shading and pen choice, title Cobra overlapping the prompt.
 **Phase 3 (screens at `&4000`, page flip) is not started.** Finding from the audit: the block `&3F60-&7D5D` that has to move to `&C000` contains 38 `db` runs that hide `push ix`/`pop ix`
 routines (the disassembler cannot decode them) and 908 `db` lines in all; their absolute operands that point into the block would have to be turned into labels first (extend `tools/z80dis.py`
@@ -79,3 +79,11 @@ config (C1/C3) instead of C0 once the code block is in bank 7. The game stack (`
 (both flag variants assemble to the same bytes as before; `bash tools/check_src.sh` is unchanged). `tools/exec_in_data.py` runs the game with breakpoints on every remaining data range to find code
 the decomposition still calls data (hits go to `traces/dyn_seeds.json`, then regenerate a reference with `tools/disasm_stock.py` into a scratch dir and run `relabel.py` again).
 Next for the relocation (plan phase 3): about 120 raw numbers `0x3F60-0x7D5D` in operands and `equ` lines (list in `TODO.md`), then `DISP 0xC000`.
+
+## Music and progress bar from banks, draw order, title (2026-11-11)
+
+`loadMusicnIndicator`, `loadNotMusique` and `loadIndicator` no longer read the disk: their `call loadFile` plus four inline argument bytes became `call bankMusic/bankNotMusic/bankIndicator` plus four nops (same length).
+At start `bankInit` first calls `installVBL` (the `setFilemenuColors` of `loadFile` puts back the firmware interrupt vector from `oldIRHandler`, which is garbage until `installVBL` has saved it; without this the first
+boot-time load jumped into game code), loads MUSIQUEX (bank 4 window `&5B00`) and INDICATO (bank 5 `&5000`) with the bank mapped, puts the firmware vector back, and copies NOTMUSIC to bank 4 `&6B00`.
+A boot-time `loadFile` ends with `installVBL` again, so calling it twice would chain `myVBL` to itself. Also: filled hulls are drawn far to near (`hullDefer`/`hullFlush`, deferred list in `handleEntitys`),
+the title text is printed after the ship, the hull patterns skip the background pen, and `tools/relo_numbers.py --write` must not touch the glue (it had turned `call 0x4000/0x4003` into `label+k`; they are `fillHullEntry`/`fillInitEntry` now).

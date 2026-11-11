@@ -15145,10 +15145,11 @@ LAB_ram_870e:
     ret
 ; Loads the progress-bar screen then swaps the 0x1A00 bytes of memory between 0x0040 and 0xA600
 loadIndicator:
-    call loadFile
-    ld b,b
-    ex af,af'
-    djnz loc_86A6
+    call bankIndicator                  ; 128K build: INDICATO from RAM bank 5 instead of the disk
+    nop                                 ; the four inline argument bytes of the original `call loadFile`: same length, run as nops
+    nop
+    nop
+    nop
     ld hl,0xA600
     ld de,0x0040
     ld bc,0x1A00
@@ -15176,10 +15177,11 @@ loadLARGEAXX:
     db 0xC9
 ; Loads the music file, sets the music-loaded flag and patches the load indicator
 loadMusicnIndicator:
-    call loadFile
+    call bankMusic                      ; 128K build: MUSIQUEX from RAM bank 4
+    nop                                 ; the four inline argument bytes of the original `call loadFile`: same length, run as nops
     nop
-    ld h,b
-    jr nz,loc_86D4
+    nop
+    nop
     ld a,0x01
     ld (flagMusicLoaded),a
     ld hl,0x6170   ; a number, not an address: its bytes 70 61 are stored over code as instructions
@@ -15193,10 +15195,11 @@ loadNotMusique:
     call loadLARGEAXX
     xor a
     ld (flagMusicLoaded),a
-    call loadFile
+    call bankNotMusic                   ; 128K build: NOTMUSIC from RAM bank 4
+    nop                                 ; the four inline argument bytes of the original `call loadFile`: same length, run as nops
     nop
-    ld h,b
-    jr z,0x86F7
+    nop
+    nop
     ret
 ; Loads LARGEAXX and the music for the docked screens
 loadExtensionsforDockingmode:
@@ -16280,6 +16283,9 @@ hullVertexBuf:
     ds 84                               ; 28 vertices x 3 bytes
 hullSaveMusic:
     db 0
+; the fill module's entry points in the RAM bank 6 window (src/elite128/fill.asm); window addresses, not code of this file
+fillHullEntry equ 0x4000
+fillInitEntry equ 0x4003
 hullType:
     db 0
 hullDummy:
@@ -16304,7 +16310,7 @@ hullDraw:
     ld a,(hullType)
     ld bc,0x7FC6                        ; RAM bank 6 at &4000
     out (c),c
-    call replacewithminus+2                         ; fillHull (src/elite128/fill.asm): carry set = no fill record for this type
+    call fillHullEntry                              ; fillHull (src/elite128/fill.asm): carry set = no fill record for this type
     sbc a,a
     ld bc,0x7FC0                        ; back to the normal map (before anything is popped: the stack is in the window)
     out (c),c
@@ -16397,7 +16403,29 @@ bankInitGo:
     ld de,0x6000
     ld bc,0x0600
     ldir
-    call parseStoredToken+1                         ; fillInit
+    call fillInitEntry                              ; fillInit
+    call installVBL                     ; loadFile's setFilemenuColors puts back the firmware interrupt vector from oldIRHandler, which holds garbage until installVBL has saved it
+    ld bc,0x7FC4                        ; MUSIQUEX (bank 4 window &5B00) and INDICATO (bank 5 window &5000) are read from the disk once, with the bank mapped: the firmware loads into it
+    out (c),c
+    call loadFile
+    dw 0x5B00
+    dw bankNameMusic
+    ld bc,0x7FC5
+    out (c),c
+    call loadFile
+    dw 0x5000
+    dw bankNameIndicator
+    ld bc,0x7FC0
+    out (c),c
+    di                                  ; loadFile ends with installVBL: put the firmware's interrupt vector back, so that the installVBL of Init_ saves the right one (twice would chain myVBL to itself)
+    ld hl,(oldIRHandler)
+    ld (0x0039),hl
+    ld hl,0x6000                        ; NOTMUSIC is the COMMONXX slice at &6000 itself: copy it to bank 4 window &6B00 now, while it is still the original bytes
+    ld de,0x6B00
+    ld b,0x10
+    ld c,0xC4
+    ld a,0
+    call bankChunk
     ld bc,0x7FC4                        ; LARGEAXX is still where the BASIC loader put it (&0840): keep a copy in bank 4 at offset 0x900 for every later docking
     out (c),c
     ld hl,0x0840
@@ -16568,6 +16596,88 @@ hullFlushEnd:
     xor a
     ld (flagEnergyBombActivated),a
     ret
+bankNameMusic:
+    db "MUSIQUEX"
+bankNameIndicator:
+    db "INDICATO"
+bankCfg:
+    db 0
+bankN:
+    db 0
+bankDir:
+    db 0
+bankSrc:
+    dw 0
+bankDst:
+    dw 0
+bankBuf:
+    ds 256
+; Copy 256-byte chunks between main RAM and a bank that is mapped over the same addresses (&4000-&7FFF): HL = source, DE = destination, B = chunks, C = config of the bank
+; (&C4 or &C5), A = 0 main -> bank (the destination is a window address), else bank -> main. Every chunk goes through bankBuf, interrupts off while a bank is mapped, no stack use.
+; (A direct ldir cannot work: the window shows either the bank or main RAM at those addresses.)
+bankChunk:
+    ld (bankSrc),hl
+    ld (bankDst),de
+    ld (bankDir),a
+    ld a,c
+    ld (bankCfg),a
+    ld a,b
+    ld (bankN),a
+bkLoop:
+    di
+    ld a,(bankDir)
+    and a
+    ld a,0xC0
+    jr z,bkMap1                         ; direction 0: the source is main RAM
+    ld a,(bankCfg)
+bkMap1:
+    ld c,a
+    ld b,0x7F
+    out (c),c
+    ld hl,(bankSrc)
+    ld de,bankBuf
+    ld bc,0x0100
+    ldir
+    ld (bankSrc),hl
+    ld a,(bankDir)
+    and a
+    ld a,(bankCfg)
+    jr z,bkMap2                         ; direction 0: the destination is the bank
+    ld a,0xC0
+bkMap2:
+    ld c,a
+    ld b,0x7F
+    out (c),c
+    ld hl,bankBuf
+    ld de,(bankDst)
+    ld bc,0x0100
+    ldir
+    ld (bankDst),de
+    ld bc,0x7FC0
+    out (c),c
+    ei
+    ld hl,bankN
+    dec (hl)
+    jr nz,bkLoop
+    ret
+bankMusic:                              ; MUSIQUEX, bank 4 window &5B00 -> &6000
+    ld hl,0x5B00
+    ld de,0x6000
+    ld c,0xC4
+    jr bankOut
+bankNotMusic:                           ; NOTMUSIC, bank 4 window &6B00 -> &6000
+    ld hl,0x6B00
+    ld de,0x6000
+    ld c,0xC4
+    jr bankOut
+bankIndicator:                          ; INDICATO, bank 5 window &5000 -> &0840 (loadIndicator swaps it into place)
+    ld hl,0x5000
+    ld de,0x0840
+    ld c,0xC5
+bankOut:
+    ld b,0x10                           ; 16 chunks of 256 bytes = 4096
+    ld a,1
+    jp bankChunk
 hullGlueEnd:
     ASSERT $ <= 0x9C80, "the filled-hull glue does not fit in front of the mission bank routines"
     DS 0x9C80-$
