@@ -1,4 +1,10 @@
 SCREEN equ 0x4000            ; the screen page: &C000 in the 64K layout, &4000 in the 128K one (docs: src/elite128/README.md)
+LAB_ram_475e equ 0xC660   ; generated: label of common2x
+drawHorLineAt0xd880 equ 0xC58C   ; generated: label of common2x
+locateLine10 equ 0xC1C3   ; generated: label of common2x
+locateLine6 equ 0xC1BF   ; generated: label of common2x
+begin_justified_text equ 0xC644   ; generated: label of common2x
+todo_stringend equ 0xC59B   ; generated: label of common2x
 STAGE equ 0xC000                ; the window page as a copy in RAM bank 3: visible at &C000 whenever a bank is mapped over the window (&4000-&7FFF is the screen page)
     macro mapMain
     ld a,(curCfg)                       ; back to the draw configuration (C1: bank 1 at &4000, C3: bank 3 at &4000; bank 7 at &C000 in both). Clobbers A and B. Never use push, pop,
@@ -2022,7 +2028,7 @@ smc_cpatchloop:
 ; 20 addresses of operand bytes that prepareCircleFillMask patches (inside the disc fill routines in screen RAM and in code, so numeric).
 CircleParmTable:
     dw 0xCE84,0xCEBF,0xCEC2,0xCF43,0xCF7E
-    dw 0xCF81,0x2603,0x2606,0x26B5,0x26B8
+    dw 0xCF81,0x2605,0x2608,0x26B7,0x26BA
     dw 0xF62A,0xF665,0xF668,0xF6DC,0xF717
     dw 0xF71A,0xF72E,0xF72F,0x20D8,0x20D9
 ; Reset the disc-fill shadow registers, store A in circlevar7 and return with Z set if circlevar3 is 0
@@ -2333,10 +2339,8 @@ splitcheckzone4:
     jr changeInks2and3
 IRSound:
     call IRKeyboardInput
-    ld a,(flagMusicLoaded)
-    and a
-    jp nz,loc_293F
-    jp IRdrivenSound
+    ld a,(flagMusicLoaded)              ; 128K build: no music player is ever loaded, so the flag stays 0 and the branch to loc_293F was dead; its `and a` and `jp nz` (4 bytes)
+    jp IRdrivenSound                    ; pay for the bytes the screen-wrap fixes added above, so every label from here on stays at its stock address
 loc_293F:
     ld a,(flagToggleMusic)
     and a
@@ -3712,7 +3716,7 @@ isStateGreen:
     jr issetIndicatorInks
 condSetInk2toValinD:
     ld a,d
-    ld (0x28FE),a
+    ld (0x2902),a
 ; Set todoUnknownStatusFlags to 4 (a status/condition value)
 SUB_ram_35a8:
     ld a,0x04

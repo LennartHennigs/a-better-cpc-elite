@@ -1,93 +1,93 @@
 SCREEN equ 0x4000            ; the screen page (the 128K layout); the block below runs in RAM bank 7 at &C000
 ActDeponEnergy equ 0x881C   ; generated: label of commonxx
-AddDEtoKillScore equ 0x39A9   ; generated: label of commonxx
+AddDEtoKillScore equ 0x39A5   ; generated: label of commonxx
 Altitude equ 0x1C11   ; generated: label of commonxx
 BYTE_ram_1c3c equ 0x1C3C   ; generated: label of commonxx
-BYTE_ram_3933 equ 0x3937   ; generated: label of commonxx
-CallprintString equ 0x3F0F   ; generated: label of commonxx
+BYTE_ram_3933 equ 0x3933   ; generated: label of commonxx
+CallprintString equ 0x3F0B   ; generated: label of commonxx
 CircleEntrypoint1 equ 0x20F2   ; generated: label of commonxx
 CirclewheretoDrawFlag equ 0x2812   ; generated: label of commonxx
 ClearBitmap equ 0x1FF1   ; generated: label of commonxx
 CockpitTemp equ 0x1C0D   ; generated: label of commonxx
 DockedDigrams equ 0x8DC6   ; generated: label of commonxx
-DrawBytesMask0 equ 0x3F5A   ; generated: label of commonxx
+DrawBytesMask0 equ 0x3F56   ; generated: label of commonxx
 FillmemoryRegionDEwithA equ 0x20B9   ; generated: label of commonxx
 FlagStationNear equ 0x1C38   ; generated: label of commonxx
-FlightMode equ 0x38FC   ; generated: label of commonxx
+FlightMode equ 0x38F8   ; generated: label of commonxx
 FuelbarValue equ 0x1C0B   ; generated: label of commonxx
 GameOverFlag equ 0x1C3B   ; generated: label of commonxx
 GenPriceAndStockEntry1 equ 0x6F7F   ; generated: label of commonxx
 GetSquareforAinDE equ 0x21CF   ; generated: label of commonxx
-GetYlocationofText equ 0x3F1A   ; generated: label of commonxx
-LAB_ram_33bc equ 0x33C0   ; generated: label of commonxx
-LAB_ram_3475 equ 0x3479   ; generated: label of commonxx
+GetYlocationofText equ 0x3F16   ; generated: label of commonxx
+LAB_ram_33bc equ 0x33BC   ; generated: label of commonxx
+LAB_ram_3475 equ 0x3475   ; generated: label of commonxx
 Lasertemp equ 0x1C0F   ; generated: label of commonxx
 MissileDestroyedbyECM equ 0x8A11   ; generated: label of commonxx
-Missionflag equ 0x392B   ; generated: label of commonxx
-PresentPlanetX equ 0x3938   ; generated: label of commonxx
-PresentPlanetY equ 0x3939   ; generated: label of commonxx
+Missionflag equ 0x3927   ; generated: label of commonxx
+PresentPlanetX equ 0x3934   ; generated: label of commonxx
+PresentPlanetY equ 0x3935   ; generated: label of commonxx
 SUB_ram_2058 equ 0x2058   ; generated: label of commonxx
-SUB_ram_33cf equ 0x33D3   ; generated: label of commonxx
-SUB_ram_3dc6 equ 0x3DCA   ; generated: label of commonxx
-SUB_ram_3f25 equ 0x3F29   ; generated: label of commonxx
-SUB_ram_3f7e equ 0x3F82   ; generated: label of commonxx
+SUB_ram_33cf equ 0x33CF   ; generated: label of commonxx
+SUB_ram_3dc6 equ 0x3DC6   ; generated: label of commonxx
+SUB_ram_3f25 equ 0x3F25   ; generated: label of commonxx
+SUB_ram_3f7e equ 0x3F7E   ; generated: label of commonxx
 SUB_ram_e74c equ 0x674C   ; generated: label of commonxx
 SUB_ram_ff39 equ 0x7F3B   ; generated: label of commonxx
 StationEnergy equ 0x1C39   ; generated: label of commonxx
-ThargonMissionVar equ 0x392A   ; generated: label of commonxx
-VerticalPlacement equ 0x3F31   ; generated: label of commonxx
+ThargonMissionVar equ 0x3926   ; generated: label of commonxx
+VerticalPlacement equ 0x3F2D   ; generated: label of commonxx
 Viewdirection equ 0x1C02   ; generated: label of commonxx
-WaitForKeypress equ 0x3E62   ; generated: label of commonxx
-anotherPrintWithToken3A equ 0x3F00   ; generated: label of commonxx
-askBuyGood equ 0x3E7B   ; generated: label of commonxx
+WaitForKeypress equ 0x3E5E   ; generated: label of commonxx
+anotherPrintWithToken3A equ 0x3EFC   ; generated: label of commonxx
+askBuyGood equ 0x3E77   ; generated: label of commonxx
 buf_1B51 equ 0x1B51   ; generated: label of commonxx
 buf_1B5A equ 0x1B5A   ; generated: label of commonxx
 buf_1B73 equ 0x1B73   ; generated: label of commonxx
-calcDustParticlePixel equ 0x338B   ; generated: label of commonxx
-cargoSpaceFree equ 0x38F7   ; generated: label of commonxx
-charXY equ 0x38C8   ; generated: label of commonxx
+calcDustParticlePixel equ 0x3387   ; generated: label of commonxx
+cargoSpaceFree equ 0x38F3   ; generated: label of commonxx
+charXY equ 0x38C4   ; generated: label of commonxx
 charsATAT equ 0x8DAC   ; generated: label of commonxx
-chkConditionNSetIndicatorColors equ 0x3549   ; generated: label of commonxx
+chkConditionNSetIndicatorColors equ 0x3545   ; generated: label of commonxx
 chkMissions equ 0x2063   ; generated: label of commonxx
 circleOffsetXhi equ 0x20C9   ; generated: label of commonxx
 circleOffsetXlo equ 0x20C8   ; generated: label of commonxx
 circleOffsetY equ 0x20C7   ; generated: label of commonxx
-cleanScannerUpdateECMIndicator equ 0x2A02   ; generated: label of commonxx
+cleanScannerUpdateECMIndicator equ 0x29FE   ; generated: label of commonxx
 clearCircle equ 0x6797   ; generated: label of commonxx
-clearKeyBuffer equ 0x3E70   ; generated: label of commonxx
+clearKeyBuffer equ 0x3E6C   ; generated: label of commonxx
 clrLine0x15 equ 0x9722   ; generated: label of commonxx
-creditsHighWord equ 0x38E1   ; generated: label of commonxx
-creditsLowWord equ 0x38E3   ; generated: label of commonxx
-currentGalaxy equ 0x38E0   ; generated: label of commonxx
-dat_38E1 equ 0x38E5   ; generated: label of commonxx
+creditsHighWord equ 0x38DD   ; generated: label of commonxx
+creditsLowWord equ 0x38DF   ; generated: label of commonxx
+currentGalaxy equ 0x38DC   ; generated: label of commonxx
+dat_38E1 equ 0x38E1   ; generated: label of commonxx
 dataSpaceStationPosXh equ 0x1C31   ; generated: label of commonxx
 dataSpaceStationPosYh equ 0x1C34   ; generated: label of commonxx
 dataSpaceStationPosZh equ 0x1C37   ; generated: label of commonxx
 dataSpaceStationPosZl equ 0x1C36   ; generated: label of commonxx
-displayAlertStateinHeader equ 0x3F9B   ; generated: label of commonxx
-dockingComputer equ 0x3907   ; generated: label of commonxx
+displayAlertStateinHeader equ 0x3F97   ; generated: label of commonxx
+dockingComputer equ 0x3903   ; generated: label of commonxx
 dot_product_scale_factor equ 0x8C08   ; generated: label of commonxx
 drawDashboard equ 0x1F8B   ; generated: label of commonxx
 drawradius equ 0x20CA   ; generated: label of commonxx
 dustPlotPixel equ 0x1FD4   ; generated: label of commonxx
-ecmEquipped equ 0x3900   ; generated: label of commonxx
-economy equ 0x3D62   ; generated: label of commonxx
-emptyDefaultsave equ 0x39CB   ; generated: label of commonxx
-energyBomb equ 0x3905   ; generated: label of commonxx
-execSelectedKeyFunctions equ 0x2ADF   ; generated: label of commonxx
-extraEnergyUnit equ 0x3906   ; generated: label of commonxx
+ecmEquipped equ 0x38FC   ; generated: label of commonxx
+economy equ 0x3D5E   ; generated: label of commonxx
+emptyDefaultsave equ 0x39C7   ; generated: label of commonxx
+energyBomb equ 0x3901   ; generated: label of commonxx
+execSelectedKeyFunctions equ 0x2ADB   ; generated: label of commonxx
+extraEnergyUnit equ 0x3902   ; generated: label of commonxx
 flagCanScoopFuel equ 0x1C3A   ; generated: label of commonxx
-flagCloakingDeviceActive equ 0x38C7   ; generated: label of commonxx
+flagCloakingDeviceActive equ 0x38C3   ; generated: label of commonxx
 flagDockingComputerOn equ 0x1C3E   ; generated: label of commonxx
 flagDrawLaserline equ 0x8CD5   ; generated: label of commonxx
 flagPausemode equ 0x1C3D   ; generated: label of commonxx
-fuel equ 0x38FD   ; generated: label of commonxx
-fuelPriceByte equ 0x2F3A   ; generated: label of commonxx
-fuelScoops equ 0x3903   ; generated: label of commonxx
-galacticHyperdrive equ 0x3908   ; generated: label of commonxx
-galaxySeed equ 0x390B   ; generated: label of commonxx
-getBounty equ 0x39BB   ; generated: label of commonxx
-government equ 0x3D63   ; generated: label of commonxx
+fuel equ 0x38F9   ; generated: label of commonxx
+fuelPriceByte equ 0x2F36   ; generated: label of commonxx
+fuelScoops equ 0x38FF   ; generated: label of commonxx
+galacticHyperdrive equ 0x3904   ; generated: label of commonxx
+galaxySeed equ 0x3907   ; generated: label of commonxx
+getBounty equ 0x39B7   ; generated: label of commonxx
+government equ 0x3D5F   ; generated: label of commonxx
 hullBegin equ 0x9A26   ; generated: label of commonxx
 hullDeferEntry equ 0x9A35   ; generated: label of commonxx
 hullDraw equ 0x986E   ; generated: label of commonxx
@@ -96,49 +96,49 @@ hullFlush equ 0x9A7B   ; generated: label of commonxx
 inputPitch equ 0x1C04   ; generated: label of commonxx
 inputRoll equ 0x1C03   ; generated: label of commonxx
 irki2_dat1 equ 0x8F3E   ; generated: label of commonxx
-jumpCounter equ 0x38DE   ; generated: label of commonxx
+jumpCounter equ 0x38DA   ; generated: label of commonxx
 keybFlags0 equ 0x8E07   ; generated: label of commonxx
 keybFlags1 equ 0x8D6B   ; generated: label of commonxx
 keybFlags2 equ 0x8D6C   ; generated: label of commonxx
 keybFlags3 equ 0x8D6D   ; generated: label of commonxx
 keybFlags4CounterNstringNumber equ 0x8D6E   ; generated: label of commonxx
 keybFlags5 equ 0x8D6F   ; generated: label of commonxx
-killScoreHigh equ 0x38DD   ; generated: label of commonxx
-largeCargoBay equ 0x38FF   ; generated: label of commonxx
-laserTypes equ 0x38F8   ; generated: label of commonxx
-legalStatus equ 0x38DA   ; generated: label of commonxx
+killScoreHigh equ 0x38D9   ; generated: label of commonxx
+largeCargoBay equ 0x38FB   ; generated: label of commonxx
+laserTypes equ 0x38F4   ; generated: label of commonxx
+legalStatus equ 0x38D6   ; generated: label of commonxx
 loadIndicator equ 0x8717   ; generated: label of commonxx
 loadLARGEAXX equ 0x8732   ; generated: label of commonxx
 longDelay equ 0x9715   ; generated: label of commonxx
-marketStock equ 0x3918   ; generated: label of commonxx
-missileLockState equ 0x38CA   ; generated: label of commonxx
-missileTargetEntity equ 0x3955   ; generated: label of commonxx
+marketStock equ 0x3914   ; generated: label of commonxx
+missileLockState equ 0x38C6   ; generated: label of commonxx
+missileTargetEntity equ 0x3951   ; generated: label of commonxx
 movementspeed equ 0x1C05   ; generated: label of commonxx
-msgECMJammer equ 0x393A   ; generated: label of commonxx
-msgSupernovaMission equ 0x3948   ; generated: label of commonxx
-msgTargetLost equ 0x393E   ; generated: label of commonxx
-numberOfDigits equ 0x394B   ; generated: label of commonxx
+msgECMJammer equ 0x3936   ; generated: label of commonxx
+msgSupernovaMission equ 0x3944   ; generated: label of commonxx
+msgTargetLost equ 0x393A   ; generated: label of commonxx
+numberOfDigits equ 0x3947   ; generated: label of commonxx
 parseStoredToken equ 0x96D5   ; generated: label of commonxx
-placeCursor equ 0x3F12   ; generated: label of commonxx
-pointerUnitMarketPrice equ 0x3E2E   ; generated: label of commonxx
-populationCount equ 0x3D65   ; generated: label of commonxx
+placeCursor equ 0x3F0E   ; generated: label of commonxx
+pointerUnitMarketPrice equ 0x3E2A   ; generated: label of commonxx
+populationCount equ 0x3D61   ; generated: label of commonxx
 posDataPlanet equ 0x1C2F   ; generated: label of commonxx
 posDataSun equ 0x1C26   ; generated: label of commonxx
 prLYDistance equ 0x6F45   ; generated: label of commonxx
-prQuantityofGoodinCargohold equ 0x3ED1   ; generated: label of commonxx
-presentSystemSeed equ 0x3911   ; generated: label of commonxx
-presentSystemX equ 0x3914   ; generated: label of commonxx
-presentSystemY equ 0x3912   ; generated: label of commonxx
-presentTechLevel equ 0x3917   ; generated: label of commonxx
-printFollowingTokenWithSpace equ 0x3F25   ; generated: label of commonxx
-printPlanetname equ 0x3F90   ; generated: label of commonxx
-printTokenAndToken0x20 equ 0x3F07   ; generated: label of commonxx
-printwithToken3a equ 0x3EFB   ; generated: label of commonxx
-productivityCredits equ 0x3D66   ; generated: label of commonxx
+prQuantityofGoodinCargohold equ 0x3ECD   ; generated: label of commonxx
+presentSystemSeed equ 0x390D   ; generated: label of commonxx
+presentSystemX equ 0x3910   ; generated: label of commonxx
+presentSystemY equ 0x390E   ; generated: label of commonxx
+presentTechLevel equ 0x3913   ; generated: label of commonxx
+printFollowingTokenWithSpace equ 0x3F21   ; generated: label of commonxx
+printPlanetname equ 0x3F8C   ; generated: label of commonxx
+printTokenAndToken0x20 equ 0x3F03   ; generated: label of commonxx
+printwithToken3a equ 0x3EF7   ; generated: label of commonxx
+productivityCredits equ 0x3D62   ; generated: label of commonxx
 punishCheater equ 0x2078   ; generated: label of commonxx
-qq3 equ 0x3D26   ; generated: label of commonxx
-qq4 equ 0x3D28   ; generated: label of commonxx
-qq5 equ 0x3D2A   ; generated: label of commonxx
+qq3 equ 0x3D22   ; generated: label of commonxx
+qq4 equ 0x3D24   ; generated: label of commonxx
+qq5 equ 0x3D26   ; generated: label of commonxx
 sEntityRole equ 0x1A61   ; generated: label of commonxx
 sEntityRoll equ 0x1A5D   ; generated: label of commonxx
 sEntityZSign equ 0x1A48   ; generated: label of commonxx
@@ -153,28 +153,28 @@ sEntityunknown equ 0x1A66   ; generated: label of commonxx
 sEntityxhi equ 0x1A41   ; generated: label of commonxx
 sEntityxlo equ 0x1A40   ; generated: label of commonxx
 sEntityxsign equ 0x1A42   ; generated: label of commonxx
-saveGameRam equ 0x38CF   ; generated: label of commonxx
-seedvar1 equ 0x3D38   ; generated: label of commonxx
-seedvar2 equ 0x3D3A   ; generated: label of commonxx
-sfxFlags1Bitmap equ 0x2DB5   ; generated: label of commonxx
-sfxFlags2Bitmap equ 0x2DB6   ; generated: label of commonxx
-sfxForKeyInput equ 0x3E53   ; generated: label of commonxx
+saveGameRam equ 0x38CB   ; generated: label of commonxx
+seedvar1 equ 0x3D34   ; generated: label of commonxx
+seedvar2 equ 0x3D36   ; generated: label of commonxx
+sfxFlags1Bitmap equ 0x2DB1   ; generated: label of commonxx
+sfxFlags2Bitmap equ 0x2DB2   ; generated: label of commonxx
+sfxForKeyInput equ 0x3E4F   ; generated: label of commonxx
 shipEnergyBank4 equ 0x1C1B   ; generated: label of commonxx
 shipFrontShieldEnergy equ 0x1C07   ; generated: label of commonxx
 shipRearShieldEnergy equ 0x1C09   ; generated: label of commonxx
-shuffle_particle_table equ 0x34D8   ; generated: label of commonxx
-singleDigit equ 0x394A   ; generated: label of commonxx
+shuffle_particle_table equ 0x34D4   ; generated: label of commonxx
+singleDigit equ 0x3946   ; generated: label of commonxx
 smc_dfcPatchpos equ 0x67B0   ; generated: label of commonxx
 spawnCommandParser equ 0x809C   ; generated: label of commonxx
-storeScoopedGood equ 0x3972   ; generated: label of commonxx
-storedByteVariable equ 0x3E52   ; generated: label of commonxx
+storeScoopedGood equ 0x396E   ; generated: label of commonxx
+storedByteVariable equ 0x3E4E   ; generated: label of commonxx
 strChar32 equ 0x1BC4   ; generated: label of commonxx
-strPLANETNAME1 equ 0x3D4E   ; generated: label of commonxx
-strPLANETNAME2 equ 0x3D57   ; generated: label of commonxx
-stringsTable equ 0x2FB3   ; generated: label of commonxx
-sub_2F81 equ 0x2F85   ; generated: label of commonxx
-tblDustCoordinates equ 0x34F8   ; generated: label of commonxx
-techLevel equ 0x3D64   ; generated: label of commonxx
+strPLANETNAME1 equ 0x3D4A   ; generated: label of commonxx
+strPLANETNAME2 equ 0x3D53   ; generated: label of commonxx
+stringsTable equ 0x2FAF   ; generated: label of commonxx
+sub_2F81 equ 0x2F81   ; generated: label of commonxx
+tblDustCoordinates equ 0x34F4   ; generated: label of commonxx
+techLevel equ 0x3D60   ; generated: label of commonxx
 tempString1 equ 0x1BC5   ; generated: label of commonxx
 tempString1End equ 0x1BE3   ; generated: label of commonxx
 tempString2 equ 0x1BE4   ; generated: label of commonxx
@@ -182,18 +182,18 @@ todoDigitCalculation equ 0x7E02   ; generated: label of commonxx
 todoDrawCircleFlag equ 0x671D   ; generated: label of commonxx
 todoDrawFilledCircle equ 0x6789   ; generated: label of commonxx
 todoLaunchFlag equ 0x1C22   ; generated: label of commonxx
-todoPrintFlag3948 equ 0x394C   ; generated: label of commonxx
-todoSomePrintFlag equ 0x394D   ; generated: label of commonxx
+todoPrintFlag3948 equ 0x3948   ; generated: label of commonxx
+todoSomePrintFlag equ 0x3949   ; generated: label of commonxx
 todoUnknownStatusFlags equ 0x1C23   ; generated: label of commonxx
 todo_planet3dCoordX2 equ 0x1C28   ; generated: label of commonxx
 todo_planet3dCoordY equ 0x1C2B   ; generated: label of commonxx
 todo_planet3dCoordZ equ 0x1C2E   ; generated: label of commonxx
 todo_varEscapepod equ 0x1C24   ; generated: label of commonxx
 transferBuffertoScreen equ 0x1ED1   ; generated: label of commonxx
-travelDistance equ 0x3D60   ; generated: label of commonxx
-tunnelFlag1 equ 0x38C5   ; generated: label of commonxx
-tunnelFlag2 equ 0x38C6   ; generated: label of commonxx
-txtScreenOffset equ 0x38C9   ; generated: label of commonxx
+travelDistance equ 0x3D5C   ; generated: label of commonxx
+tunnelFlag1 equ 0x38C1   ; generated: label of commonxx
+tunnelFlag2 equ 0x38C2   ; generated: label of commonxx
+txtScreenOffset equ 0x38C5   ; generated: label of commonxx
 useJumpTokens1 equ 0x7EAA   ; generated: label of commonxx
 useJumpTokens2 equ 0x7EA5   ; generated: label of commonxx
     IFNDEF STAR_OCCLUDE
@@ -870,8 +870,8 @@ LAB_ram_453c:
     djnz LAB_ram_453c
     ret
 commandsPatchTable:
-    ; addresses of the 4 operand bytes that setCommandsNOP overwrites (inside code, so numeric)
-    dw 0x4502,0x4504,0x4512,0x4514
+    ; addresses of the 4 operand bytes that setCommandsNOP overwrites (self-patched operand bytes, labelled)
+    dw smc_dcPatchAdr1,smc_dcPatchAdr2,smc_dcPatchAdr3,smc_dcPatchAdr4
     db 0x28,0x9B
 flagWhichScreenToPrint:
     db 0x00
@@ -879,18 +879,18 @@ flagWhichScreenToPrint:
 setColors:
     ld a,(de)
     inc de
-    ld (0x28E3),a
+    ld (0x28E7),a
     ld a,(de)
     inc de
-    ld (0x28EC),a
+    ld (0x28F0),a
     ld a,(de)
     inc de
-    ld (0x28F5),a
+    ld (0x28F9),a
     ld a,(de)
     inc de
-    ld (0x291A),a
+    ld (0x291E),a
     ld a,(de)
-    ld (0x2911),a
+    ld (0x2915),a
     ret
 ColorsMarketBuyGoods:
     db "X_KTB"
@@ -1634,6 +1634,7 @@ drawFlipChart:
     ld (charXY),hl
     pop af
     jp printStringA
+colorsSuperNovaStart:
     db "T",0x5C,"^N^"
 colorsSuperNovaMissionEnd:
     db "VNTTJ"
@@ -2071,13 +2072,13 @@ setViewColors:
     ld hl,tableSystemColors
     call SetTableBegintoAofHL
     ld a,(hl)
-    ld (0x28B1),a
+    ld (0x28B5),a
     inc hl
     ld a,(hl)
-    ld (0x28A8),a
+    ld (0x28AC),a
     inc hl
     ld a,(hl)
-    ld (0x289F),a
+    ld (0x28A3),a
     ret
 generateTargetSystemparAtHyperjump:
     xor a
@@ -5773,12 +5774,12 @@ LAB_ram_688f:
     and 0x30
     cp 0x30
     jr nz,LAB_ram_68df
-    ld a,(0x28B1)
+    ld a,(0x28B5)
 ; Probably the explosion/flash effect: sets circle mask and sound flag, then draws circles for each ship slot
 sub_689D:
     ld (CirclePixelMask),a
     ld a,0x4E
-    ld (0x28B1),a
+    ld (0x28B5),a
     ld a,(sfxFlags2Bitmap)
     or 0x40
     ld (sfxFlags2Bitmap),a
@@ -5801,7 +5802,7 @@ LAB_ram_68c1:
     dec c
     jr nz,LAB_ram_68c1
     ld a,(CirclePixelMask)
-    ld (0x28B1),a
+    ld (0x28B5),a
     res 4,(ix+32)
 LAB_ram_68df:
     ld de,0x0027
@@ -8519,21 +8520,21 @@ manipulate_drawroutine1:
     jr nc,LAB_ram_7d06
     cp 0x02
     ld hl,0x012D
-    ld de,SCREEN+0x624
+    ld de,0xC624   ; opcode bytes &C6 (add a,n) and &24 (inc h) for the self-patched line routines, not a screen address
     jr c,smc_md1_patchcommands
     jr LAB_ram_7d10
 LAB_ram_7d06:
     cp 0x0A
     ld hl,0x092C
-    ld de,SCREEN+0x624
+    ld de,0xC624   ; opcode bytes &C6 (add a,n) and &24 (inc h) for the self-patched line routines, not a screen address
     jr c,smc_md1_patchcommands
 LAB_ram_7d10:
     set 4,d
     inc e
 smc_md1_patchcommands:
     ld a,h
-    ld (0x8018),a
-    ld (0x804B),a
+    ld (dvRotatePixmask+1),a
+    ld (dh2RotatePixmask+1),a
     ld a,l
     ld (dvgetscrbyte),a
     ld (dh2SetnextByteadr),a
@@ -8552,13 +8553,13 @@ manipulate_drawroutine2:
     cp 0x16
     jr nc,LAB_ram_7d4a
     cp 0x12
-    ld hl,SCREEN+0x624
+    ld hl,0xC624   ; opcode bytes &C6 (add a,n) and &24 (inc h) for the self-patched line routines, not a screen address
     ld de,0x012D
     jr c,smc_md2_patchcommands
     jr LAB_ram_7d54
 LAB_ram_7d4a:
     cp 0x1A
-    ld hl,SCREEN+0x624
+    ld hl,0xC624   ; opcode bytes &C6 (add a,n) and &24 (inc h) for the self-patched line routines, not a screen address
     ld de,0x092C
     jr c,smc_md2_patchcommands
 LAB_ram_7d54:
@@ -8572,8 +8573,8 @@ smc_md2_patchcommands:
     ld (dh1nextPixellineBlock),a
     ld (dh3nextPixellineBlock),a
     ld a,d
-    ld (0x8037),a
-    ld (0x806D),a
+    ld (dh1RotatePixmask+1),a
+    ld (dh3RotatePixmask+1),a
     ld a,e
     ld (dh1SetnextByteadr),a
     ld (dh3SetnextByteadr),a

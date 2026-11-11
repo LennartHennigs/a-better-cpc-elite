@@ -2390,29 +2390,29 @@ Jumptokens2:
     dw jpPrintCommanderName
     dw LAB_ram_fff1
     dw LAB_ram_fff5
-    dw 0x3E4F  ; commonxx: sfxForKeyInput
+    dw sfxForKeyInput
     dw LAB_ram_ff81
-    dw 0x4646  ; commonxx: drawFrame
-    dw 0x3F16  ; commonxx: GetYlocationofText
-    dw 0x468A  ; commonxx: drawHorLineAt0xd880
+    dw drawFrame
+    dw GetYlocationofText
+    dw drawHorLineAt0xd880
     dw placeCursor
     dw LAB_ram_ffb5
-    dw 0x4742  ; commonxx: begin_justified_text
-    dw 0x475E  ; commonxx: LAB_ram_475e
+    dw begin_justified_text
+    dw LAB_ram_475e
     dw jpPrintPlanetname
     dw jpCheckforEndingVowel
     dw printFlightDigramsReducedRandom
     dw jptodoSetUnknownFlag
     dw nothing_return
-    dw 0x404F  ; commonxx: clrLine0x15
-    dw 0x403E  ; commonxx: sub_403E
-    dw 0x42C3  ; commonxx: locateLine10
+    dw clrLine0x15
+    dw sub_403E
+    dw locateLine10
     dw longDelay
     dw LAB_ram_ff20
     dw LAB_ram_ff85
     dw nothing_return
-    dw 0x3F16  ; commonxx: GetYlocationofText
-    dw 0x42BF  ; commonxx: locateLine6
+    dw GetYlocationofText
+    dw locateLine6
     db 0xFF,0x0C,0x04,0x0D
 jpprintCommanderLabel:
     ld a,0xFC
@@ -2545,7 +2545,7 @@ jpAddIAN:
     ld hl,strIAN
     jr jpPrintCleartext
 AppendIAN:
-    ld hl,0x4699
+    ld hl,todo_stringend
     dec (hl)
     ld hl,(todo_stringpointer)
     dec hl

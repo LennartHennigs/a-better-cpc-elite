@@ -464,10 +464,10 @@ spawnCommandParser equ 0x809C
 dataFromPPI equ 0x8D11
 splash2Shipnr equ 0x1DA8
 printString equ 0xC2DC
-charXY equ 0x38C8
+charXY equ 0x38C4
 flagWhichScreenToPrint equ 0xC44E
-todoPrintFlag3948 equ 0x394C
-todoSomePrintFlag equ 0x394D
+todoPrintFlag3948 equ 0x3948
+todoSomePrintFlag equ 0x3949
     ASSERT $ == 0x6E21
     jp titleScreen2                 ; +0  replaces call transferBuffertoScreen (press-space screen)
     jp titleNext                    ; +3  replaces the automatic ship pick before the press-space screen
