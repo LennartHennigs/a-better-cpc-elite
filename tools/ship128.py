@@ -45,6 +45,7 @@ STUB_OF = {"shipdatRockHermit": "shipdatAsteroid", "SHIPDATSINGLETRADER": "shipd
 AXIS_OVERRIDE = {}      # label -> (perm, signs), e.g. "shipdatViper": ((0, 1, 2), (1, 1, -1)); applied to the ArcElite point (x, y, z)
 CONVEX = {"shipdatCoriolis", "shipdatMissile", "shipdatCapsule", "shipdatCargo", "shipdatSplinter", "shipdatViper", "SHIPDATPIRATE1", "shipdatThargon"}  # unchecked guess; the tool does not test convexity yet
 TABLE = 0x1B78
+PATTERNS = [p for p in gen.PATTERN_ORDER if p != 0]      # brightest first; pattern 0 is solid pen 1, the colour of the empty view, so a hull face in it would vanish
 
 
 def stock_image():
@@ -200,7 +201,7 @@ def main():
         tris, ngroups = triangles(facets, tp)
         assert ngroups <= 31 and len(tris) < 256
         cols = sorted({t[3] for t in tris}, reverse=True)
-        pat = {c: gen.PATTERN_ORDER[i % len(gen.PATTERN_ORDER)] for i, c in enumerate(cols)}
+        pat = {c: PATTERNS[i % len(PATTERNS)] for i, c in enumerate(cols)}
         hdr = bytearray(m[a:a + 23])
         hdr[3], hdr[4], hdr[5] = len(q), 0, 0
         vo = 23

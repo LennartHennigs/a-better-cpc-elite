@@ -372,8 +372,8 @@ loc_1CCF:
 loc_1CD9:
     call setCommandsCPL
     call ClearBitmap
+    call drawIntroShip                  ; 128K build: ship first, so that the filled hull does not cover the text (it is printed into the same bitmap)
     call printSplashscreen1
-    call drawIntroShip
     call transferBuffertoScreen
     call setCommandsNOP
     ld a,(pressedKey)
@@ -416,8 +416,8 @@ loc_1D1E:
     ENDIF
     call setCommandsCPL
     call ClearBitmap
-    call printPressSpace
     call drawIntroShip
+    call printPressSpace
     call transferBuffertoScreen
 loc_1D36:
     ld a,(pressedKey)
@@ -425,8 +425,8 @@ loc_1D36:
     jr nz,loc_1D36
 loc_1D3C:
     call ClearBitmap
-    call printPressSpace
     call drawIntroShip
+    call printPressSpace
     IFDEF TITLESEL
     call TITLE_SCREEN2              ; musiquex.asm: cursor left/right change the ship, then transferBuffertoScreen
     ELSE
@@ -14169,7 +14169,7 @@ dvRotatePixmask:
 dvgetscrbyte:
     inc l
 dvscrgetnextline:
-    db "}"
+    ld a,l
 smc_dvpatchadr5:
     add a,0x40
     ld l,a

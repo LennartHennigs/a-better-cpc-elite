@@ -14167,7 +14167,7 @@ dvRotatePixmask:
 dvgetscrbyte:
     inc l
 dvscrgetnextline:
-    db "}"
+    ld a,l
 smc_dvpatchadr5:
     add a,0x40
     ld l,a

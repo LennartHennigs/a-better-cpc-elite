@@ -37,8 +37,8 @@ async def main():
             await c("run", {"max_us": 8_000_000, "timeout_s": 120})
             await press("space", 1.4)
             await c("run", {"max_us": 12_000_000, "timeout_s": 120})
-            await c("sna_save", {"path": "output/docked128.sna"})
-            print("saved output/docked128.sna")
+            await c("sna_save", {"path": os.environ.get("SNAP128", "output/docked128.sna")})
+            print("saved", os.environ.get("SNAP128", "output/docked128.sna"))
 
 
 asyncio.run(main())
