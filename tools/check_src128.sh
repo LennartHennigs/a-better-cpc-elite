@@ -12,7 +12,7 @@ export PATH="$HOME/.local/bin:$PATH"
 rc=0
 # generated, third-party derived inputs (work/elite128/, never committed): the blueprints that commonxx.asm includes and the bank 6 fill records
 python3 -I "$ROOT/tools/ship128.py" >/dev/null || { echo "ship128.py FAILED"; exit 1; }
-for p in "largeaxx -DFIREBIRD -DMISSIONS" "commonxx -DTITLESEL -DMISSIONS" "common2x" "musiquex -DTITLESEL"; do
+for p in "largeaxx -DFIREBIRD -DMISSIONS" "commonxx -DTITLESEL -DMISSIONS" "common2x -DMISSIONS" "musiquex -DTITLESEL"; do
   set -- $p; n=$1; shift
   if ! sjasmplus -DENHANCED "$@" --raw="$OUT/$n.128" "$ROOT/src/elite128/$n.asm" >"$OUT/$n.128.log" 2>&1; then echo "$n: assemble FAILED"; tail -5 "$OUT/$n.128.log"; rc=1; continue; fi
   sjasmplus -DENHANCED "$@" --raw="$OUT/$n.ref" "$ROOT/src/elite/$n.asm" >/dev/null 2>&1

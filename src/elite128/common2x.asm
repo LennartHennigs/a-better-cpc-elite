@@ -1,4 +1,10 @@
 SCREEN equ 0x4000            ; the screen page (the 128K layout); the block below runs in RAM bank 7 at &C000
+mxArrive equ 0x9DAD   ; generated: label of commonxx
+mxInvHook equ 0x9DB3   ; generated: label of commonxx
+mxKillHook equ 0x9DA4   ; generated: label of commonxx
+mxLaserHook equ 0x9DA7   ; generated: label of commonxx
+mxLaunchEntry equ 0x9DBA   ; generated: label of commonxx
+mxSun equ 0x9DB0   ; generated: label of commonxx
 curCfg equ 0x9865   ; generated: label of commonxx
 dbCopy equ 0x9D5D   ; generated: label of commonxx
 dbOn equ 0x9CFF   ; generated: label of commonxx

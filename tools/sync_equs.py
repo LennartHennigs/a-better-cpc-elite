@@ -16,7 +16,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 d = Path(sys.argv[1])
 write = "--write" in sys.argv
-FLAGS = {"commonxx": ["-DENHANCED", "-DTITLESEL", "-DMISSIONS"], "largeaxx": ["-DENHANCED", "-DFIREBIRD", "-DMISSIONS"], "common2x": ["-DENHANCED", "-DTITLESEL"], "musiquex": ["-DENHANCED", "-DTITLESEL"]}
+FLAGS = {"commonxx": ["-DENHANCED", "-DTITLESEL", "-DMISSIONS"], "largeaxx": ["-DENHANCED", "-DFIREBIRD", "-DMISSIONS"], "common2x": ["-DENHANCED", "-DTITLESEL", "-DMISSIONS"], "musiquex": ["-DENHANCED", "-DTITLESEL"]}
 SJ = str(Path.home() / ".local/bin/sjasmplus")
 syms, owner = {}, {}
 with tempfile.TemporaryDirectory() as tmp:
@@ -36,10 +36,11 @@ with tempfile.TemporaryDirectory() as tmp:
             m = re.match(r"([A-Za-z_][A-Za-z0-9_]*):", line) or re.match(r"([A-Za-z_][A-Za-z0-9_]*)\s+equ\s+(?!0x)", line)
             if m:
                 owner.setdefault(m.group(1), f)
-    for line in (d / "gaps.asm").read_text().split("\n") if (d / "gaps.asm").exists() else []:      # gaps.asm is INCLUDEd by commonxx.asm: its labels belong to commonxx
-        m = re.match(r"([A-Za-z_][A-Za-z0-9_]*):", line)
-        if m:
-            owner.setdefault(m.group(1), "commonxx")
+    for inc in ("gaps.asm", "missions_flight.asm"):      # INCLUDEd by commonxx.asm: their labels belong to commonxx
+        for line in (d / inc).read_text().split("\n") if (d / inc).exists() else []:
+            m = re.match(r"([A-Za-z_][A-Za-z0-9_]*):", line)
+            if m:
+                owner.setdefault(m.group(1), "commonxx")
 changes = 0
 for f in FLAGS:
     p = d / f"{f}.asm"
