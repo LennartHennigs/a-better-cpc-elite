@@ -16,7 +16,7 @@ FlagStationNear equ 0x1C38   ; generated: label of commonxx
 FlightMode equ 0x38F8   ; generated: label of commonxx
 FuelbarValue equ 0x1C0B   ; generated: label of commonxx
 GameOverFlag equ 0x1C3B   ; generated: label of commonxx
-GenPriceAndStockEntry1 equ 0x6F7F   ; generated: label of commonxx
+GenPriceAndStockEntry1 equ 0x6F7D   ; generated: label of commonxx
 GetSquareforAinDE equ 0x21CF   ; generated: label of commonxx
 GetYlocationofText equ 0x3F16   ; generated: label of commonxx
 LAB_ram_33bc equ 0x33BC   ; generated: label of commonxx
@@ -32,7 +32,7 @@ SUB_ram_3dc6 equ 0x3DC6   ; generated: label of commonxx
 SUB_ram_3f25 equ 0x3F25   ; generated: label of commonxx
 SUB_ram_3f7e equ 0x3F7E   ; generated: label of commonxx
 SUB_ram_e74c equ 0x674C   ; generated: label of commonxx
-SUB_ram_ff39 equ 0x7F3B   ; generated: label of commonxx
+SUB_ram_ff39 equ 0x7F39   ; generated: label of commonxx
 StationEnergy equ 0x1C39   ; generated: label of commonxx
 ThargonMissionVar equ 0x3926   ; generated: label of commonxx
 VerticalPlacement equ 0x3F2D   ; generated: label of commonxx
@@ -124,7 +124,7 @@ pointerUnitMarketPrice equ 0x3E2A   ; generated: label of commonxx
 populationCount equ 0x3D61   ; generated: label of commonxx
 posDataPlanet equ 0x1C2F   ; generated: label of commonxx
 posDataSun equ 0x1C26   ; generated: label of commonxx
-prLYDistance equ 0x6F45   ; generated: label of commonxx
+prLYDistance equ 0x6F43   ; generated: label of commonxx
 prQuantityofGoodinCargohold equ 0x3ECD   ; generated: label of commonxx
 presentSystemSeed equ 0x390D   ; generated: label of commonxx
 presentSystemX equ 0x3910   ; generated: label of commonxx
@@ -178,7 +178,7 @@ techLevel equ 0x3D60   ; generated: label of commonxx
 tempString1 equ 0x1BC5   ; generated: label of commonxx
 tempString1End equ 0x1BE3   ; generated: label of commonxx
 tempString2 equ 0x1BE4   ; generated: label of commonxx
-todoDigitCalculation equ 0x7E02   ; generated: label of commonxx
+todoDigitCalculation equ 0x7E00   ; generated: label of commonxx
 todoDrawCircleFlag equ 0x671D   ; generated: label of commonxx
 todoDrawFilledCircle equ 0x6789   ; generated: label of commonxx
 todoLaunchFlag equ 0x1C22   ; generated: label of commonxx
@@ -194,8 +194,8 @@ travelDistance equ 0x3D5C   ; generated: label of commonxx
 tunnelFlag1 equ 0x38C1   ; generated: label of commonxx
 tunnelFlag2 equ 0x38C2   ; generated: label of commonxx
 txtScreenOffset equ 0x38C5   ; generated: label of commonxx
-useJumpTokens1 equ 0x7EAA   ; generated: label of commonxx
-useJumpTokens2 equ 0x7EA5   ; generated: label of commonxx
+useJumpTokens1 equ 0x7EA8   ; generated: label of commonxx
+useJumpTokens2 equ 0x7EA3   ; generated: label of commonxx
     IFNDEF STAR_OCCLUDE
       IFDEF ENHANCED
 STAR_OCCLUDE equ 1
