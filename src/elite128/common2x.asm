@@ -5491,7 +5491,7 @@ getByteAdrinScrMem:
     scf
     rr h
     rr l
-    scf
+    and a                               ; 128K layout: the second SCF made the base &C000; this gives &4000
     rr h
     rr l
     jr circgetPixelmaskinBitmap
