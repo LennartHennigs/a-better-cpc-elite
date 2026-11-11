@@ -7627,7 +7627,8 @@ missileTargetEntityNr:
     db 0x00,0xDD,"!G",0x04,0xFD,"!TP"
 ; Per-frame pass over the entity slots: maybe spawn a station ship, reset damage and target state (probably)
 handleEntitys:
-    ld a,(ThargonMissionVar)
+    jp hullBegin                        ; 128K build: starts the deferred hull list, then ld a,(ThargonMissionVar)
+heResume:
     cp 0x04
     jr nz,loc_5072
     ld hl,sEntityRole
@@ -7824,8 +7825,8 @@ LAB_ram_51fb:
     add ix,de
     dec a
     jp nz,LAB_ram_50d7
-    xor a
-    ld (flagEnergyBombActivated),a
+    call hullFlush                      ; 128K build: draws the queued hulls far to near, then xor a / ld (flagEnergyBombActivated),a
+    nop
     ld a,(entityMassLocked)
     and a
     ret nz
@@ -8699,8 +8700,8 @@ LAB_ram_57bc:
     jr nc,LAB_ram_57d0
     ld b,h
 LAB_ram_57d0:
-    ld a,b
-    sub 0x02
+    jp hullDeferEntry                   ; 128K build: queue the hull (far to near order), else ld a,b / sub 0x02 and carry on below
+hullDrawResume:
     jr nc,LAB_ram_57d6
     xor a
 LAB_ram_57d6:
@@ -16433,6 +16434,140 @@ bankInitGo:
     out (c),c
     ei
     jp copyCharset
+; Hull draw order (128K build): filled hulls overwrite each other, so ships must be drawn far to near, but the entity loop of handleEntitys draws in slot order. While the loop
+; runs (hullDefer = 1) the tail of the ship draw routine (parseFaces, vertices, hull, enemy laser) is queued instead of run: IX, IY, B and a depth key (high byte of the ship's
+; position along the view axis, larger = farther). hullFlush, called after the loop, runs the queue far to near; nothing is queued outside the loop (title screen, tunnels).
+hullDefer:
+    db 0
+hullQn:
+    db 0
+hullQ:
+    ds 8 * 6                            ; per entry: IX, IY (words), B, key (0xFF = drawn)
+hullBegin:
+    ld a,1
+    ld (hullDefer),a
+    xor a
+    ld (hullQn),a
+    ld a,(ThargonMissionVar)
+    jp heResume
+hullDeferEntry:
+    ld a,(hullDefer)
+    and a
+    jr z,hullNow
+    ld a,(hullQn)
+    cp 8
+    jr nc,hullNow                       ; full (cannot happen: 8 slots)
+    ld e,a
+    add a,a
+    add a,e
+    add a,a                             ; * 6
+    ld e,a
+    ld d,0
+    ld hl,hullQ
+    add hl,de
+    push ix
+    pop de
+    ld (hl),e
+    inc hl
+    ld (hl),d
+    inc hl
+    push iy
+    pop de
+    ld (hl),e
+    inc hl
+    ld (hl),d
+    inc hl
+    ld (hl),b
+    inc hl
+    ld a,(Viewdirection)
+    bit 1,a
+    ld a,(ix+7)                         ; depth: z high byte for front and rear views, x high byte for left and right
+    jr z,hullKey
+    ld a,(ix+1)
+hullKey:
+    cp 0xFF
+    jr nz,hullKeyOk
+    dec a                               ; 0xFF marks an entry as drawn
+hullKeyOk:
+    ld (hl),a
+    ld hl,hullQn
+    inc (hl)
+    ret
+hullNow:
+    ld a,b
+    sub 0x02
+    jp hullDrawResume
+hullFlush:
+    push ix
+    push iy
+    xor a
+    ld (hullDefer),a                    ; from here on the draw runs at once (hullNow)
+hullPick:
+    ld a,(hullQn)
+    and a
+    jr z,hullFlushEnd
+    ld b,a
+    ld hl,hullQ + 5
+    ld c,0xFF                           ; best entry (0xFF = none yet)
+    ld d,0                              ; its key
+    ld e,0                              ; index
+hullScan:
+    ld a,(hl)
+    cp 0xFF
+    jr z,hullNext                       ; already drawn
+    bit 7,c
+    jr nz,hullTake
+    cp d
+    jr c,hullNext
+    jr z,hullNext                       ; equal depth: the earlier slot stays first
+hullTake:
+    ld d,a
+    ld c,e
+hullNext:
+    ld a,l
+    add a,6
+    ld l,a
+    jr nc,hullNc
+    inc h
+hullNc:
+    inc e
+    djnz hullScan
+    bit 7,c
+    jr nz,hullFlushEnd                  ; nothing left
+    ld a,c
+    ld e,a
+    add a,a
+    add a,e
+    add a,a
+    ld e,a
+    ld d,0
+    ld hl,hullQ
+    add hl,de
+    ld e,(hl)
+    inc hl
+    ld d,(hl)
+    inc hl
+    push de
+    pop ix
+    ld e,(hl)
+    inc hl
+    ld d,(hl)
+    inc hl
+    push de
+    pop iy
+    ld b,(hl)
+    inc hl
+    ld (hl),0xFF                        ; mark drawn
+    call LAB_ram_57d0
+    jr hullPick
+hullFlushEnd:
+    xor a
+    ld (hullQn),a
+    pop iy
+    pop ix
+    xor a
+    ld (flagEnergyBombActivated),a
+    ret
 hullGlueEnd:
     ASSERT $ <= 0x9C80, "the filled-hull glue does not fit in front of the mission bank routines"
     DS 0x9C80-$
