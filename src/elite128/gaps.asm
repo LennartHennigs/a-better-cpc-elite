@@ -341,7 +341,7 @@ todo_drawcircleInteriorpart:
     push bc
     ld d,b
     dec c
-    ld b,0xCE
+    ld b,(SCREEN>>8)+0x0E                 ; the mask table at page offset &E00 of the screen page (was 0xCE with the screen at &C000)
     ld a,(bc)
     or (hl)
     ld (hl),a
@@ -461,7 +461,7 @@ LAB_ram_cf13:
     push bc
     ld d,b
     dec c
-    ld b,0xCE
+    ld b,(SCREEN>>8)+0x0E                 ; the mask table at page offset &E00 of the screen page (was 0xCE with the screen at &C000)
     ld a,(bc)
     or (hl)
     ld (hl),a
@@ -1817,7 +1817,7 @@ LAB_ram_f60f:
     ld d,l
     ld l,e
     push de
-    ld d,0xCE
+    ld d,(SCREEN>>8)+0x0E                 ; the mask table at page offset &E00 of the screen page (was 0xCE with the screen at &C000)
     ld e,b
     dec e
     set 3,e
@@ -1925,7 +1925,7 @@ LAB_ram_f6ac:
     ld d,l
     ld l,e
     push de
-    ld d,0xCE
+    ld d,(SCREEN>>8)+0x0E                 ; the mask table at page offset &E00 of the screen page (was 0xCE with the screen at &C000)
     ld e,b
     dec e
     set 3,e

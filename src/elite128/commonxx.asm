@@ -1801,7 +1801,7 @@ ce2func61:
 ce2func62:
     push bc
     dec c
-    ld b,0xCE
+    ld b,(SCREEN>>8)+0x0E               ; mask table at page offset &E00 of the screen page (was 0xCE at &C000)
     ld a,(bc)
     or (hl)
     ld d,a
@@ -1908,7 +1908,7 @@ ce2func73:
     exx
     push bc
     dec c
-    ld b,0xCE
+    ld b,(SCREEN>>8)+0x0E               ; mask table at page offset &E00 of the screen page (was 0xCE at &C000)
     ld a,(bc)
     or (hl)
     ld d,a
