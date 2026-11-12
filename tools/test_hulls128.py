@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Spawn every ship type (0..18) straight ahead in the 128K build, one at a time, and screenshot it: output/hulls128_NN.png (128K plan, Phase 1).
 
+NOTE: spawn at most three or four types per run: after four consecutive spawns the session degrades (the engine counts the slots; emptying a slot by writing ix+34 does not undo that). Hostile ships have their AI switched off here (bit 7 of ix+32); type 3 (alloy plate) is drawn as wireframe by design; type 1 (missile) is tiny at the default depth.
 usage (from work/xray):  PATH=$HOME/.local/bin:$PATH ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_hulls128.py [TYPE ...]
 Needs output/flight128.sna (tools/test_flight128.py) and disk/elite128.dsk. Method of tools/test_flight_hull.py: stop at handleEntitys (&5066), lookforFreeSlot (&816B) gives IX,
 spawnShip (&80CD) builds the type, the position is set ahead (z = &180, big hulls farther), setDirectionofEntity (&82B8) builds the orientation (nose pointing away from us),
@@ -58,7 +59,7 @@ async def main():
                 for off, val in ((0, POS[0] & 255), (1, POS[0] >> 8), (2, 0), (3, POS[1] & 255), (4, POS[1] >> 8), (5, 0), (6, (POS[2] or z) & 255), (7, (POS[2] or z) >> 8), (8, 0), (27, 0), (37, 0x7F)):
                     await c("memory_write", {"address": ix + off, "data": "%02X" % val})
                 flag = (await c("memory_read", {"address": ix + 32, "length": 1}))["hex"]
-                await c("memory_write", {"address": ix + 32, "data": "%02X" % (int(flag, 16) & ~0x40)})
+                await c("memory_write", {"address": ix + 32, "data": "%02X" % (int(flag, 16) & ~0xC0)})
                 await call(0x82B8, ix=ix)
                 await c("registers_set", {"values": {k: saved[k] for k in ("af", "bc", "de", "hl", "ix", "iy", "sp", "pc", "af_", "bc_", "de_", "hl_") if k in saved}})
                 await c("run", {"max_us": 1_000_000, "timeout_s": 60})
