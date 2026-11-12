@@ -156,16 +156,16 @@ FileMenu equ 0x0D28
 LAB_ram_0d38 equ 0x0D38
 Filemenuloop equ 0x0D40
 SCR_SETINK equ 0xBC32
-CAS_STOP_MOTOR equ 0xBC71
-CAS_IN_OPEN equ 0xBC77
-CAS_IN_CLOSE equ 0xBC7A
-CAS_IN_ABANDON equ 0xBC7D
-CAS_IN_DIRECT equ 0xBC83
-CAS_OUT_OPEN equ 0xBC8C
-CAS_OUT_CLOSE equ 0xBC8F
-CAS_OUT_ABANDON equ 0xBC92
-CAS_OUT_DIRECT equ 0xBC98
-CAS_CATALOG equ 0xBC9B
+CAS_STOP_MOTOR_FW equ 0xBC71
+CAS_IN_OPEN_FW equ 0xBC77
+CAS_IN_CLOSE_FW equ 0xBC7A
+CAS_IN_ABANDON_FW equ 0xBC7D
+CAS_IN_DIRECT_FW equ 0xBC83
+CAS_OUT_OPEN_FW equ 0xBC8C
+CAS_OUT_CLOSE_FW equ 0xBC8F
+CAS_OUT_ABANDON_FW equ 0xBC92
+CAS_OUT_DIRECT_FW equ 0xBC98
+CAS_CATALOG_FW equ 0xBC9B
 TXT_DRAW_CURSOR equ 0xBDCD
 TXT_UNDRAW_CURSOR equ 0xBDD0
 TXT_OUT_ACTION equ 0xBDD9
@@ -7949,6 +7949,31 @@ titleNameBlue:
     res 7,(hl)
     ret
  ENDIF
+; Disc access without the game stack. The game stack (MainStackNStrings) is in bank 7 at &F39B, and the firmware's disc routines enable the upper ROM over &C000-&FFFF: their
+; pushes would still land in RAM but their pops read AMSDOS ROM, so Save, Load and Catalogue hung. Each firmware entry used by the file code goes through one of these
+; trampolines (the old names CAS_xxx), which run the firmware on discStack in the off-screen bitmap's first lines (unused while docked) and restore SP afterwards.
+; Registers and flags pass through unchanged (`ld sp` changes neither).
+discStackTop equ 0xA500
+discSP:
+    dw 0
+    MACRO discTrampoline name, fw
+name:
+    ld (discSP),sp
+    ld sp,discStackTop
+    call fw
+    ld sp,(discSP)
+    ret
+    ENDM
+    discTrampoline CAS_STOP_MOTOR, CAS_STOP_MOTOR_FW
+    discTrampoline CAS_IN_OPEN, CAS_IN_OPEN_FW
+    discTrampoline CAS_IN_CLOSE, CAS_IN_CLOSE_FW
+    discTrampoline CAS_IN_ABANDON, CAS_IN_ABANDON_FW
+    discTrampoline CAS_IN_DIRECT, CAS_IN_DIRECT_FW
+    discTrampoline CAS_OUT_OPEN, CAS_OUT_OPEN_FW
+    discTrampoline CAS_OUT_CLOSE, CAS_OUT_CLOSE_FW
+    discTrampoline CAS_OUT_ABANDON, CAS_OUT_ABANDON_FW
+    discTrampoline CAS_OUT_DIRECT, CAS_OUT_DIRECT_FW
+    discTrampoline CAS_CATALOG, CAS_CATALOG_FW
 hullGlueEnd:
     ASSERT $ <= 0x9C80, "the filled-hull glue does not fit in front of the mission bank routines"
     DS 0x9C80-$
