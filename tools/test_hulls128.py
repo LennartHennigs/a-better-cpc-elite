@@ -16,6 +16,7 @@ from mcp.client.stdio import stdio_client
 
 TRAP = 0x9F00
 TYPES = [int(a) for a in sys.argv[1:]] or list(range(19))
+POS = [int(v, 0) for v in os.environ.get("POS", "0,0,0").split(",")]      # position (x, y, z, 16 bit each) of the spawned ship; z 0 = the default for the type
 FAR = {0: 0x0700, 15: 0x0300, 11: 0x0300, 10: 0x0300, 6: 0x0200, 7: 0x0200}      # z high byte word: stations and big hulls farther away
 
 
@@ -54,7 +55,7 @@ async def main():
                 await call(0x80CD, a=t, ix=ix)
                 ix = (await c("registers_get"))["ix"]
                 z = FAR.get(t, 0x0180)
-                for off, val in ((0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (5, 0), (6, z & 255), (7, z >> 8), (8, 0), (27, 0), (37, 0x7F)):
+                for off, val in ((0, POS[0] & 255), (1, POS[0] >> 8), (2, 0), (3, POS[1] & 255), (4, POS[1] >> 8), (5, 0), (6, (POS[2] or z) & 255), (7, (POS[2] or z) >> 8), (8, 0), (27, 0), (37, 0x7F)):
                     await c("memory_write", {"address": ix + off, "data": "%02X" % val})
                 flag = (await c("memory_read", {"address": ix + 32, "length": 1}))["hex"]
                 await c("memory_write", {"address": ix + 32, "data": "%02X" % (int(flag, 16) & ~0x40)})

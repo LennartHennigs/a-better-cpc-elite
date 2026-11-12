@@ -189,8 +189,10 @@ gvXok:
     bit 0,c
     jr z,gvYu
     add a,63                    ; below the centre
+    jr c,gvYcl                  ; magnitude of 193 or more wrapped: clamp, do not wrap to the top of the view
     cp 128
     jr c,gvYok
+gvYcl:
     ld a,127
     jr gvYok
 gvYu:
