@@ -40,7 +40,9 @@ HULL = {"shipdatCoriolis": "CORIOLIS", "shipdatMissile": "MISSILE", "shipdatCaps
         "shipdatCobraMk3Pirate": "COBRA", "shipdatAspMk2": "ASP", "shipdatFerDeLance": "FERDELANCE", "shipdatThargoid": "THARGOID",
         "SHIPDATPIRATE1": "SIDEWINDER", "SHIPDATPIRATE2": "KRAIT", "shipdatThargon": "THARGON"}
 STUB_OF = {"shipdatRockHermit": "shipdatAsteroid", "SHIPDATSINGLETRADER": "shipdatCobraMk3Pirate", "SHIPDATBIGTRADER": "shipdatPythonPirate"}
-AXIS_OVERRIDE = {}      # label -> (perm, signs), e.g. "shipdatViper": ((0, 1, 2), (1, 1, -1)); applied to the ArcElite point (x, y, z)
+# The Coriolis is a cube: the extents rule cannot tell its axes apart. The entry slot is what matters: stock has it on the +z face (4 vertices at z = +160, 20 wide in x, 60 tall in y),
+# ArcElite on the +y face (4 vertices at y = +750, 300 along x, 100 along z). So stock (x, y, z) = (arc z, arc x, arc y): a rotation (cyclic permutation, no sign change).
+AXIS_OVERRIDE = {"shipdatCoriolis": ((2, 0, 1), (1, 1, 1))}      # label -> (perm, signs), e.g. "shipdatViper": ((0, 1, 2), (1, 1, -1)); applied to the ArcElite point (x, y, z)
 CONVEX = {"shipdatCoriolis", "shipdatMissile", "shipdatCapsule", "shipdatCargo", "shipdatSplinter", "shipdatViper", "SHIPDATPIRATE1", "shipdatThargon"}  # unchecked guess; the tool does not test convexity yet
 TABLE = 0x1B78
 PATTERNS = [p for p in gen.PATTERN_ORDER if p != 0]      # brightest first; pattern 0 is solid pen 1, the colour of the empty view, so a hull face in it would vanish
