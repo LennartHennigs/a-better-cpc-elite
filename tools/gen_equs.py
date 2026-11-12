@@ -14,7 +14,7 @@ from pathlib import Path
 
 d = Path(sys.argv[1])
 write = "--write" in sys.argv
-FLAGS = {"commonxx": ["-DENHANCED", "-DTITLESEL", "-DMISSIONS"], "largeaxx": ["-DENHANCED", "-DFIREBIRD", "-DMISSIONS"], "common2x": ["-DENHANCED", "-DTITLESEL", "-DMISSIONS"], "musiquex": ["-DENHANCED", "-DTITLESEL"]}
+FLAGS = {"commonxx": [], "largeaxx": [], "common2x": [], "musiquex": []}      # flags live in src/elite128/config.inc
 FILES = {"commonxx": ["commonxx.asm", "gaps.asm", "missions_flight.asm"], "largeaxx": ["largeaxx.asm"], "common2x": ["common2x.asm"], "musiquex": ["musiquex.asm"]}
 SJ = str(Path.home() / ".local/bin/sjasmplus")
 

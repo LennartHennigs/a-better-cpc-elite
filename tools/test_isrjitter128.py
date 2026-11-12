@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Jitter of the interrupt entry (raster split timing) in flight, 128K build (plan step "raster split jitter").
 
-usage (from work/xray):  DISK128=disk/elite128m.dsk SNA=output/flight128.sna PATH=$HOME/.local/bin:$PATH ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_isrjitter128.py [N]
+usage (from work/xray):  DISK128=disk/elite128.dsk SNA=output/flight128.sna PATH=$HOME/.local/bin:$PATH ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_isrjitter128.py [N]
 Loads SNA, breakpoints the interrupt vector (&0038) N times (default 300), and takes the emulated clock of each entry modulo the interrupt period (the gate array raises 6 per
 frame, 3328 us apart at 50 Hz). Prints the lateness of each entry against the earliest phase seen (0 = on time): max, 95th percentile, mean. A flip build whose copy keeps interrupts
 off for long chunks shows late entries; the stock game shows only the small delay of its own di sections.

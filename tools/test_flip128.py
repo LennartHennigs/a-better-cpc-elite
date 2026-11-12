@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Page flip check (128K plan, phase 3): from output/flight128.sna (tools/test_flight128.py) sample the flip state for a few seconds and compare the two screens.
 
-usage (from work/xray):  DISK128=disk/elite128m.dsk PATH=$HOME/.local/bin:$PATH ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_flip128.py
+usage (from work/xray):  DISK128=disk/elite128.dsk PATH=$HOME/.local/bin:$PATH ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_flip128.py
 Prints curCfg / dbShown / dbOn at 40 instants (the two banks must alternate), then saves a snapshot, and compares the cockpit rows (rows 16-23 of each 2 KB scan line block) of bank 1 and
 bank 3 (they differ only for the bytes of the frame in progress) and the view rows (they must differ: one frame apart).
 """

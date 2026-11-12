@@ -1473,7 +1473,7 @@ AddDigram:
     and 0x1F
     and a
     jr z,waggle_galaxy
-    ld hl,0x8DE2
+    ld hl,DockedDigrams
     add a,a
     ld d,0x00
     ld e,a
@@ -2505,7 +2505,7 @@ printFlightDigrams:
     push af
     call text_rng
     and 0x3E
-    ld hl,0x8DCA
+    ld hl,FlightDigrams
     ld d,0x00
     ld e,a
     add hl,de

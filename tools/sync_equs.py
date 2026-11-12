@@ -16,7 +16,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 d = Path(sys.argv[1])
 write = "--write" in sys.argv
-FLAGS = {"commonxx": ["-DENHANCED", "-DTITLESEL", "-DMISSIONS"], "largeaxx": ["-DENHANCED", "-DFIREBIRD", "-DMISSIONS"], "common2x": ["-DENHANCED", "-DTITLESEL", "-DMISSIONS"], "musiquex": ["-DENHANCED", "-DTITLESEL"]}
+FLAGS = {"commonxx": [], "largeaxx": [], "common2x": [], "musiquex": []}      # flags live in src/elite128/config.inc
 SJ = str(Path.home() / ".local/bin/sjasmplus")
 syms, owner = {}, {}
 with tempfile.TemporaryDirectory() as tmp:

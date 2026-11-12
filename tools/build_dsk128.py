@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Assemble src/elite128 and write the four code files into a copy of the Firebird DSK (128K build, filled hulls). Based on tools/build_dsk.py.
 
-usage: python3 -I tools/build_dsk128.py [--missions] [OUT.dsk]    (default work/elite128.dsk, or work/elite128_missions.dsk with --missions; base is
-       Elite_UK_Firebird_cracked_trainer.dsk, never modified). --missions builds LARGEAXX and COMMONXX with -DMISSIONS and adds the overlay and flight image files
+usage: python3 -I tools/build_dsk128.py [OUT.dsk]    (default work/elite128.dsk; base is
+       Elite_UK_Firebird_cracked_trainer.dsk, never modified). The disk always carries the mission overlays and flight images (src/elite128/config.inc defines the flags; --missions is accepted and ignored)
        as tools/build_dsk.py does (README.TXT included).
 
 Needs the generated inputs of tools/check_src128.sh (it makes them): work/elite128/shipdata128.asm, fill.bin (assembled with the address of hullVertexBuf) and fill128.bin.
@@ -21,14 +21,14 @@ from hide_files import hide_entries  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 BASE = ROOT / "Elite_UK_Firebird_cracked_trainer.dsk"
-MISSIONS = "--missions" in sys.argv
-_args = [a for a in sys.argv[1:] if a != "--missions"]
-OUT = Path(_args[0]) if _args else ROOT / ("work/elite128_missions.dsk" if MISSIONS else "work/elite128.dsk")
+MISSIONS = True      # the 128K build has one variant (src/elite128/config.inc): missions, enhanced UI, title selection
+_args = [a for a in sys.argv[1:] if a != "--missions"]      # --missions is accepted and ignored (old command lines)
+OUT = Path(_args[0]) if _args else ROOT / "work/elite128.dsk"
 if OUT.resolve() == BASE.resolve() or OUT.resolve().parent == ROOT:
     sys.exit(f"{OUT}: refusing to write a disk into the project root (the originals live there); use work/")
 SJASM = Path.home() / ".local/bin/sjasmplus"
 SRC = ROOT / "src/elite128"
-FILES = {"LARGEAXX": ["-DFIREBIRD"], "COMMONXX": ["-DTITLESEL"], "COMMON2X": ["-DTITLESEL"], "MUSIQUEX": ["-DTITLESEL"]}
+FILES = {"LARGEAXX": [], "COMMONXX": [], "COMMON2X": [], "MUSIQUEX": []}      # flags live in src/elite128/config.inc
 STAGE_FILL, STAGE_DATA = 0x0800, 0x1000          # offsets in COMMON2X (&C800, &D000); the mission overlays and images use &D800-&FDFF
 
 
@@ -84,8 +84,8 @@ def main():
     with tempfile.TemporaryDirectory() as tmp:
         for n, defs in FILES.items():
             out = Path(tmp) / f"{n}.bin"
-            extra = ["-DMISSIONS"] if MISSIONS and n in ("LARGEAXX", "COMMONXX", "COMMON2X") else []
-            r = subprocess.run([str(SJASM), "-DENHANCED", *defs, *extra, f"--raw={out}", str(SRC / f"{n.lower()}.asm")], capture_output=True, text=True)
+            extra = []
+            r = subprocess.run([str(SJASM), *defs, *extra, f"--raw={out}", str(SRC / f"{n.lower()}.asm")], capture_output=True, text=True)
             if r.returncode:
                 sys.exit(f"{n}: assemble failed\n{r.stdout[-400:]}{r.stderr[-400:]}")
             new = bytearray(out.read_bytes())
@@ -94,11 +94,11 @@ def main():
                 stage = [(STAGE_FILL, fill), (STAGE_DATA, data)]
                 if MISSIONS:      # overlays (bank 4: slots of 0x240 at &D800, &DC80, &E000, &E480) and flight images (bank 5: 0x260 at &E800, &EC60, &F000, &F460, &F800, &FC60); bankInit copies them
                     for i, tag in enumerate("CPTR"):
-                        base, blob = sliced("largeaxx.asm", ["-DENHANCED", *FILES["LARGEAXX"], "-DMISSIONS", f"-DOVL_{tag}"], "mxOverlayBase", "mxOverlayEnd", 0x840)
+                        base, blob = sliced("largeaxx.asm", [f"-DOVL_{tag}"], "mxOverlayBase", "mxOverlayEnd", 0x840)
                         assert len(blob) <= 0x240, (tag, len(blob))
                         stage.append((0x1800 + (i // 2) * 0x800 + (i % 2) * 0x240, blob))
                     for i, tag in enumerate("0CPTSR"):
-                        flags = ["-DENHANCED", *FILES["COMMONXX"], "-DMISSIONS"] + ([f"-DFL_{tag}"] if tag != "0" else [])
+                        flags = ([f"-DFL_{tag}"] if tag != "0" else [])
                         base, blob = sliced("commonxx.asm", flags, "mxFlightBase", "mxFlightEnd", 0x1A40)
                         assert len(blob) <= 0x260, (tag, len(blob))
                         stage.append((0x2800 + (i // 2) * 0x800 + (i % 2) * 0x260, blob))

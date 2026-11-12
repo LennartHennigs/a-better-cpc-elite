@@ -1,4 +1,6 @@
+    INCLUDE "config.inc"
 SCREEN equ 0x4000            ; the screen page: &C000 in the 64K layout, &4000 in the 128K one (docs: src/elite128/README.md)
+tblLaserNumbers equ 0x8DA7   ; generated: label of commonxx
 ActionsAtEndOfMessage equ 0xC8A0   ; generated: label of common2x
 LAB_ram_442c equ 0xC32C   ; generated: label of common2x
 colorsThargonMissionAccepted equ 0xC933   ; generated: label of common2x
@@ -705,7 +707,7 @@ eqListEquipmentdirections:
     ld a,b
     and a
     jr z,eqLeaveNothingtoRefund
-    ld hl,0x8DC3
+    ld hl,tblLaserNumbers
     call SetTableBegintoAofHL
     ld a,(hl)
     call getEquipmentPriceEntry

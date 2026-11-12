@@ -1,3 +1,4 @@
+    INCLUDE "config.inc"
 SCREEN equ 0x4000            ; the screen page: &C000 in the 64K layout, &4000 in the 128K one (docs: src/elite128/README.md)
 LAB_ram_475e equ 0xC660   ; generated: label of common2x
 drawHorLineAt0xd880 equ 0xC58C   ; generated: label of common2x

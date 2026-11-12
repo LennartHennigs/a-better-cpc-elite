@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Boot a 128K disk, start a new commander and save the docked state: output/docked128.sna (for quick tests of launch and docking hooks).
 
-usage (from work/xray):  DISK128=disk/elite128_missions.dsk PATH=$HOME/.local/bin:$PATH ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/snap_docked128.py
+usage (from work/xray):  DISK128=disk/elite128.dsk PATH=$HOME/.local/bin:$PATH ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/snap_docked128.py
 """
 import asyncio
 import json

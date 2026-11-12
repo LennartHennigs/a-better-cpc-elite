@@ -1,4 +1,6 @@
+    INCLUDE "config.inc"
 SCREEN equ 0x4000            ; the screen page (the 128K layout); the block below runs in RAM bank 7 at &C000
+irki2_8 equ 0x8EB2   ; generated: label of commonxx
 mxArrive equ 0x9DAD   ; generated: label of commonxx
 mxInvHook equ 0x9DB3   ; generated: label of commonxx
 mxKillHook equ 0x9DA4   ; generated: label of commonxx
@@ -7475,7 +7477,7 @@ loc_745B:
     call sub_748C
     ld (hl),0x0C
     ld b,0x05
-    ld hl,0x8ECF
+    ld hl,irki2_8+1
 ; Zeroes B bytes at HL (same fill loop as todo_clearvars)
 sub_748C:
     xor a
