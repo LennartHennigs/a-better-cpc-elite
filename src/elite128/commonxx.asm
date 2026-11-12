@@ -771,7 +771,7 @@ tfScrMemNextLine:
     pop hl
     pop de
     pop bc
-    jp dbFlipTail                       ; 128K build: pop af, then flip the screens (dbFlip in bank 7) and return
+    jp dbFlipTail                       ; 128K build: pop af, then flip the screens (dbFlip6 in bank 6) and return
 tbmLoopCounter:
     db "O"
 ; Redraw the dashboard if the screen's first byte is not 0x0F, i.e. the dashboard is not yet on screen
@@ -7486,16 +7486,11 @@ hullDraw:
     ld bc,0x7FC6                        ; RAM bank 6 at &4000
     out (c),c
     call fillHullEntry                              ; fillHull (src/elite128/fill.asm): carry set = no fill record for this type
-    sbc a,a
-    ld d,a
-    mapMain                             ; back to the draw configuration
+    mapMain                             ; back to the draw configuration (the carry of the fill survives mapMain, the stack switch and the pop)
     ld sp,(hullSaveSP)
     pop iy
-    ld c,d
-    ld a,c
-    and a
-    jp nz,todo_parseEdges               ; no record: wireframe
-    ret
+    ret nc
+    jp todo_parseEdges                  ; carry: no record, wireframe
 bankInitStageFill  equ STAGE+0x800
 bankInitStageData  equ STAGE+0x1000
 ; Once, at the start of Init_: the loader put the fill module and its records into blank screen bytes of COMMON2X (tools/build_dsk128.py), which are still
@@ -7788,77 +7783,19 @@ hullFlushEnd:
     xor a
     ld (flagEnergyBombActivated),a
     ret
-bankNameMusic:
-    db "MUSIQUEX"
 bankNameIndicator:
     db "INDICATO"
-bankCfg:
-    db 0
-bankN:
-    db 0
-bankDir:
-    db 0
-bankSrc:
-    dw 0
-bankDst:
-    dw 0
-bankBuf:
-    ds 64
-; Copy 64-byte chunks between main RAM and a bank that is mapped over the same addresses (&4000-&7FFF): HL = source, DE = destination, B = chunks, C = config of the bank
-; (&C4 or &C5), A = 0 main -> bank (the destination is a window address), else bank -> main. Every chunk goes through bankBuf, interrupts off while a bank is mapped, no stack use.
-; (A direct ldir cannot work: the window shows either the bank or main RAM at those addresses.)
-bankChunk:
-    ld (bankSrc),hl
-    ld (bankDst),de
-    ld (bankDir),a
-    ld a,c
-    ld (bankCfg),a
-    ld a,b
-    ld (bankN),a
-bkLoop:
+bankIndicator:                          ; INDICATO, bank 5 window &5000 -> &0840 (loadIndicator swaps it into place); the destination is not remapped by C5, so no bounce buffer
     di
-    ld a,(bankDir)
-    and a
-    ld a,(curCfg)
-    jr z,bkMap1                         ; direction 0: the source is main RAM
-    ld a,(bankCfg)
-bkMap1:
-    ld c,a
-    ld b,0x7F
+    ld bc,0x7FC5
     out (c),c
-    ld hl,(bankSrc)
-    ld de,bankBuf
-    ld bc,0x0040
-    ldir
-    ld (bankSrc),hl
-    ld a,(bankDir)
-    and a
-    ld a,(bankCfg)
-    jr z,bkMap2                         ; direction 0: the destination is the bank
-    ld a,(curCfg)
-bkMap2:
-    ld c,a
-    ld b,0x7F
-    out (c),c
-    ld hl,bankBuf
-    ld de,(bankDst)
-    ld bc,0x0040
-    ldir
-    ld (bankDst),de
-    mapMain
-    ei
-    ld hl,bankN
-    dec (hl)
-    jr nz,bkLoop
-    ret
-bankIndicator:                          ; INDICATO, bank 5 window &5000 -> &0840 (loadIndicator swaps it into place)
     ld hl,0x5000
     ld de,0x0840
-    ld c,0xC5
-bankOut:
-    ld b,0x40                           ; 64 chunks of 64 bytes = 4096
-    ld a,1
-    jp bankChunk
+    ld bc,0x1000
+    ldir
+    mapMain
+    ei
+    ret
  IFDEF TITLESEL
 ; --- title screen ship selection: in the 64K layout the zero tail of MUSIQUEX at &6E21, an overlay in the window; resident code here, its two tables at the end of the bank 7 block ---
 TITLE_SCREEN2:
@@ -8080,8 +8017,8 @@ mxLettersOverlay:
     db "CPTR"
 mxLettersFlight:
     db "0CPTSR"
-; --- page flip (128K build), resident part: dbFlip itself is in bank 7 (common2x.asm) ---
-; dbShown: config value (C1 or C3) of the bank the CRTC displays. In flight the game draws into the other one (curCfg), dbFlip swaps them after each transferBuffertoScreen.
+; --- page flip (128K build), resident part: the flip body dbFlip6 is in bank 6 (fill.asm) ---
+; dbShown: config value (C1 or C3) of the bank the CRTC displays. In flight the game draws into the other one (curCfg), dbFlip6 swaps them after each transferBuffertoScreen.
 dbShown:
     db 0xC1
 dbCnt:
@@ -8147,28 +8084,16 @@ dbIsr:
 ; Copies BC bytes from HL to DE through the C0 configuration (bank 1 at &4000, bank 3 at &C000), interrupts off meanwhile; the alternate registers carry the port and are saved.
 ; Only called from the flip code in bank 6: returns in config C6, with HL, DE advanced.
 dbCopy:
-    exx
-    push bc
-    push de
-    push hl
-    exx
     di
-    exx
+    push bc                             ; the stack is resident (hullStack), visible in C0 and C6
     ld bc,0x7FC0
     out (c),c
-    exx
-    ldir
-    exx
-    ld a,0xC6                           ; back to the flip code in bank 6
-    ld b,0x7F
-    out (c),a
-    pop hl
-    pop de
     pop bc
-    exx
+    ldir
+    ld bc,0x7FC6                        ; back to the flip code in bank 6
+    out (c),c
     ei
     ret
-; moved here from the filled-hull glue to make room there (labels are free in this part)
 hullFindType:
     push iy
     pop de                              ; DE = blueprint address

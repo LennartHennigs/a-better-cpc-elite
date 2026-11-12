@@ -16,9 +16,6 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
 ROOT = Path(__file__).resolve().parent.parent
-sym = {}
-for l in (ROOT / "work/elite128/fill.sym").read_text().splitlines():
-    pass
 csym = {}
 for p in ("work/elite128/relo/c.sym",):
     f = ROOT / p

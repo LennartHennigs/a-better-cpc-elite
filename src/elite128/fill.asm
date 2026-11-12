@@ -706,7 +706,6 @@ ibRow:
 ibLM:   db 0xFF, 0x77, 0x33, 0x11
 ibRM:   db 0x88, 0xCC, 0xEE, 0xFF
 fillEnd:
-    ASSERT fillEnd <= 0x4F00
     ASSERT fillEnd <= 0x4400
     DS 0x4400-$
 
@@ -955,7 +954,7 @@ zRow:       db 0
 dbTick:     db 0
 dbSnapM:    ds 3
 dbWatch:    dw DB_MISS, DB_STAT, DB_LOCK
-dbSnap:     ds 40
+dbSnap:     ds DB_VLEN
 ; The copy keeps interrupts off while it runs, which would delay the raster-timed interrupts (colour split of the view and the dashboard). So the copies are paced by the interrupts:
 ; each one starts right after an interrupt handler returned (HALT) and at most DBWIN bytes are copied before the next HALT (DBWIN x 5.25 us stays below the 3.3 ms between interrupts
 ; minus the handler). HL, DE, BC as for dbCopy.
@@ -987,4 +986,4 @@ dbBases:
     ex de,hl
     ret
 dbFlip6End:
-    ASSERT dbFlip6End <= 0x4F00
+    ASSERT dbFlip6End <= 0x4600             ; the staging copy of bankInit is 0x600 bytes
