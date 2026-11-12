@@ -877,6 +877,15 @@ dbfGaps:
     add hl,bc
     ex de,hl
     ld bc,16
+    call dbCopyB
+    ld a,(DB_SHOWN)                     ; smc_dfcPatchpos (&27B0): the opcode that drawFilledCircle's size test is patched to. It is patched in the draw bank only but runs from either one,
+    call dbBases                        ; so a stale copy made planets and suns blink on alternate frames
+    ld bc,0x27B0
+    add hl,bc
+    ex de,hl
+    add hl,bc
+    ex de,hl
+    ld bc,1
     jp dbCopyB
 ; HL = zone descriptor: offset in the page of the first strip (word), width (byte), rows (byte), step to the next row = 64 - width (word), step to the next scan line block (word).
 ; Copies rows x width bytes in each of the 8 scan line blocks from the shown bank to the draw bank.
