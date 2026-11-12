@@ -75,7 +75,7 @@ fillHull:
     jp fillInit                 ; &4003
 fillHullGo:
     cp 20
-    jr nc,fhNone
+    jp nc,fhNone
     add a,a
     ld l,a
     ld h,0
@@ -95,6 +95,13 @@ fillHullGo:
     inc hl                      ; skip the flags byte
     ld (V_TRIP),hl
 fhLoop:
+    ld a,(VIEWDIR)                      ; title screens (Viewdirection &94): stop filling as soon as a key is down, so a key press is answered within one triangle
+    cp 0x94                             ; instead of after the whole ship (about 250 ms with a close hull)
+    jr nz,fhNoKey
+    ld a,(DB_KEY)
+    inc a
+    jr nz,fhDone
+fhNoKey:
     ld a,(V_NTRI)
     and a
     jr z,fhDone
@@ -723,6 +730,7 @@ DB_STAT     equ 0
 DB_LOCK     equ 0
 DB_VARS     equ 0
 DB_VLEN     equ 0
+DB_KEY      equ 0
     ENDIF
 VIEWDIR     equ 0x1C02
 ; Flight views: wait for the vertical sync, point the CRTC at the bank just drawn (R12 &1C = bank 1, &3C = bank 3), make the other bank the draw bank, then copy what the game

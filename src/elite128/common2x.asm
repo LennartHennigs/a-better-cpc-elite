@@ -2854,7 +2854,7 @@ sqrt_approx_core:
     srl h
     rr l
     rra
-    ld de,LAB_ram_8000
+    ld de,0x8000                        ; the constant &8000 (was the address of a label that sat there in the stock build)
     call SUB_ram_52d4
     pop de
     call SUB_ram_52ca
@@ -3229,7 +3229,7 @@ LAB_ram_556a:
     dec hl
     bit 7,h
     jr z,LAB_ram_557c
-    ld hl,LAB_ram_8000
+    ld hl,0x8000                        ; the constant &8000 (was the address of a label that sat there in the stock build)
 LAB_ram_5577:
     neg
     ld (ix+6),a

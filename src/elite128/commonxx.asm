@@ -7151,7 +7151,7 @@ irki2_11:
     and 0x7F
     or l
     jr nz,irki2_12
-    ld hl,dh3nextPixelline
+    ld hl,0x8066                        ; the pitch step; the disassembler had read it as the address of dh3nextPixelline (stock &8066), which moved
     jp irki2_16
 irki2_12:
     bit 7,h
