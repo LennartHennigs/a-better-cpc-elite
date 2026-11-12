@@ -1734,10 +1734,9 @@ printViewPortLabel:
     ld a,(Viewdirection)
     cp 0x04
     jr c,LAB_ram_4acd
-    ld hl,SCREEN+0x044
-    call DrawBytesMask0
-    ld hl,SCREEN+0x046
-    call DrawBytesMask0
+    jr viewLabelSkip                  ; stock clears the two cells at column 2 here (the view name); the screen was cleared already and the headlines start in column 2 now, so it would erase their first two letters
+    ds 10                             ; the stock clear, kept as padding: later labels keep their offsets
+viewLabelSkip:
     call SUB_ram_4aee
     ret
 LAB_ram_4acd:
@@ -2943,9 +2942,7 @@ LAB_ram_5337:
     add ix,de
     call rotate_orientation_vector
     call rotate_orientation_vector
-    db 0xCD
-    ld c,b
-    ld d,h
+    call rotate_orientation_vector
     pop ix
     ld a,(ix+29)
     ld b,a
@@ -3732,9 +3729,7 @@ loc_58AD:
 ; Copy of putshippixelstoBM: OR one pixel at (C,B) into the bitmap; its call target is a raw db operand
 sub_58BF:
     push bc
-    db 0xCD
-    sbc a,c
-    ld h,a
+    call LAB_ram_6798+1                 ; into the operand of the call at LAB_ram_6798 (as in the stock build)
     inc a
     ld c,0x88
 loc_58C6:

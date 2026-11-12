@@ -2063,8 +2063,8 @@ cdr2:
     pop af
     ret
 cdr3:
-    bit 7,h
-    jr z,cdr2
+    bit 7,h                           ; 128K layout: the screen is &4000-&7FFF (stock: both bits set, &C000-&FFFF); the shifts below drop both top bits, so the row maths is unchanged
+    jr nz,cdr2
     bit 6,h
     jr z,cdr2
     push hl

@@ -138,3 +138,4 @@ Open work, most useful first. `CLAUDE.md` keeps the short list; details live in 
 ## Housekeeping
 - [x] Removed the redundant extractions in `work/` (done 2026-11-07: `ext_EliteSource`, `ext_EliteMasterSource`, `ext_ELITE_EXT_DISK`, `build_fessor_run`; each checked byte-for-byte against an archive that stays). `ext_st`, `ext_nes`, `ext_msx` are reference clones in use (tools read `ext_msx/skoolkit`), so they stay.
 - [ ] Update `work/xray/` disk copies and snapshots if they still use the old disk names.
+- [ ] `-DENHANCED` headlines start in column 2, but `printViewPortLabel` (`src/elite/commonxx.asm`, views >= 4) clears the cells at column 2-3 of row 1 after the title is printed: from flight the chart titles lose their first two letters ("ORT RANGE CHART"). Fixed in `src/elite128` (the clear is skipped); not yet in `src/elite`, `src/elite_de`, `src/elite_fr`.
