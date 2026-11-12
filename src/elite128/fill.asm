@@ -68,7 +68,9 @@ V_S1        equ 0x4F16          ; sign work for the cull test
 V_M1        equ 0x4F17          ; word
 V_M2        equ 0x4F19          ; word
 V_S2        equ 0x4F1B
-V_SPS       equ 0x4F1C          ; word: the stack pointer while a span is pushed
+TT_ST       equ 0x4F30          ; title text cache: 0 empty, 1 the text rows are held in the other screen bank
+TT_KEY      equ 0x4F31          ; the title ship index the cached text belongs to
+TT_CNT      equ 0x4F32
 
     ORG 0x4000
 fillHull:
@@ -453,41 +455,6 @@ spWide:
     ld a,b
     ld b,d
     inc hl
-    ld d,a                      ; B = whole bytes in between, HL = the first one, D = the pattern byte
-    ld a,b
-    cp 6
-    ld a,d
-    jr c,spMid                  ; short: one byte at a time
-    ld e,d                      ; DE = the pattern byte twice: pushed two bytes at a time (4 us per pair instead of 16)
-    srl b                       ; B = pairs, carry = an odd byte
-    jr nc,spEven
-    ld (hl),d
-    inc hl
-spEven:
-    ld a,b
-    add a,a
-    add a,l
-    ld l,a
-    jr nc,spEnd
-    inc h
-spEnd:                          ; HL = the address after the last byte: the stack grows down from there
-    di                          ; an interrupt would push its return address into the span's own bytes
-    ld (V_SPS),sp
-    ld sp,hl
-    ld hl,spRunEnd
-    ld c,b
-    ld b,0
-    or a
-    sbc hl,bc                   ; enter the run of pushes B from its end
-    jp (hl)
-spRun:
-    DUP 32
-    push de
-    EDUP
-spRunEnd:
-    ld sp,(V_SPS)
-    ei
-    jr spNext
 spMid:
     ld (hl),a
     inc hl
@@ -625,6 +592,8 @@ PATS:   db 0x0F,0x0F, 0xF0,0xF0, 0xFF,0xFF, 0x5F,0xAF, 0xF5,0xFA, 0x5A,0xA5
 
 ; Builds the tables. Run once with bank 6 mapped.
 fillInit:
+    xor a
+    ld (TT_ST),a
     ld hl,EDB                   ; edge block: 128 times ld a,h / ld (de),a / inc e / add hl,bc, then ret
     ld b,128
 ibEdge:
@@ -749,8 +718,8 @@ ibRow:
 ibLM:   db 0xFF, 0x77, 0x33, 0x11
 ibRM:   db 0x88, 0xCC, 0xEE, 0xFF
 fillEnd:
-    ASSERT fillEnd <= 0x4400
-    DS 0x4400-$
+    ASSERT fillEnd <= 0x43B8
+    DS 0x43B8-$
 
 ; --- page flip (runs here, in RAM bank 6, so that the resident glue stays small): called through dbFlipTail (commonxx.asm) with config C6 and the resident stack ---
 ; The addresses of the resident variables and of dbCopy come from the build (tools/check_src128.sh).
@@ -767,6 +736,10 @@ DB_LOCK     equ 0
 DB_VARS     equ 0
 DB_VLEN     equ 0
 DB_KEY      equ 0
+DB_SHIPNR   equ 0
+DB_STATUS   equ 0
+DB_PRT1     equ 0
+DB_PRT2     equ 0
     ENDIF
 VIEWDIR     equ 0x1C02
 ; Flight views: wait for the vertical sync, point the CRTC at the bank just drawn (R12 &1C = bank 1, &3C = bank 3), make the other bank the draw bank, then copy what the game
@@ -776,6 +749,15 @@ dbFlip6:
     ld a,(VIEWDIR)
     cp 4
     ret nc
+    and a                               ; view 0 with the status flag below 4 is the title (flight, the launch and docking tunnels have 4): single buffered like the other
+    jr nz,dbfFlight                     ; non-flight screens (dbIsr follows curCfg), which is what lets the text cache use the idle bank
+    ld a,(DB_STATUS)
+    cp 4
+    jp c,ttHook
+dbfFlight:
+    ld a,(TT_ST)
+    and a
+    call nz,ttOff                       ; leaving the title: the text printers must run again next time
     ld a,(DB_ON)
     and a
     jr nz,dbfFlip
@@ -931,6 +913,71 @@ dbfGaps:
     ex de,hl
     ld bc,1
     jp dbCopyB
+; --- title text cache -------------------------------------------------------------------------------------------------------------------------------------------------------
+; The two title screens print a heading (text row 1) and a prompt (text row 14) into the bitmap every frame, which costs about 65 ms of a 320 ms frame. The titles draw straight into
+; the displayed bank (single buffer), so the other bank is idle: after one frame that printed the text, its 8 lines x 52 bytes (columns 8-59) of both rows are copied to the same
+; places of the other bank, and the two printers (printSplashscreen1, printPressSpace) are patched to a `ret`. Every later frame copies the rows back after the bitmap transfer
+; (about 5 ms). The cache belongs to one title ship index (splash2Shipnr changes on every screen change and cursor key), a different index, or any flight frame, unpatches the
+; printers again. The copy overwrites ship pixels inside those rows with the ones of the capture frame: only a ship reaching the first or last text row would show it.
+ttHook:
+    ld a,(TT_ST)
+    and a
+    jr z,ttCapture
+    ld a,(DB_SHIPNR)
+    ld hl,TT_KEY
+    cp (hl)
+    jr nz,ttOff                         ; another ship: print again (this frame has no text, the next one has)
+    ld a,(DB_CURCFG)
+    call dbBases                        ; HL = displayed bank, DE = the other one
+    ex de,hl                            ; restore: other -> displayed
+    jr ttCopyAll
+ttCapture:
+    ld a,(DB_CURCFG)
+    call dbBases
+    call ttCopyAll                      ; displayed -> other
+    ld a,(DB_SHIPNR)
+    ld (TT_KEY),a
+    ld a,1
+    ld (TT_ST),a
+    ld a,0xC9                           ; ret
+    ld (DB_PRT1),a
+    ld (DB_PRT2),a
+    ret
+ttOff:
+    xor a
+    ld (TT_ST),a
+    ld a,0xCD                           ; call: both printers start with one
+    ld (DB_PRT1),a
+    ld (DB_PRT2),a
+    ret
+ttCopyAll:
+    ld bc,0x48                          ; text row 1, byte 8
+    add hl,bc
+    ex de,hl
+    add hl,bc
+    ex de,hl
+    call ttBand
+    ld bc,0xC340                        ; the 8 lines moved 0x4000 on: back, and to text row 14 (0x340 further)
+    add hl,bc
+    ex de,hl
+    add hl,bc
+    ex de,hl
+ttBand:
+    ld a,8
+    ld (TT_CNT),a
+ttLine:
+    ld bc,52
+    call DB_COPY
+    ld bc,0x0800-52
+    add hl,bc
+    ex de,hl
+    add hl,bc
+    ex de,hl
+    ld a,(TT_CNT)
+    dec a
+    ld (TT_CNT),a
+    jr nz,ttLine
+    ret
 ; HL = zone descriptor: offset in the page of the first strip (word), width (byte), rows (byte), step to the next row = 64 - width (word), step to the next scan line block (word).
 ; Copies rows x width bytes in each of the 8 scan line blocks from the shown bank to the draw bank.
 dbZone:
@@ -1007,7 +1054,8 @@ zRow:       db 0
 dbTick:     db 0
 dbSnapM:    ds 3
 dbWatch:    dw DB_MISS, DB_STAT, DB_LOCK
-dbSnap:     ds DB_VLEN
+dbSnap      equ 0x4F40                  ; DB_VLEN bytes in the variable page (it would not fit in the 0x600 staged bytes of code)
+    ASSERT 0x4F40 + DB_VLEN <= 0x5000
 ; The copy keeps interrupts off while it runs, which would delay the raster-timed interrupts (colour split of the view and the dashboard). So the copies are paced by the interrupts:
 ; each one starts right after an interrupt handler returned (HALT) and at most DBWIN bytes are copied before the next HALT (DBWIN x 5.25 us stays below the 3.3 ms between interrupts
 ; minus the handler). HL, DE, BC as for dbCopy.
@@ -1039,4 +1087,4 @@ dbBases:
     ex de,hl
     ret
 dbFlip6End:
-    ASSERT dbFlip6End <= 0x4600             ; the staging copy of bankInit is 0x600 bytes
+    ASSERT dbFlip6End <= 0x4600             ; the staging copy of bankInit is 0x600 bytes (a stage area is 0x600 blank pixel bytes in a screen page)

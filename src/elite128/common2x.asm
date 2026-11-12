@@ -8,7 +8,7 @@ mxLaserHook equ 0x9DA7   ; generated: label of commonxx
 mxLaunchEntry equ 0x9DBA   ; generated: label of commonxx
 mxSun equ 0x9DB0   ; generated: label of commonxx
 curCfg equ 0x9864   ; generated: label of commonxx
-dbCopy equ 0x9D5D   ; generated: label of commonxx
+dbCopy equ 0x9D66   ; generated: label of commonxx
 dbOn equ 0x9CFF   ; generated: label of commonxx
 dbShown equ 0x9CFB   ; generated: label of commonxx
 ActDeponEnergy equ 0x881C   ; generated: label of commonxx

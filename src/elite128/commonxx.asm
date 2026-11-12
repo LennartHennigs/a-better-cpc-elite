@@ -8061,7 +8061,7 @@ dbScanFlag:
     db 0
 dbOn:
     db 0                                ; 1 while flipping (flight views); the ISR clears it when a non-flight view is shown
-dbFlip6Entry equ 0x4400                 ; fill.asm: dbFlip6
+dbFlip6Entry equ 0x43B8                 ; fill.asm: dbFlip6
 dbFlipTail:
     pop af
     ld (hullSaveSP),sp                  ; like hullDraw: the game stack is in bank 7, which RAM bank 6 (config C6) hides
@@ -8092,7 +8092,13 @@ dbFlipTail:
 dbIsr:
     ld a,(Viewdirection)
     cp 4
-    ret c
+    jr nc,dbIsrFollow
+    and a                               ; the title screens (view 0, status flag below 4) are single buffered too: see dbFlip6
+    ret nz
+    ld a,(todoUnknownStatusFlags)
+    cp 4
+    ret nc
+dbIsrFollow:
     ld hl,curCfg
     ld a,(dbShown)
     cp (hl)

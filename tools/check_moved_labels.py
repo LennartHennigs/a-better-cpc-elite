@@ -44,7 +44,7 @@ if "--all" in sys.argv:
     for a in sorted(moved):
         print(hex(a), moved[a][:2])
 hits = 0
-IGNORE = {0x4000, 0x2710, 0x403F, 0x4980}      # window size, BCD limit, laser screen coordinates, bank copy destination: not addresses of moved labels
+IGNORE = {0x4000, 0x2710, 0x403F, 0x4980, 0x8000, 0x8066}      # window size, BCD limit, laser screen coordinates, bank copy destination: not addresses of moved labels; 0x8000 and 0x8066 are the rotation constants that stock labels happened to sit on
 ISR_ZONE = range(0x2800, 0x2940)            # self-patch operands of the ISR and disc code, shifted by hand by +4 (README "Relocated layout"): the literal equals a stock label by coincidence
 for src in sorted((ROOT / "src/elite128").glob("*.asm")):
     for n, line in enumerate(src.read_text().split("\n"), 1):
