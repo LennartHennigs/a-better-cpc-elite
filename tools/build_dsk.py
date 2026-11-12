@@ -37,9 +37,6 @@ SJASM = Path.home() / ".local/bin/sjasmplus"
 FILES = {"LARGEAXX": [] if DE or FR else ["-DFIREBIRD"], "COMMONXX": ["-DTITLESEL"], "COMMON2X": [], "MUSIQUEX": ["-DTITLESEL"]}   # TITLESEL: cursor keys change the title ship
 
 
-add_file = dskx.add_file
-
-
 def flight_image(tag):
     """Assemble COMMONXX with -DMISSIONS (-DFL_<tag> for C/P/T/S/R; "0" is the default image) and slice mxFlightBase..mxFlightEnd (the COMMONXX tail)."""
     with tempfile.TemporaryDirectory() as tmp:
@@ -98,11 +95,11 @@ def main():
     if MISSIONS:
         for tag in ("C", "P", "T", "R"):
             base, data = overlay(tag)
-            blocks = add_file(d, secs, first, f"MISSION{tag}", "BIN", data, base)
+            blocks = dskx.add_file(d, secs, first, f"MISSION{tag}", "BIN", data, base)
             print(f"MISSION{tag}.BIN: {len(data)} bytes at &{base:04X}, blocks {blocks}")
         for tag in ("0", "C", "P", "T", "S", "R"):
             base, data = flight_image(tag)
-            blocks = add_file(d, secs, first, f"MFLIGHT{tag}", "BIN", data, base)
+            blocks = dskx.add_file(d, secs, first, f"MFLIGHT{tag}", "BIN", data, base)
             print(f"MFLIGHT{tag}.BIN: {len(data)} bytes at &{base:04X}, blocks {blocks}")
     if MISSIONS:
         add_readme(d, secs, first)

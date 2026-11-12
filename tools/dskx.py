@@ -149,22 +149,6 @@ def amsdos_header(b):
                 exec=struct.unpack("<H", b[26:28])[0])
 
 
-if __name__ == "__main__":
-    files = read_files(load_sectors(sys.argv[1]))
-    out = Path(sys.argv[2]) if len(sys.argv) > 2 else None
-    if out:
-        out.mkdir(parents=True, exist_ok=True)
-    for (user, name), data in sorted(files.items(), key=lambda kv: kv[0][1]):
-        h = amsdos_header(data)
-        desc = (f"type={h['type']} load={h['load']:04X} exec={h['exec']:04X} len={h['length']:04X}"
-                if h else "no AMSDOS header")
-        print(f"{name:14} user={user} size={len(data):6}  {desc}")
-        if out:
-            safe = "".join(c if c.isalnum() or c in "._-" else "_" for c in name)
-            (out / (safe + ".raw")).write_bytes(data)
-            (out / safe).write_bytes(data[128:128 + h["length"]] if h else data)
-
-
 def add_file(d, secs, first, name, ext, data, load):
     """Add a new AMSDOS file (header + data); files up to 16 KB (one extent)."""
     payload = make_header(name, ext, load, len(data)) + data
@@ -193,3 +177,20 @@ def overwrite_file(d, secs, first, name, new):
             break
         d[off:off + len(chunk)] = chunk
     return h
+
+
+if __name__ == "__main__":
+    files = read_files(load_sectors(sys.argv[1]))
+    out = Path(sys.argv[2]) if len(sys.argv) > 2 else None
+    if out:
+        out.mkdir(parents=True, exist_ok=True)
+    for (user, name), data in sorted(files.items(), key=lambda kv: kv[0][1]):
+        h = amsdos_header(data)
+        desc = (f"type={h['type']} load={h['load']:04X} exec={h['exec']:04X} len={h['length']:04X}"
+                if h else "no AMSDOS header")
+        print(f"{name:14} user={user} size={len(data):6}  {desc}")
+        if out:
+            safe = "".join(c if c.isalnum() or c in "._-" else "_" for c in name)
+            (out / (safe + ".raw")).write_bytes(data)
+            (out / safe).write_bytes(data[128:128 + h["length"]] if h else data)
+

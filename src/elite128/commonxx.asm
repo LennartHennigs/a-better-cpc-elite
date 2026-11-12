@@ -2063,6 +2063,7 @@ cdr2:
     pop af
     ret
 cdr3:
+    ASSERT SCREEN == 0x4000, "the bit tests below assume the screen page at &4000"
     bit 7,h                           ; 128K layout: the screen is &4000-&7FFF (stock: both bits set, &C000-&FFFF); the shifts below drop both top bits, so the row maths is unchanged
     jr nz,cdr2
     bit 6,h
@@ -7467,10 +7468,11 @@ curCfg:
     db 0xC1                             ; RAM configuration the CPU draws with (C1: screen A = bank 1 at &4000, C3: screen B = bank 3)
 hullDummy:
     ds 8
+HULL_NOFILL equ 3
 hullDraw:
     call hullFindType                   ; A = ship type 0..18 from the blueprint pointer in IY, carry if none
     jp c,todo_parseEdges
-    cp 3                                ; type 3 (alloy plate) has no fill record (tools/ship128.py): wireframe without copying its vertices first
+    cp HULL_NOFILL                      ; the alloy plate has no fill record (tools/ship128.py): wireframe without copying its vertices first
     jp z,todo_parseEdges
     ld (hullType),a
     ld a,(iy+3)                         ; copy 3 * vertex count bytes of buf_5860 to the resident buffer
@@ -7955,7 +7957,9 @@ titleNameBlue:
 ; pushes would still land in RAM but their pops read AMSDOS ROM, so Save, Load and Catalogue hung. Each firmware entry used by the file code goes through one of these
 ; trampolines (the old names CAS_xxx), which run the firmware on discStack in the off-screen bitmap's first lines (unused while docked) and restore SP afterwards.
 ; Registers and flags pass through unchanged (`ld sp` changes neither).
+; Invariant: disc access only happens docked (FileMenu), when the off-screen bitmap is not drawn into; discSP is a single slot (the trampolines never nest).
 discStackTop equ 0xA500
+    ASSERT discStackTop > 0xA000 && discStackTop <= 0xA600, "the disc stack must lie in the first bitmap lines, below the parked firmware data at &A600"
 discSP:
     dw 0
     MACRO discTrampoline name, fw

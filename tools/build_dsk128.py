@@ -32,9 +32,6 @@ FILES = {"LARGEAXX": [], "COMMONXX": [], "COMMON2X": [], "MUSIQUEX": []}      # 
 STAGE_FILL, STAGE_DATA = 0x0800, 0x1000          # offsets in COMMON2X (&C800, &D000); the mission overlays and images use &D800-&FDFF
 
 
-add_file = dskx.add_file
-
-
 def sliced(src, flags, lo_label, hi_label, base_addr):
     """Assemble SRC with FLAGS and slice lo_label..hi_label (labels from the symbol file); returns (address, bytes)."""
     with tempfile.TemporaryDirectory() as tmp:
