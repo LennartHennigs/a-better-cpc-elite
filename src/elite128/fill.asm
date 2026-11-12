@@ -68,6 +68,7 @@ V_S1        equ 0x4F16          ; sign work for the cull test
 V_M1        equ 0x4F17          ; word
 V_M2        equ 0x4F19          ; word
 V_S2        equ 0x4F1B
+V_SPS       equ 0x4F1C          ; word: the stack pointer while a span is pushed
 
     ORG 0x4000
 fillHull:
@@ -452,6 +453,41 @@ spWide:
     ld a,b
     ld b,d
     inc hl
+    ld d,a                      ; B = whole bytes in between, HL = the first one, D = the pattern byte
+    ld a,b
+    cp 6
+    ld a,d
+    jr c,spMid                  ; short: one byte at a time
+    ld e,d                      ; DE = the pattern byte twice: pushed two bytes at a time (4 us per pair instead of 16)
+    srl b                       ; B = pairs, carry = an odd byte
+    jr nc,spEven
+    ld (hl),d
+    inc hl
+spEven:
+    ld a,b
+    add a,a
+    add a,l
+    ld l,a
+    jr nc,spEnd
+    inc h
+spEnd:                          ; HL = the address after the last byte: the stack grows down from there
+    di                          ; an interrupt would push its return address into the span's own bytes
+    ld (V_SPS),sp
+    ld sp,hl
+    ld hl,spRunEnd
+    ld c,b
+    ld b,0
+    or a
+    sbc hl,bc                   ; enter the run of pushes B from its end
+    jp (hl)
+spRun:
+    DUP 32
+    push de
+    EDUP
+spRunEnd:
+    ld sp,(V_SPS)
+    ei
+    jr spNext
 spMid:
     ld (hl),a
     inc hl
