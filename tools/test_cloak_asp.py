@@ -5,6 +5,10 @@ usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../too
   GATE = value written to aspMissionState (&504D in the stock code), `mark` sets the marker bit 6 of (ix+38), TAG names output/asp_TAG.png.
 Result 2026-11-10 (stock code): `1 mark` hides the wireframe in the front view, the scanner blip stays (UpdateScanner has no marker test); `0 plain` shows both.
 """
+import asyncio
+import json
+import sys
+
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 GATE=int(sys.argv[1]); MARK=sys.argv[2]=="mark"; TAG=sys.argv[3]

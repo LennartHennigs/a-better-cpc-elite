@@ -8107,7 +8107,7 @@ dbIsr:
     ld b,0xBD
     out (c),a
     ret
-; Copies BC bytes from HL to DE through the C0 configuration (bank 1 at &4000, bank 3 at &C000), interrupts off meanwhile; the alternate registers carry the port and are saved.
+; Copies BC bytes from HL to DE through the C0 configuration (bank 1 at &4000, bank 3 at &C000), interrupts off meanwhile; the count in BC waits on the resident stack while BC carries the port.
 ; Only called from the flip code in bank 6: returns in config C6, with HL, DE advanced.
 dbCopy:
     di
