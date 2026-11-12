@@ -7470,6 +7470,8 @@ hullDummy:
 hullDraw:
     call hullFindType                   ; A = ship type 0..18 from the blueprint pointer in IY, carry if none
     jp c,todo_parseEdges
+    cp 3                                ; type 3 (alloy plate) has no fill record (tools/ship128.py): wireframe without copying its vertices first
+    jp z,todo_parseEdges
     ld (hullType),a
     ld a,(iy+3)                         ; copy 3 * vertex count bytes of buf_5860 to the resident buffer
     ld c,a

@@ -163,3 +163,33 @@ if __name__ == "__main__":
             safe = "".join(c if c.isalnum() or c in "._-" else "_" for c in name)
             (out / (safe + ".raw")).write_bytes(data)
             (out / safe).write_bytes(data[128:128 + h["length"]] if h else data)
+
+
+def add_file(d, secs, first, name, ext, data, load):
+    """Add a new AMSDOS file (header + data); files up to 16 KB (one extent)."""
+    payload = make_header(name, ext, load, len(data)) + data
+    return add_payload(d, secs, first, name, ext, payload, -(-len(payload) // 128))
+
+
+def overwrite_file(d, secs, first, name, new):
+    """Replace the contents of the existing file `name` (NAME.EXT) in the image bytes `d` with `new`, keeping its AMSDOS header and record padding.
+    Exits when the header length differs from len(new). Returns the parsed header."""
+    slots, total = [], 0
+    for _, off, blocks in find_extents(d, secs, first, name):
+        total += d[off + 15] * 128
+        for b in blocks:
+            for s in (0, 1):
+                ls = b * 2 + s
+                slots.append(secs[(ls // 9, first + ls % 9)][0])
+    hdr = bytes(d[slots[0]:slots[0] + 128])
+    h = amsdos_header(hdr)
+    if h is None or h["length"] != len(new):
+        raise SystemExit(f"{name}: header length {h and h['length']} != built length {len(new)}")
+    data = hdr + bytes(new)
+    data += b"\0" * (total - len(data))
+    for k, off in enumerate(slots):
+        chunk = data[k * 512:(k + 1) * 512]
+        if not chunk:
+            break
+        d[off:off + len(chunk)] = chunk
+    return h

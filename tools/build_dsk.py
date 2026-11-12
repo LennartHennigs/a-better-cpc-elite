@@ -16,7 +16,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import dskx  # noqa: E402
-from dskx import amsdos_header, sector_offsets  # noqa: E402
+from dskx import sector_offsets  # noqa: E402
 from hide_files import hide_entries  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -37,10 +37,7 @@ SJASM = Path.home() / ".local/bin/sjasmplus"
 FILES = {"LARGEAXX": [] if DE or FR else ["-DFIREBIRD"], "COMMONXX": ["-DTITLESEL"], "COMMON2X": [], "MUSIQUEX": ["-DTITLESEL"]}   # TITLESEL: cursor keys change the title ship
 
 
-def add_file(d, secs, first, name, ext, data, load):
-    """Add a new AMSDOS file (header + data); files up to 16 KB (one extent)."""
-    payload = dskx.make_header(name, ext, load, len(data)) + data
-    return dskx.add_payload(d, secs, first, name, ext, payload, -(-len(payload) // 128))
+add_file = dskx.add_file
 
 
 def flight_image(tag):
@@ -87,26 +84,6 @@ def main():
     d = bytearray(BASE.read_bytes())
     secs = sector_offsets(d)
     first = min(r for (t, r) in secs if t == 0)
-    dirdata = b"".join(d[secs[(0, first + i)][0]:secs[(0, first + i)][0] + 512] for i in range(4))
-    ents = {}
-    for i in range(64):
-        e = dirdata[i * 32:(i + 1) * 32]
-        if e[0] == 0xE5:
-            continue
-        name = (bytes(b & 0x7F for b in e[1:9]).decode().strip() + "." + bytes(b & 0x7F for b in e[9:12]).decode().strip())
-        ents.setdefault(name, []).append((e[12], e[15], [b for b in e[16:32] if b]))
-
-    def file_slots(name):
-        """Disk offsets of every 512-byte half block of a file, in file order, plus its length in bytes."""
-        slots, total = [], 0
-        for _, rc, blocks in sorted(ents[name]):
-            total += rc * 128
-            for b in blocks:
-                for s in (0, 1):
-                    ls = b * 2 + s
-                    slots.append(secs[(ls // 9, first + ls % 9)][0])
-        return slots, total
-
     with tempfile.TemporaryDirectory() as tmp:
         for n, defs in FILES.items():
             out = Path(tmp) / f"{n}.bin"
@@ -116,18 +93,7 @@ def main():
             if r.returncode:
                 sys.exit(f"{n}: assemble failed\n{r.stdout[-400:]}{r.stderr[-400:]}")
             new = out.read_bytes()
-            slots, total = file_slots(f"{n}.BIN")
-            hdr = bytes(d[slots[0]:slots[0] + 128])
-            h = amsdos_header(hdr)
-            if h is None or h["length"] != len(new):
-                sys.exit(f"{n}: header length {h and h['length']} != built length {len(new)}")
-            data = hdr + new
-            data += b"\0" * (total - len(data))   # old file keeps its record padding
-            for k, off in enumerate(slots):
-                chunk = data[k * 512:(k + 1) * 512]
-                if len(chunk) == 0:
-                    break
-                d[off:off + len(chunk)] = chunk
+            h = dskx.overwrite_file(d, secs, first, f"{n}.BIN", new)
             print(f"{n}.BIN: {len(new)} bytes written, header kept (load {h['load']:04X})")
     if MISSIONS:
         for tag in ("C", "P", "T", "R"):
