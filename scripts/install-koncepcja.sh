@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# Build konCePCja (https://github.com/ikari-pl/konCePCja), a pin-level CPC emulator with a TCP IPC server, into work/ext_koncepcja/.
+# Build konCePCja (https://github.com/ikari-pl/konCePCja), a pin-level CPC emulator with a TCP IPC server, into ~/.local/share/koncepcja.
+# Not inside the project: its makefile passes APP_PATH unquoted, so a path with a space ("cpc elite") breaks the compile.
 # Used as a second opinion next to cpcxray for raster-timing effects (colour split bands, interrupt phase); IPC notes in docs/_build.md.
-# Source-available licence (personal and hobby use): do not copy it into the repo or publish builds. Run it yourself: ! bash scripts/install-koncepcja.sh
+# Source-available licence (personal and hobby use): never copy it into the repo or publish builds. Run it yourself: ! bash scripts/install-koncepcja.sh
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-DEST="$ROOT/work/ext_koncepcja"
+DEST="$HOME/.local/share/koncepcja"
 brew install freetype zlib libpng cmake
 if [ ! -d "$DEST/.git" ]; then
   git clone --recurse-submodules https://github.com/ikari-pl/konCePCja.git "$DEST"
