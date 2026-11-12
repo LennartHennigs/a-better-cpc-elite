@@ -6,6 +6,7 @@ Needs output/flight128.sna and disk/elite128.dsk. Run 1 patches `ld a,1` at hull
 Screenshots output/order128_slot.png and output/order128_sorted.png.
 """
 import asyncio
+import os
 import json
 import re
 import sys
@@ -41,7 +42,7 @@ async def run(sort):
                 await c("registers_set", {"values": {"sp": sp, "pc": addr, **regs}})
                 return await c("run", {"max_us": 2_000_000, "timeout_s": 60})
 
-            await c("disk_insert", {"drive": "A", "path": "disk/elite128.dsk"})
+            await c("disk_insert", {"drive": "A", "path": os.environ.get("DISK128", "disk/elite128.dsk")})
             await c("sna_load", {"path": "output/flight128.sna"})
             await c("run", {"max_us": 4_000_000, "timeout_s": 60})
             if not sort:
@@ -53,7 +54,8 @@ async def run(sort):
             saved = await c("registers_get")
             trap = (await c("breakpoint_add", {"address": TRAP, "kind": "pc"}))["id"]
             await c("memory_write", {"address": 0x1C2F, "data": "00 FF 80  00 00 00  B6 7C 01"})
-            ships = [(NEAR, 0x0120, 0x00), (FAR, 0x01C0, 0x00)]
+            ZS = [int(v, 0) for v in os.environ.get("ZS", "0x120,0x1C0").split(",")]      # depth of the near and the far ship (16 bit; try 0x210,0x2F0 for the same high byte)
+            ships = [(NEAR, ZS[0], 0x00), (FAR, ZS[1], 0x00)]
             for typ, z, x in (ships[::-1] if REV else ships):
                 await call(0x816B)
                 ix = (await c("registers_get"))["ix"]
@@ -67,7 +69,7 @@ async def run(sort):
             await c("breakpoint_remove", {"breakpoint_id": trap})
             await c("registers_set", {"values": {k: saved[k] for k in ("af", "bc", "de", "hl", "ix", "iy", "sp", "pc", "af_", "bc_", "de_", "hl_") if k in saved}})
             await c("run", {"max_us": 1_500_000, "timeout_s": 60})
-            await c("screen_image", {"path": "output/order128_%s%s.png" % ("sorted" if sort else "slot", "_rev" if REV else "")})
+            await c("screen_image", {"path": "output/order128_%s%s%s.png" % ("sorted" if sort else "slot", "_rev" if REV else "", os.environ.get("TAG", ""))})
             reg = await c("registers_get")
             print("sorted" if sort else "slot order", f"pc=&{reg['pc']:04X} sp=&{reg['sp']:04X}", flush=True)
 

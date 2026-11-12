@@ -5224,12 +5224,14 @@ gfxAlertStateinHeaders:
     ds 0x4000 - $                       ; &3FFE-&3FFF: the two bytes of the old replacewithminus (moved to the resident glue)
     INCLUDE "gaps.asm"
 hullQ:                                  ; &8000-&8072 are free since the line drawing code moved to bank 7 with the block
-    ds 8 * 6                            ; per entry of the deferred hull list: IX, IY (words), B, key (0xFF = drawn)
+    ds 8 * 8                            ; per entry of the deferred hull list: IX, IY (words), B, key high byte (0xFF = drawn), key low byte, spare
 hullStack:
     ds 32                               ; resident stack for the calls into RAM bank 6: the game stack (bank 7) is hidden by the window configurations
 hullStackTop:
 hullSaveSP:
     dw 0
+hullBestLo:
+    db 0
     ds 0x8073 - $
 shipEntityInitMatrixdata:
     db 0x00,"2",0x00,0x00,"2",0x00,0x00,"2",0x00,0x00,0x00,0x00,0x00,0xFF,0xFF,0x00
@@ -7652,10 +7654,9 @@ hullDeferEntry:
     ld a,(hullQn)
     cp 8
     jr nc,hullNow                       ; full (cannot happen: 8 slots)
-    ld e,a
     add a,a
-    add a,e
-    add a,a                             ; * 6
+    add a,a
+    add a,a                             ; * 8
     ld e,a
     ld d,0
     ld hl,hullQ
@@ -7681,15 +7682,19 @@ hullNoLaser:
     inc hl
     ld a,(Viewdirection)
     bit 1,a
-    ld a,(ix+7)                         ; depth: z high byte for front and rear views, x high byte for left and right
+    ld a,(ix+7)                         ; depth: z (high byte, then low byte) for front and rear views, x for left and right
+    ld e,(ix+6)
     jr z,hullKey
     ld a,(ix+1)
+    ld e,(ix+0)
 hullKey:
     cp 0xFF
     jr nz,hullKeyOk
     dec a                               ; 0xFF marks an entry as drawn
 hullKeyOk:
     ld (hl),a
+    inc hl
+    ld (hl),e
     ld hl,hullQn
     inc (hl)
     ret
@@ -7719,13 +7724,23 @@ hullScan:
     jr nz,hullTake
     cp d
     jr c,hullNext
-    jr z,hullNext                       ; equal depth: the earlier slot stays first
+    jr nz,hullTake
+    inc hl
+    ld a,(hullBestLo)                   ; same high byte: the low byte decides
+    cp (hl)
+    dec hl
+    jr nc,hullNext                      ; equal depth: the earlier slot stays first
 hullTake:
+    ld a,(hl)
     ld d,a
+    inc hl
+    ld a,(hl)
+    ld (hullBestLo),a
+    dec hl
     ld c,e
 hullNext:
     ld a,l
-    add a,6
+    add a,8
     ld l,a
     jr nc,hullNc
     inc h
@@ -7735,9 +7750,8 @@ hullNc:
     bit 7,c
     jr nz,hullFlushEnd                  ; nothing left
     ld a,c
-    ld e,a
     add a,a
-    add a,e
+    add a,a
     add a,a
     ld e,a
     ld d,0
