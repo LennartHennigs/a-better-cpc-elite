@@ -66,14 +66,9 @@ mxFlightId:
     db FLID                         ; "0" default, "C", "P": which image is in RAM (the launch hook compares it)
 
 ; Launch hook: replaces the first call of launchSequence (`call loadIndicator`). Makes sure the flight image the state asks for is in this tail, then carries on with
-; loadIndicator. "T" while Trumbles are aboard, "C" while the Constrictor hunt is on (state 1 or 3), "P" while the plans are aboard, "S" while the stolen-ship mission waits or hunts, "R" while Ceerdi is being cleared, else "0" (this default image).
+; loadIndicator. "C" while the Constrictor hunt is on (state 1 or 3), "P" while the plans are aboard, "S" while the stolen-ship mission waits or hunts, "R" while Ceerdi is being cleared, else "T" while Trumbles are aboard, else "0" (this default image). A mission in progress wins over the Trumbles, so its hooks keep working.
 ; Nothing is loaded when the right image is already there. This code is the same in every image, at the same address, so the load can overwrite it while it waits.
 mxLaunchEntry:
-    ld hl,(mxTrCount)
-    ld a,h
-    or l
-    ld a,"T"
-    jr nz,mxFlightGo
     ld a,(mxStateByte)
     ld b,a
     and 0x03
@@ -101,6 +96,11 @@ mxLaunchEntry:
     ld a,"R"
     jr z,mxFlightGo
 mxFlightNone:
+    ld hl,(mxTrCount)                 ; no mission image wanted: the Trumbles image while they are aboard (a mission in progress must keep its own hooks), else the default
+    ld a,h
+    or l
+    ld a,"T"
+    jr nz,mxFlightGo
     ld a,"0"
 mxFlightGo:
     ld hl,mxFlightId

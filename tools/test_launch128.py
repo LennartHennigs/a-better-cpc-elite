@@ -13,6 +13,7 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
 STATE = int(sys.argv[1], 16) if len(sys.argv) > 1 else 0x71
+TR = int(os.environ.get("TR", "0"), 0)      # Trumbles aboard (16 bit count at &3905)
 
 
 async def main():
@@ -36,6 +37,7 @@ async def main():
             await c("run", {"max_us": 1_000_000, "timeout_s": 60})
             await c("memory_write", {"address": 0x38D9, "data": "01"})
             await c("memory_write", {"address": 0x38FD, "data": "%02X" % STATE})
+            await c("memory_write", {"address": 0x3905, "data": "%02X %02X" % (TR & 255, TR >> 8)})
             print("tail before:", (await rd(0x9D9E, 8)).hex(" "), " id:", chr((await rd(0x9DB9))[0] or 63))
             bp = (await c("breakpoint_add", {"address": 0x9C83, "kind": "pc"}))["id"]
             await c("key_press", {"key": "f1"})
