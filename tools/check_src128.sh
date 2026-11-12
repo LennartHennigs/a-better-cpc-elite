@@ -24,6 +24,6 @@ done
 sjasmplus -DENHANCED -DTITLESEL -DMISSIONS --raw="$OUT/c.bin" --sym="$OUT/c.sym" "$ROOT/src/elite128/commonxx.asm" >/dev/null 2>&1
 VB=$(awk '$1 == "hullVertexBuf:" || $2 == "hullVertexBuf:" { print $NF }' "$OUT/c.sym")
 sym() { awk -v n="$1:" '$1 == n || $2 == n { print $NF }' "$OUT/c.sym"; }
-DBDEF="-DDB_CURCFG=$(($(sym curCfg))) -DDB_ON=$(($(sym dbOn))) -DDB_SHOWN=$(($(sym dbShown))) -DDB_CNT=$(($(sym dbCnt))) -DDB_COPY=$(($(sym dbCopy))) -DDB_SCAN=$(($(sym dbScanFlag))) -DDB_MISS=$(($(sym missileCount))) -DDB_VARS=$(($(sym movementspeed))) -DDB_VLEN=$(($(sym todoLaunchFlag) - $(sym movementspeed)))"
+DBDEF="-DDB_CURCFG=$(($(sym curCfg))) -DDB_ON=$(($(sym dbOn))) -DDB_SHOWN=$(($(sym dbShown))) -DDB_CNT=$(($(sym dbCnt))) -DDB_COPY=$(($(sym dbCopy))) -DDB_SCAN=$(($(sym dbScanFlag))) -DDB_MISS=$(($(sym missileCount))) -DDB_STAT=$(($(sym FlagStationNear))) -DDB_LOCK=$(($(sym missileLockState))) -DDB_VARS=$(($(sym movementspeed))) -DDB_VLEN=$(($(sym todoLaunchFlag) - $(sym movementspeed)))"
 if [ -n "$VB" ] && sjasmplus -DVBUF=$((VB)) $DBDEF --raw="$ROOT/work/elite128/fill.bin" --sym="$ROOT/work/elite128/fill.sym" "$ROOT/src/elite128/fill.asm" >"$OUT/fill.log" 2>&1; then echo "fill: $(wc -c <"$ROOT/work/elite128/fill.bin") bytes (VBUF=$VB)"; else echo "fill: assemble FAILED"; tail -3 "$OUT/fill.log"; rc=1; fi
 exit $rc

@@ -53,6 +53,21 @@ async def main():
                 seen.append("%02X/%02X/%d" % (m[0], sh[0], sh[2]))
             print(" ".join(seen))
             await c("sna_save", {"path": "output/flip128.sna"})
+            # key events: right after each flip (the return of dbFlipTail) both cockpits must be equal
+            ret = csym["dbIsr"] - 1
+            for key in (None, "e", "e", "t", "m", "m", "u", None, "a", "a", None):
+                if key:
+                    await c("key_press", {"key": key})
+                bid = (await c("breakpoint_add", {"address": ret, "kind": "pc"}))["id"]
+                rep = await c("run", {"max_us": 3_000_000, "timeout_s": 60})
+                await c("breakpoint_remove", {"breakpoint_id": bid})
+                if key:
+                    await c("key_release", {"key": key})
+                await c("sna_save", {"path": "output/flip128_ev.sna"})
+                e = open("output/flip128_ev.sna", "rb").read()
+                x1, x3 = e[0x100 + 0x4000:0x100 + 0x8000], e[0x100 + 0xC000:0x100 + 0x10000]
+                d = [i for i in range(8 * 0x800) if 0x400 <= i % 0x800 < 0x600 and x1[i] != x3[i]]
+                print("event", key, rep.get("reason"), "cockpit bytes differing:", len(d), flush=True)
     d = open("output/flip128.sna", "rb").read()
     b1, b3 = d[0x100 + 0x4000:0x100 + 0x8000], d[0x100 + 0xC000:0x100 + 0x10000]
     cock = [(k * 0x800 + 0x400 + i) for k in range(8) for i in range(512)]

@@ -718,6 +718,8 @@ DB_CNT      equ 0
 DB_COPY     equ 0
 DB_SCAN     equ 0
 DB_MISS     equ 0
+DB_STAT     equ 0
+DB_LOCK     equ 0
 DB_VARS     equ 0
 DB_VLEN     equ 0
     ENDIF
@@ -776,7 +778,7 @@ dbfw2:
     ei
     ; what changed in the cockpit since the last flip, found without hooks in the drawing routines:
     ;  gauges (bars, missiles, speed digit, text): the player variables the bars are drawn from (DB_VARS, with their "last drawn" copies) and the missile count, compared with a
-    ;  snapshot; every 8th frame in any case (alert light, station and ECM letters are drawn on events that have no variable of their own here)
+    ;  snapshot; every 64th frame in any case (alert light, station and ECM letters are drawn on events that have no variable of their own here)
     ;  scanner: busy while a ship is in range or ECM runs, one frame longer for the clean-up (dbScanFlag, computed by dbFlipTail)
     ;  compass: every frame
     ld c,0
@@ -794,17 +796,30 @@ dbfSame:
     inc hl
     inc de
     djnz dbfCmp
-    ld a,(DB_MISS)
-    ld hl,dbSnapM
+    ld hl,dbWatch                       ; single variables behind indicators that are drawn on events: missiles, lock state, station near
+    ld de,dbSnapM
+    ld b,3
+dbfW:
+    ld a,(hl)
+    inc hl
+    push hl
+    ld h,(hl)
+    ld l,a
+    ld a,(de)
     cp (hl)
-    jr z,dbfM
-    ld (hl),a
+    jr z,dbfWs
+    ld a,(hl)
+    ld (de),a
     ld c,1
-dbfM:
+dbfWs:
+    pop hl
+    inc hl
+    inc de
+    djnz dbfW
     ld hl,dbTick
     inc (hl)
     ld a,(hl)
-    and 7
+    and 63
     jr nz,dbfNoTick
     ld c,1
 dbfNoTick:
@@ -936,7 +951,8 @@ zOff:       dw 0
 zBlk:       db 0
 zRow:       db 0
 dbTick:     db 0
-dbSnapM:    db 0
+dbSnapM:    ds 3
+dbWatch:    dw DB_MISS, DB_STAT, DB_LOCK
 dbSnap:     ds 40
 ; The copy keeps interrupts off while it runs, which would delay the raster-timed interrupts (colour split of the view and the dashboard). So the copies are paced by the interrupts:
 ; each one starts right after an interrupt handler returned (HALT) and at most DBWIN bytes are copied before the next HALT (DBWIN x 5.25 us stays below the 3.3 ms between interrupts
