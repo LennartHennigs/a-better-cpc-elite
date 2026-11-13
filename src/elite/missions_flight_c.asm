@@ -48,11 +48,8 @@ mxSpawnScan:
     ld a,(ix+34)
     and a
     jr z,mxSpawnNext
-    ld a,(ix+35)
-    cp shipdatConstrictor & 0xFF
-    jr nz,mxSpawnNext
     ld a,(ix+36)
-    cp shipdatConstrictor >> 8
+    cp shipdatConstrictor >> 8        ; the high byte alone is enough (see the ASSERT below)
     jr z,mxSpawnDone                  ; already there
 mxSpawnNext:
     djnz mxSpawnScan
@@ -88,9 +85,6 @@ mxKillHookImpl:
     call getBounty
     push af
     push hl
-    ld a,iyl
-    cp shipdatConstrictor & 0xFF
-    jr nz,mxKillDone
     ld a,iyh
     cp shipdatConstrictor >> 8
     jr nz,mxKillDone
@@ -110,9 +104,6 @@ mxKillDone:
 ; unchanged and returns NZ/NC, so the caller neither kills nor counts it. Every other ship gets the original store, flags untouched.
 mxLaserHookImpl:
     push af
-    ld a,(ix+35)
-    cp shipdatConstrictor & 0xFF
-    jr nz,mxLaserNormal
     ld a,(ix+36)
     cp shipdatConstrictor >> 8
     jr nz,mxLaserNormal
@@ -128,3 +119,4 @@ mxLaserNormal:
     ret
 
     INCLUDE "missions_hull.asm"
+    ASSERT shipdatConstrictor >= 0x9E00         ; the three tests above compare only the blueprint pointer's high byte: no other hull may start at or above &9E00 (stock hulls end below &9D9E, the other flight images carry none)

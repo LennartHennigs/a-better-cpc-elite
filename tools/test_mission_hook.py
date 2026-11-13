@@ -67,6 +67,10 @@ SCENARIOS.update({
 })
 SCENARIOS["t_stage_bits"] = (0x72, 6, 2, 10, 10, 0xF2, 0, 0x00, True, 0)       # offered with the hint stage bits (4-6) left over from the hunt
 SCENARIOS["t_plans_done"] = (0x0E, 6, 2, 10, 10, 0x0E, 0, 0x00, False, 0)      # plans already offered: no Trumbles offer any more
+SCENARIOS["t_blocks_plans"] = (0x82, 6, 2, 10, 10, 0x82, 0, 0x00, False, 0)     # Trumbles aboard (count 5): the plans are not offered (the docked stub returns, 2026-11-13)
+SCENARIOS["t_chain_resumes"] = (0x82, 6, 2, 10, 10, 0x86, 0, 0x00, True, 0)     # no Trumbles any more: the same state gets the plans offer
+EXTRA["t_blocks_plans"] = dict(cash=(6, 0), key="space", count=5, count_after=5, cash_delta=0)
+EXTRA["t_chain_resumes"] = dict(cash=(6, 0), key="space", count_after=0, cash_delta=0)
 for _k in ("t_during_hunt", "t_no_kills", "t_stage_bits", "t_plans_done"):
     EXTRA[_k] = dict(cash=(6, 0), key="space", count_after=0, cash_delta=0)
 AST0 = {"r_hunt_idle": 0x51, "r_reward": 2, "r_paid": 3}                      # &38FE before
@@ -74,7 +78,7 @@ AST1 = {"p_birera": range(5, 13), "r_offer": [0x51], "r_hunt_idle": [0x51], "r_r
 
 # Scenarios where the stub must return without touching the disk (no overlay load): they take a few ms, a load takes about 1750 ms.
 FAST = {"r_paid", "r_hunt_idle", "s_waiting_idle", "s_clearing_idle", "c_offer_low", "c_hint_wrong", "c_offer_galaxy3", "c_stage7_idle", "c_hint_stage2_wrong_place", "p_brief_low", "p_brief_g1", "p_ceerdi_wrong", "p_birera_early",
-        "t_cash_short", "t_poor", "t_offered_before", "t_during_hunt", "t_no_kills", "t_plans_done"}
+        "t_cash_short", "t_poor", "t_offered_before", "t_during_hunt", "t_no_kills", "t_plans_done", "t_blocks_plans"}
 
 
 async def main():

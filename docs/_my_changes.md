@@ -15,6 +15,7 @@ Every difference between our builds and the original game, with why it exists, w
 | Status screen: short labels, values and fuel number in column 9 | `ENHANCED` | English, German (new labels), French (all but the "Statut Legal" label) | the label strings in both string tables (same length), 4 bytes in `COMMON2X`, two bytes in `COMMONXX` | 0 |
 | Cash on the quantity line of buy, sell and equip | `ENHANCED` | all three | two 3-byte call operands (`clrLine0x15` -> `clrLineCash`) | 16 dead bytes in `LARGEAXX` (`&08E7`) and 7 in the dead block of `COMMONXX` (`cashHome`, `&1FEA`) |
 | Title screen ship choice, ship name on the press-space screen | `TITLESEL` | English, German, French (ship names are English in all three) | three call operands (two in German and French) plus one `call printELITE` in `COMMONXX` (same length) | about 280 bytes in the tail of `MUSIQUEX` |
+| A sells the whole hold in the sell menu | `ENHANCED` | English | the 3-byte operand of the `jp Inventory` at the end of the sell menu (`sellAllOperand`) | 48 bytes in the `LARGEAXX` tail (`sell_all.asm`; in the missions build inside the resident stub) |
 | Added missions | `MISSIONS` (+ `FL_*`, `OVL_*`) | English | about a dozen 3-byte call replacements (hook sites) | both zero tails, plus overlay and image files on disk |
 | Trainer and save tools | none (BASIC programs, host scripts) | UK, French, German saves | none | none |
 
@@ -52,6 +53,13 @@ The eleven `COMMONXX` addresses `musiquex.asm` hard-codes are checked by `check_
 
 The buy, sell and equipment prompts show the balance at the right end of text row `&16`, the row below the prompt where the typed quantity appears (8 characters ending at column 30, one decimal, space-padded by `printDeciCredit`). `clrLineCash` replaces `clrLine0x15` at two sites (`printInputQuestionforQuantity`, used by buy and sell, and `eqShoppingloop`): it clears the two rows, prints `getMoneyinHLDE` at `(22, &16)` and jumps to `cashHome`, which puts `charXY` back on `&1500` so the prompt prints as before. Because the prompt runs before every row, the balance is fresh after each purchase.
 `clrLineCash` sits in 16 dead bytes of `LARGEAXX` (`&08E7`, a ZX Spectrum attribute fill nothing calls), `cashHome` (7 bytes, `&1FEA`) at the end of the star-occlusion dead block in `COMMONXX`; `largeaxx.asm` calls it by address and `commonxx.asm` asserts it. `check_src.sh` requires the default `LARGEAXX` to equal the original and the `-DENHANCED` one to differ only in that slot and the two call operands. 
+
+## A key of the sell menu (`ENHANCED`)
+
+In the sell menu, A at a quantity prompt sells every good in the hold (the same row handler as typing the quantity, `sellQuantityofGood`) and leaves for the inventory screen. The old exit for any other key stays. `sell_all.asm` (48 bytes, one trade sound for the whole hold, no delay) sits in the free `LARGEAXX` tail
+(with `-DMISSIONS` inside the resident stub, before the overlay); the only changed stock bytes are the operand of the `jp Inventory` at `csGotoInventoryScreen`, which now reads `jp sellAllEntry`. Nothing before `EquipShip` moves, so the save key is untouched.
+`reAskifNotAllSold` counts the key down twice on its way there, so the routine compares with `"A"-2`; the other way in, the end of the menu loop, arrives with A = `0x11`. `check_src.sh` allows exactly the operand and the routine (`sellAllOperand`, `sellAllEntry..sellAllEnd`) as differences of `-DENHANCED`.
+Test: `tools/test_sellall.py` (boot, fill the hold, key 3, key A). English only so far; German and French need the hook and a localised key.
 
 ## The added missions (`MISSIONS`)
 

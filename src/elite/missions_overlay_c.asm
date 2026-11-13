@@ -7,9 +7,7 @@ mxModuleEntry:
     jr z,mxBriefing                   ; 0: not offered yet
     cp 0x03
     jr z,mxDebrief                    ; 3: killed, collect the reward
-    cp 0x01
-    ret nz                            ; 2: finished
-                                      ; 1: hunting, fall through to the hints
+                                      ; 1: hunting, fall through to the hints (the stub never loads this module for 2: finished)
 ; Hint chain: the stub only loads this module at the system of the current stage (mxStageTable), so here the stage just advances and its text is shown.
 mxHint:
     ld a,(missionState)
@@ -23,14 +21,9 @@ mxHint:
     add a,0x04                        ; string 5 + old stage = 4 + new stage
     jp mxShowEnd
 
-; Offer: needs 256 kill points and galaxy 1 or 2. Galaxy 2 skips the first two hints and starts at Cearso (stage 2).
+; Offer (the stub has checked 256 kill points and galaxy 1 or 2). Galaxy 2 skips the first two hints and starts at Cearso (stage 2).
 mxBriefing:
-    ld a,(mxKillScoreHigh)
-    and a
-    ret z
     ld a,(mxCurrentGalaxy)
-    cp 0x02
-    ret nc
     ld c,a
     rrca
     rrca

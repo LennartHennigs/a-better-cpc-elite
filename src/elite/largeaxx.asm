@@ -2,6 +2,11 @@
 ; load address 0x0840, 4608 bytes. Names come from Fessor's reconstruction where known,
 ; otherwise sub_ (call target), loc_ (jump target), dat_ (data/variable reference).
 
+; A key of the sell menu (sell_all.asm): -DENHANCED, English. With -DMISSIONS the routine sits in the stub, before the overlay (resident; the overlay is loaded after it)
+    IFDEF ENHANCED
+    DEFINE SELL_ALL
+    ENDIF
+
 ; names of addresses in the other binaries
 Viewdirection equ 0x1C02
 circleOffsetY equ 0x20C7
@@ -437,7 +442,12 @@ reAskifNotAllSold:
     dec a
     jr z,LAB_ram_0a9f
 csGotoInventoryScreen:
+    IFDEF SELL_ALL
+    jp sellAllEntry                 ; A sells the whole hold first (sell_all.asm), every other key just leaves
+    ELSE
     jp Inventory
+    ENDIF
+sellAllOperand equ $ - 2
 ; ZX Spectrum: sell_commodity_row (&E935)
 sellQuantityofGood:
     call snapshot_trade_state
@@ -1358,6 +1368,10 @@ missionsDockedTail:
     IFDEF MISSIONS
     INCLUDE "missions_docked.asm"              ; the stub; the overlay selected by -DOVL_C/P/T/R follows it
     ASSERT missionsDockedEntry == 0x1714       ; the hook in COMMONXX is `call 0x1714` (it cannot see this label)
+    ELSE
+      IFDEF SELL_ALL
+    INCLUDE "sell_all.asm"
+      ENDIF
     ENDIF
     ASSERT $ <= 0x1A40
     DS 0x1A40-$

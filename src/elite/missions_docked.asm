@@ -158,6 +158,10 @@ missionPrint:                          ; A = string number: print it at the curs
     ld hl,(mxOverlayBase+3)           ; the module's missionTextTable
     jp mxPrintStringScan
 
+    IFDEF SELL_ALL
+    INCLUDE "sell_all.asm"            ; the A key of the sell menu: resident, so before the overlay
+    ENDIF
+
 mxOverlayBase:                        ; the overlay file is loaded here
     IFDEF OVL_C
     INCLUDE "missions_overlay_c.asm"

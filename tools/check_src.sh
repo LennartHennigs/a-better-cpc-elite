@@ -22,10 +22,12 @@ for p in "largeaxx LARGEAXX" "commonxx COMMONXX" "common2x COMMON2X" "musiquex M
       if sjasmplus -DENHANCED --raw="$OUT/$n.enh.bin" --sym="$OUT/$n.enh.sym" "$SRC/$n.asm" >/dev/null 2>&1; then
         esym() { awk -v k="$1:" '$2 == k || $1 == k { print $NF }' "$OUT/$n.enh.sym"; }
         ST=$(( $(esym statusToken) - 0x840 )); STE=$(( ST + 7 )); [ -n "$(esym statusTokenEnd)" ] && STE=$(( $(esym statusTokenEnd) - 0x840 )); CL=$(( $(esym clrLineCash) - 0x840 )); PQ=$(( $(esym printInputQuestionforQuantity) - 0x840 )); EQ=$(( $(esym eqShoppingloop) - 0x840 ))
+        SA=-99999; SAE=-99999; SO=-99999   # A key of the sell menu (sell_all.asm): the 3-byte jp operand and the routine in the free tail
+        if [ -n "$(esym sellAllEntry)" ]; then SA=$(( $(esym sellAllEntry) - 0x840 )); SAE=$(( $(esym sellAllEnd) - 0x840 )); SO=$(( $(esym sellAllOperand) - 0x840 )); fi
         # the 104 bytes at EquipShip are the save key: any change breaks every existing save 
         KW=$(( $(esym EquipShip) - 0x840 ))
         if ! cmp -s <(dd if="$OUT/$n.enh.bin" bs=1 skip=$KW count=104 2>/dev/null) <(dd if="$REF" bs=1 skip=$KW count=104 2>/dev/null); then echo "$n -DENHANCED: save key window (EquipShip, 104 bytes) CHANGED: old saves will not load"; rc=1; fi
-        if cmp -l "$OUT/$n.enh.bin" "$REF" | awk -v cl=$CL -v st=$ST -v ste=$STE -v pq=$PQ -v eq=$EQ '{o=$1-1; if (!((o>=cl && o<cl+16) || (o>=st && o<ste) || o==pq+1 || o==pq+2 || o==eq+1 || o==eq+2)) bad=1} END{exit bad}'; then echo "$n -DENHANCED: ok (differs only in the clrLineCash slot, its two call sites and the status label)"; else echo "$n -DENHANCED: differs outside the clrLineCash slot and its call sites"; rc=1; fi
+        if cmp -l "$OUT/$n.enh.bin" "$REF" | awk -v cl=$CL -v st=$ST -v ste=$STE -v pq=$PQ -v eq=$EQ -v sa=$SA -v sae=$SAE -v so=$SO '{o=$1-1; if (!((o>=cl && o<cl+16) || (o>=sa && o<sae) || o==so || o==so+1 || (o>=st && o<ste) || o==pq+1 || o==pq+2 || o==eq+1 || o==eq+2)) bad=1} END{exit bad}'; then echo "$n -DENHANCED: ok (differs only in the clrLineCash slot, its two call sites, the status label and the sell-all key)"; else echo "$n -DENHANCED: differs outside the clrLineCash slot and its call sites"; rc=1; fi
       else echo "$n -DENHANCED: assemble FAILED"; rc=1; fi
     fi
     # COMMON2X -DENHANCED (English): only the fuel-line tab (call operand and inline byte)

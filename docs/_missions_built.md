@@ -59,9 +59,9 @@ Missions run one at a time, so their code is loaded when needed instead of being
 | Part | Constrictor | Plans | Stolen ship | Asteroids | Trumbles |
 |---|---|---|---|---|---|
 | Docked overlay file | `MISSIONC.BIN` 561 | `MISSIONP.BIN` 506 (also the stolen ship) | in `MISSIONP` | `MISSIONR.BIN` 170 | `MISSIONT.BIN` 178 |
-| Flight image file | `MFLIGHTC.BIN` 609 | `MFLIGHTP.BIN` 260 | `MFLIGHTS.BIN` 352 | `MFLIGHTR.BIN` 276 | `MFLIGHTT.BIN` 609 |
+| Flight image file | `MFLIGHTC.BIN` 588 | `MFLIGHTP.BIN` 260 | `MFLIGHTS.BIN` 352 | `MFLIGHTR.BIN` 276 | `MFLIGHTT.BIN` 600 |
 
-Default image `MFLIGHT0.BIN` 158 (what `COMMONXX.BIN` carries). **Limits:** docked stub plus largest overlay (Constrictor) ends at `&1A3F`, the last byte of the tail (0 spare); the Constrictor flight image is 609 of 610 (1 spare), so any further change there
+Default image `MFLIGHT0.BIN` 158 (what `COMMONXX.BIN` carries). **Limits:** docked stub (with the sell-all key, 48 bytes) plus largest overlay (Constrictor, trimmed 2026-11-13) ends at `&1A3C`, 3 bytes short of the end of the tail (`&1A3F`); the Constrictor flight image is 588 of 608 (20 spare, after comparing only the blueprint's high byte), the Trumbles image 600 (8 spare), so any further change there
 needs trimming first. Every image carries the launch picker and the recharge hook. Text is tokenised with the game's own digrams and string references (`tools/textenc.py`), 25-31% smaller than raw text. Mission text is in the default capitalised-words
 style (all caps): the stock mission screens use `{0D}`/`{13}` sentence case instead, which would cost about 38 docked bytes in the Constrictor overlay, so it stays as is for now.
 **Time (emulated):** an overlay load about 1.9-2.1 s; a launch with an image swap about 3.9 s against 2.0 s for `loadIndicator` alone; nothing extra when nothing is active or the right image is in RAM.
@@ -77,7 +77,7 @@ All run in cpcxray (`work/xray`, `~/.local/share/uv/tools/cpcxray/bin/python -I 
 ## 6. Limits and open items
 
 **Known limits** (code review, 2026-11-08):
-- While Trumbles are aboard the chain waits: the docked stub returns when the Trumble count is nonzero (6 bytes at its start, 2026-11-13; it ends exactly at `&1A40`, 0 spare), so no mission is offered, paid or running with the Trumbles image loaded (that image has none of the hooks). A player who accepts them and never meets a sun or a pod stalls the chain. The original has no end for Trumbles other than a sun; ours also ends them with an escape pod (`mxPodHook` in the dead block at `&1FDD` zeroes the count; the original leaves 1-7).
+- While Trumbles are aboard the chain waits: the docked stub returns when the Trumble count is nonzero (6 bytes at its start, 2026-11-13), so no mission is offered, paid or running with the Trumbles image loaded (that image has none of the hooks). A player who accepts them and never meets a sun or a pod stalls the chain. The original has no end for Trumbles other than a sun; ours also ends them with an escape pod (`mxPodHook` in the dead block at `&1FDD` zeroes the count; the original leaves 1-7).
 - A launch needs the game disk in the drive for the flight image (`loadFile` shows the firmware disk error and retries like every other game load; no mission-specific fallback).
 - The vector table and the stub sit at fixed addresses (`&9D9E`, `&1714`), guarded by `ASSERT`s; flight images must end at or below `&9FFE`.
 
