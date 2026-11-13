@@ -480,7 +480,7 @@ loc_1CD9:
     call printSplashscreen1
     call transferBuffertoScreen
     call setCommandsNOP
-    ld a,(pressedKey)
+    call getTitleKey
     inc a
     jr z,loc_1CD9
     cp 0x5A
@@ -500,7 +500,24 @@ CMDRLoadExtensions:
 branchNewCommander:
     IFDEF TITLESEL
     call TITLE_NEXT                 ; musiquex.asm: next ship in its list, spawned
-    ds 20
+tkStart:
+    jr getTitleKeyEnd
+titleKeyLatch:
+    db 0xFF
+; Returns the latched title key once (the latch is emptied: A = 0xFF) or, with nothing latched, the live pressedKey.
+getTitleKey:
+    ld hl,titleKeyLatch
+    ld a,(hl)
+    ld (hl),0xFF
+    inc a
+    jr z,gtkLive
+    dec a
+    ret
+gtkLive:
+    ld a,(pressedKey)
+    ret
+getTitleKeyEnd:
+    ds 20-($-tkStart)
     ELSE
     ld hl,splash2Shipnr
     inc (hl)
@@ -524,7 +541,7 @@ loc_1D1E:
     call printPressSpace
     call transferBuffertoScreen
 loc_1D36:
-    ld a,(pressedKey)
+    call getTitleKey
     inc a
     jr nz,loc_1D36
 loc_1D3C:
@@ -536,7 +553,7 @@ loc_1D3C:
     ELSE
     call transferBuffertoScreen
     ENDIF
-    ld a,(pressedKey)
+    call getTitleKey
     cp 0x20
     jr nz,loc_1D3C
     call loadNotMusique
@@ -7817,7 +7834,8 @@ titleNext:
     ld hl,splash2Shipnr
     ld a,(hl)
     and 0x80                        ; keep "key is down"
-    or 2                            ; always start on the Cobra Mk III (index 2)
+    or 0x42                         ; always start on the Cobra Mk III (index 2); bit 6 marks the press-space screen, so that the title text cache (key = this byte) does not
+                                    ; put the first screen's heading and prompt back over it
     ld (hl),a
     jr titleShow
 ; Step the ship on a fresh left or right press. The raw PPI rows are read because irki2 rewrites keybFlags2 into roll values.
@@ -7980,6 +7998,17 @@ name:
     discTrampoline CAS_OUT_ABANDON, CAS_OUT_ABANDON_FW
     discTrampoline CAS_OUT_DIRECT, CAS_OUT_DIRECT_FW
     discTrampoline CAS_CATALOG, CAS_CATALOG_FW
+; Title key latch (getTitleKey, in the padding behind TITLE_NEXT): the title frames take about 250 ms and the loops sample pressedKey once per frame, so a short tap on Y / N
+; / space fell between two samples. dbIsr (every interrupt) calls titleKeyIsr with A = the status flag; on the title (status 0) it keeps the last key seen in titleKeyLatch.
+titleKeyIsr:
+    and a
+    ret nz
+    ld a,(pressedKey)
+    inc a
+    ret z
+    dec a
+    ld (titleKeyLatch),a
+    ret
 hullGlueEnd:
     ASSERT $ <= 0x9C80, "the filled-hull glue does not fit in front of the mission bank routines"
     DS 0x9C80-$
@@ -8093,11 +8122,10 @@ dbIsr:
     ld a,(Viewdirection)
     cp 4
     jr nc,dbIsrFollow
-    and a                               ; the title screens (view 0, status flag below 4) are single buffered too: see dbFlip6
+    and a
     ret nz
-    ld a,(todoUnknownStatusFlags)
-    cp 4
-    ret nc
+    ld a,(todoUnknownStatusFlags)       ; view 0: the title (status 0) latches its keys; the screens flip in dbFlip6, nothing to follow
+    jp titleKeyIsr
 dbIsrFollow:
     ld hl,curCfg
     ld a,(dbShown)

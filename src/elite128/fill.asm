@@ -751,15 +751,18 @@ dbFlip6:
     ld a,(VIEWDIR)
     cp 4
     ret nc
-    and a                               ; view 0 with the status flag below 4 is the title (flight, the launch and docking tunnels have 4): single buffered like the other
-    jr nz,dbfFlight                     ; non-flight screens (dbIsr follows curCfg), which is what lets the text cache use the idle bank
+    and a                               ; view 0 with the status flag below 4 is the title (flight, the launch and docking tunnels have 4): double buffered, with the text cache
+    jr nz,dbfFlight
     ld a,(DB_STATUS)
     cp 4
-    jp c,TT_HOOK
+    jr nc,dbfFlight
+    call TT_HOOK                        ; title: the text rows come from the screen on show (fill_tt.asm), then the normal flip
+    jr dbfOn
 dbfFlight:
     ld a,(TT_ST)
     and a
     call nz,TT_OFF                      ; leaving the title: the text printers must run again next time
+dbfOn:
     ld a,(DB_ON)
     and a
     jr nz,dbfFlip

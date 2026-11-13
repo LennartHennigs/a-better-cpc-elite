@@ -9,29 +9,29 @@ TT_CNT      equ 0x4F32
     jp ttOff                            ; 0x6543 TT_OFF
 dbBases     equ DBBASES
 ; --- title text cache -------------------------------------------------------------------------------------------------------------------------------------------------------
-; The two title screens print a heading (text row 1) and a prompt (text row 14) into the bitmap every frame, which costs about 65 ms of a 320 ms frame. The titles draw straight into
-; the displayed bank (single buffer), so the other bank is idle: after one frame that printed the text, its 8 lines x 52 bytes (columns 8-59) of both rows are copied to the same
-; places of the other bank, and the two printers (printSplashscreen1, printPressSpace) are patched to a `ret`. Every later frame copies the rows back after the bitmap transfer
-; (about 5 ms). The cache belongs to one title ship index (splash2Shipnr changes on every screen change and cursor key), a different index, or any flight frame, unpatches the
-; printers again. The copy overwrites ship pixels inside those rows with the ones of the capture frame: only a ship reaching the first or last text row would show it.
+; The two title screens print a heading (text row 1) and a prompt (text row 14) into the bitmap every frame, which costs about 65 ms of a 320 ms frame. The titles are double
+; buffered like flight, and the screen on show holds the text of the last frame: from the second frame on the two printers (printSplashscreen1, printPressSpace) are patched to a
+; `ret` and every frame copies the 8 lines x 52 bytes (columns 8-59) of both rows from the screen on show into the draw screen before the flip (about 5 ms). The text is on both
+; screens all the time, so nothing flickers. The cache belongs to one title ship index (splash2Shipnr, without the key-down bit 7; it changes on every screen and cursor key): a
+; different index, or any flight frame, unpatches the printers again (that one frame has no text). The copy overwrites ship pixels inside those rows with the ones of the last frame:
+; only a ship reaching the first or last text row would show it.
 ttHook:
+    ld a,(DB_SHIPNR)
+    and 0x7F
+    ld hl,TT_KEY
+    ld c,a
     ld a,(TT_ST)
     and a
     jr z,ttCapture
-    ld a,(DB_SHIPNR)
-    ld hl,TT_KEY
+    ld a,c
     cp (hl)
-    jr nz,ttOff                         ; another ship: print again (this frame has no text, the next one has)
+    jr nz,ttOff                         ; another ship: print again
     ld a,(DB_CURCFG)
-    call dbBases                        ; HL = displayed bank, DE = the other one
-    ex de,hl                            ; restore: other -> displayed
+    call dbBases                        ; HL = draw screen, DE = screen on show
+    ex de,hl                            ; on show -> draw
     jr ttCopyAll
-ttCapture:
-    ld a,(DB_CURCFG)
-    call dbBases
-    call ttCopyAll                      ; displayed -> other
-    ld a,(DB_SHIPNR)
-    ld (TT_KEY),a
+ttCapture:                              ; this frame printed the text into the draw screen, which goes on show now
+    ld (hl),c
     ld a,1
     ld (TT_ST),a
     ld a,0xC9                           ; ret
