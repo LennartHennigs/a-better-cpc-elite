@@ -212,7 +212,7 @@ each frame (read at `&28D8`). Not tested: the pen 3 flicker during explosions. T
   station-launched ships, it calls `spawnCommandParser` with action 0 = `spawnCommand0`. That rolls a random byte minus the contraband weight C: below zero picks a hostile (`cmd0ChkSendHostileAfterUs`), `&50-&59` an asteroid, `&5A`+ nothing.
   The mission spawn checks hook in at its top. The invasion already forces a Thargoid there when `ThargonMissionVar` is 4.
 - **The escape pod (answered 2026-11-07):** a bug that affects no reward. `cargoHold` is `&38E2-&38F2` (17 goods), but the pod clear (`mleCleanInvLoop`) clears 17 bytes from `&38E1`, wiping `&38E1` (the market random byte) and goods 0-15
-  and **keeping alien items (good 16, `&38F2`)**; `cargoSpaceFree` is reset to the full capacity, so a pilot who ejects with alien items can hold more than the capacity. Fix: start the loop at `&38E2` (`ld hl,cargoHold`); not applied.
+  and **keeping alien items (good 16, `&38F2`)**; `cargoSpaceFree` is reset to the full capacity, so a pilot who ejects with alien items can hold more than the capacity. Fix: start the loop at `&38E2` (`ld hl,cargoHold`); applied under `-DENHANCED` in all three trees (`podCleanOperand`), the default build keeps the original bytes.
 - Not planned: Elite-A delivery missions, the Apple II's graphics, music. The BBC code is under Mark Moxon's annotations: behaviour only, the Z80 is written fresh. Builds start from the Firebird or German cracked disks, not the protected original.
 
 ## 4. Elite Plus

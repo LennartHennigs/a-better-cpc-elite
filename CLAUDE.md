@@ -15,6 +15,7 @@ write the modified build back to a DSK image that runs on a CPC emulator.
 - On every disk we build, `CAT` shows only `.BAS` and `.TXT` files (`ELITE.BAS`, our `CHEAT/EDITSAVE.BAS`, `README.TXT`); every other file (`.BIN` code,
   mission overlays, flight images) gets the System attribute. `tools/build_dsk.py` does it for all its variants, `tools/hide_files.py DISK` for finished images
   (`tools/build_cheat.sh` calls it); iDSK adds files unhidden, so hide again after any `iDSK -i` or `-r`. Check with `CAT` or by reading the directory, not `iDSK -l` (it lists hidden files).
+- Keep the save-game XOR key intact: the 104 bytes at `EquipShip` (`LARGEAXX` file offset `&2BE` stock, `&2C2` German) decode every commander save, so plans should leave them as they are. If a plan would change or move them (a tweak in that code, a shifted table before it, a different build flag), tell the user before doing it.
 - Fessor's material stays out of the repo and is not re-uploaded; see `extended/CLAUDE.md`. Exception, by his private mail: the Constrictor hull (`src/elite/missions_hull.asm`) and the use of his names and findings in the source, credited in `README.md`.
 - `scripts/build-fessor.sh` builds Fessor's source in `work/build_fessor_run/` and compares with the beta disk (user runs it).
 - Building downloaded source in Bash is blocked by the permission classifier. Put it in a script under
@@ -75,7 +76,8 @@ write the modified build back to a DSK image that runs on a CPC emulator.
 | Purpose | Tool | Status |
 |---|---|---|
 | Analysis emulator | **cpcxray** 0.9.4 (traces, disassembly, sjasmplus output, MCP server) | Installed with `uv tool`; `~/.local/bin/cpcxray` (not on PATH). Project folder `work/xray/`. Headless MCP and GUI both work. |
-| Other emulators | RVM (play and compare), MAME (traces), konCePCja (sector editor) | Not installed |
+| Other emulators | RVM 2.1 (play and compare; installed in `/Applications`, no remote interface: its debugger has only PC `break`, `poke`, `load`/`save`), MAME (traces, not installed), **konCePCja** (sector editor; see below) | konCePCja: source only in `work/ext_koncepcja/` (v6.6.0, not built, not installed) |
+| konCePCja for live memory tracking | Unlike RVM it has a TCP text protocol on `localhost:6543` (`docs/ipc-protocol.md` in its clone: `wp add <addr> [len] [r\|w\|rw]` watchpoints, memory read and search, breakpoints, `step`, `wait pc`), so Claude can drive it like cpcxray without the cpcxray GUI's keyboard problem. Needs a build (macOS, see its `AGENTS.md`/`CMakeLists.txt`; building downloaded source in Bash is blocked, so put it in a script under `scripts/` and ask the user to run it). Not tried yet: first use is the parked-RAM check (`TODO.md`, `tools/test_parked_ram.py`) | Planned |
 | DSK read and write | iDSK | Installed at `~/.local/bin/iDSK` (built by `scripts/install-tools.sh`). `iDSK x.dsk -l` lists, including hidden System files. |
 | Disassembly | cpcxray first; z80dismblr (unmaintained but works); Ghidra if cross-references are needed | z80dismblr and Ghidra not installed |
 | Assembler | **sjasmplus** (needed by cpcxray's `source-verify`), RASM as optional | sjasmplus 1.24.0 installed at `~/.local/bin/sjasmplus` (built by `scripts/install-tools.sh`; not in Homebrew). RASM 3.3.2 is built locally at `tools/bin/rasm` (needed for Fessor's source; not in Homebrew; rebuild with

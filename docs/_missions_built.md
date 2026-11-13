@@ -8,7 +8,7 @@ Everything lives on branch `addon-missions` (the former branches `missions-found
 ## 1. Missions, order, triggers
 
 The three stock missions (S1 to S3: supernova rescue, cloaking device, Thargon invasion) run first and unchanged: the docked stub hands over to the original `chkMissions` whenever `ThargonMissionVar` is not 0.
-The added chain is fixed: **Constrictor -> Thargoid plans -> stolen police ship -> asteroid bombardment**. The Trumbles are offered once, in the gap after the Constrictor is paid and before the plans are offered, so they never interrupt a running hunt; with Trumbles aboard the docked offers and payouts still work, but a mission that needs flight hooks (the Trumbles image carries none of them) cannot progress until a sun kills them, as in the original, where the sun is the only end.
+The added chain is fixed: **Constrictor -> Thargoid plans -> stolen police ship -> asteroid bombardment**. The Trumbles are offered once, in the gap after the Constrictor is paid and before the plans are offered, so they never interrupt a running hunt; while Trumbles are aboard the docked stub starts nothing else (it returns right after the stock-mission check), so no chain mission can be running when the Trumbles image is loaded. A sun ends them, as in the original, or an escape pod; until then the chain waits.
 
 Global prerequisites for every added mission: the files on the disk; for the chain at least 256 kill points (`killScoreHigh` >= 1; below that the stub returns without touching the disk; the Trumbles offer has no kill gate); no stock mission offer or reward pending.
 
@@ -32,7 +32,7 @@ Missions run one at a time, so their code is loaded when needed instead of being
   with the game's own `loadFile`. The docking sequence calls `&1714` in place of `chkMissions`. The stub tests the trigger first (state bytes, galaxy, system table `mxStageTable`, cash) and loads an overlay only where something can happen,
   about 2 s of emulated disk time; a docking with nothing to do costs nothing. Overlay layout: `jp entry`, `dw textTable`, code, strings; a module ends with `jp mxShowEnd` (message box, back to the docking code) or `ret`.
 - **Flight part.** The last 610 bytes of `COMMONXX` (`&9D9E-&9FFF`) hold a table of ten 3-byte `jp` vectors, an id byte and the launch hook, then at most one **flight image**. At every launch `mxLaunchEntry` picks the image for the state
-  (letter T Trumbles, C Constrictor, P plans, S stolen ship, R asteroids, 0 none) and loads `MFLIGHT?.BIN` only when it differs from the one in RAM. Every image has stubs for the vectors it does not use.
+  (letter T Trumbles, C Constrictor, P plans, S stolen ship, R asteroids, 0 none; T is tested first, which is safe because the docked stub lets no chain mission run while Trumbles are aboard, but a poked state or an old save can have both, see `elite128` commit `52573a7` for the reorder: mission image first, T only when none is wanted) and loads `MFLIGHT?.BIN` only when it differs from the one in RAM. Every image has stubs for the vectors it does not use.
 - **Hook sites in stock code** (each a 3-byte `call` replacement, so no stock routine moves): `spawnShip` (`mxShipTable`, serves ship type 19), `spawnCommand0` (`mxSpawnCheck`), `todo_killedsomeone` (`mxKillHook`, replaces `call getBounty`),
   `applyLaserDamagetoEntity` (`mxLaserHook`), `RechargeEnergy` (`mxRecharge`), the docking sequence (`&1714`), `launchSequence` (`mxLaunchEntry`), `setShipvarsAtArrival` (`mxArrive`), `todoOverheating` (`mxSun`), the Inventory loop
   (`mxInvHook`) and the `call transferBuffertoScreen` in `Spaceflight` at `&1E4D` (`mxFlightDraw`, the sprites).
@@ -77,7 +77,7 @@ All run in cpcxray (`work/xray`, `~/.local/share/uv/tools/cpcxray/bin/python -I 
 ## 6. Limits and open items
 
 **Known limits** (code review, 2026-11-08):
-- While Trumbles are aboard, a running chain mission cannot progress in flight (the Trumbles image has none of its hooks); the docked stub still offers and pays. The original has no end for Trumbles other than a sun; ours also ends them with an escape pod (`mxPodHook` in the dead block at `&1FDD` zeroes the count; the original leaves 1-7).
+- While Trumbles are aboard the chain waits: the docked stub returns when the Trumble count is nonzero (6 bytes at its start, 2026-11-13; it ends exactly at `&1A40`, 0 spare), so no mission is offered, paid or running with the Trumbles image loaded (that image has none of the hooks). A player who accepts them and never meets a sun or a pod stalls the chain. The original has no end for Trumbles other than a sun; ours also ends them with an escape pod (`mxPodHook` in the dead block at `&1FDD` zeroes the count; the original leaves 1-7).
 - A launch needs the game disk in the drive for the flight image (`loadFile` shows the firmware disk error and retries like every other game load; no mission-specific fallback).
 - The vector table and the stub sit at fixed addresses (`&9D9E`, `&1714`), guarded by `ASSERT`s; flight images must end at or below `&9FFE`.
 

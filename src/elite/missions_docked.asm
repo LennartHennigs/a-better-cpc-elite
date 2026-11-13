@@ -8,6 +8,10 @@ missionsDockedEntry:                  ; = &1714, the fixed entry the docking cod
     ld a,(mxThargonMissionVar)
     and a
     jp nz,mxChkMissions               ; an existing mission offer or reward is pending: its turn, returns to the docking code
+    ld hl,(mxTrCount)
+    ld a,h
+    or l
+    ret nz                            ; Trumbles aboard: no chain mission starts or runs until a sun or an escape pod ends them (the Trumbles flight image has none of the hooks)
     ld a,(missionState)
     ld b,a
     and 0x8F
