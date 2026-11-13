@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Spawn every ship type (0..18) straight ahead in the 128K build, one at a time, and screenshot it: output/hulls128_NN.png (128K plan, Phase 1).
+"""Spawn every ship type (0..19) straight ahead in the 128K build, one at a time, and screenshot it: output/hulls128_NN.png (128K plan, Phase 1).
 
-NOTE: spawn at most three or four types per run: after four consecutive spawns the session degrades (the engine counts the slots; emptying a slot by writing ix+34 does not undo that). Hostile ships have their AI switched off here (bit 7 of ix+32); type 3 (alloy plate) is drawn as wireframe by design; type 1 (missile) is tiny at the default depth.
+NOTE: spawn at most three or four types per run: after four consecutive spawns the session degrades (the engine counts the slots; emptying a slot by writing ix+34 does not undo that). Hostile ships have their AI switched off here (bit 7 of ix+32); type 19 needs CBLOB=file (the image C tail); type 1 (missile) is tiny at the default depth.
 usage (from work/xray):  PATH=$HOME/.local/bin:$PATH ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_hulls128.py [TYPE ...]
 Needs output/flight128.sna (tools/test_flight128.py) and disk/elite128.dsk. Method of tools/test_flight_hull.py: stop at handleEntitys (&5066), lookforFreeSlot (&816B) gives IX,
 spawnShip (&80CD) builds the type, the position is set ahead (z = &180, big hulls farther), setDirectionofEntity (&82B8) builds the orientation (nose pointing away from us),
@@ -50,6 +50,8 @@ async def main():
             saved = await c("registers_get")
             trap_bp = (await c("breakpoint_add", {"address": TRAP, "kind": "pc"}))["id"]
             await c("memory_write", {"address": 0x1C2F, "data": "00 FF 80  00 00 00  B6 7C 01"})      # planet far to the left
+            if os.environ.get("CBLOB"):      # type 19 (Constrictor) lives in flight image C: put that image's tail (&9D9E-&9FFF, assembled with -DFL_C) in place
+                await c("memory_write", {"address": 0x9D9E, "data": open(os.environ["CBLOB"], "rb").read().hex()})
             for t in TYPES:
                 await call(0x816B)
                 ix = (await c("registers_get"))["ix"]
@@ -64,6 +66,8 @@ async def main():
                 await c("registers_set", {"values": {k: saved[k] for k in ("af", "bc", "de", "hl", "ix", "iy", "sp", "pc", "af_", "bc_", "de_", "hl_") if k in saved}})
                 await c("run", {"max_us": 1_000_000, "timeout_s": 60})
                 await c("screen_image", {"path": f"output/hulls128_{t:02d}.png"})
+                if os.environ.get("DUMPVB"):      # the last projected vertices (x lo/hi, y lo/hi... as copied by hullDraw), address from commonxx.sym
+                    print((await c("memory_read", {"address": int(os.environ["DUMPVB"], 0), "length": 84}))["hex"])
                 reg = await c("registers_get")
                 print(f"type {t:2d}: pc=&{reg['pc']:04X} sp=&{reg['sp']:04X}", flush=True)
                 await c("memory_write", {"address": ix + 34, "data": "00"})                              # empty the slot

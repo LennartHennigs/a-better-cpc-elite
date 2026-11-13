@@ -7,7 +7,7 @@ mxKillHook equ 0x9DA4   ; generated: label of commonxx
 mxLaserHook equ 0x9DA7   ; generated: label of commonxx
 mxLaunchEntry equ 0x9DBA   ; generated: label of commonxx
 mxSun equ 0x9DB0   ; generated: label of commonxx
-curCfg equ 0x9864   ; generated: label of commonxx
+curCfg equ 0x9854   ; generated: label of commonxx
 dbCopy equ 0x9D66   ; generated: label of commonxx
 dbOn equ 0x9CFF   ; generated: label of commonxx
 dbShown equ 0x9CFB   ; generated: label of commonxx
@@ -67,7 +67,7 @@ circleOffsetY equ 0x20C7   ; generated: label of commonxx
 cleanScannerUpdateECMIndicator equ 0x29FE   ; generated: label of commonxx
 clearCircle equ 0x6797   ; generated: label of commonxx
 clearKeyBuffer equ 0x3E6C   ; generated: label of commonxx
-clrLine0x15 equ 0x9722   ; generated: label of commonxx
+clrLine0x15 equ 0x9712   ; generated: label of commonxx
 creditsHighWord equ 0x38DD   ; generated: label of commonxx
 creditsLowWord equ 0x38DF   ; generated: label of commonxx
 currentGalaxy equ 0x38DC   ; generated: label of commonxx
@@ -100,11 +100,11 @@ galacticHyperdrive equ 0x3904   ; generated: label of commonxx
 galaxySeed equ 0x3907   ; generated: label of commonxx
 getBounty equ 0x39B7   ; generated: label of commonxx
 government equ 0x3D5F   ; generated: label of commonxx
-hullBegin equ 0x99F9   ; generated: label of commonxx
-hullDeferEntry equ 0x9A13   ; generated: label of commonxx
-hullDraw equ 0x986D   ; generated: label of commonxx
-hullDummy equ 0x9865   ; generated: label of commonxx
-hullFlush equ 0x9A62   ; generated: label of commonxx
+hullBegin equ 0x99E4   ; generated: label of commonxx
+hullDeferEntry equ 0x99FE   ; generated: label of commonxx
+hullDraw equ 0x985D   ; generated: label of commonxx
+hullDummy equ 0x9855   ; generated: label of commonxx
+hullFlush equ 0x9A4D   ; generated: label of commonxx
 inputPitch equ 0x1C04   ; generated: label of commonxx
 inputRoll equ 0x1C03   ; generated: label of commonxx
 irki2_dat1 equ 0x8F3E   ; generated: label of commonxx
@@ -121,7 +121,7 @@ laserTypes equ 0x38F4   ; generated: label of commonxx
 legalStatus equ 0x38D6   ; generated: label of commonxx
 loadIndicator equ 0x8717   ; generated: label of commonxx
 loadLARGEAXX equ 0x8732   ; generated: label of commonxx
-longDelay equ 0x9715   ; generated: label of commonxx
+longDelay equ 0x9705   ; generated: label of commonxx
 marketStock equ 0x3914   ; generated: label of commonxx
 missileLockState equ 0x38C6   ; generated: label of commonxx
 missileTargetEntity equ 0x3951   ; generated: label of commonxx
@@ -130,7 +130,7 @@ msgECMJammer equ 0x3936   ; generated: label of commonxx
 msgSupernovaMission equ 0x3944   ; generated: label of commonxx
 msgTargetLost equ 0x393A   ; generated: label of commonxx
 numberOfDigits equ 0x3947   ; generated: label of commonxx
-parseStoredToken equ 0x96D5   ; generated: label of commonxx
+parseStoredToken equ 0x96C5   ; generated: label of commonxx
 placeCursor equ 0x3F0E   ; generated: label of commonxx
 pointerUnitMarketPrice equ 0x3E2A   ; generated: label of commonxx
 populationCount equ 0x3D61   ; generated: label of commonxx

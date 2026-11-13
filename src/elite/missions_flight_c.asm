@@ -127,4 +127,8 @@ mxLaserNormal:
     ld (ix+34),a
     ret
 
+    IFDEF HULL_128
+    INCLUDE "../elite128/missions_hull.asm"     ; the 128K tree has its own hull (filled like every other: ArcElite vertices, see that file)
+    ELSE
     INCLUDE "missions_hull.asm"
+    ENDIF

@@ -11,10 +11,13 @@ Outputs in work/elite128/:
   shipdata128.asm   one blueprint per stock ship label, same label names and order as the stock data: the 23-byte header is the stock header
                     (energy, laser, bounty, scale, ... stay classic) with the counts and offsets patched; the geometry is the ArcElite hull as
                     vertices only (6 bytes each: |x|, |y|, |z|, signs<<5 | 0x1F, face nibbles 0x00 = always visible); edges and faces are empty
-                    (the filled path culls by screen winding, see docs/_filled_ships.md). Ships without an ArcElite hull (the alloy plate) keep
-                    their stock bytes and no fill record.
+                    (the filled path culls by screen winding, see docs/_filled_ships.md). The alloy plate has no ArcElite hull: its four stock
+                    vertices become two double-sided quads' worth of triangles (one colour per side).
   fill128.bin       bank 6 payload: byte 20 (ship types), 20 words (offset of the type's record from the start of the file, 0 = none), then records
-                    ntri, flags (bit 0: convex), ntri x (v0, v1, v2, pattern<<5 | group)
+                    ntri, flags (bit 0: convex), ntri x (v0, v1, v2, pattern<<5 | group). The records of the alloy plate and the Constrictor do not fit in front of
+                    the title cache module (0x540): they are in fill128_late.bin, which tools/build_dsk128.py places at LATE (after that module)
+  hull_constrictor.asm  the mission hull (ship type 19) for src/elite128/missions_hull.asm: Fessor's header, the ArcElite CONSTRICTOR vertices fitted to
+                    his hull (his own vertices are only used to pick the axis map and the scale)
   ship128_points.json  the quantised vertices per ship type (for tests)
   ship128_report.txt  per hull: chosen axis map, quantisation error, vertex/triangle/group counts
 
@@ -33,9 +36,9 @@ spec = importlib.util.spec_from_file_location("gen", ROOT / "tools/proto_fill/ge
 gen = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(gen)
 
-# stock blueprint label -> ArcElite hull (None: keep the stock geometry). Stubs (RockHermit, SingleTrader, BigTrader) share the geometry of the blueprint
+# stock blueprint label -> ArcElite hull ("ALLOY": no ArcElite hull, see alloy()). Stubs (RockHermit, SingleTrader, BigTrader) share the geometry of the blueprint
 # that follows them and are patched from it.
-HULL = {"shipdatCoriolis": "CORIOLIS", "shipdatMissile": "MISSILE", "shipdatCapsule": "ESCAPEPOD", "shipdatAlloy": None, "shipdatCargo": "CANNISTER",
+HULL = {"shipdatCoriolis": "CORIOLIS", "shipdatMissile": "MISSILE", "shipdatCapsule": "ESCAPEPOD", "shipdatAlloy": "ALLOY", "shipdatCargo": "CANNISTER",
         "shipdatSplinter": "FRAGMENT", "shipdatAsteroid": "ASTEROID", "shipdatViper": "VIPER", "shipdatPythonPirate": "PYTHON",
         "shipdatCobraMk3Pirate": "COBRA", "shipdatAspMk2": "ASP", "shipdatFerDeLance": "FERDELANCE", "shipdatThargoid": "THARGOID",
         "SHIPDATPIRATE1": "SIDEWINDER", "SHIPDATPIRATE2": "KRAIT", "shipdatThargon": "THARGON"}
@@ -45,6 +48,10 @@ STUB_OF = {"shipdatRockHermit": "shipdatAsteroid", "SHIPDATSINGLETRADER": "shipd
 AXIS_OVERRIDE = {"shipdatCoriolis": ((2, 0, 1), (1, 1, 1))}      # label -> (perm, signs), e.g. "shipdatViper": ((0, 1, 2), (1, 1, -1)); applied to the ArcElite point (x, y, z)
 CONVEX = {"shipdatCoriolis", "shipdatMissile", "shipdatCapsule", "shipdatCargo", "shipdatSplinter", "shipdatViper", "SHIPDATPIRATE1", "shipdatThargon"}  # unchecked guess; the tool does not test convexity yet
 TABLE = 0x1B78
+LATE = 0x5C0                 # file offset of fill128_late.bin (fill_tt.asm sits at 0x540, 117 bytes)
+MAIN_END = 0x540
+FESSOR_HULL = ROOT / "src/elite/missions_hull.asm"
+TYPE_CONSTRICTOR = 19
 PATTERNS = [p for p in gen.PATTERN_ORDER if p != 0]      # brightest first; pattern 0 is solid pen 1, the colour of the empty view, so a hull face in it would vanish
 
 
@@ -167,6 +174,73 @@ def triangles(facets, pts):
     return out, n_groups
 
 
+def fit(stock, pts_a, facets, label):
+    """ArcElite hull -> (quantised vertices, triangles, group count, axis map, match error, scale), at the stock hull's radius."""
+    assert len(pts_a) <= 28, (label, len(pts_a))
+    (perm, sg), err = best_axis(stock, pts_a, label)
+    tp = [apply(p, perm, sg) for p in pts_a]
+    k = radius(stock) / radius(tp)       # same bounding radius as the stock hull (rotation invariant, so a wrong axis map does not skew the size)
+    q = [tuple(int(round(c * k)) for c in p) for p in tp]
+    assert all(abs(c) <= 255 for p in q for c in p), label
+    tris, ngroups = triangles(facets, tp)
+    assert ngroups <= 31 and len(tris) < 256
+    return q, tris, ngroups, (perm, sg), err, k
+
+
+def record(label, tris):
+    cols = sorted({t[3] for t in tris}, reverse=True)
+    pat = {c: PATTERNS[i % len(PATTERNS)] for i, c in enumerate(cols)}
+    return bytes([len(tris), 1 if label in CONVEX else 0]) + b"".join(bytes([t[0], t[1], t[2], pat[t[3]] << 5 | t[4]]) for t in tris)
+
+
+def gun_vertex(q):
+    return max(range(len(q)), key=lambda i: (q[i][2], -abs(q[i][0])))    # gun vertex (lookup_vertex_coords): the nose, the vertex furthest along +z
+
+
+def alloy(m, a):
+    """The plate: its 4 stock vertices, two triangles per side (the fill culls by winding, so each side shows its own pair); the sides get different colours."""
+    q = stock_points(m, a)
+    return q, [(0, 1, 2, 118, 0), (0, 2, 3, 118, 1), (0, 2, 1, 42, 2), (0, 3, 2, 42, 3)], 4
+
+
+def fessor_constrictor():
+    """(header lines, vertices) of Fessor's Constrictor in src/elite/missions_hull.asm."""
+    lines = FESSOR_HULL.read_text().splitlines()
+    i0 = next(i for i, l in enumerate(lines) if l.startswith("shipdatConstrictor:"))
+    i1 = next(i for i, l in enumerate(lines) if l.startswith("constrictorVertices:"))
+    i2 = next(i for i, l in enumerate(lines) if l.startswith("constrictorEdges:"))
+    pts = []
+    for l in lines[i1 + 1:i2]:
+        v = [int(x, 16) for x in l.split(";")[0].strip()[3:].split(",")]
+        pts.append(tuple((-1 if v[3] & b else 1) * v[i] for i, b in enumerate((0x80, 0x40, 0x20))))
+    return lines[i0 + 1:i1], pts
+
+
+def constrictor():
+    """-> (asm text of the blueprint, vertices, triangles)."""
+    head, stock = fessor_constrictor()
+    pts_a, facets = gen.parse("CONSTRICTOR")
+    ctr = [min(p[i] for p in pts_a) + max(p[i] for p in pts_a) for i in range(3)]       # this hull is not centred on its origin (x runs -52..17): centre the bounding box (doubled units)
+    pts_a = [[2 * p[i] - ctr[i] for i in range(3)] for p in pts_a]
+    q, tris, ngroups, (perm, sg), err, k = fit(stock, pts_a, facets, "Constrictor")
+    out = []
+    for n, l in enumerate(head):
+        code = l.split(";")[0].strip()
+        if n in (3, 4, 5):                                       # vertex, edge and face counts
+            l = f"    db {len(q) if n == 3 else 0}   ; " + ("vertices" if n == 3 else "edges" if n == 4 else "faces") + " (vertices only: the fill needs no edges)"
+        elif code.startswith("dw constrictorEdges") or code.startswith("dw constrictorFaces"):
+            l = l.replace("constrictorEdges", "constrictorEnd").replace("constrictorFaces", "constrictorEnd")
+        out.append(l)
+    # header byte 20 is the gun vertex: the line holding "Gun-Vertex"
+    out = [f"    db {gun_vertex(q)}   ; Gun-Vertex (the nose)" if "Gun-Vertex" in l else l for l in out]
+    lines = ["; generated by tools/ship128.py: Fessor's Constrictor header with the ArcElite CONSTRICTOR vertices (third party data): do not commit", "shipdatConstrictor:"]
+    lines += out + ["constrictorVertices:"]
+    lines += ["    db " + ",".join(f"0x{x:02X}" for x in vertex_bytes(p)) for p in q]
+    lines += ["constrictorEnd:", ""]
+    note = f"{'shipdatConstrictor':24s} CONSTRICTOR axes {perm} signs {sg}  match error {err:.3f}  scale {k:.3f}  {len(q)} vertices {len(tris)} triangles {ngroups} groups  (Fessor's {len(stock)} vertices as reference)"
+    return "\n".join(lines), q, tris, note
+
+
 def vertex_bytes(p):
     x, y, z = p
     return bytes([abs(x), abs(y), abs(z), (0x80 if x < 0 else 0) | (0x40 if y < 0 else 0) | (0x20 if z < 0 else 0) | 0x1F, 0x00, 0x00])
@@ -182,26 +256,19 @@ def main():
     for a, label in order:
         if label in STUB_OF:
             continue
-        if label not in HULL or HULL[label] is None:
+        if label == "shipdatAlloy":
+            q, tris, ngroups = alloy(m, a)
+            perm, sg, err, k = (0, 1, 2), (1, 1, 1), 0.0, 1.0
+        elif label not in HULL:
             end = ends[label]
             blobs[label] = m[a:end] if end else m[a:a + 23]
             report.append(f"{label:24s} kept (stock bytes)")
             continue
-        pts_a, facets = gen.parse(HULL[label])
-        assert len(pts_a) <= 28, (label, len(pts_a))
-        stock = stock_points(m, a)
-        (perm, sg), err = best_axis(stock, pts_a, label)
-        tp = [apply(p, perm, sg) for p in pts_a]
-        k = radius(stock) / radius(tp)       # same bounding radius as the stock hull (rotation invariant, so a wrong axis map does not skew the size)
-        q = [tuple(int(round(c * k)) for c in p) for p in tp]
-        assert all(abs(c) <= 255 for p in q for c in p), label
-        tris, ngroups = triangles(facets, tp)
-        assert ngroups <= 31 and len(tris) < 256
-        cols = sorted({t[3] for t in tris}, reverse=True)
-        pat = {c: PATTERNS[i % len(PATTERNS)] for i, c in enumerate(cols)}
+        else:
+            q, tris, ngroups, (perm, sg), err, k = fit(stock_points(m, a), *gen.parse(HULL[label]), label)
         hdr = bytearray(m[a:a + 23])
         hdr[3], hdr[4], hdr[5] = len(q), 0, 0
-        hdr[20] = max(range(len(q)), key=lambda i: (q[i][2], -abs(q[i][0])))    # gun vertex (lookup_vertex_coords): the nose, the vertex furthest along +z
+        hdr[20] = gun_vertex(q)
         vo = 23
         vert = b"".join(vertex_bytes(p) for p in q)
         end_off = vo + len(vert)
@@ -209,10 +276,9 @@ def main():
         hdr[14:16] = end_off.to_bytes(2, "little")
         hdr[16:18] = end_off.to_bytes(2, "little")
         blobs[label] = bytes(hdr) + vert
-        rec = bytes([len(tris), 1 if label in CONVEX else 0]) + b"".join(bytes([t[0], t[1], t[2], pat[t[3]] << 5 | t[4]]) for t in tris)
-        fill[label] = rec
+        fill[label] = record(label, tris)
         pts_by[label] = q
-        report.append(f"{label:24s} {HULL[label]:10s} axes {perm} signs {sg}  match error {err:.3f}  scale {k:.3f}  {len(q)} vertices {len(tris)} triangles {ngroups} groups  blueprint {len(blobs[label])} bytes (stock {ends[label] - a if ends[label] else '?'})")
+        report.append(f"{label:24s} {HULL.get(label) or 'ALLOY':10s} axes {perm} signs {sg}  match error {err:.3f}  scale {k:.3f}  {len(q)} vertices {len(tris)} triangles {ngroups} groups  blueprint {len(blobs[label])} bytes (stock {ends[label] - a if ends[label] else '?'})")
     for stub, donor in STUB_OF.items():
         hdr = bytearray(m[sym[stub]:sym[stub] + 23])
         d = blobs[donor]
@@ -237,20 +303,35 @@ def main():
         addr = m[TABLE + 4 * i + 1] | m[TABLE + 4 * i + 2] << 8
         label = next(n for n, a in sym.items() if a == addr)
         types.append(STUB_OF.get(label, label))
-    body, offs = b"", []
+    asm, cq, ctris, note = constrictor()
+    (OUT / "hull_constrictor.asm").write_text(asm)
+    report.append(note)
+    fill["shipdatConstrictor"] = record("shipdatConstrictor", ctris)
+    pts_by["shipdatConstrictor"] = cq
+    types.append("shipdatConstrictor")
+    assert len(types) == TYPE_CONSTRICTOR + 1
+    LATE_TYPES = {"shipdatAlloy", "shipdatConstrictor"}      # their records go behind the title cache module
+    body, late, offs, placed = b"", b"", [], {}
     base = 1 + 2 * 20
     for t in range(20):
-        lab = types[t] if t < 19 else None
-        if lab in fill:
-            offs.append(base + len(body))
-            body += fill[lab]
+        lab = types[t]
+        if lab in LATE_TYPES:
+            offs.append(LATE + len(late))
+            late += fill[lab]
+        elif lab in fill:
+            if lab not in placed:                  # the stub types (single trader, big trader, Rock Hermit) share their donor's record
+                placed[lab] = base + len(body)
+                body += fill[lab]
+            offs.append(placed[lab])
         else:
             offs.append(0)
+    assert base + len(body) <= MAIN_END, f"fill records ({base + len(body)} bytes) run into the title cache module at {MAIN_END:#x}"
     import json
-    (OUT / "ship128_points.json").write_text(json.dumps({str(t): {"name": types[t], "points": pts_by[types[t]]} for t in range(19) if types[t] in pts_by}))
+    (OUT / "ship128_points.json").write_text(json.dumps({str(t): {"name": types[t], "points": pts_by[types[t]]} for t in range(20) if types[t] in pts_by}))
     (OUT / "fill128.bin").write_bytes(bytes([20]) + b"".join(o.to_bytes(2, "little") for o in offs) + body)
+    (OUT / "fill128_late.bin").write_bytes(late)
     report.extend(report_note)
-    report.append(f"fill128.bin: {1 + 40 + len(body)} bytes; blueprints replaced: {sum(len(b) for b in blobs.values())} bytes (stock region {sum((ends[n] or a + 23) - a for a, n in order)})")
+    report.append(f"fill128.bin: {1 + 40 + len(body)} bytes (limit {MAIN_END}), late records {len(late)} bytes at {LATE:#x}; blueprints replaced: {sum(len(b) for b in blobs.values())} bytes (stock region {sum((ends[n] or a + 23) - a for a, n in order)})")
     (OUT / "ship128_report.txt").write_text("\n".join(report) + "\n")
     print("\n".join(report))
 

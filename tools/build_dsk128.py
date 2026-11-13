@@ -49,13 +49,15 @@ def sliced(src, flags, lo_label, hi_label, base_addr):
 
 def main():
     work = ROOT / "work/elite128"
-    for f in ("fill.bin", "fill128.bin", "tt.bin"):
+    for f in ("fill.bin", "fill128.bin", "fill128_late.bin", "tt.bin"):
         if not (work / f).exists():
             sys.exit(f"missing {work / f}: run bash tools/check_src128.sh first")
     fill, data = (work / "fill.bin").read_bytes(), (work / "fill128.bin").read_bytes()
     assert len(data) <= 0x540, f"fill128.bin ({len(data)} bytes) runs into the title cache module at 0x6540"
     data = data.ljust(0x540, b"\0") + (work / "tt.bin").read_bytes()      # fill_tt.asm is assembled for 0x6540: its bytes follow the records
-    assert len(fill) <= 0x600 and len(data) <= 0x600, (len(fill), len(data))
+    assert len(data) <= 0x5C0, f"the title cache module ({len(data)} bytes in all) runs into the late records at 0x65C0"
+    data = data.ljust(0x5C0, b"\0") + (work / "fill128_late.bin").read_bytes()      # alloy plate and Constrictor records (ship128.py LATE)
+    assert len(fill) <= 0x600 and len(data) <= 0x800, (len(fill), len(data))      # bankInit copies 0x800 bytes of the data stage; overlays start at +0x1800
     d = bytearray(BASE.read_bytes())
     secs = sector_offsets(d)
     first = min(r for (t, r) in secs if t == 0)
