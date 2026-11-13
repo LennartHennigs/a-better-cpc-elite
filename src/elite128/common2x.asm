@@ -1,5 +1,6 @@
     INCLUDE "config.inc"
 SCREEN equ 0x4000            ; the screen page (the 128K layout); the block below runs in RAM bank 7 at &C000
+killHook equ 0x9C56   ; generated: label of commonxx
 irki2_8 equ 0x8EB2   ; generated: label of commonxx
 mxArrive equ 0x9DAD   ; generated: label of commonxx
 mxInvHook equ 0x9DB3   ; generated: label of commonxx
@@ -1430,7 +1431,7 @@ LAB_ram_4895:
     call printStringFollowingByte
     db " "
     call getRank
-    call anotherPrintwithTokeninA
+    call killHook                       ; commonxx.asm: the rank name, " - <kills>", then the two new lines (was call anotherPrintwithTokeninA)
     call printStringFollowingByte
     db 0x11
     call SUB_ram_491a

@@ -1,5 +1,6 @@
     INCLUDE "config.inc"
 SCREEN equ 0x4000            ; the screen page: &C000 in the 64K layout, &4000 in the 128K one (docs: src/elite128/README.md)
+LAB_ram_43a0 equ 0xC2A0   ; generated: label of common2x
 LAB_ram_475e equ 0xC660   ; generated: label of common2x
 drawHorLineAt0xd880 equ 0xC58C   ; generated: label of common2x
 locateLine10 equ 0xC1C3   ; generated: label of common2x
@@ -8009,6 +8010,21 @@ titleKeyIsr:
     dec a
     ld (titleKeyLatch),a
     ret
+; Kill count on the commander page (called from common2x.asm in place of `call anotherPrintwithTokeninA`, A = rank token): the rank name, " - 1234", then the new line.
+; The count is the word at killScore+1: the low byte of the 24-bit score is a fraction (getRank compares the middle byte).
+killHook:
+    call printString                    ; no new line yet (CallprintString would add it)
+    call printStringFollowingByte
+    db " "
+    call printStringFollowingByte
+    db "-"
+    call printStringFollowingByte
+    db " "
+    ld hl,(killScore + 1)
+    and a                               ; carry clear: a plain number, no decimal point
+    call todo_SomethingwithDigits
+    call placeCursor                    ; the two new lines anotherPrintwithTokeninA gave the rank
+    jp placeCursor
 hullGlueEnd:
     ASSERT $ <= 0x9C80, "the filled-hull glue does not fit in front of the mission bank routines"
     DS 0x9C80-$
