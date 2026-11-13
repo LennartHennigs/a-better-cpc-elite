@@ -68,6 +68,8 @@ V_S1        equ 0x4F16          ; sign work for the cull test
 V_M1        equ 0x4F17          ; word
 V_M2        equ 0x4F19          ; word
 V_S2        equ 0x4F1B
+TT_HOOK     equ 0x6540          ; the title text cache lives in fill_tt.asm, appended to the record file at this address (the code here is full)
+TT_OFF      equ 0x6543
 TT_ST       equ 0x4F30          ; title text cache: 0 empty, 1 the text rows are held in the other screen bank
 TT_KEY      equ 0x4F31          ; the title ship index the cached text belongs to
 TT_CNT      equ 0x4F32
@@ -753,11 +755,11 @@ dbFlip6:
     jr nz,dbfFlight                     ; non-flight screens (dbIsr follows curCfg), which is what lets the text cache use the idle bank
     ld a,(DB_STATUS)
     cp 4
-    jp c,ttHook
+    jp c,TT_HOOK
 dbfFlight:
     ld a,(TT_ST)
     and a
-    call nz,ttOff                       ; leaving the title: the text printers must run again next time
+    call nz,TT_OFF                      ; leaving the title: the text printers must run again next time
     ld a,(DB_ON)
     and a
     jr nz,dbfFlip
@@ -913,71 +915,6 @@ dbfGaps:
     ex de,hl
     ld bc,1
     jp dbCopyB
-; --- title text cache -------------------------------------------------------------------------------------------------------------------------------------------------------
-; The two title screens print a heading (text row 1) and a prompt (text row 14) into the bitmap every frame, which costs about 65 ms of a 320 ms frame. The titles draw straight into
-; the displayed bank (single buffer), so the other bank is idle: after one frame that printed the text, its 8 lines x 52 bytes (columns 8-59) of both rows are copied to the same
-; places of the other bank, and the two printers (printSplashscreen1, printPressSpace) are patched to a `ret`. Every later frame copies the rows back after the bitmap transfer
-; (about 5 ms). The cache belongs to one title ship index (splash2Shipnr changes on every screen change and cursor key), a different index, or any flight frame, unpatches the
-; printers again. The copy overwrites ship pixels inside those rows with the ones of the capture frame: only a ship reaching the first or last text row would show it.
-ttHook:
-    ld a,(TT_ST)
-    and a
-    jr z,ttCapture
-    ld a,(DB_SHIPNR)
-    ld hl,TT_KEY
-    cp (hl)
-    jr nz,ttOff                         ; another ship: print again (this frame has no text, the next one has)
-    ld a,(DB_CURCFG)
-    call dbBases                        ; HL = displayed bank, DE = the other one
-    ex de,hl                            ; restore: other -> displayed
-    jr ttCopyAll
-ttCapture:
-    ld a,(DB_CURCFG)
-    call dbBases
-    call ttCopyAll                      ; displayed -> other
-    ld a,(DB_SHIPNR)
-    ld (TT_KEY),a
-    ld a,1
-    ld (TT_ST),a
-    ld a,0xC9                           ; ret
-    ld (DB_PRT1),a
-    ld (DB_PRT2),a
-    ret
-ttOff:
-    xor a
-    ld (TT_ST),a
-    ld a,0xCD                           ; call: both printers start with one
-    ld (DB_PRT1),a
-    ld (DB_PRT2),a
-    ret
-ttCopyAll:
-    ld bc,0x48                          ; text row 1, byte 8
-    add hl,bc
-    ex de,hl
-    add hl,bc
-    ex de,hl
-    call ttBand
-    ld bc,0xC340                        ; the 8 lines moved 0x4000 on: back, and to text row 14 (0x340 further)
-    add hl,bc
-    ex de,hl
-    add hl,bc
-    ex de,hl
-ttBand:
-    ld a,8
-    ld (TT_CNT),a
-ttLine:
-    ld bc,52
-    call DB_COPY
-    ld bc,0x0800-52
-    add hl,bc
-    ex de,hl
-    add hl,bc
-    ex de,hl
-    ld a,(TT_CNT)
-    dec a
-    ld (TT_CNT),a
-    jr nz,ttLine
-    ret
 ; HL = zone descriptor: offset in the page of the first strip (word), width (byte), rows (byte), step to the next row = 64 - width (word), step to the next scan line block (word).
 ; Copies rows x width bytes in each of the 8 scan line blocks from the shown bank to the draw bank.
 dbZone:

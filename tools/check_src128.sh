@@ -29,5 +29,8 @@ for n in curCfg dbOn dbShown dbCnt dbCopy dbScanFlag missileCount FlagStationNea
   [ -n "$(sym $n)" ] || { echo "fill: symbol $n missing in commonxx.asm (renamed?)"; exit 1; }
 done
 DBDEF="-DDB_CURCFG=$(($(sym curCfg))) -DDB_ON=$(($(sym dbOn))) -DDB_SHOWN=$(($(sym dbShown))) -DDB_CNT=$(($(sym dbCnt))) -DDB_COPY=$(($(sym dbCopy))) -DDB_SCAN=$(($(sym dbScanFlag))) -DDB_MISS=$(($(sym missileCount))) -DDB_STAT=$(($(sym FlagStationNear))) -DDB_LOCK=$(($(sym missileLockState))) -DDB_KEY=$(($(sym pressedKey))) -DDB_STATUS=$(($(sym todoUnknownStatusFlags))) -DDB_SHIPNR=$(($(sym splash2Shipnr))) -DDB_PRT1=$(($(sym printSplashscreen1))) -DDB_PRT2=$(($(sym printPressSpace))) -DDB_VARS=$(($(sym movementspeed))) -DDB_VLEN=$(($(sym todoLaunchFlag) - $(sym movementspeed)))"
-if [ -n "$VB" ] && sjasmplus -DVBUF=$((VB)) $DBDEF --raw="$ROOT/work/elite128/fill.bin" --sym="$ROOT/work/elite128/fill.sym" "$ROOT/src/elite128/fill.asm" >"$OUT/fill.log" 2>&1; then echo "fill: $(wc -c <"$ROOT/work/elite128/fill.bin") bytes (VBUF=$VB)"; else echo "fill: assemble FAILED"; tail -3 "$OUT/fill.log"; rc=1; fi
+if [ -n "$VB" ] && sjasmplus -DVBUF=$((VB)) $DBDEF --raw="$ROOT/work/elite128/fill.bin" --sym="$ROOT/work/elite128/fill.sym" "$ROOT/src/elite128/fill.asm" >"$OUT/fill.log" 2>&1; then echo "fill: $(wc -c <"$ROOT/work/elite128/fill.bin") bytes (VBUF=$VB)"
+  DBB=$(awk '$1 == "dbBases:" || $2 == "dbBases:" { print $NF }' "$ROOT/work/elite128/fill.sym")
+  if sjasmplus -DDBBASES=$((DBB)) -DDB_CURCFG=$(($(sym curCfg))) -DDB_COPY=$(($(sym dbCopy))) -DDB_SHIPNR=$(($(sym splash2Shipnr))) -DDB_PRT1=$(($(sym printSplashscreen1))) -DDB_PRT2=$(($(sym printPressSpace))) --raw="$ROOT/work/elite128/tt.bin" "$ROOT/src/elite128/fill_tt.asm" >"$OUT/tt.log" 2>&1; then echo "tt: $(wc -c <"$ROOT/work/elite128/tt.bin") bytes"; else echo "tt: assemble FAILED"; tail -3 "$OUT/tt.log"; rc=1; fi
+else echo "fill: assemble FAILED"; tail -3 "$OUT/fill.log"; rc=1; fi
 exit $rc
