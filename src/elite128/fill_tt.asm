@@ -1,5 +1,5 @@
 ; Title text cache (bank 6, at 0x6540: appended to fill128.bin by tools/build_dsk128.py; the record file ends before it). Called from dbFlip6 in fill.asm through
-; TT_HOOK / TT_OFF. Needs from the build: DBBASES (dbBases in fill.asm), DB_COPY, DB_CURCFG, DB_SHIPNR, DB_PRT1, DB_PRT2 (tools/check_src128.sh).
+; TT_HOOK / TT_OFF. Needs from the build: DBBASES (dbBases in fill.asm), DB_COPY, DB_CURCFG, DB_SHIPNR, DB_SEEN, DB_PRT1, DB_PRT2 (tools/check_src128.sh).
     DEVICE AMSTRADCPC464
     ORG 0x6540
 TT_ST       equ 0x4F30
@@ -13,9 +13,14 @@ dbBases     equ DBBASES
 ; buffered like flight, and the screen on show holds the text of the last frame: from the second frame on the two printers (printSplashscreen1, printPressSpace) are patched to a
 ; `ret` and every frame copies the 8 lines x 52 bytes (columns 8-59) of both rows from the screen on show into the draw screen before the flip (about 5 ms). The text is on both
 ; screens all the time, so nothing flickers. The cache belongs to one title ship index (splash2Shipnr, without the key-down bit 7; it changes on every screen and cursor key): a
-; different index, or any flight frame, unpatches the printers again (that one frame has no text). The copy overwrites ship pixels inside those rows with the ones of the last frame:
+; different index, or any frame that is not a title frame, unpatches the printers again (that one frame has no text). The copy overwrites ship pixels inside those rows with the ones of the last frame:
 ; only a ship reaching the first or last text row would show it.
 ttHook:
+    ld a,(DB_SEEN)                      ; set by getTitleKey: only a frame of the title loops uses the cache (every other frame of views 0-3 comes here too and switches the cache off)
+    and a
+    jr z,ttOff
+    xor a
+    ld (DB_SEEN),a
     ld a,(DB_SHIPNR)
     and 0x7F
     ld hl,TT_KEY

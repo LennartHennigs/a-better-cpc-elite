@@ -20,6 +20,10 @@ VBUF        equ 0x9D9E          ; resident copy of the projected vertices (3 byt
 VISPOS      equ 1               ; 1: a triangle is front facing when its screen cross product is positive (clockwise on screen); 0: negative
     ENDIF
 BITMAP      equ 0xA000
+VIEW_X0     equ 9               ; inside the viewport frame (drawViewportFrame: left pixel 8, right pixel 247, rows 0 and 127)
+VIEW_X1     equ 246
+VIEW_Y0     equ 1
+VIEW_Y1     equ 126
 
 XLP         equ 0x50
 XRP         equ 0x51
@@ -195,17 +199,22 @@ gvXr:
     jr nc,gvXok
     ld a,255
 gvXok:
+    cp VIEW_X0                  ; keep inside the viewport frame (the frame is drawn into the bitmap first, a fill would paint over it)
+    jr nc,gvXlo
+    ld a,VIEW_X0
+gvXlo:
+    cp VIEW_X1 + 1
+    jr c,gvXhi
+    ld a,VIEW_X1
+gvXhi:
     ld (de),a
     inc de
     ld a,b
     bit 0,c
     jr z,gvYu
     add a,63                    ; below the centre
-    jr c,gvYcl                  ; magnitude of 193 or more wrapped: clamp, do not wrap to the top of the view
-    cp 128
-    jr c,gvYok
-gvYcl:
-    ld a,127
+    jr nc,gvYok
+    ld a,255                    ; magnitude of 193 or more wrapped: do not wrap to the top of the view (the clamp below pulls it in)
     jr gvYok
 gvYu:
     ld b,a
@@ -214,6 +223,14 @@ gvYu:
     jr nc,gvYok
     xor a
 gvYok:
+    cp VIEW_Y0
+    jr nc,gvYlo
+    ld a,VIEW_Y0
+gvYlo:
+    cp VIEW_Y1 + 1
+    jr c,gvYhi
+    ld a,VIEW_Y1
+gvYhi:
     ld (de),a
     dec de                      ; DE back on x (the caller advances by name)
     pop bc
@@ -720,8 +737,8 @@ ibRow:
 ibLM:   db 0xFF, 0x77, 0x33, 0x11
 ibRM:   db 0x88, 0xCC, 0xEE, 0xFF
 fillEnd:
-    ASSERT fillEnd <= 0x43B8
-    DS 0x43B8-$
+    ASSERT fillEnd <= 0x43D0
+    DS 0x43D0-$
 
 ; --- page flip (runs here, in RAM bank 6, so that the resident glue stays small): called through dbFlipTail (commonxx.asm) with config C6 and the resident stack ---
 ; The addresses of the resident variables and of dbCopy come from the build (tools/check_src128.sh).
@@ -739,7 +756,6 @@ DB_VARS     equ 0
 DB_VLEN     equ 0
 DB_KEY      equ 0
 DB_SHIPNR   equ 0
-DB_STATUS   equ 0
 DB_PRT1     equ 0
 DB_PRT2     equ 0
     ENDIF
@@ -751,18 +767,7 @@ dbFlip6:
     ld a,(VIEWDIR)
     cp 4
     ret nc
-    and a                               ; view 0 with the status flag below 4 is the title (flight, the launch and docking tunnels have 4): double buffered, with the text cache
-    jr nz,dbfFlight
-    ld a,(DB_STATUS)
-    cp 4
-    jr nc,dbfFlight
-    call TT_HOOK                        ; title: the text rows come from the screen on show (fill_tt.asm), then the normal flip
-    jr dbfOn
-dbfFlight:
-    ld a,(TT_ST)
-    and a
-    call nz,TT_OFF                      ; leaving the title: the text printers must run again next time
-dbfOn:
+    call TT_HOOK                        ; title frames (marked by getTitleKey) take their text rows from the screen on show (fill_tt.asm); every other frame switches the cache off
     ld a,(DB_ON)
     and a
     jr nz,dbfFlip

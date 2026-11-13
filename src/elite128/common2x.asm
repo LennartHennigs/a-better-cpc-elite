@@ -101,10 +101,10 @@ galaxySeed equ 0x3907   ; generated: label of commonxx
 getBounty equ 0x39B7   ; generated: label of commonxx
 government equ 0x3D5F   ; generated: label of commonxx
 hullBegin equ 0x99F9   ; generated: label of commonxx
-hullDeferEntry equ 0x9A08   ; generated: label of commonxx
+hullDeferEntry equ 0x9A13   ; generated: label of commonxx
 hullDraw equ 0x986D   ; generated: label of commonxx
 hullDummy equ 0x9865   ; generated: label of commonxx
-hullFlush equ 0x9A5E   ; generated: label of commonxx
+hullFlush equ 0x9A62   ; generated: label of commonxx
 inputPitch equ 0x1C04   ; generated: label of commonxx
 inputRoll equ 0x1C03   ; generated: label of commonxx
 irki2_dat1 equ 0x8F3E   ; generated: label of commonxx

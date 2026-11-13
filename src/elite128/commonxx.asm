@@ -504,16 +504,18 @@ tkStart:
     jr getTitleKeyEnd
 titleKeyLatch:
     db 0xFF
-; Returns the latched title key once (the latch is emptied: A = 0xFF) or, with nothing latched, the live pressedKey.
+titleSeen:                              ; nonzero once a title loop has asked for a key since the flip code last looked (fill_tt.asm: only title frames use the text cache)
+    db 0
+; Returns the latched title key once (the latch is emptied) or, with nothing latched, the live pressedKey (0xFF: none). Marks the frame as a title frame (the old latch value is
+; never 0).
 getTitleKey:
     ld hl,titleKeyLatch
     ld a,(hl)
     ld (hl),0xFF
-    inc a
-    jr z,gtkLive
-    dec a
-    ret
-gtkLive:
+    inc hl
+    ld (hl),a
+    cp 0xFF
+    ret nz
     ld a,(pressedKey)
     ret
 getTitleKeyEnd:
@@ -7664,6 +7666,15 @@ hullBegin:
     ld (hullQn),a
     ld a,(ThargonMissionVar)
     jp heResume
+hullEntryAddr:                          ; HL = hullQ + 8 * A
+    add a,a
+    add a,a
+    add a,a
+    ld e,a
+    ld d,0
+    ld hl,hullQ
+    add hl,de
+    ret
 hullDeferEntry:
     ld a,(hullDefer)
     and a
@@ -7671,13 +7682,7 @@ hullDeferEntry:
     ld a,(hullQn)
     cp 8
     jr nc,hullNow                       ; full (cannot happen: 8 slots)
-    add a,a
-    add a,a
-    add a,a                             ; * 8
-    ld e,a
-    ld d,0
-    ld hl,hullQ
-    add hl,de
+    call hullEntryAddr
     push ix
     pop de
     ld (hl),e
@@ -7767,13 +7772,7 @@ hullNc:
     bit 7,c
     jr nz,hullFlushEnd                  ; nothing left
     ld a,c
-    add a,a
-    add a,a
-    add a,a
-    ld e,a
-    ld d,0
-    ld hl,hullQ
-    add hl,de
+    call hullEntryAddr
     ld e,(hl)
     inc hl
     ld d,(hl)
@@ -7985,9 +7984,11 @@ name:
     ld (discSP),sp
     ld sp,discStackTop
     call fw
+    jp discExit
+    ENDM
+discExit:
     ld sp,(discSP)
     ret
-    ENDM
     discTrampoline CAS_STOP_MOTOR, CAS_STOP_MOTOR_FW
     discTrampoline CAS_IN_OPEN, CAS_IN_OPEN_FW
     discTrampoline CAS_IN_CLOSE, CAS_IN_CLOSE_FW
@@ -8090,7 +8091,7 @@ dbScanFlag:
     db 0
 dbOn:
     db 0                                ; 1 while flipping (flight views); the ISR clears it when a non-flight view is shown
-dbFlip6Entry equ 0x43B8                 ; fill.asm: dbFlip6
+dbFlip6Entry equ 0x43D0                 ; fill.asm: dbFlip6
 dbFlipTail:
     pop af
     ld (hullSaveSP),sp                  ; like hullDraw: the game stack is in bank 7, which RAM bank 6 (config C6) hides
