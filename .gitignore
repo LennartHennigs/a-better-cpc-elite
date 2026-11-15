@@ -9,6 +9,8 @@ tmp/
 # Disk images, scans and photos of other people's work
 *.dsk
 *.DSK
+*.cdt
+*.CDT
 magazines/*
 !magazines/README.md
 *.jpg
