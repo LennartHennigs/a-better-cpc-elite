@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Assemble src/elite and write the four code files into a copy of the Firebird DSK, keeping the AMSDOS headers.
 
-usage: python3 -I tools/build_dsk.py [--missions | --de | --fr] [OUT.dsk]      (default work/elite_rebuilt.dsk; base is Elite_UK_Firebird_cracked_trainer.dsk;
+usage: python3 -I tools/build_dsk.py [--stock] [--missions | --de | --fr] [OUT.dsk]      (default work/elite_rebuilt.dsk; base is Elite_UK_Firebird_cracked_trainer.dsk;
+       --stock assembles with no enhancement flags (the original bytes, CPC+ fix included) and adds nothing: work/elite_original.dsk, with --de/--fr work/elite_original_de.dsk / _fr.dsk;
        --de assembles src/elite_de into a copy of Elite_DE_cracked.dsk, default work/elite_de_rebuilt.dsk;
        --fr assembles src/elite_fr into a copy of the French Firebird disk, default work/elite_fr_rebuilt.dsk)
 
@@ -27,15 +28,20 @@ if DE and FR:
     sys.exit("--de and --fr cannot be combined")
 BASE = ROOT / ("Elite_DE_cracked.dsk" if DE else "Elite (1985)(Firebird Software)(fr).dsk" if FR else "Elite_UK_Firebird_cracked_trainer.dsk")
 SRC = ROOT / ("src/elite_de" if DE else "src/elite_fr" if FR else "src/elite")
+STOCK = "--stock" in sys.argv         # original bytes: no -DENHANCED, -DTITLESEL or -DTRAFFIC
 MISSIONS = "--missions" in sys.argv   # assemble LARGEAXX and COMMONXX with -DMISSIONS (src/elite/missions_*.asm in the free tails)
 if (DE or FR) and MISSIONS:
     sys.exit("--de/--fr and --missions cannot be combined: the missions exist for the English build only (src/elite)")
-args = [a for a in sys.argv[1:] if a not in ("--missions", "--de", "--fr")]
-OUT = Path(args[0]) if args else ROOT / "work" / ("elite_de_rebuilt.dsk" if DE else "elite_fr_rebuilt.dsk" if FR else "elite_missions.dsk" if MISSIONS else "elite_rebuilt.dsk")
+if STOCK and MISSIONS:
+    sys.exit("--stock and --missions cannot be combined: the missions need the enhanced build")
+args = [a for a in sys.argv[1:] if a not in ("--stock", "--missions", "--de", "--fr")]
+OUT = Path(args[0]) if args else ROOT / "work" / ("elite_original" + ("_de" if DE else "_fr" if FR else "") + ".dsk" if STOCK else "elite_de_rebuilt.dsk" if DE else "elite_fr_rebuilt.dsk" if FR else "elite_missions.dsk" if MISSIONS else "elite_rebuilt.dsk")
 if OUT.resolve() == BASE.resolve() or OUT.resolve().parent == ROOT:   # CLAUDE.md: never modify the original disks in the project root
     sys.exit(f"{OUT}: refusing to write a disk into the project root (the originals live there); use work/")
 SJASM = Path.home() / ".local/bin/sjasmplus"
 FILES = {"LARGEAXX": [] if DE or FR else ["-DFIREBIRD"], "COMMONXX": ["-DTITLESEL", "-DTRAFFIC"], "COMMON2X": [], "MUSIQUEX": ["-DTITLESEL"]}   # TITLESEL: cursor keys change the title ship; TRAFFIC: C64-like spawn odds (docs/_ship_packs.md)
+if STOCK:
+    FILES = {"LARGEAXX": [], "COMMONXX": [], "COMMON2X": [], "MUSIQUEX": []}   # no -DFIREBIRD either: it drops the cargo-capacity test (LARGEAXX &0998)
 
 
 def add_file(d, secs, first, name, ext, data, load):
@@ -79,8 +85,7 @@ def overlay(tag):
 def add_readme(d, secs, first):
     """src/disk/README.TXT as an ASCII file (CRLF, ends with Ctrl-Z, last record padded with Ctrl-Z)."""
     data = (ROOT / "src/disk/README.TXT").read_bytes()
-    records = -(-len(data) // 128)
-    dskx.add_payload(d, secs, first, "README", "TXT", data.ljust(records * 128, b"\x1a"), records)
+    dskx.add_padded(d, secs, first, "README", "TXT", data)
     print(f"README.TXT: {len(data)} bytes")
 
 
@@ -92,37 +97,21 @@ def add_showship(d, secs, first):
         print("SHOWSHIP: not added (run tools/build_showship.sh first)")
         return
     data = bas.read_bytes()   # AMSDOS header included
-    records = -(-len(data) // 128)
-    dskx.add_payload(d, secs, first, "SHOWSHIP", "BAS", data.ljust(records * 128, b"\x1a"), records)
+    dskx.add_padded(d, secs, first, "SHOWSHIP", "BAS", data)
     add_file(d, secs, first, "SHIPS", "BIN", ships.read_bytes(), 0x4000)
     print(f"SHOWSHIP.BAS {len(data)} bytes, SHIPS.BIN {ships.stat().st_size} bytes")
 
 
-def remove_file(d, secs, first, name, ext):
-    """Delete a file: mark its directory entries free (0xE5); the blocks are free again, nothing else is touched."""
-    n = 0
-    for i in range(64):
-        off = secs[(0, first + i // 16)][0] + (i % 16) * 32
-        e = d[off:off + 32]
-        if e[0] != 0xE5 and bytes(e[1:9]).decode("latin1").strip() == name and bytes(e[9:12]).decode("latin1").replace("\x00", "").strip() == ext:
-            d[off] = 0xE5
-            n += 1
-    return n
-
-
 def replace_trainer(d, secs, first):
-    """The base disk carries Firebird's own CHEAT.BAS (wrong cloak entry, loads the game itself); replace it with ours (src/cheats/CHEAT.BAS, which chains to the hidden CHEATB.BIN =
+    """The base disk carries Firebird's own CHEAT.BAS (wrong cloak entry, loads the game itself); delete it and put ours there (TRAINER.BAS, src/cheats/TRAINER.BAS, which chains to the hidden CHEATB.BIN =
     src/cheats/CHEATB.BAS; docs/_cheats.md). Both files keep the AMSDOS header the tokeniser gave them."""
-    cheat, cheatb = ROOT / "src/cheats/CHEAT.BAS", ROOT / "src/cheats/CHEATB.BAS"
+    cheat, cheatb = ROOT / "src/cheats/TRAINER.BAS", ROOT / "src/cheats/CHEATB.BAS"
     if not (cheat.exists() and cheatb.exists()):
-        print("trainer: not replaced (src/cheats/CHEAT.BAS or CHEATB.BAS missing)")
-        return
-    removed = remove_file(d, secs, first, "CHEAT", "BAS")
-    for name, ext, f in (("CHEAT", "BAS", cheat), ("CHEATB", "BIN", cheatb)):
-        data = f.read_bytes()
-        records = -(-len(data) // 128)
-        dskx.add_payload(d, secs, first, name, ext, data.ljust(records * 128, b"\x1a"), records)
-    print(f"CHEAT.BAS: removed the original ({removed} entry), added ours and CHEATB.BIN")
+        sys.exit("trainer: src/cheats/TRAINER.BAS or CHEATB.BAS missing (tools/build_cheat.sh makes them)")
+    removed = dskx.remove_file(d, secs, first, "CHEAT", "BAS")
+    dskx.add_padded(d, secs, first, "TRAINER", "BAS", cheat.read_bytes(), replace=True)
+    dskx.add_padded(d, secs, first, "CHEATB", "BIN", cheatb.read_bytes(), replace=True)
+    print(f"TRAINER.BAS: removed Firebird's CHEAT.BAS ({removed} entry), added ours and CHEATB.BIN")
 
 
 def main():
@@ -153,7 +142,7 @@ def main():
         for n, defs in FILES.items():
             out = Path(tmp) / f"{n}.bin"
             extra = ["-DMISSIONS"] if MISSIONS and n in ("LARGEAXX", "COMMONXX") else []
-            r = subprocess.run([str(SJASM), "-DENHANCED", *defs, *extra, f"--raw={out}", str(SRC / f"{n.lower()}.asm")],
+            r = subprocess.run([str(SJASM), *([] if STOCK else ["-DENHANCED"]), *defs, *extra, f"--raw={out}", str(SRC / f"{n.lower()}.asm")],
                                capture_output=True, text=True)
             if r.returncode:
                 sys.exit(f"{n}: assemble failed\n{r.stdout[-400:]}{r.stderr[-400:]}")

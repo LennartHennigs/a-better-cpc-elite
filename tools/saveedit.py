@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Edit an Elite CPC commander save (104 bytes): the savegame counterpart of the interactive trainer (src/cheats/CHEAT.ASC).
+"""Edit an Elite CPC commander save (104 bytes): the savegame counterpart of the interactive trainer (src/cheats/TRAINER.ASC).
 
 usage:
   saveedit.py show   SAVE  [--key-disk GAME.dsk]
@@ -19,7 +19,7 @@ options (all optional, each sets one thing; the numbers match the trainer; --to-
   --kills N            kill count 0-65535 (bytes &38D8/&38D9, the BBC TALLY: 256 = the Constrictor/plans gate "256 kill points"; the fraction byte is kept)
   --jumps N            jump counter 0-65535 (the stock missions start at 32, 128 and 254; counted from galaxy 2 on in the game)
   --cash CR            credits in Cr (0-65,535,999.9)
-  --legal N            legal status (0 clean, 25 offender, 40+ fugitive)
+  --legal N            legal status (0 clean, 1-49 offender, 50+ fugitive on the status page)
   --fuel LY            fuel in light years (0-7.0)
   --stock 0-3          stock missions like the trainer: 1 supernova stage, 2 cloak stage (also bit 0), 3 invasion stage (bits 0 and 1): sets the jump counter 31, 127 or 253
   --cloak yes|no       own the cloaking device (Missionflag bit 6)

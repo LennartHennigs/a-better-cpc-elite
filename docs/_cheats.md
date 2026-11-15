@@ -50,13 +50,13 @@ Other known variables: laser temperature `&1C0F`, frame counter `&1DA8`, hypersp
   supersedes this (it sets the ownership bit instead).
 - Notes: `FlightMode` (`&38F8`) stayed 0 in all runs, so do not read it as docked/flying. cpcxray tips are in `CLAUDE.md`.
 
-## Our interactive trainer (`CHEAT.BAS`, from `src/cheats/CHEAT.ASC`)
+## Our interactive trainer (`TRAINER.BAS`, from `src/cheats/TRAINER.ASC`; called `CHEAT.BAS` until 2026-11-15)
 
-`RUN"CHEAT` on `work/firebird_cheat.dsk` (the Firebird disk plus this file; built, not shipped), `work/de_cheat.dsk` (German) or
+`RUN"TRAINER` on `work/firebird_cheat.dsk` (the Firebird disk plus this file; built, not shipped), `work/de_cheat.dsk` (German) or
 `work/fr_cheat.dsk` (French): the same file runs on the UK, German and French builds (and on the mission build). It asks, loads the game
 and applies only what you chose.
 
-Two stages (the BASIC program and its variables must fit under `&83F`, one program with the three address tables did not): `CHEAT.BAS`
+Two stages (the BASIC program and its variables must fit under `&83F`, one program with the three address tables did not): `TRAINER.BAS`
 asks and converts the answers to numbers, then `CHAIN"cheatb.bin"`. `CHEATB.BAS` (disk file `CHEATB.BIN`, so it stays hidden; built from
 `src/cheats/CHEATB.ASC`) loads the game, finds the build and pokes. CHAIN keeps the variables but puts HIMEM back to `&A000`, so stage two
 repeats `OPENOUT"d":MEMORY &83F:CLOSEOUT` before the `LOAD`s (without it: "Memory full in 2"). Build detection: the byte pattern around the
@@ -71,13 +71,13 @@ label + offset in the three source trees (`sjasmplus --sym`) and checked byte by
 | galaxy-gate byte | `&4E5D` | `&4F71` | `&4FAF` |
 | `setFuel` operand | `&4F02` | `&5016` | `&5054` |
 
-`work/de_savegames.dsk` (built by the same script) is `work/de_cheat.dsk` (German game, `CHEAT.BAS`, `EDITSAVE.BAS`) plus `LISTSAVE.BAS` and the four saves of `Elite_DE_savegames.dsk`; all find the build from the save's key, so they work on any of the three builds' saves. The saves stay visible on this disk: `LISTSAVE` lists them by running `CAT` into a hidden screen buffer and reading it back, and `CAT` does not show System files. It only loads files `CAT` shows as 1K (a save is 232 bytes with its header), so large `.BIN` files are skipped; the key and checksum test still decides what is a save.
+`work/de_savegames.dsk` (built by the same script) is `work/de_cheat.dsk` (German game, `TRAINER.BAS`, `EDITSAVE.BAS`) plus `LISTSAVE.BAS` and the four saves of `Elite_DE_savegames.dsk`; all find the build from the save's key, so they work on any of the three builds' saves. The saves stay visible on this disk: `LISTSAVE` lists them by running `CAT` into a hidden screen buffer and reading it back, and `CAT` does not show System files. It only loads files `CAT` shows as 1K (a save is 232 bytes with its header), so large `.BIN` files are skipped; the key and checksum test still decides what is a save.
 
 Tested in cpcxray on all three disks with every cheat on, cash 5000, mission 2, kills 300, jumps 40: all pokes landed, the title screen came
 up. The added-mission pokes (`+50`, `+51`) only mean something in the English `-DMISSIONS` build.
- Edit `src/cheats/CHEAT.ASC` (ASCII); `CHEAT.BAS` is the tokenised file with AMSDOS header, `CHEAT.BAS.txt` its listing.
+ Edit `src/cheats/TRAINER.ASC` (ASCII, CRLF lines and a Ctrl-Z at the end: LF-only lines tokenise to an empty program); `TRAINER.BAS` is the tokenised file with AMSDOS header, `TRAINER.BAS.txt` its listing.
 `bash tools/build_cheat.sh` rebuilds them and the disks (the CPC's own BASIC tokenises, via headless cpcxray), and also writes
-`work/missions_cheat.dsk` (the mission build plus `CHEAT.BAS`, `EDITSAVE.BAS` and `LISTSAVE.BAS`; `make expanded` copies it to `work/elite_expanded.dsk`).
+`work/missions_cheat.dsk` (the mission build plus `TRAINER.BAS`, `EDITSAVE.BAS` and `LISTSAVE.BAS`; `make expanded` copies it to `work/elite_expanded.dsk`).
 
 Prompts (Y or ENTER = yes, N = no):
 
@@ -142,6 +142,6 @@ Screenshots (cpcxray, Mode 1): `docs/img/trainer_prompts.png`, `showsave_uk.png`
 
 How it works: `tools/mk_showship.py` cuts every blueprint out of `work/bin_stock/COMMONXX.BIN` and the extra hull sources, scales the vertices to +-125 and the face normals to +-64, and packs them with the Z80 routine of `src/cheats/showship.asm` into `SHIPS.BIN` (loaded to `&4000`, ships from `&5000`; everything stays under `&A67B`, where AMSDOS keeps its work area, or the load fails with "read fail"). BASIC only handles keys and text and POKEs the sine and cosine of the spin angle (6 degrees a frame); `CALL &4000` rotates (spin about the ship's y axis, then a fixed 20 degree tilt, orthographic) and redraws every edge whose face points at the viewer, erasing the edge's segment of the previous frame first. The lines come from the routine's own DDA (8-bit slope fraction, XOR into the mode 1 screen at `&C000`, pen 2): the firmware's `GRA LINE` gave about 3 frames a second, this gives about 8 (Coriolis, counted with a breakpoint on `&4000`). The alternate registers are not used (the firmware's interrupt routine owns them). `CALL &4003` copies a ship's packed record into the tables. Shared line ends toggle twice in XOR, so a vertex pixel can flicker.
 
-The mission disk (`python3 -I tools/build_dsk.py --missions`, `work/elite_missions.dsk`) carries it too: `SHOWSHIP.BAS` visible in `CAT`, `SHIPS.BIN` hidden, added with `dskx` (`add_showship` in `tools/build_dsk.py`; run `tools/build_showship.sh` first, otherwise the build skips it). `RUN"SHOWSHIP` there works as on the blank disk (checked in cpcxray); `src/disk/README.TXT` mentions it. The same build now **replaces Firebird's own `CHEAT.BAS` on that disk with ours** (`replace_trainer`: the original is deleted, `src/cheats/CHEAT.BAS` and the hidden `CHEATB.BIN` are added; checked: `RUN"CHEAT` asks "ELITE CHEATS"). The old file only held nine poke groups with a wrong cloak entry; its addresses are still right in our build (all in `COMMONXX`, bytes unchanged there).
+The mission disk (`python3 -I tools/build_dsk.py --missions`, `work/elite_missions.dsk`) carries it too: `SHOWSHIP.BAS` visible in `CAT`, `SHIPS.BIN` hidden, added with `dskx` (`add_showship` in `tools/build_dsk.py`; run `tools/build_showship.sh` first, otherwise the build skips it). `RUN"SHOWSHIP` there works as on the blank disk (checked in cpcxray); `src/disk/README.TXT` mentions it. The same build now **replaces Firebird's own `CHEAT.BAS` on that disk with ours** (`replace_trainer`: the original is deleted, `src/cheats/TRAINER.BAS` (named `CHEAT.BAS` then) and the hidden `CHEATB.BIN` are added; checked: `RUN"TRAINER` asks "ELITE CHEATS"). The old file only held nine poke groups with a wrong cloak entry; its addresses are still right in our build (all in `COMMONXX`, bytes unchanged there).
 
 The standalone disk is a blank one because the Firebird disk has two tracks with odd sector ids that iDSK may fill; AMSDOS cannot read them (`Drive A: read fail`).

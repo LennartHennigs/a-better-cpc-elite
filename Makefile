@@ -1,9 +1,11 @@
 # Assemble the four code files. Needs sjasmplus (scripts/install-tools.sh puts it in ~/.local/bin).
+#   make original   the original game on a disk (stock bytes)                     -> work/elite_original.dsk
+#   make expanded   everything: enhancements, missions, ship packs, trainers, viewer -> work/elite_expanded.dsk (English only for now)
 #   make stock      original bytes (CPC+ keyboard fix included in en/fr)           -> work/build/stock/
 #   make enhanced   star occlusion, Escape in the menus, title-screen ship choice  -> work/build/enhanced/
-#   make missions   enhanced plus the added missions (English only): bootable disk -> work/elite_missions.dsk
+#   make missions   enhanced plus the added missions (English only): bootable disk -> work/elite_missions.dsk (no trainers or viewer; `expanded` is the full build)
 #   make check      bash tools/check_src.sh for en, de and fr
-# LOC=de or LOC=fr picks the German or French tree (stock and enhanced).
+# LOC=de or LOC=fr picks the German or French tree (original, stock and enhanced; expanded is not ported yet).
 SJASM ?= $(HOME)/.local/bin/sjasmplus
 LOC   ?= en
 TREE_en = src/elite
@@ -13,7 +15,13 @@ TREE    = $(TREE_$(LOC))
 TITLE   = -DTITLESEL
 OUT     = work/build
 
-.PHONY: stock enhanced missions check
+.PHONY: original expanded stock enhanced missions check
+
+original:
+	bash tools/build_original.sh $(LOC)
+
+expanded:
+	bash tools/build_expanded.sh $(LOC)
 
 stock:
 	@mkdir -p $(OUT)/stock/$(LOC)

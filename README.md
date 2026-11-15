@@ -47,6 +47,7 @@ Besides the missions, the build has a few changes that make the game nicer to pl
 - **"A" sells the whole hold.** In the sell menu, "A" at any quantity prompt sells every good you carry at once (with the trade sound) and returns to the inventory screen; the other keys still just leave the menu (`-DENHANCED`, English only so far; `src/elite/sell_all.asm`).
 - **Improved readability.** The station screens line up: every headline starts in column 2, the status screen reads "System:", "Target:", "Fuel:", "Cash:", "Status:" and "Rating:" with the values in one column ("Legal Status" is now just "Status"), and the hyperspace countdown moved to column 6 so it no longer covers the headline (`-DENHANCED`, English only so far).
 - **Cash on the quantity line.** The buy, sell and equipment prompts show your credits at the bottom right, on the row where you type the quantity, and refresh after every purchase (`-DENHANCED`, English only so far).
+- **Kill count on the status page.** "Rating: Competent - 300": the rank is followed by your kills (`-DENHANCED`, English, in the mission build too: `killcount.asm`, 26 bytes in every flight image).
 - **A sight for each laser.** The pulse laser keeps the cross; the beam, military and mining lasers get their own sights (two bracketed bars, four diagonals, bars with a dot), as on the C64 and Atari ST, and there is no sight without a laser (`-DENHANCED`, `lasersights.asm`, all three languages). Not on the mission disk: the missions fill the free flight memory it would need (English only without `-DMISSIONS`).
 - **Stars stay behind the planet and sun.** The stars used to be drawn over the planet and sun discs, so they shone through them. Now they only appear against empty space (switch `STAR_OCCLUDE`, in all three languages). Ships are still wireframes, so you see stars between their edges, as in the original.
 
@@ -72,7 +73,7 @@ make original                        # the original game, stock bytes: work/elit
 make expanded                        # everything on one disk: work/elite_expanded.dsk = enhancements, all missions and ship packs, CHEAT, EDITSAVE, LISTSAVE, SHOWSHIP (English only for now)
 ```
 
-Boot the disk and `RUN"ELITE`. `RUN"SHOWSHIP` starts the ship viewer. `RUN"CHEAT.BAS` starts the trainer (the mission disk carries ours, not Firebird's) (it has prompts for kills, jumps and mission presets, so the added missions can be reached without hours of play); `RUN"EDITSAVE.BAS` edits a save; `RUN"LISTSAVE.BAS` (on the mission, expanded and German saves disks) lists the saves on a disk with build, kills and cash. On the host, `tools/saveedit.py` does the same and can convert a save between the three builds.
+Boot the disk and `RUN"ELITE`. `RUN"SHOWSHIP` starts the ship viewer. `RUN"TRAINER.BAS` starts the trainer (ours, which replaces Firebird's `CHEAT.BAS` on the mission and expanded disks) (it has prompts for kills, jumps and mission presets, so the added missions can be reached without hours of play); `RUN"EDITSAVE.BAS` edits a save; `RUN"LISTSAVE.BAS` (on the mission, expanded and German saves disks) lists the saves on a disk with build, kills and cash. On the host, `tools/saveedit.py` does the same and can convert a save between the three builds.
 
 ## Build switches
 
@@ -106,7 +107,7 @@ Underneath, a plain `sjasmplus` run gives the **stock** game (`bash tools/check_
 | Where | Size | What lives there | Left |
 |---|---|---|---|
 | zero tail of `LARGEAXX` (`&1714-&1A3F`, reloaded from disk at every docking) | 812 | resident mission stub (251) and the sell-all key (48) plus the one docked overlay that is loaded on demand (largest: Constrictor, 511) | **3** |
-| zero tail of `COMMONXX` (`&9D9E-&9FFF`) | 610 | vector table, launch hook and one flight image, picked at every launch (largest: Trumbles, 600; the image must end at `&9FFE` or below, because an interrupt can push at `&9FFE-&9FFF`, which an `ASSERT` checks) | **8** |
+| zero tail of `COMMONXX` (`&9D9E-&9FFF`) | 610 | vector table, launch hook and one flight image, picked at every launch (largest: Trumbles, 608, and pack 1, 606; the image must end at `&9FFE` or below, because an interrupt can push at `&9FFE-&9FFF`, which an `ASSERT` checks) | **8** |
 | dead `unusedViewBorderFill` (`&1FD2-&1FF0`) | 31 | `dustPlotPixel` for star occlusion (11 bytes), `mxPodHook`, which zeroes the Trumble count when an escape pod is used (10 bytes), and `cashHome` for the cash display (7 bytes) | 3 |
 
 Changes to existing stock bytes are small: the CPC+ keyboard fix and the Escape key code (one byte each), 16 bytes of the dust loop for star occlusion, and a handful of 3-byte call replacements at the mission hook sites. Nothing else moves. With the switches off only the CPC+ byte differs from the original, and `tools/check_src.sh` checks every one of these claims. So the two tails have 3 and 8 spare bytes: a further mission or change to the largest ones has to trim something first (sizes per mission in `docs/_missions_built.md`).

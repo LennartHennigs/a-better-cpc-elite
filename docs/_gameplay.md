@@ -61,3 +61,18 @@ Kills per ship (word / 512), with the C64 value (`KWL%`/`KWH%`, `work/ext_c64`) 
 | Coriolis | 0 | 0 |
 
 The CPC has the same 19 ship types as the Spectrum (`shipGFXdataTable`; `SHIPDATPIRATE1/2` match the Spectrum's Sidewinder and Krait blueprints byte for byte). The C64 and BBC also have Boulder, Shuttle, Transporter, Boa, Anaconda, Mamba, Adder, Gecko, Cobra Mk I, Worm, Moray, Cougar and the Dodecahedron station, which the CPC lacks. The CPC missions add no scoring: `mxKillHook` only wraps `getBounty`. The Constrictor and plans missions pay a rank step (`inc killScoreHigh`, +256 kills), like the C64's flat +256 for the Constrictor kill and mission 2.
+
+## Legal status (read from the code 2026-11-16; not yet confirmed in a run)
+
+`legalStatus` (`&38D6`, one byte in the save) is 0 clean, 1-49 offender, 50-255 fugitive (`cp &32` in the status page code).
+
+Raised by:
+- **Illegal goods**, in `chkForIllegalGoods` (a purchase, with B = the quantity bought, or a scooped canister, B = 1): the byte gets B added, saturating at 255. Slaves (good 3) and narcotics (6) count B x 4, firearms (10) B x 2.
+- **A kill**, in `todo_killedsomeone`: if the dead ship's flag byte `ix+33` has bit 5 or 6 set (police or innocent), `legalStatus |= &40`, so the commander is a fugitive at once. Missed shots and hits that do not kill change nothing: no other code writes the byte, which differs from the BBC.
+
+Lowered by:
+- every hyperspace jump halves it (`srl`);
+- a galactic jump sets it to 0;
+- the escape pod sets it to 0 (the same routine that clears the cargo).
+
+Effect in flight: `chkCopHuntergettingHostile` sets the hostile flag (`ix+33` bit 2) on a ship with bit 1 set (the cop AI) once the byte is 40 or more, so police turn on the commander before the status page says Fugitive.

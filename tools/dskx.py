@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""List and extract AMSDOS files from a CPC DSK image (standard or extended). Read-only.
+"""List and extract AMSDOS files from a CPC DSK image (standard or extended). The command line is read-only; add_payload and remove_file edit an image in memory for build_dsk.py and add_files.py.
 
 usage: dskx.py IMAGE.dsk [OUTDIR]
 Prints one line per file with the AMSDOS header (load, exec, length); with OUTDIR also
@@ -103,6 +103,23 @@ def make_header(name, ext, load, length, exe=0):
     return bytes(h)
 
 
+def _entry_name(e):
+    """(name, extension) of a directory entry, attribute bits (read-only, System) masked off."""
+    return (bytes(b & 0x7F for b in e[1:9]).decode("latin1").strip(), bytes(b & 0x7F for b in e[9:12]).decode("latin1").strip())
+
+
+def remove_file(d, secs, first, name, ext):
+    """Delete a file: mark its directory entries free (0xE5); the blocks are free again, nothing else is touched. Returns the number of entries removed."""
+    n = 0
+    for i in range(64):
+        off = secs[(0, first + i // 16)][0] + (i % 16) * 32
+        e = d[off:off + 32]
+        if e[0] != 0xE5 and _entry_name(e) == (name, ext):
+            d[off] = 0xE5
+            n += 1
+    return n
+
+
 def add_payload(d, secs, first, name, ext, payload, records):
     """Add a new file whose bytes (header included) are `payload` to the image `d`: free directory entries, free 1 KB blocks, one extent (16 KB = 128 records,
     16 blocks) per 16 KB of the file."""
@@ -113,6 +130,8 @@ def add_payload(d, secs, first, name, ext, payload, records):
         if e[0] == 0xE5:
             free_entries.append(i)
         else:
+            if _entry_name(e) == (name, ext):
+                raise SystemExit(f"{name}.{ext} is already on the disk (remove_file first)")
             used.update(x for x in e[16:32] if x)
     nblocks = -(-len(payload) // 1024)
     nextents = -(-nblocks // 16)
@@ -137,6 +156,15 @@ def add_payload(d, secs, first, name, ext, payload, records):
         e[16:16 + len(chunk)] = bytes(chunk)
         d[entries[free_entries[x]]:entries[free_entries[x]] + 32] = e
     return blocks
+
+
+def add_padded(d, secs, first, name, ext, data, replace=False):
+    """add_payload for a finished file (`data` already carries its AMSDOS header, if it has one): the last record is padded with Ctrl-Z. replace=True removes a
+    file of the same name first; returns how many directory entries that removed."""
+    removed = remove_file(d, secs, first, name, ext) if replace else 0
+    records = -(-len(data) // 128)
+    add_payload(d, secs, first, name, ext, data.ljust(records * 128, b"\x1a"), records)
+    return removed
 
 
 def amsdos_header(b):

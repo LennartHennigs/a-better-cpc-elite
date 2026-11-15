@@ -49,7 +49,7 @@ extracted to `work/plus_patch/x/`) against stock, 2026-11-07:
 ## Status in our tree
 
 - `src/elite/`, `src/elite_de/`, `src/elite_fr/` carry the fix; the assembled `COMMONXX` differs from stock in exactly that byte and
-  equals `work/plus_patch/x/COMMONXX.BIN`. `tools/check_src.sh` expects it; the `CHEAT.ASC` pokes are unaffected.
+  equals `work/plus_patch/x/COMMONXX.BIN`. `tools/check_src.sh` expects it; the `TRAINER.ASC` pokes are unaffected.
 - `work/elite_plus.dsk` is the Firebird disk with that byte (AMSDOS headers untouched).
 - Caprice32 4.6.0 (`scripts/install-caprice32.sh`; `./cap32 -O system.model=3 DISK.dsk`, `model=2` is the classic 6128): at the Plus startup
   menu press CPC f1 through the on-screen keyboard (Shift+F1; host F1 opens the emulator menu), then `run"elite`. The **unpatched**
