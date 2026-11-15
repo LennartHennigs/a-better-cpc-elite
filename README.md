@@ -32,6 +32,7 @@ The stock game has few ship types and a quiet sky. This build fills it up, in th
 | `src/elite/` | the stock English game as **commented source in sjasmplus syntax** that assembles to the original bytes (`LARGEAXX`, `COMMONXX`, `COMMON2X`, `MUSIQUEX`, about 20,000 lines) |
 | `src/elite_de/`, `src/elite_fr/` | the German and French builds, same names and comments carried over, also byte-exact; without the missions and ship packs, which do not fit their smaller free tails |
 | `src/elite/missions_*.asm` | the added missions: code, text and one ship model, assembled only with `-DMISSIONS` so the stock build stays untouched; also the extra ship hulls and the ship packs (`missions_ships.asm`, `missions_flight_k.asm`) |
+| `src/*/lasersights.asm`, `src/elite/killcount.asm` | the per-laser sights (the same file in all three trees) and the kill count of the status page (English), included into the free tail of `COMMONXX` (`-DENHANCED`) |
 | `src/cheats/` | a trainer, a save viewer and a save editor, all written in CPC BASIC, and `SHOWSHIP.BAS`, a viewer for all the ships (BASIC plus a small Z80 routine) |
 | `tools/` | Python helpers: disassembler and verifier, disk reader and writer, text compressor, sprite converter, savegame decoder and editor, emulator tests |
 | `docs/` | notes by topic: building and the switches, what we changed in the game, memory map, architecture, save format, cheats, disks, the other versions' missions (research), the implemented missions, and open questions |
@@ -92,7 +93,7 @@ Underneath, a plain `sjasmplus` run gives the **stock** game (`bash tools/check_
 
 | Switch | What it does | Files |
 |---|---|---|
-| `ENHANCED` | turns on `STAR_OCCLUDE` and `ESC_KEYCODE=0x7F` together, and the cash display, the A key of the sell menu, the readability tabs, the shorter key delay and the escape-pod cargo fix (the "small improvements" above) | `commonxx.asm`, `largeaxx.asm` |
+| `ENHANCED` | turns on `STAR_OCCLUDE` and `ESC_KEYCODE=0x7F` together, and the cash display, the A key of the sell menu, the readability tabs, the shorter key delay, the escape-pod cargo fix, the kill count on the status page (English) and the laser sights (not together with `MISSIONS`) (the "small improvements" above) | `commonxx.asm`, `largeaxx.asm` |
 | `STAR_OCCLUDE` | stars stay behind planet and sun (`=1`/`=0`, overrides `ENHANCED`) | `commonxx.asm` |
 | `ESC_KEYCODE` | key code of Escape in the keyboard table (`0x7F` = Escape leaves the prompts, `0xFF` = stock) | `commonxx.asm` |
 | `TITLESEL` | choose the demo ship on the title screen | `commonxx.asm`, `musiquex.asm` |
@@ -107,10 +108,11 @@ Underneath, a plain `sjasmplus` run gives the **stock** game (`bash tools/check_
 | Where | Size | What lives there | Left |
 |---|---|---|---|
 | zero tail of `LARGEAXX` (`&1714-&1A3F`, reloaded from disk at every docking) | 812 | resident mission stub (251) and the sell-all key (48) plus the one docked overlay that is loaded on demand (largest: Constrictor, 511) | **3** |
-| zero tail of `COMMONXX` (`&9D9E-&9FFF`) | 610 | vector table, launch hook and one flight image, picked at every launch (largest: Trumbles, 608, and pack 1, 606; the image must end at `&9FFE` or below, because an interrupt can push at `&9FFE-&9FFF`, which an `ASSERT` checks) | **8** |
+| zero tail of `COMMONXX` (`&9D9E-&9FFF`) | 610 | vector table, launch hook, the 26-byte kill count routine and one flight image, picked at every launch (largest: Trumbles, 608, and pack 1 and the Constrictor, 606; the image must end at `&9FFE` or below, because an interrupt can push at `&9FFE-&9FFF`, which an `ASSERT` checks). Without `MISSIONS` the tail holds the laser sights (128 bytes) and the kill count instead, with about 450 bytes free | **0** |
 | dead `unusedViewBorderFill` (`&1FD2-&1FF0`) | 31 | `dustPlotPixel` for star occlusion (11 bytes), `mxPodHook`, which zeroes the Trumble count when an escape pod is used (10 bytes), and `cashHome` for the cash display (7 bytes) | 3 |
+| dead `unusedGetFlightMode` and `unusedGetCloakFlag` (`&204E-&2057`) | 10 | `killSpace`, the helper of the kill count that prints one space before the dash (10 bytes) | 0 |
 
-Changes to existing stock bytes are small: the CPC+ keyboard fix and the Escape key code (one byte each), 16 bytes of the dust loop for star occlusion, and a handful of 3-byte call replacements at the mission hook sites. Nothing else moves. With the switches off only the CPC+ byte differs from the original, and `tools/check_src.sh` checks every one of these claims. So the two tails have 3 and 8 spare bytes: a further mission or change to the largest ones has to trim something first (sizes per mission in `docs/_missions_built.md`).
+Changes to existing stock bytes are small: the CPC+ keyboard fix and the Escape key code (one byte each), 16 bytes of the dust loop for star occlusion, and a handful of 3-byte call replacements at the mission hook sites. Nothing else moves. With the switches off only the CPC+ byte differs from the original, and `tools/check_src.sh` checks every one of these claims. So the two tails have 3 and 0 spare bytes (the Trumbles image is exactly 608 of 608): a further mission or change to the largest ones has to trim something first (sizes per mission in `docs/_missions_built.md`).
 
 Example: assemble the four files with the mods (English, with missions) into a scratch directory, then put them on a disk:
 

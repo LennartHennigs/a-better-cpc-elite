@@ -24,7 +24,7 @@ see-through: stars show between their edge lines. Options for hiding them:
 ## Constraints
 
 - **Space.** `unusedViewBorderFill` (`&1FD2-&1FF0`) holds `dustPlotPixel` and has 20 bytes left (`&1FDD-&1FF0`);
-  `unusedGetFlightMode` and `unusedGetCloakFlag` give 10. The `&9D9E` tail has 610 bytes, but `-DMISSIONS` builds fill it
+  `unusedGetFlightMode` and `unusedGetCloakFlag` give 10 (used by `killSpace` since 2026-11-15). The `&9D9E` tail has 610 bytes, but `-DMISSIONS` builds fill it
   with mission images and the Constrictor flight image has none spare. A does not fit without moving its table (overlay or
   screen-gap memory); B might.
 - **Check.** `tools/check_src.sh` needs a second switch with the same proof as `STAR_OCCLUDE` (off = original bytes, on

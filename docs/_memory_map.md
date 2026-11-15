@@ -82,7 +82,7 @@ rely on the interrupt pushing its return address below the buffer: with SP at `&
 | `&9D9E-&9FFF` (end of `COMMONXX`) | 610, of which `&9FFE-&9FFF` stack | flight time (cannot hold docked-only code: it is resident always) | mission vector table (`&9D9E`), launch hook and one flight image, up to `&9FFE` (an `ASSERT` checks it) |
 | `&1714-&1A3F` (end of `LARGEAXX`) | 812 | docked only (fresh at each docking) | mission stub (251), the sell-all key (48) plus one overlay loaded at `mxOverlayBase` `&1775`; 0 spare with the Constrictor overlay |
 | `&1FD2-&1FF0` (`unusedViewBorderFill`) | 31 | always | `dustPlotPixel` and `mxPodHook`; 10 bytes left |
-| `&204E`, `&2053` (`unusedGetFlightMode`, `unusedGetCloakFlag`) | 10 | always (never referenced or executed) | nothing |
+| `&204E`, `&2053` (`unusedGetFlightMode`, `unusedGetCloakFlag`) | 10 | always (never referenced or executed) | `killSpace` of the kill count with `-DENHANCED` (English); nothing in the stock build |
 | `&6E21-&6FFF` (tail of `MUSIQUEX`) | about 480 | while the title screens run (the file is resident only then) | title ship selection, about 120 bytes |
 | `&9751-&97A0` | 80 | filler, not verified as free for new code | nothing |
 | German build tail | 282 | flight time | (no missions in the German build) |

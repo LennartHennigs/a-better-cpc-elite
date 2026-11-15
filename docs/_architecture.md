@@ -98,7 +98,7 @@ square tables at `&57FE-&57FF` this way (flattened station every 90 degrees). Re
 ## Dead code and free space (2026-11-07/08)
 
 Goal: find bytes a mission port can reclaim. **Conclusion: there is no reclaimable dead code in the `db` runs.** Reliable free space is the 610-byte tail of
-`COMMONXX` (`&9D9E-&9FFF`) minus the top bytes the stack uses, plus 10 bytes of `unusedGetFlightMode` (`&204E`) and `unusedGetCloakFlag` (`&2053`).
+`COMMONXX` (`&9D9E-&9FFF`) minus the top bytes the stack uses, plus 10 bytes of `unusedGetFlightMode` (`&204E`) and `unusedGetCloakFlag` (`&2053`) (taken by `killSpace` since 2026-11-15 with `-DENHANCED`).
 `unusedViewBorderFill` (`&1FD2-&1FF0`, 31 bytes, no references) now holds `dustPlotPixel` under `STAR_OCCLUDE`.
 
 1. **Fessor's switches** (`extended/source/EliteMasterSource.asm`): `defdeactivate`, `defdeactivate1-13`, `defdeactivatereal` and `defdeactivatechar` (all on in the
