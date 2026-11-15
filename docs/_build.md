@@ -45,6 +45,8 @@ What each change does in the game: `_my_changes.md`.
 ## `make`
 
 ```bash
+make original         # tools/build_original.sh: python3 -I tools/build_dsk.py --stock -> work/elite_original.dsk (LOC=de|fr: work/elite_original_de.dsk, _fr.dsk)
+make expanded         # tools/build_expanded.sh: build_showship.sh, then build_cheat.sh (which runs build_dsk.py --missions) -> work/elite_expanded.dsk; LOC=de|fr stops with a message (not ported yet)
 make stock            # work/build/stock/{en,de,fr}/      original bytes   (LOC=de or LOC=fr)
 make enhanced         # work/build/enhanced/{...}/        -DENHANCED, plus -DTITLESEL
 make missions         # python3 -I tools/build_dsk.py --missions work/elite_missions.dsk
@@ -73,6 +75,7 @@ All disk builders start from a **copy** of a base disk and refuse to modify the 
 | Command | Base disk | Output | Notes |
 |---|---|---|---|
 | `python3 -I tools/build_dsk.py` | `Elite_UK_Firebird_cracked_trainer.dsk` | `work/elite_rebuilt.dsk` | the four files with `-DENHANCED -DTITLESEL` (LARGEAXX with `-DFIREBIRD`), AMSDOS headers kept, sizes must not change |
+| `... --stock` | same (`--de`, `--fr` work) | `work/elite_original.dsk` (`_de`, `_fr`) | no flags at all: the original bytes plus the CPC+ fix (LARGEAXX with `-DFIREBIRD` on the Firebird disk); Firebird's own `CHEAT.BAS` stays; refused with `--missions` |
 | `... --missions` | same | `work/elite_missions.dsk` | adds the mission overlays and flight images (assembled per tag), `README.TXT` |
 | `... --de` | `Elite_DE_cracked.dsk` | `work/elite_de_rebuilt.dsk` | `--de --missions` is refused |
 | `... --fr` | `Elite (1985)(Firebird Software)(fr).dsk` | `work/elite_fr_rebuilt.dsk` | `--fr --missions` is refused; boot with `RUN"EL` |

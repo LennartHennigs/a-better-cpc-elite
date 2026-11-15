@@ -34,7 +34,9 @@ One spawn check per 256 passes on the CPC and the C64 alike; what differs is wha
 |---|---|---|---|
 | `SPAWN_HOSTILE_LIMIT` (roll below it lets a hostile through, 256 = 100%) | `0x50` (31%) | `0x5A` (35%) | `CMP #90` |
 | `SPAWN_JUNK_WIDTH` (the next values make an asteroid) | 10 (3.9%) | 35 (13.7%) | `CMP #35` |
-| escort pack size (`spawnPackSlot`) | 2 to 3 | 1 to 4 | `(rnd & 3) + 1` |
+| escort pack size (`spawnPackSlot`) | 2 to 4 (mean 3.0) | 1 to 4 (mean 2.5) | `(rnd & 3) + 1` |
+
+The pack size matches the C64's range but not its effect on the average: the stock roll gives 2,3,3,4 ships, `(rnd & 3) + 1` gives 1,2,3,4, so packs get a little smaller and 1-ship packs appear.
 
 Not changed: the slot count (the slot area is fixed in `_memory_map.md`), the C64's junk cap of 3 and the 4-ship gate (no spare bytes in the main binary), and the share of packs against lone hunters (C64 61%, CPC about 25%; set by a bit test, not an operand). With 6 slots and no cap, 13.7% junk may crowd out hostiles: if so lower `SPAWN_JUNK_WIDTH` (try 20). `check_src.sh` proves the default is the original and `-DTRAFFIC` differs only in those five bytes, in all three trees.
 

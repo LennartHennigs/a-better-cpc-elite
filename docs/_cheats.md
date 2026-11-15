@@ -77,7 +77,7 @@ Tested in cpcxray on all three disks with every cheat on, cash 5000, mission 2, 
 up. The added-mission pokes (`+50`, `+51`) only mean something in the English `-DMISSIONS` build.
  Edit `src/cheats/CHEAT.ASC` (ASCII); `CHEAT.BAS` is the tokenised file with AMSDOS header, `CHEAT.BAS.txt` its listing.
 `bash tools/build_cheat.sh` rebuilds them and the disks (the CPC's own BASIC tokenises, via headless cpcxray), and also writes
-`work/missions_cheat.dsk` (the mission build plus `CHEAT.BAS` and `EDITSAVE.BAS`).
+`work/missions_cheat.dsk` (the mission build plus `CHEAT.BAS`, `EDITSAVE.BAS` and `LISTSAVE.BAS`; `make expanded` copies it to `work/elite_expanded.dsk`).
 
 Prompts (Y or ENTER = yes, N = no):
 

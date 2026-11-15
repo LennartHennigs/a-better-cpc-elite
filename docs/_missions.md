@@ -45,7 +45,7 @@ heats the cabin; the ST pays 1 kg of gems, the CPC rank +1 and gems.
 **2. Cloaking device** (CPC, ST #4, MSX #4). Arrival hook stage 2 (>= 128, needs bit 0, sets bit 1); random encounters (`&8404`: random byte below 30/256 and
 `Missionflag & &42 == 2`) spawn a special Asp Mk II with a marker flag; scooping cargo type `&FF` (`&3961`) sets bit 6, rank +1; `chkCloak` `&2017` and the `Y` key;
 enemy aiming returns early; shut-off when energy bank 3 is below `&28`. The ST and MSX use a Cougar (own hull, 5,000 bounty = 500 Cr) with two Asp escorts; the CPC and
-Spectrum use a marked Asp Mk II with 2-3 Sidewinder/Krait escorts and no bounty.
+Spectrum use a marked Asp Mk II with 2-4 Sidewinder/Krait escorts and no bounty.
 
 *Cougar and cloak compared (read 2026-11-07; ST = `work/ext_st/repo/src_orig/asm`; Spectrum = `work/ext_msx/skoolkit/src/elite.skool`; CPC = `src/elite/commonxx.asm`):*
 
@@ -53,7 +53,7 @@ Spectrum use a marked Asp Mk II with 2-3 Sidewinder/Krait escorts and no bounty.
 |---|---|---|
 | Start | `new_mission` (`missions.m68:64`): galaxy 2+, no mission, `jump_count` (64 per mission) hits 0, `next_mission` 4 gives `$40` | `Missionflag` stage 2 on the 128th jump (`&4EDB`), no state byte |
 | Briefing | next docking, `dock_check` at `$40` runs `warning4` (text21 "Warning to all Traders"); state `$41` | none |
-| Spawn | `create_pirates` (deep space, fewer than 2 pirates) calls `pirate_attack`; at `$41`, only if no Cougar exists, creates a Cougar plus exactly 2 Asps | `spawnCommand0`: random below 30/256, `Missionflag & &42 == 2`, gate byte `aspMissionState` zero; gate := 1, spawns ship `&0D` (Asp), patch `dat_8427` sets bit 6 of `(ix+38)` (marker) and bit 2 of `(ix+32)`, then `jp &84E0` = `spawnEscortPack` (2-3 escorts; Spectrum `$BCAB`) |
+| Spawn | `create_pirates` (deep space, fewer than 2 pirates) calls `pirate_attack`; at `$41`, only if no Cougar exists, creates a Cougar plus exactly 2 Asps | `spawnCommand0`: random below 30/256, `Missionflag & &42 == 2`, gate byte `aspMissionState` zero; gate := 1, spawns ship `&0D` (Asp), patch `dat_8427` sets bit 6 of `(ix+38)` (marker) and bit 2 of `(ix+32)`, then `jp &84E0` = `spawnEscortPack` (2-4 escorts, 1-4 with `-DTRAFFIC`; Spectrum `$BCAB`) |
 | Hidden? | Cougar blinks invisible half the time (`vector.m68:151`), always ECMs missiles, ignores the energy bomb, cannot be collided with | while the gate is 1 the marked Asp is drawn as its laser only (Spectrum `$A7D9`; CPC `drawShipDistanceCheck`, the test just before it) |
 | Gate states | none (state `$41` is the gate) | `aspMissionState` (Spectrum `$9CB2`): 1 spawned, 2 it has you lined up with the cloak off (`loc_884A`, back to 1 when the bearing grows), 3 shot down by the player's laser (`targetisKilled`), canister pending; 0 on hyperspace, ramming, or death by another route |
 | Kill | `explode_object`, `release_cargo` (`orbit.m68:504`): blueprint `cargo_type` -1 releases one canister with cargo -1 | `targetisKilled`: marked Asp with gate 1 or 2 sets the gate to 3 and ejects a canister (action 6); cargo is not a blueprint field |

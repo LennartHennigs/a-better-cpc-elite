@@ -13,7 +13,7 @@ The CPC game shipped with **three** scripted missions. This build adds **five** 
 | the C64 and NES versions | 1 |
 | *Elite Plus* for the PC | 2 |
 
-What they are, where they start and what they pay is the point of finding out: **it is not written here**. Play it. (The research notes in `docs/` do spoil everything, so read those afterwards.)
+The missions are for the **English build only**: the German and French builds have too little free space for them (the tail of `COMMONXX` holds 282 bytes in German and 195 in French against 610 in English, and the English missions, their texts and the flight images already fill it), so the localized ports keep the stock missions. What they are, where they start and what they pay is the point of finding out: **it is not written here**. Play it. (The research notes in `docs/` do spoil everything, so read those afterwards.)
 
 The repository contains no game binaries, disk images or third-party source: the original disks, scans and reference sources are listed in `.gitignore` and stay on the author's machine. You need your own copy of the game to build and test anything. The assembly source is a disassembly of the original game's code and stays subject to its copyright; it is here for study and preservation.
 
@@ -21,7 +21,7 @@ The repository contains no game binaries, disk images or third-party source: the
 
 The stock game has few ship types and a quiet sky. This build fills it up, in three ways:
 
-- **More ships in space.** The stock game has 19 ship types. Ten more (Gecko, Cobra Mk I, Worm, Moray, Mamba, Adder, Boa, Anaconda, Shuttle, Boulder, hulls by Fessor) come in seven small "ship packs" on the disk. With no mission active, one pack is chosen for each system visit and loaded at the first launch (about 2 s, only when the pack changes); in it the new ships replace some Sidewinders, Kraits and traders at random, and the stock ships stay. Missions in progress use their own images, so no extras then (`-DMISSIONS`, English; `docs/_ship_packs.md`).
+- **More ships in space.** The stock game has 19 ship types. Ten more (Gecko, Cobra Mk I, Worm, Moray, Mamba, Adder, Boa, Anaconda, Shuttle, Boulder, hulls by Fessor) come in seven small "ship packs" on the disk. With no mission active, one pack is chosen for each system visit and loaded at the first launch (about 2 s, only when the pack changes); in it the new ships replace some Sidewinders, Kraits and traders at random, and the stock ships stay. Missions in progress use their own images, so no extras then (`-DMISSIONS`, English only, for the same lack of space in the German and French builds; `docs/_ship_packs.md`).
 - **Busier space, like the C64.** The spawn roll is named and tuned towards the C64 version: more hostiles per check, about 3.5 times the asteroids, escort packs of one to four (`-DTRAFFIC`, all three languages, on in the disks; the stock values stay in comments; `docs/_ship_packs.md`).
 - **A viewer for ships and objects.** `RUN"SHOWSHIP` shows all 30 models of the game as a rotating hidden-line wireframe with name, kills, bounty, speed and energy: 21 ships (the 11 stock ones, the 9 new ones and the Constrictor) and 9 objects that are not ships (the Coriolis station, missile, escape pod, cargo canister, alloy plate, splinter, asteroid, rock hermit and the new Boulder). The arrow keys step through them, "Q" quits. It runs on the mission disk and on its own blank disk (`tools/build_showship.sh`, about 8 frames a second).
 
@@ -30,7 +30,7 @@ The stock game has few ship types and a quiet sky. This build fills it up, in th
 | Part | What it is |
 |---|---|
 | `src/elite/` | the stock English game as **commented source in sjasmplus syntax** that assembles to the original bytes (`LARGEAXX`, `COMMONXX`, `COMMON2X`, `MUSIQUEX`, about 20,000 lines) |
-| `src/elite_de/`, `src/elite_fr/` | the German and French builds, same names and comments carried over, also byte-exact |
+| `src/elite_de/`, `src/elite_fr/` | the German and French builds, same names and comments carried over, also byte-exact; without the missions and ship packs, which do not fit their smaller free tails |
 | `src/elite/missions_*.asm` | the added missions: code, text and one ship model, assembled only with `-DMISSIONS` so the stock build stays untouched; also the extra ship hulls and the ship packs (`missions_ships.asm`, `missions_flight_k.asm`) |
 | `src/cheats/` | a trainer, a save viewer and a save editor, all written in CPC BASIC, and `SHOWSHIP.BAS`, a viewer for all the ships (BASIC plus a small Z80 routine) |
 | `tools/` | Python helpers: disassembler and verifier, disk reader and writer, text compressor, sprite converter, savegame decoder and editor, emulator tests |
@@ -47,6 +47,7 @@ Besides the missions, the build has a few changes that make the game nicer to pl
 - **"A" sells the whole hold.** In the sell menu, "A" at any quantity prompt sells every good you carry at once (with the trade sound) and returns to the inventory screen; the other keys still just leave the menu (`-DENHANCED`, English only so far; `src/elite/sell_all.asm`).
 - **Improved readability.** The station screens line up: every headline starts in column 2, the status screen reads "System:", "Target:", "Fuel:", "Cash:", "Status:" and "Rating:" with the values in one column ("Legal Status" is now just "Status"), and the hyperspace countdown moved to column 6 so it no longer covers the headline (`-DENHANCED`, English only so far).
 - **Cash on the quantity line.** The buy, sell and equipment prompts show your credits at the bottom right, on the row where you type the quantity, and refresh after every purchase (`-DENHANCED`, English only so far).
+- **A sight for each laser.** The pulse laser keeps the cross; the beam, military and mining lasers get their own sights (two bracketed bars, four diagonals, bars with a dot), as on the C64 and Atari ST, and there is no sight without a laser (`-DENHANCED`, `lasersights.asm`, all three languages). Not on the mission disk: the missions fill the free flight memory it would need (English only without `-DMISSIONS`).
 - **Stars stay behind the planet and sun.** The stars used to be drawn over the planet and sun discs, so they shone through them. Now they only appear against empty space (switch `STAR_OCCLUDE`, in all three languages). Ships are still wireframes, so you see stars between their edges, as in the original.
 
 ## The commented code
@@ -67,18 +68,19 @@ Requirements: Python 3, [sjasmplus](https://github.com/z00m128/sjasmplus), iDSK 
 
 ```bash
 bash tools/check_src.sh              # stock English source == original bytes, -DENHANCED differs only where documented (also: de, fr)
-python3 -I tools/build_dsk.py --missions     # combined build: work/elite_missions.dsk (from the Firebird disk)
-bash tools/build_cheat.sh            # trainer and save tools onto work/firebird_cheat.dsk, work/missions_cheat.dsk, work/de_cheat.dsk and work/fr_cheat.dsk
-bash tools/build_showship.sh         # the ship viewer: work/showship.dsk (run it before build_dsk.py to get the viewer on the mission disk)
+make original                        # the original game, stock bytes: work/elite_original.dsk (LOC=de or LOC=fr for German / French)
+make expanded                        # everything on one disk: work/elite_expanded.dsk = enhancements, all missions and ship packs, CHEAT, EDITSAVE, LISTSAVE, SHOWSHIP (English only for now)
 ```
 
-Boot the disk and `RUN"ELITE`. `RUN"SHOWSHIP` starts the ship viewer. `RUN"CHEAT.BAS` starts the trainer (the mission disk carries ours, not Firebird's) (it has prompts for kills, jumps and mission presets, so the added missions can be reached without hours of play); `RUN"EDITSAVE.BAS` edits a save; `RUN"LISTSAVE.BAS` (on the German saves disk) lists the saves on a disk with build, kills and cash. On the host, `tools/saveedit.py` does the same and can convert a save between the three builds.
+Boot the disk and `RUN"ELITE`. `RUN"SHOWSHIP` starts the ship viewer. `RUN"CHEAT.BAS` starts the trainer (the mission disk carries ours, not Firebird's) (it has prompts for kills, jumps and mission presets, so the added missions can be reached without hours of play); `RUN"EDITSAVE.BAS` edits a save; `RUN"LISTSAVE.BAS` (on the mission, expanded and German saves disks) lists the saves on a disk with build, kills and cash. On the host, `tools/saveedit.py` does the same and can convert a save between the three builds.
 
 ## Build switches
 
 The easy way is `make`:
 
 ```bash
+make original       # the original game on a disk -> work/elite_original.dsk
+make expanded       # the full build on one disk -> work/elite_expanded.dsk (runs tools/build_showship.sh and tools/build_cheat.sh in the right order)
 make stock          # original bytes -> work/build/stock/       (LOC=de or LOC=fr for German / French)
 make enhanced       # the improvements -> work/build/enhanced/
 make missions       # enhanced + added missions, bootable disk -> work/elite_missions.dsk
@@ -121,7 +123,7 @@ sjasmplus -DTITLESEL                                  --raw=out/MUSIQUEX.BIN src
 python3 -I tools/build_dsk.py --missions             # does all of the above and writes work/elite_missions.dsk
 ```
 
-Without `-DMISSIONS` you get the improvements only; without any flag, the original. The missions also need the overlay and flight-image files, which `build_dsk.py` builds and writes, so use it for a bootable disk; the raw `sjasmplus` lines are for looking at the bytes. The German and French trees take the same `ENHANCED` switch (`src/elite_de/`, `src/elite_fr/`; `TITLESEL` in German, `MISSIONS` English only).
+Without `-DMISSIONS` you get the improvements only; without any flag, the original. The missions also need the overlay and flight-image files, which `build_dsk.py` builds and writes, so use it for a bootable disk; the raw `sjasmplus` lines are for looking at the bytes. The German and French trees take the same `ENHANCED` switch (`src/elite_de/`, `src/elite_fr/`; `TITLESEL` in German, `MISSIONS` English only: the German and French free tails are 384 and 493 bytes in `LARGEAXX` and 282 and 195 in `COMMONXX`, against 812 and 610 in English, too small for the stub, the overlays and the flight images; `TRAFFIC` and the improvements work in all three).
 
 ## Tests
 
@@ -141,4 +143,4 @@ The notes live in `docs/`, one file per topic (`docs/_*.md`); the main ones:
 
 ## Credits and sources
 
-*Elite* is by David Braben and Ian Bell; the CPC version is the Firebird port. Mark Moxon's annotated BBC Micro, C64 and NES sources (elite.bbcelite.com) and Andy McFadden's Apple II disassembly were read for behaviour only; the Z80 here is written fresh. The Atari ST source, the MSX and ZX Spectrum (SkoolKit) disassemblies, the *Elite Plus* decompilation work by rembish and the CPC reconstruction by Fessor were used as references. **Fessor** (CPCWiki, thread "Expanding Elite") disassembled the CPC game first: the Constrictor hull in `src/elite/missions_hull.asm` and the extra ship hulls in `src/elite/missions_ships.asm` (Gecko, Cobra Mk I, Worm, Moray, Mamba, Adder, Boa, Anaconda, Shuttle) are his, and many routine and variable names, the ship layout and the symbol list come from his work. The rest of his source, beta disk and forum pages are not part of this repository (he asked that they not be redistributed); they are in his thread, linked in `docs/_references.md`.
+*Elite* is by David Braben and Ian Bell; the CPC version is the Firebird port. Mark Moxon's annotated BBC Micro, C64 and NES sources (elite.bbcelite.com) and Andy McFadden's Apple II disassembly were read for behaviour only; the Z80 here is written fresh. The Atari ST source, the MSX and ZX Spectrum (SkoolKit) disassemblies, the *Elite Plus* decompilation work by rembish and the CPC reconstruction by Fessor were used as references. **Fessor** (CPCWiki, thread "Expanding Elite") disassembled the CPC game first: the Constrictor hull in `src/elite/missions_hull.asm` and the extra ship hulls in `src/elite/missions_ships.asm` (Gecko, Cobra Mk I, Worm, Moray, Mamba, Adder, Boa, Anaconda, Shuttle, Boulder) are his, and many routine and variable names, the ship layout and the symbol list come from his work. The rest of his source, beta disk and forum pages are not part of this repository (he asked that they not be redistributed); they are in his thread, linked in `docs/_references.md`.
