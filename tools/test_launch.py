@@ -5,7 +5,7 @@ Build first:  python3 -I tools/build_dsk.py --missions ; cp work/elite_missions.
 usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_launch.py
 
 Method as in tools/test_mission_hook.py: stop at handleEntitys (&5066), write the built COMMONXX patches (default image, -DMISSIONS), call loadLARGEAXX so the stub is in
-RAM, then for each scenario set missionState (&38FD), the Trumble count (&3905) and the flight id byte (&9DB6, the image "already loaded"), call mxLaunchEntry with a trap return address and compare
+RAM, then for each scenario set missionState (&38FD), the Trumble count (&3905) and the flight id byte (mxFlightId, the image "already loaded"), call mxLaunchEntry with a trap return address and compare
 the tail (&9D9E..) with the MFLIGHTx.BIN file on the disk. The stub loads the file with the game's loadFile, then continues with loadIndicator.
 """
 import asyncio
@@ -48,10 +48,17 @@ SCENARIOS = {
     "rocks_hunting_from_S":   (0x5E, "S", "R"),
     "rocks_killed":           (0x5E, "R", "0"),
     "rocks_paid":             (0x5E, "R", "0"),
+    "pack_picked":            (0x00, "0", "3"),     # no mission: the pack is (jumpCounter + presentSystemSeed) & 7, see PACKSEL
+    "pack_already_loaded":    (0x00, "3", "3"),
+    "pack_none_picked":       (0x00, "5", "0"),
+    "pack_after_mission":     (0x02, "C", "7"),
+    "mission_beats_pack":     (0x01, "0", "C"),
+    "trumbles_beat_pack":     (0x0E, "0", "T"),
 }
+PACKSEL = {"pack_picked": (2, 1), "pack_already_loaded": (1, 2), "pack_none_picked": (8, 0), "pack_after_mission": (4, 3), "mission_beats_pack": (1, 0), "trumbles_beat_pack": (6, 6)}   # (jumpCounter low byte, presentSystemSeed); default (0, 0) = no pack
 POLICE = {"rocks_hunting": 1, "rocks_hunting_from_S": 1, "rocks_killed": 2, "rocks_paid": 3}   # &38FE (stolen police ship state, bits 0-1)
-TRUMBLES = {"trumbles_aboard", "trumbles_from_C"}   # these run with a non-zero count in &3905
-FLIGHT_ID = 0x9DB6   # mxFlightId: the id byte after the 8-entry vector table
+TRUMBLES = {"trumbles_aboard", "trumbles_from_C", "trumbles_beat_pack"}   # these run with a non-zero count in &3905
+FLIGHT_ID = 0x9DB9   # mxFlightId: the id byte after the 9-entry vector table (main() reads the real address from the symbols)
 
 
 def patches():
@@ -75,7 +82,7 @@ def patches():
 async def main():
     files = dskx.read_files(dskx.load_sectors(ROOT / "work/elite_missions.dsk"))
     images = {}
-    for t in "0CPTSR":
+    for t in "0CPTSR1234567":
         raw = files[(0, f"MFLIGHT{t}.BIN")]
         images[t] = raw[128:128 + dskx.amsdos_header(raw)["length"]]   # the file is padded to whole records after the real length
     params = StdioServerParameters(command="cpcxray", args=["mcp", "--config", "config/cpc6128.toml"])
@@ -119,6 +126,9 @@ async def main():
                 await c("memory_write", {"address": 0x38FD, "data": "%02X" % st})
                 await c("memory_write", {"address": 0x38FE, "data": "%02X" % POLICE.get(name, 0)})
                 await c("memory_write", {"address": 0x3905, "data": "03 00" if name in TRUMBLES else "00 00"})
+                jc, seed = PACKSEL.get(name, (0, 0))
+                await c("memory_write", {"address": syms["jumpCounter"], "data": "%02X 00" % jc})
+                await c("memory_write", {"address": syms["presentSystemSeed"], "data": "%02X" % seed})
                 if have != "0":     # pretend the tail holds that image already
                     img = images[have]
                     await c("memory_write", {"address": BASE, "data": img.hex()})

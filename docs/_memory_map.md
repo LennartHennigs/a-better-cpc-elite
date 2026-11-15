@@ -96,7 +96,7 @@ may move, because saves are XORed with the code at `EquipShip`.
 |---|---|---|
 | docked stub (251 bytes) and the call from the docking sequence | `&1714` | with `LARGEAXX`, every docking |
 | docked overlay `MISSIONC/P/T/R.BIN` | `&1775` (`mxOverlayBase`) | on demand, only where something can happen (about 2 s of disk time) |
-| vector table (ten 3-byte `jp`s), id byte `mxFlightId` `&9DB6`, launch hook `mxLaunchEntry`, flight image `MFLIGHT0/C/P/T/S/R.BIN` | `&9D9E-&9FFE` | image chosen at every launch, loaded only if it differs from the one in RAM |
+| vector table (nine 3-byte `jp`s), id byte `mxFlightId` `&9DB9`, launch hook `mxLaunchEntry`, flight image `MFLIGHT0/C/P/T/S/R.BIN` or a ship pack `MFLIGHT1-7.BIN` (`_ship_packs.md`) | `&9D9E-&9FFE` | image chosen at every launch, loaded only if it differs from the one in RAM |
 | mission state bytes | `&38FD` (state), `&38FE` (counter), `&3905-&3906` (Trumbles) | in the save |
 
 Details, sizes and tests: `_missions_built.md`.

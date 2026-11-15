@@ -35,7 +35,7 @@ OUT = Path(args[0]) if args else ROOT / "work" / ("elite_de_rebuilt.dsk" if DE e
 if OUT.resolve() == BASE.resolve() or OUT.resolve().parent == ROOT:   # CLAUDE.md: never modify the original disks in the project root
     sys.exit(f"{OUT}: refusing to write a disk into the project root (the originals live there); use work/")
 SJASM = Path.home() / ".local/bin/sjasmplus"
-FILES = {"LARGEAXX": [] if DE or FR else ["-DFIREBIRD"], "COMMONXX": ["-DTITLESEL"], "COMMON2X": [], "MUSIQUEX": ["-DTITLESEL"]}   # TITLESEL: cursor keys change the title ship
+FILES = {"LARGEAXX": [] if DE or FR else ["-DFIREBIRD"], "COMMONXX": ["-DTITLESEL", "-DTRAFFIC"], "COMMON2X": [], "MUSIQUEX": ["-DTITLESEL"]}   # TITLESEL: cursor keys change the title ship; TRAFFIC: C64-like spawn odds (docs/_ship_packs.md)
 
 
 def add_file(d, secs, first, name, ext, data, load):
@@ -45,7 +45,7 @@ def add_file(d, secs, first, name, ext, data, load):
 
 
 def flight_image(tag):
-    """Assemble COMMONXX with -DMISSIONS (-DFL_<tag> for C/P/T/S/R; "0" is the default image) and slice mxFlightBase..mxFlightEnd (the COMMONXX tail)."""
+    """Assemble COMMONXX with -DMISSIONS (-DFL_<tag> for C/P/T/S/R and the ship packs 1-7; "0" is the default image) and slice mxFlightBase..mxFlightEnd (the COMMONXX tail)."""
     with tempfile.TemporaryDirectory() as tmp:
         out, sym = Path(tmp) / "c.bin", Path(tmp) / "c.sym"
         flags = ["-DENHANCED", *FILES["COMMONXX"], "-DMISSIONS"] + ([f"-DFL_{tag}"] if tag != "0" else [])   # the flags of the COMMONXX that goes on the disk
@@ -82,6 +82,47 @@ def add_readme(d, secs, first):
     records = -(-len(data) // 128)
     dskx.add_payload(d, secs, first, "README", "TXT", data.ljust(records * 128, b"\x1a"), records)
     print(f"README.TXT: {len(data)} bytes")
+
+
+def add_showship(d, secs, first):
+    """The ship viewer (tools/build_showship.sh): SHOWSHIP.BAS (visible) and SHIPS.BIN (hidden, loaded to &4000). Added with dskx, not iDSK: iDSK may put blocks on the
+    two odd-sector tracks of the base disk, which AMSDOS cannot read."""
+    bas, ships = ROOT / "src/cheats/SHOWSHIP.BAS", ROOT / "work/showship/SHIPS.BIN"
+    if not (bas.exists() and ships.exists()):
+        print("SHOWSHIP: not added (run tools/build_showship.sh first)")
+        return
+    data = bas.read_bytes()   # AMSDOS header included
+    records = -(-len(data) // 128)
+    dskx.add_payload(d, secs, first, "SHOWSHIP", "BAS", data.ljust(records * 128, b"\x1a"), records)
+    add_file(d, secs, first, "SHIPS", "BIN", ships.read_bytes(), 0x4000)
+    print(f"SHOWSHIP.BAS {len(data)} bytes, SHIPS.BIN {ships.stat().st_size} bytes")
+
+
+def remove_file(d, secs, first, name, ext):
+    """Delete a file: mark its directory entries free (0xE5); the blocks are free again, nothing else is touched."""
+    n = 0
+    for i in range(64):
+        off = secs[(0, first + i // 16)][0] + (i % 16) * 32
+        e = d[off:off + 32]
+        if e[0] != 0xE5 and bytes(e[1:9]).decode("latin1").strip() == name and bytes(e[9:12]).decode("latin1").replace("\x00", "").strip() == ext:
+            d[off] = 0xE5
+            n += 1
+    return n
+
+
+def replace_trainer(d, secs, first):
+    """The base disk carries Firebird's own CHEAT.BAS (wrong cloak entry, loads the game itself); replace it with ours (src/cheats/CHEAT.BAS, which chains to the hidden CHEATB.BIN =
+    src/cheats/CHEATB.BAS; docs/_cheats.md). Both files keep the AMSDOS header the tokeniser gave them."""
+    cheat, cheatb = ROOT / "src/cheats/CHEAT.BAS", ROOT / "src/cheats/CHEATB.BAS"
+    if not (cheat.exists() and cheatb.exists()):
+        print("trainer: not replaced (src/cheats/CHEAT.BAS or CHEATB.BAS missing)")
+        return
+    removed = remove_file(d, secs, first, "CHEAT", "BAS")
+    for name, ext, f in (("CHEAT", "BAS", cheat), ("CHEATB", "BIN", cheatb)):
+        data = f.read_bytes()
+        records = -(-len(data) // 128)
+        dskx.add_payload(d, secs, first, name, ext, data.ljust(records * 128, b"\x1a"), records)
+    print(f"CHEAT.BAS: removed the original ({removed} entry), added ours and CHEATB.BIN")
 
 
 def main():
@@ -135,12 +176,14 @@ def main():
             base, data = overlay(tag)
             blocks = add_file(d, secs, first, f"MISSION{tag}", "BIN", data, base)
             print(f"MISSION{tag}.BIN: {len(data)} bytes at &{base:04X}, blocks {blocks}")
-        for tag in ("0", "C", "P", "T", "S", "R"):
+        for tag in ("0", "C", "P", "T", "S", "R", "1", "2", "3", "4", "5", "6", "7"):   # 1-7: ship packs (docs/_ship_packs.md)
             base, data = flight_image(tag)
             blocks = add_file(d, secs, first, f"MFLIGHT{tag}", "BIN", data, base)
             print(f"MFLIGHT{tag}.BIN: {len(data)} bytes at &{base:04X}, blocks {blocks}")
     if MISSIONS:
         add_readme(d, secs, first)
+        add_showship(d, secs, first)
+        replace_trainer(d, secs, first)
     hidden, shown = hide_entries(d, secs, first)   # System attribute on everything but .BAS and .TXT (CLAUDE.md rule; code in tools/hide_files.py)
     print(f"{len(hidden)} directory entries hidden (System attribute), visible: {', '.join(sorted(shown))}")
     OUT.write_bytes(d)

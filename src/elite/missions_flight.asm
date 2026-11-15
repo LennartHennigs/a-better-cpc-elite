@@ -37,6 +37,37 @@ mxTypeConstrictor equ 19            ; ship type after the 19 stock ships (0-18)
     DEFINE HAS_SPAWN
     DEFINE HAS_KILL
     ENDIF
+    IFDEF FL_1
+    DEFINE FLID "1"
+    DEFINE FL_PACK
+    ENDIF
+    IFDEF FL_2
+    DEFINE FLID "2"
+    DEFINE FL_PACK
+    ENDIF
+    IFDEF FL_3
+    DEFINE FLID "3"
+    DEFINE FL_PACK
+    ENDIF
+    IFDEF FL_4
+    DEFINE FLID "4"
+    DEFINE FL_PACK
+    ENDIF
+    IFDEF FL_5
+    DEFINE FLID "5"
+    DEFINE FL_PACK
+    ENDIF
+    IFDEF FL_6
+    DEFINE FLID "6"
+    DEFINE FL_PACK
+    ENDIF
+    IFDEF FL_7
+    DEFINE FLID "7"
+    DEFINE FL_PACK
+    ENDIF
+    IFDEF FL_PACK
+    DEFINE HAS_SHIP
+    ENDIF
     IFNDEF FLID
     DEFINE FLID "0"
     ENDIF
@@ -66,7 +97,7 @@ mxFlightId:
     db FLID                         ; "0" default, "C", "P": which image is in RAM (the launch hook compares it)
 
 ; Launch hook: replaces the first call of launchSequence (`call loadIndicator`). Makes sure the flight image the state asks for is in this tail, then carries on with
-; loadIndicator. "T" while Trumbles are aboard, "C" while the Constrictor hunt is on (state 1 or 3), "P" while the plans are aboard, "S" while the stolen-ship mission waits or hunts, "R" while Ceerdi is being cleared, else "0" (this default image).
+; loadIndicator. "T" while Trumbles are aboard, "C" while the Constrictor hunt is on (state 1 or 3), "P" while the plans are aboard, "S" while the stolen-ship mission waits or hunts, "R" while Ceerdi is being cleared, else a ship pack "0" to "7" (0 = the default image, no extra ships).
 ; Nothing is loaded when the right image is already there. This code is the same in every image, at the same address, so the load can overwrite it while it waits.
 mxLaunchEntry:
     ld hl,(mxTrCount)
@@ -100,8 +131,12 @@ mxLaunchEntry:
     cp 0x01
     ld a,"R"
     jr z,mxFlightGo
-mxFlightNone:
-    ld a,"0"
+mxFlightNone:                         ; no mission: ship pack "0" (none) to "7" for this visit. jumpCounter changes at every arrival and the system byte with the system, so a
+    ld a,(jumpCounter)                ; relaunch from the same station asks for the same pack (already in RAM, nothing loaded); stock was `ld a,"0"`
+    ld hl,presentSystemSeed
+    add a,(hl)
+    and 0x07
+    add a,"0"
 mxFlightGo:
     ld hl,mxFlightId
     cp (hl)
@@ -177,6 +212,9 @@ mxRechargeImpl:
     ENDIF
     IFDEF FL_R
     INCLUDE "missions_flight_r.asm"
+    ENDIF
+    IFDEF FL_PACK
+    INCLUDE "missions_flight_k.asm"
     ENDIF
 mxFlightEnd:
     ASSERT mxFlightEnd <= 0x9FFE              ; with SP at &A000 an interrupt pushes at &9FFE-&9FFF (docs/_architecture.md): no image byte may sit there

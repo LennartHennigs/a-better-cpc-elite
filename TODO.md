@@ -2,6 +2,7 @@
 
 Open work, most useful first. `CLAUDE.md` keeps the short list; details live in `docs/` (there is no `notes.md`). Things we do not know yet are in `docs/_open_questions.md`.
 
+- [ ] Ship packs (`docs/_ship_packs.md`): play through a few jumps and launches (pack mix, 2 s load after a jump, asteroid crowding with `-DTRAFFIC`); try hiding the pack load (load at the end of `DockingSequence`, or chunked during the launch tunnel); Boulder and Transporter do not fit yet; check the new hulls' role flags and kill values against the C64 table.
 - [x] allow Escape to exit the buy menu (goods): done (one byte, `CHANGELOG.md`)
 - [ ] Escape at the second digit of a buy or sell quantity leaves the first digit's trade applied (`todoInputNumber0to9`, `largeaxx.asm` ~line 205: ESC takes `jr nc,LAB_ram_095f` without `restore_trade_state`; DEL undoes it correctly). Review 2026-11-10, not fixed.
 - [ ] Save on a write-protected disk resets to BASIC (seen in RVM on the mission disk). The game's own hook only catches AMSDOS's "Retry, Ignore or Cancel?" message (`LAB_ram_855e`, `checkMedia`); whether the stock game behaves the same, and what a graceful handler would cost in bytes, is untested (needs a clean boot in cpcxray on a read-only disk; `firebird_at_entry.sna` is not valid for disk-menu tests).

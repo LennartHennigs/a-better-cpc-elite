@@ -2,7 +2,8 @@
 """Spawn the Constrictor (ship type 19) in cpcxray and look at it.
 
 Build and copy first:  python3 -I tools/build_dsk.py --missions ; cp work/elite_missions.dsk work/xray/disk/
-usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_flight_hull.py [TYPE]
+usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_flight_hull.py [TYPE] [--fl TAG] [--extra LABEL]
+(--fl 3 --extra shipdatMamba 16 builds ship pack 3 and spawns type 16 until the pack's Mamba comes up, as the pack hook redirects half the spawns)
 
 From output/firebird_in_flight.sna: lookforFreeSlot (&816B) gives IX, spawnShip (&80CD) builds type TYPE (default 19) there, the position is set
 ahead of the player, then 2 s run and a screenshot (output/missions_ship.png). Prints the blueprint address stored in the slot (ix+35/36) and whether the
@@ -35,14 +36,21 @@ def patch_ranges(new, gap=8):
     return [(0x1A40 + lo, 0x1A40 + hi) for lo, hi in ranges]
 
 
+FL = sys.argv[sys.argv.index("--fl") + 1] if "--fl" in sys.argv else "C"
+EXTRA = sys.argv[sys.argv.index("--extra") + 1] if "--extra" in sys.argv else None
+SYMS = {}
+
+
 def built_commonxx():
     """assemble COMMONXX with -DMISSIONS (the snapshot holds the stock code; only LARGEAXX comes from the disk)"""
     with tempfile.TemporaryDirectory() as d:
-        out = Path(d) / "c.bin"
-        subprocess.run([str(Path.home() / ".local/bin/sjasmplus"), "-DMISSIONS", "-DFL_C", f"--raw={out}", str(ROOT / "src/elite/commonxx.asm")],
+        out, sym = Path(d) / "c.bin", Path(d) / "c.sym"
+        subprocess.run([str(Path.home() / ".local/bin/sjasmplus"), "-DMISSIONS", f"-DFL_{FL}", f"--raw={out}", f"--sym={sym}", str(ROOT / "src/elite/commonxx.asm")],
                        check=True, capture_output=True)
+        import re
+        SYMS.update({m.group(1): int(m.group(2), 16) for m in re.finditer(r"^(\w+):\s+EQU\s+0x([0-9A-Fa-f]+)", sym.read_text(), re.M)})
         return out.read_bytes()
-TYPE = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].isdigit() else 19
+TYPE = int(next((a for a in sys.argv[1:] if a.isdigit()), 19))
 PRINTCHAR = 0x44A9   # printCharAtLocationXY
 
 
@@ -83,8 +91,14 @@ async def main():
             rep = await call(0x816B)
             ix = (await c("registers_get"))["ix"]
             print("free slot IX = %04X" % ix)
-            rep = await call(0x80CD, a=TYPE, ix=ix)
-            ix = (await c("registers_get"))["ix"]
+            for _ in range(40 if EXTRA else 1):
+                rep = await call(0x80CD, a=TYPE, ix=ix)
+                ix = (await c("registers_get"))["ix"]
+                bpa = bytes.fromhex((await c("memory_read", {"address": ix + 35, "length": 2}))["hex"])
+                if not EXTRA or bpa[0] | bpa[1] << 8 == SYMS[EXTRA]:
+                    break
+            else:
+                sys.exit(f"{EXTRA} never came up")
             hdr = bytes.fromhex((await c("memory_read", {"address": ix + 34, "length": 3}))["hex"])
             print("slot flags %02X, blueprint address %04X" % (hdr[0], hdr[1] | hdr[2] << 8))
             for off, val in ((0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (5, 0), (6, 0), (7, 0x01), (6, 0x80), (8, 0), (27, 0), (37, 0x7F)):   # z 384 straight ahead, speed 0 so it hangs there, hostile flags like spawnCommand1

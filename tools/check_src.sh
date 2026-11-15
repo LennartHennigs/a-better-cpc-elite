@@ -59,6 +59,12 @@ for p in "largeaxx LARGEAXX" "commonxx COMMONXX" "common2x COMMON2X" "musiquex M
   FU=$(off fuelToken); FUN=0; [ "$(off fuelTokenEnd)" -gt 0 ] && FUN=$(( $(off fuelTokenEnd) - FU ))
   CH=$(off cashHome); PC=$(off podCleanOperand); PD=$(off predelayOperand); HP=$(off hyperCountPos)   # English: cashHome (&1FEA, 7 bytes); all trees: the pod cargo clear start (low operand byte)
   if cmp -l "$OUT/$n.enh.bin" "$REF" | awk -v lo=$LO -v hi=$HI -v dl=$DL -v sl=$SL -v sln=$SLN -v sbn=$SBN -v fu=$FU -v fun=$FUN -v cc=$CC -v tc=$TC -v hc=$HC -v sb=$SB -v cp=$CP -v ch=$CH -v pc=$PC -v pd=$PD -v hp=$HP -v esc=$((ESCP+1)) '{o=$1-1; if ($1==esc) { if ($2!="177" || $3!="377") bad=1; seen=1 } else if (!((o>=lo && o<hi) || (o>=dl && o<dl+16) || (o>=sl && o<sl+sln) || (o>=fu && o<fu+fun) || o==cc || o==tc || o==hc || (o>=sb && o<sb+sbn) || (o>=cp && o<cp+4) || (o>=ch && o<ch+7) || o==pc || o==pd || o==hp)) bad=1} END{exit (bad || !seen)}'; then echo "$n: ok (default = original; -DENHANCED differs only in the ESC byte, the star-occlusion slots, the status/title tabs and labels, cashHome, the pod cargo clear, the key pre-delay and the hyperspace count position)"; else echo "$n -DENHANCED: differs outside the documented slots"; rc=1; fi
+  # -DTRAFFIC (C64-like spawn odds, docs/_ship_packs.md): differs from the original only in the two roll operands and the 3-byte escort pack size slot
+  if sjasmplus -DTRAFFIC --raw="$OUT/$n.tr.bin" --sym="$OUT/$n.tr.sym" "$SRC/$n.asm" >/dev/null 2>&1; then
+    tsym() { awk -v k="$1:" '$2 == k || $1 == k { print $NF }' "$OUT/$n.tr.sym"; }
+    TJ=$(( $(tsym spawnJunkEndOperand) - 0x1A40 )); TH=$(( $(tsym spawnHostileOperand) - 0x1A40 )); TP=$(( $(tsym spawnPackSlot) - 0x1A40 ))
+    if cmp -l "$OUT/$n.tr.bin" "$REF" | awk -v tj=$TJ -v th=$TH -v tp=$TP '{o=$1-1; seen++; if (!(o==tj || o==th || (o>=tp && o<tp+3))) bad=1} END{exit (bad || seen != 5)}'; then echo "$n -DTRAFFIC: ok (differs only in the junk end, hostile limit and escort pack size slot)"; else echo "$n -DTRAFFIC: differs outside the traffic slots"; rc=1; fi
+  else echo "$n -DTRAFFIC: assemble FAILED"; rc=1; fi
 done
 # English only: the -DMISSIONS variant (src/elite/missions_*.asm in the free tails) must keep both files the same length
 if [ "$SRC" = "$ROOT/src/elite" ]; then

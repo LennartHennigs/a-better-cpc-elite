@@ -20,9 +20,7 @@ mxArriveImpl:
     ld a,h
     and 0xC0
     jr nz,mxArriveCap                 ; a sum of 0x4000 or more doubles to 0x8000 or more (or wraps past 16 bits at the cap): keep it at 0x7FFF
-    ld a,l
-    or 0x04
-    ld l,a
+    set 2,l                           ; was ld a,l / or 4 / ld l,a: 2 bytes saved for the ship pack picker in mxFlightNone
     add hl,hl
     jr mxArriveStore
 mxArriveCap:

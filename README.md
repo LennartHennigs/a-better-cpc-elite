@@ -23,8 +23,8 @@ The repository contains no game binaries, disk images or third-party source: the
 |---|---|
 | `src/elite/` | the stock English game as **commented source in sjasmplus syntax** that assembles to the original bytes (`LARGEAXX`, `COMMONXX`, `COMMON2X`, `MUSIQUEX`, about 20,000 lines) |
 | `src/elite_de/`, `src/elite_fr/` | the German and French builds, same names and comments carried over, also byte-exact |
-| `src/elite/missions_*.asm` | the added missions: code, text and one ship model, assembled only with `-DMISSIONS` so the stock build stays untouched |
-| `src/cheats/` | a trainer, a save viewer and a save editor, all written in CPC BASIC |
+| `src/elite/missions_*.asm` | the added missions: code, text and one ship model, assembled only with `-DMISSIONS` so the stock build stays untouched; also the extra ship hulls and the ship packs (`missions_ships.asm`, `missions_flight_k.asm`) |
+| `src/cheats/` | a trainer, a save viewer and a save editor, all written in CPC BASIC, and `SHOWSHIP.BAS`, a viewer for all the ships (BASIC plus a small Z80 routine) |
 | `tools/` | Python helpers: disassembler and verifier, disk reader and writer, text compressor, sprite converter, savegame decoder and editor, emulator tests |
 | `docs/` | notes by topic: building and the switches, what we changed in the game, memory map, architecture, save format, cheats, disks, the other versions' missions (research), the implemented missions, and open questions |
 
@@ -37,6 +37,9 @@ Besides the missions, the build has a few changes that make the game nicer to pl
 - **The keyboard reacts faster.** Before every key read the game waited 128 interrupts, which is 0.43 s on the CPC (the interrupt fires six times per frame, so the "128 frames" in the old comment were never frames). With `-DENHANCED` it waits 48, about 0.16 s (one operand byte in `sub_403E`, measured in the emulator: 425 ms against 160 ms), so menus, quantity prompts and Press Space feel quicker.
 - **Stars stay behind the planet and sun.** The stars used to be drawn over the planet and sun discs, so they shone through them. Now they only appear against empty space (switch `STAR_OCCLUDE`, in all three languages). Ships are still wireframes, so you see stars between their edges, as in the original.
 - **Browse the ships on the "Press Space" screen.** Cursor left and right, or the joystick, step the demo ship through eight hulls (Viper, Asp, Cobra Mk III, Fer-de-Lance, Sidewinder, Krait, Rock Hermit, Thargoid), so you can look at all of them (it only changes the demo ship, not the one you fly) (switch `TITLESEL`, English and German; the disks from `tools/build_dsk.py` include it). In the English build the press-space screen shows the ship's name, in the ship colour, where the ELITE title stood.
+- **More ships in space.** The stock game has 19 ship types. Ten more (Gecko, Cobra Mk I, Worm, Moray, Mamba, Adder, Boa, Anaconda, Shuttle, Boulder, hulls by Fessor) come in seven small "ship packs" on the disk. With no mission active, one pack is chosen for each system visit and loaded at the first launch (about 2 s, only when the pack changes); in it the new ships replace some Sidewinders, Kraits and traders at random, and the stock ships stay. Missions in progress use their own images, so no extras then (`-DMISSIONS`, English; `docs/_ship_packs.md`).
+- **Busier space, like the C64.** The spawn roll is named and tuned towards the C64 version: more hostiles per check, about 3.5 times the asteroids, escort packs of one to four (`-DTRAFFIC`, all three languages, on in the disks; the stock values stay in comments; `docs/_ship_packs.md`).
+- **A ship viewer.** `RUN"SHOWSHIP` shows all 30 ships (19 stock, the 10 new ones, the Constrictor) as a rotating hidden-line wireframe with name, kills, bounty, speed and energy; the arrow keys step through them, Q quits. It runs on the mission disk and on its own blank disk (`tools/build_showship.sh`, about 8 frames a second).
 - **Cash on the quantity line.** The buy, sell and equipment prompts show your credits at the bottom right, on the row where you type the quantity, and refresh after every purchase (`-DENHANCED`, English only so far).
 - **A sells the whole hold.** In the sell menu, A at any quantity prompt sells every good you carry at once (with the trade sound) and returns to the inventory screen; the other keys still just leave the menu (`-DENHANCED`, English only so far; `src/elite/sell_all.asm`).
 - **Improved readability.** The station screens line up: every headline starts in column 2, the status screen reads "System:", "Target:", "Fuel:", "Cash:", "Status:" and "Rating:" with the values in one column ("Legal Status" is now just "Status"), and the hyperspace countdown moved to column 6 so it no longer covers the headline (`-DENHANCED`, English only so far).
@@ -61,9 +64,10 @@ Requirements: Python 3, [sjasmplus](https://github.com/z00m128/sjasmplus), iDSK 
 bash tools/check_src.sh              # stock English source == original bytes, -DENHANCED differs only where documented (also: de, fr)
 python3 -I tools/build_dsk.py --missions     # combined build: work/elite_missions.dsk (from the Firebird disk)
 bash tools/build_cheat.sh            # trainer and save tools onto work/firebird_cheat.dsk, work/missions_cheat.dsk, work/de_cheat.dsk and work/fr_cheat.dsk
+bash tools/build_showship.sh         # the ship viewer: work/showship.dsk (run it before build_dsk.py to get the viewer on the mission disk)
 ```
 
-Boot the disk and `RUN"ELITE`. `RUN"CHEAT.BAS` starts the trainer (it has prompts for kills, jumps and mission presets, so the added missions can be reached without hours of play); `RUN"EDITSAVE.BAS` edits a save; `RUN"LISTSAVE.BAS` (on the German saves disk) lists the saves on a disk with build, kills and cash. On the host, `tools/saveedit.py` does the same and can convert a save between the three builds.
+Boot the disk and `RUN"ELITE`. `RUN"SHOWSHIP` starts the ship viewer. `RUN"CHEAT.BAS` starts the trainer (the mission disk carries ours, not Firebird's) (it has prompts for kills, jumps and mission presets, so the added missions can be reached without hours of play); `RUN"EDITSAVE.BAS` edits a save; `RUN"LISTSAVE.BAS` (on the German saves disk) lists the saves on a disk with build, kills and cash. On the host, `tools/saveedit.py` does the same and can convert a save between the three builds.
 
 ## Build switches
 
@@ -84,6 +88,7 @@ Underneath, a plain `sjasmplus` run gives the **stock** game (`bash tools/check_
 | `STAR_OCCLUDE` | stars stay behind planet and sun (`=1`/`=0`, overrides `ENHANCED`) | `commonxx.asm` |
 | `ESC_KEYCODE` | key code of Escape in the keyboard table (`0x7F` = Escape leaves the prompts, `0xFF` = stock) | `commonxx.asm` |
 | `TITLESEL` | choose the demo ship on the title screen | `commonxx.asm`, `musiquex.asm` |
+| `TRAFFIC` | C64-like spawn odds: hostile limit, asteroid width, escort pack size (named constants, stock values in comments) | `commonxx.asm` (all three trees) |
 | `MISSIONS` | the added missions (`missions_*.asm`, overlay stub, hooks) | `largeaxx.asm`, `commonxx.asm` |
 | `FIREBIRD` | the Firebird trainer variant of `LARGEAXX` (one byte, no hold-capacity test) | `largeaxx.asm` |
 
@@ -115,7 +120,7 @@ Without `-DMISSIONS` you get the improvements only; without any flag, the origin
 
 ## Tests
 
-The missions are tested in an emulator driven from Python (`tools/test_*.py`): the docked stub and overlays, the launch image picker, the spawn and kill hooks of every mission, the Trumble sprites and the save tools. The tests force game states and call routines directly. They do not replace playing through the whole game with save and load, which is still open.
+The missions are tested in an emulator driven from Python (`tools/test_*.py`): the docked stub and overlays, the launch image picker (mission images and ship packs), the ship pack hooks, the spawn and kill hooks of every mission, the Trumble sprites and the save tools. The tests force game states and call routines directly. They do not replace playing through the whole game with save and load, which is still open.
 
 ## More
 
@@ -123,11 +128,12 @@ The notes live in `docs/`, one file per topic (`docs/_*.md`); the main ones:
 
 - `docs/_build.md` building, switches and what the checker proves, `docs/_my_changes.md` every change we made to the game, `docs/_memory_map.md` memory map, swapping and free space
 - `docs/_architecture.md` design, dead code and the dynamic labels
+- `docs/_ship_packs.md` the extra ships, the ship packs, the traffic constants and how they are tested
 - `docs/_missions_built.md` the implemented missions (spoilers), `docs/_missions.md` the research on the other versions (spoilers)
-- `docs/_savegame.md` the save format, `docs/_cheats.md` the trainer and save tools
+- `docs/_savegame.md` the save format, `docs/_cheats.md` the trainer, save tools and the ship viewer
 - `docs/_open_questions.md` what is unverified, with how to settle it
 - `CHANGELOG.md` what changed and why, `TODO.md` what is open, `CLAUDE.md` working notes for the tooling
 
 ## Credits and sources
 
-*Elite* is by David Braben and Ian Bell; the CPC version is the Firebird port. Mark Moxon's annotated BBC Micro, C64 and NES sources (elite.bbcelite.com) and Andy McFadden's Apple II disassembly were read for behaviour only; the Z80 here is written fresh. The Atari ST source, the MSX and ZX Spectrum (SkoolKit) disassemblies, the *Elite Plus* decompilation work by rembish and the CPC reconstruction by Fessor were used as references. **Fessor** (CPCWiki, thread "Expanding Elite") disassembled the CPC game first: the Constrictor hull in `src/elite/missions_hull.asm` is his, and many routine and variable names, the ship layout and the symbol list come from his work. He confirmed by private mail that the hull and his names and findings may be used here. His source, beta disk and forum pages are not part of this repository (he asked that they not be redistributed); they are in his thread, linked in `docs/_references.md`.
+*Elite* is by David Braben and Ian Bell; the CPC version is the Firebird port. Mark Moxon's annotated BBC Micro, C64 and NES sources (elite.bbcelite.com) and Andy McFadden's Apple II disassembly were read for behaviour only; the Z80 here is written fresh. The Atari ST source, the MSX and ZX Spectrum (SkoolKit) disassemblies, the *Elite Plus* decompilation work by rembish and the CPC reconstruction by Fessor were used as references. **Fessor** (CPCWiki, thread "Expanding Elite") disassembled the CPC game first: the Constrictor hull in `src/elite/missions_hull.asm` and the extra ship hulls in `src/elite/missions_ships.asm` (Gecko, Cobra Mk I, Worm, Moray, Mamba, Adder, Boa, Anaconda, Shuttle) are his, and many routine and variable names, the ship layout and the symbol list come from his work. He confirmed by private mail that the Constrictor hull and his names and findings may be used here, and later agreed to the other hulls. The rest of his source, beta disk and forum pages are not part of this repository (he asked that they not be redistributed); they are in his thread, linked in `docs/_references.md`.

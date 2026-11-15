@@ -16,6 +16,8 @@ Every difference between our builds and the original game, with why it exists, w
 | Cash on the quantity line of buy, sell and equip | `ENHANCED` | all three | two 3-byte call operands (`clrLine0x15` -> `clrLineCash`) | 16 dead bytes in `LARGEAXX` (`&08E7`) and 7 in the dead block of `COMMONXX` (`cashHome`, `&1FEA`) |
 | Title screen ship choice, ship name on the press-space screen | `TITLESEL` | English, German, French (ship names are English in all three) | three call operands (two in German and French) plus one `call printELITE` in `COMMONXX` (same length) | about 280 bytes in the tail of `MUSIQUEX` |
 | A sells the whole hold in the sell menu | `ENHANCED` | English | the 3-byte operand of the `jp Inventory` at the end of the sell menu (`sellAllOperand`) | 48 bytes in the `LARGEAXX` tail (`sell_all.asm`; in the missions build inside the resident stub) |
+| Ten more ships in flight (ship packs) | `MISSIONS` (`FL_1`-`FL_7`) | English | none beyond the missions' hooks (`mxShipTable`, `mxLaunchEntry`) | seven flight images on disk; 9 bytes more in every image for the picker |
+| C64-like traffic | `TRAFFIC` | all three | 5 bytes (two roll operands, the 3-byte escort pack size) | 0 |
 | Added missions | `MISSIONS` (+ `FL_*`, `OVL_*`) | English | about a dozen 3-byte call replacements (hook sites) | both zero tails, plus overlay and image files on disk |
 | Trainer and save tools | none (BASIC programs, host scripts) | UK, French, German saves | none | none |
 
@@ -76,11 +78,16 @@ What they change in the stock game:
   flight image only when it differs (about 2 s more).
 - Disk files: `MISSIONC/P/T/R.BIN` (overlays), `MFLIGHT0/C/P/T/S/R.BIN` (flight images), `README.TXT`; all but the `.BAS`/`.TXT` files are hidden.
 
+## Ship packs and traffic (`MISSIONS`, `TRAFFIC`)
+
+Ten more hulls (Fessor's; `src/elite/missions_ships.asm`) in seven flight images `MFLIGHT1-7`, picked per system visit by `(jumpCounter + presentSystemSeed) & 7`; the pack hook redirects some Sidewinder, Krait and trader spawns to them. The spawn roll constants are named (`SPAWN_HOSTILE_LIMIT` 0x5A, `SPAWN_JUNK_WIDTH` 35, escort packs of one to four) with the stock values in comments. Design, sizes, load times, tests and what was left out: `_ship_packs.md`.
+
 ## Trainer, save tools and disks
 
 - `CHEAT.BAS` (ours, replaces the Firebird disk's): interactive trainer with prompts for each of the original pokes plus no pirate boarding, unlimited hold, own cloak, cash, stock mission stage, kills, jumps and added-mission presets;
   `EDITSAVE.BAS` edits and `LISTSAVE.BAS` lists commander saves on the CPC; `tools/saveedit.py` does the same on the host and converts saves between UK, French and German builds. `_cheats.md`, `_savegame.md`.
 - The original `CHEAT.BAS` has a wrong cloak entry (it only lists the device; `POKE &202B,0` makes the cloak work); ours sets the ownership bit instead.
+- The mission disk (`build_dsk.py --missions`) now carries our `CHEAT.BAS` (+ hidden `CHEATB.BIN`) instead of Firebird's, and `SHOWSHIP.BAS` + hidden `SHIPS.BIN`, the ship viewer (`_cheats.md`).
 - Built disks show only `.BAS` and `.TXT` files in `CAT`, like the original protected disk; `RUN`, `LOAD` and the game's own loads still find the hidden files.
 
 ## Stock bugs we found and did not fix

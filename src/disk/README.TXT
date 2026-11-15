@@ -22,6 +22,9 @@ You can navigate the game's
 ships in the start menu via
 arrow keys.
 
+See every ship, the new ones too:
+RUN"SHOWSHIP (arrow keys)
+
 Elite by David Braben and Ian
 Bell. CPC version by Firebird.
 

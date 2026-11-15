@@ -14739,13 +14739,23 @@ dat_8427:
 ; ZX Spectrum: finish_ship_and_escort (&BBF2)
 ; Two entries: &8432 (this one) rolls a random byte against C: a low roll goes to the hostile pick, a middling one makes an asteroid, a high one
 ; spawns nothing. The marked Asp's return address (dat_8427) enters at its own tail and spawns the 2-3 escort pack.
+    IFDEF TRAFFIC
+; -DTRAFFIC: spawn odds like the C64 (docs/_ship_packs.md). One check per 256 passes on both machines; these are the per-check chances out of 256.
+SPAWN_HOSTILE_LIMIT equ 0x5A        ; roll below this lets a hostile through: 90/256 = 35% (C64 CMP #90); stock 0x50 = 31%
+SPAWN_JUNK_WIDTH equ 35             ; the next 35 values make an asteroid: 13.7% (C64 CMP #35); stock 10 = 3.9%
+    ELSE
+SPAWN_HOSTILE_LIMIT equ 0x50
+SPAWN_JUNK_WIDTH equ 10
+    ENDIF
 chkSpawnAsteroid:
     call getRandomNumber
     sub c
     jr c,cmd0ChkSendHostileAfterUs
-    cp 0x5A
+    cp SPAWN_HOSTILE_LIMIT + SPAWN_JUNK_WIDTH   ; stock cp 0x5A
+spawnJunkEndOperand equ $ - 1
     ret nc
-    cp 0x50
+    cp SPAWN_HOSTILE_LIMIT                      ; stock cp 0x50
+spawnHostileOperand equ $ - 1
     jr c,cmd0ChkSendHostileAfterUs
     call lookforFreeSlot
     ret nz
@@ -14850,8 +14860,15 @@ HermitOrViper:
 spawnEscortPack:
     call getRandomNumber
     and 0x03
+spawnPackSlot:
+    IFDEF TRAFFIC
+    inc a                           ; 1 to 4 ships like the C64 ((rnd & 3) + 1); stock: rra / adc a,0x02 = 2 to 3
+    nop
+    nop
+    ELSE
     rra
     adc a,0x02
+    ENDIF
     ld c,a
 spawnEscortLoop:
     call lookforFreeSlot

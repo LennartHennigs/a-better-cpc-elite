@@ -34,8 +34,9 @@ A flag-less `sjasmplus` run gives the **original bytes** (plus the one-byte CPC+
 | `STAR_OCCLUDE` (`=1`/`=0`) | stars stay behind planet and sun; overrides `ENHANCED` | `commonxx.asm` |
 | `ESC_KEYCODE` (`=0x7F`/`0xFF`) | key code of ESC in the keyboard table; `0x7F` leaves the buy, sell and equipment prompts | `commonxx.asm` |
 | `TITLESEL` | choose the demo ship on the title screens | `commonxx.asm`, `musiquex.asm` |
+| `TRAFFIC` | C64-like spawn odds (`SPAWN_HOSTILE_LIMIT`, `SPAWN_JUNK_WIDTH`, escort pack size); `check_src.sh` proves default = original and TRAFFIC = five bytes | `commonxx.asm` (all three trees) |
 | `MISSIONS` | added missions: stub, hooks, vector table, default flight image | `largeaxx.asm`, `commonxx.asm` |
-| `FL_C` `FL_P` `FL_T` `FL_S` `FL_R` | with `MISSIONS`: which flight image goes in the `COMMONXX` tail (default image if none) | `commonxx.asm` |
+| `FL_C` `FL_P` `FL_T` `FL_S` `FL_R` `FL_1`-`FL_7` | with `MISSIONS`: which flight image (mission image or ship pack, `_ship_packs.md`) goes in the `COMMONXX` tail (default image if none) | `commonxx.asm` |
 | `OVL_C` `OVL_P` `OVL_T` `OVL_R` | with `MISSIONS`: which docked overlay goes after the stub | `largeaxx.asm` |
 | `FIREBIRD` | the Firebird disk's `LARGEAXX` (`&0998`: `38 19` -> `38 00`, no hold-capacity test) | `largeaxx.asm` |
 
