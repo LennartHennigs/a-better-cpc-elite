@@ -8,15 +8,15 @@ A **pack** is a flight image `MFLIGHT1..7.BIN` (the tail `&9D9E-&9FFD`, see `_mi
 
 | Pack | Hulls (bytes) | Replaces (stock type) | Image |
 |---|---|---|---|
-| 1 | Gecko 199, Cobra Mk I 201 | 16 Sidewinder, 17 Krait | 600 |
-| 2 | Worm 179, Moray 219 | 16 Sidewinder, 17 Krait | 598 |
-| 3 | Mamba 305 | 16 Sidewinder | 492 |
-| 4 | Adder 307 | 17 Krait | 494 |
-| 5 | Boa 249 | 10 Python trader | 436 |
-| 6 | Anaconda 261 | 10 Python trader | 448 |
-| 7 | Shuttle 309 | 9 Cobra Mk III trader | 496 |
+| 1 | Gecko 199, Cobra Mk I 201 | 16 Sidewinder, 17 Krait | 606 |
+| 2 | Worm 179, Moray 219 | 16 Sidewinder, 17 Krait | 604 |
+| 3 | Mamba 305 | 16 Sidewinder | 504 |
+| 4 | Adder 307 | 17 Krait | 506 |
+| 5 | Boa 249 | 10 Python trader | 448 |
+| 6 | Anaconda 261 | 10 Python trader | 460 |
+| 7 | Shuttle 309 | 9 Cobra Mk III trader | 508 |
 
-The image limit is 608 bytes (`ASSERT mxFlightEnd <= &9FFE`); the default image is 167. Never redirected: 8 (police Viper), 15 (Thargoid), 18 (Thargon): the Thargoid and plans missions need them. Not included: Boulder (165 bytes; with the Boa the image is 9 bytes over), Transporter (485) and the Dodecahedron (do not fit). Role flags, bounty, missiles and kill value come from Fessor's headers (a Gecko is worth 0.5 kills, a Mamba 0.75, an Anaconda 1.5; see `_gameplay.md`).
+The image limit is 608 bytes (`ASSERT mxFlightEnd <= &9FFE`); the default image is 182 (sizes as of 2026-11-15, with the kill count routine every image carries). Never redirected: 8 (police Viper), 15 (Thargoid), 18 (Thargon): the Thargoid and plans missions need them. Not included: Boulder (165 bytes; with the Boa the image is 9 bytes over), Transporter (485) and the Dodecahedron (do not fit). Role flags, bounty, missiles and kill value come from Fessor's headers (a Gecko is worth 0.5 kills, a Mamba 0.75, an Anaconda 1.5; see `_gameplay.md`).
 
 ## Which pack, and when it loads
 

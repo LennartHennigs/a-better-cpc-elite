@@ -6,9 +6,9 @@ usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../too
 
 As tools/test_trumbles.py (stop at handleEntitys, write the patches of a COMMONXX built with -DMISSIONS -DFL_T, call the vector with a trap return address). mxFlightDraw draws into
 the off-screen bitmap at &A000 and ends with `jp transferBuffertoScreen`, so after the call the sprites are also on the screen. Checks:
- - blit: with the bitmap cleared and the Trumble at x 10, y 20, the 10 x 4 bytes there equal the right-facing shape; the second Trumble (odd) uses the mirrored one;
+ - blit: with the bitmap cleared and the Trumble at x 10, y 20, the shape bytes there equal the right-facing shape; the second Trumble (odd) uses the mirrored one;
  - how many are drawn for counts 0, 1, 3, 11 and 300 (0, 1, 3, 6, 6): each Trumble's rectangle is non-zero, an undrawn one's stays zero;
- - 300 draw calls: every position stays inside x 3-56, y 2-113, and something moved.
+ - 300 draw calls: every position stays inside x 3-57, y 2-114, and something moved.
 Screenshots: output/trumble_sprites_*.png.
 """
 import asyncio
@@ -50,13 +50,13 @@ def patch_ranges(new, gap=8):
 def shape():
     """the sprite bytes and its number of rows, from the generated source"""
     rows = [bytes(int(x, 16) for x in re.findall(r"0x([0-9A-F]{2})", l)) for l in (ROOT / "src/elite/missions_trumble_data.asm").read_text().splitlines() if l.strip().startswith("db")]
-    return b"".join(rows), len(rows)
+    return b"".join(rows), len(rows), len(rows[0])
 
 
 async def main():
     new, syms = build()
     sites = patch_ranges(new)
-    shape_bytes, nrows = shape()
+    shape_bytes, nrows, ncols = shape()
     state, tick = syms["mxTrState"], syms["mxTrTick"]
     params = StdioServerParameters(command="cpcxray", args=["mcp", "--config", "config/cpc6128.toml"])
     async with stdio_client(params) as (r, w):
@@ -102,7 +102,7 @@ async def main():
             async def rect(x, y):
                 out = b""
                 for row in range(nrows):
-                    out += await rd(BITMAP + (y + row) * 64 + x, 4)
+                    out += await rd(BITMAP + (y + row) * 64 + x, ncols)
                 return out
 
             ok = True
@@ -120,7 +120,7 @@ async def main():
             await wr(state, bytes([10, 20, 0, 0, 30, 40, 0, 0]))
             await call(syms["mxFlightDraw"])
             got0, got1 = await rect(10, 20), await rect(30, 40)
-            report(got0 == shape_bytes and got1 == shape_bytes, f"two Trumbles at (10,20) and (30,40): each {nrows} x 4 bytes equal the shape")
+            report(got0 == shape_bytes and got1 == shape_bytes, f"two Trumbles at (10,20) and (30,40): each {nrows} x {ncols} bytes equal the shape")
             await c("screen_image", {"path": "output/trumble_sprites_two.png"})
             # regression: a call that moves a Trumble must not change how many are drawn (mxMoveSprite once clobbered C, the count, and the draw loop ran off the state array)
             await start()
@@ -133,7 +133,7 @@ async def main():
             inside = set()
             for x, y in ((10, 20), (30, 40)):
                 for row in range(nrows):
-                    for col in range(4):
+                    for col in range(ncols):
                         inside.add((y + row) * 64 + x + col)
             frame = lambda i: i // 64 in (0, 127) or i % 64 in (2, 61)      # the viewport frame that transferBuffertoScreen draws into the bitmap
             stray = [i for i, v in enumerate(bm) if v and i not in inside and not frame(i)]
@@ -161,7 +161,7 @@ async def main():
                 await call(syms["mxFlightDraw"])
             st = await rd(state, 24)
             xs, ys = st[0::4], st[1::4]
-            inside = all(3 <= x <= 56 for x in xs) and all(2 <= y <= 113 for y in ys)
+            inside = all(3 <= x <= 57 for x in xs) and all(2 <= y <= 114 for y in ys)      # 12 x 12 sprite: x up to 64 - 3 - 3 + 1, y up to 128 - 12 - 2
             moved = st != bytes([10, 10, 0, 0, 30, 20, 0, 0, 45, 40, 0, 0, 15, 60, 0, 0, 35, 80, 0, 0, 50, 100, 0, 0])
             report(inside and moved, f"300 draw calls: x {list(xs)} y {list(ys)} inside the frame, moved: {moved}")
             await c("screen_image", {"path": "output/trumble_sprites_moved.png"})

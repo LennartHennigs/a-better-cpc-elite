@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Test the ship pack ship table hook (missions_flight_k.asm) in cpcxray: with pack N in the flight tail, spawnShip must hand out the extra hull for the redirected
-stock types about half the time, the stock hull the rest, and never touch types 8, 15 and 18. A, BC and DE must survive the hook.
+stock types about half the time, the stock hull the rest, and never touch types 8, 15 and 18. A, B and DE must survive the hook (C is scratch: BC is dead there, spawnShip sets B from A and BC for the ldir).
 
 usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_ship_packs.py [PACK ...]      (default: packs 1 to 7)
 Needs output/firebird_in_flight.sna and any disk in drive A (the tail is written straight into RAM, no disk load). Method as in tools/test_flight_hull.py.
@@ -96,7 +96,7 @@ async def main():
                         if rep.get("pc") != "%04X" % TRAP:
                             print("  hook call did not return to the trap:", rep)
                         regs = await c("registers_get")
-                        kept &= (regs["af"] >> 8) == typ and regs["bc"] == 0x1234 and regs["de"] == 0x5678
+                        kept &= (regs["af"] >> 8) == typ and (regs["bc"] >> 8) == 0x12 and regs["de"] == 0x5678      # C is scratch: BC is dead after the hook (spawnShip rewrites it)
                         rec = regs["hl"] + 4 * typ
                         raw = bytes.fromhex((await c("memory_read", {"address": rec, "length": 3}))["hex"])
                         addr = raw[1] | raw[2] << 8
@@ -111,7 +111,7 @@ async def main():
                     redirected = typ in PACKS[pack]
                     good = seen["other"] == 0 and kept and ((seen["extra"] >= N // 4 and seen["stock"] >= N // 4) if redirected else seen["extra"] == 0 or stock == extra)
                     ok &= good
-                    print(f"{'ok  ' if good else 'FAIL'} pack {pack} type {typ:2d}: stock {seen['stock']:2d}, extra {seen['extra']:2d}, other {seen['other']}, A/BC/DE kept {kept}")
+                    print(f"{'ok  ' if good else 'FAIL'} pack {pack} type {typ:2d}: stock {seen['stock']:2d}, extra {seen['extra']:2d}, other {seen['other']}, A/B/DE kept {kept}")
                 await c("registers_set", {"values": {k: saved[k] for k in ("af", "bc", "de", "hl", "ix", "iy", "sp", "pc") if k in saved}})
     print("ALL OK" if ok else "FAILURES")
     sys.exit(0 if ok else 1)

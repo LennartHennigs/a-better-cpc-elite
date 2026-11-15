@@ -4,7 +4,7 @@
 Build first:  python3 -I tools/build_dsk.py --missions ; cp work/elite_missions.dsk work/xray/disk/
 usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_launch.py
 
-Method as in tools/test_mission_hook.py: stop at handleEntitys (&5066), write the built COMMONXX patches (default image, -DMISSIONS), call loadLARGEAXX so the stub is in
+Method as in tools/test_mission_hook.py: stop at handleEntitys (&5066), write the built COMMONXX patches (default image, -DENHANCED -DTITLESEL -DTRAFFIC -DMISSIONS as on the disk), call loadLARGEAXX so the stub is in
 RAM, then for each scenario set missionState (&38FD), the Trumble count (&3905) and the flight id byte (mxFlightId, the image "already loaded"), call mxLaunchEntry with a trap return address and compare
 the tail (&9D9E..) with the MFLIGHTx.BIN file on the disk. The stub loads the file with the game's loadFile, then continues with loadIndicator.
 """
@@ -64,7 +64,7 @@ FLIGHT_ID = 0x9DB9   # mxFlightId: the id byte after the 9-entry vector table (m
 def patches():
     with tempfile.TemporaryDirectory() as d:
         out, sym = Path(d) / "c.bin", Path(d) / "c.sym"
-        subprocess.run([str(Path.home() / ".local/bin/sjasmplus"), "-DMISSIONS", f"--raw={out}", f"--sym={sym}", str(ROOT / "src/elite/commonxx.asm")], check=True, capture_output=True)
+        subprocess.run([str(Path.home() / ".local/bin/sjasmplus"), "-DENHANCED", "-DTITLESEL", "-DTRAFFIC", "-DMISSIONS", f"--raw={out}", f"--sym={sym}", str(ROOT / "src/elite/commonxx.asm")], check=True, capture_output=True)   # the flags build_dsk.py uses: -DENHANCED adds the kill count to the shared head, so the default image differs without it
         new = out.read_bytes()
         import re
         syms = {m.group(1): int(m.group(2), 16) for m in re.finditer(r"^(\w+):\s+EQU\s+0x([0-9A-Fa-f]+)", sym.read_text(), re.M)}

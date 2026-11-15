@@ -80,7 +80,11 @@ mxShipTable:                        ; replaces `ld hl,shipGFXdataTable` in spawn
 mxSpawnCheck:                       ; replaces `ld a,(cargoSlaves)` at the start of spawnCommand0 and must end with it
     jp mxSpawnCheckImpl
 mxKillHook:                         ; replaces `call getBounty` in todo_killedsomeone (IY = the dead ship's blueprint)
+    IFDEF HAS_KILL
     jp mxKillHookImpl
+    ELSE
+    jp getBounty                    ; an image without the hook jumps straight to the stock routine (no stub)
+    ENDIF
 mxLaserHook:                        ; replaces `ld (ix+34),a` after `sub c` in applyLaserDamagetoEntity (flags from the sub must survive)
     jp mxLaserHookImpl
 mxRecharge:                         ; replaces `call nz,SUB_ram_3693` in RechargeEnergy
@@ -90,9 +94,17 @@ mxArrive:                           ; replaces `ld (tunnelFlag2),a` at the start
 mxSun:                              ; replaces `ld hl,CockpitTemp` in todoOverheating (A must be kept)
     jp mxSunImpl
 mxInvHook:                          ; replaces `call prQuantityofGoodinCargohold` in the Inventory loop (carry of the result must survive)
+    IFDEF HAS_INV
     jp mxInvHookImpl
+    ELSE
+    jp prQuantityofGoodinCargohold
+    ENDIF
 mxFlightDraw:                       ; replaces the `call transferBuffertoScreen` in Spaceflight (draws into the off-screen bitmap, then jumps there)
+    IFDEF HAS_DRAW
     jp mxFlightDrawImpl
+    ELSE
+    jp transferBuffertoScreen
+    ENDIF
 mxFlightId:
     db FLID                         ; "0" default, "C", "P": which image is in RAM (the launch hook compares it)
 
@@ -107,21 +119,19 @@ mxLaunchEntry:
     jr nz,mxFlightGo
     ld a,(mxStateByte)
     ld b,a
-    and 0x03
-    jr z,mxFlightNone                 ; Constrictor not offered
-    cp 0x02
-    ld a,"C"
-    jr nz,mxFlightGo                  ; hunting or killed
-    ld a,b
-    and 0x0C
-    cp 0x08
-    ld a,"P"
-    jr z,mxFlightGo                   ; plans aboard
-    ld a,b
-    and 0x5C
-    cp 0x1C                           ; plans finished and the asteroid stage is 1 (waiting: the image counts the jumps) or 3 (clearing Ceerdi); bit 5 tells them apart
-    ld a,"S"
+    ld hl,mxLaunchTable               ; (mask, value, image) for the state byte, first match wins: C = bit 0 set (hunting or killed), P = plans aboard, S = stolen ship
+    ld d,3
+mxLaunchLoop:
+    ld a,(hl)
+    and b
+    inc hl
+    cp (hl)
+    inc hl
+    ld a,(hl)
+    inc hl
     jr z,mxFlightGo
+    dec d
+    jr nz,mxLaunchLoop
     ld a,b
     and 0x7C
     cp 0x5C                           ; first mission paid: the second one clearing (&38FE bits 0-1 = 1) needs the R image
@@ -148,6 +158,16 @@ mxFlightGo:
     jp loadIndicator
 mxFlightName:
     db "MFLIGHT?"
+; Launch picker table: (mask, value, image) tested against the state byte (mxStateByte), first match wins. "C": bit 0 set (Constrictor hunting or killed, state 1 or 3);
+; "P": bits 0-3 = 1010 (plans stage, plans aboard); "S": bits 0-4 and 6 = 1 1110 and 0 (stolen ship stage). The asteroid image "R" needs the second byte as well, see above.
+mxLaunchTable:
+    db 0x01,0x01,"C"
+    db 0x0F,0x0A,"P"
+    db 0x5F,0x1E,"S"
+    IF KILL_COUNT
+    INCLUDE "killcount.asm"           ; shared head: the same address in every image (the hook in commonxx.asm calls it)
+    ASSERT killCountHook == 0x9E1A, "the kill count hook must sit at the same address in every flight image (the status code calls it): the shared head changed size"
+    ENDIF
 
 ; Defaults for the vectors the image does not use.
     IFNDEF HAS_SHIP
@@ -159,10 +179,6 @@ mxShipTableImpl:
 mxSpawnCheckImpl:
     ld a,(cargoSlaves)
     ret
-    ENDIF
-    IFNDEF HAS_KILL
-mxKillHookImpl:
-    jp getBounty
     ENDIF
     IFNDEF HAS_LASER
 mxLaserHookImpl:
@@ -179,14 +195,6 @@ mxArriveImpl:
 mxSunImpl:
     ld hl,CockpitTemp
     ret
-    ENDIF
-    IFNDEF HAS_INV
-mxInvHookImpl:
-    jp prQuantityofGoodinCargohold
-    ENDIF
-    IFNDEF HAS_DRAW
-mxFlightDrawImpl:
-    jp transferBuffertoScreen
     ENDIF
 
 ; Navy energy unit (extraEnergyUnit = &FE, the Thargoid plans reward): it stays fitted after the mission, so this is in every image. One extra recharge step

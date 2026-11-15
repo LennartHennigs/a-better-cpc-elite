@@ -27,57 +27,51 @@
 
 mxShipTableImpl:
     ld hl,shipGFXdataTable
-    push bc
-    ld c,a
+    ld c,a                            ; BC is dead after the hook (spawnShip sets B from A and BC for the ldir), so it needs no push
     call getRandomNumber              ; preserves BC and HL
     rrca                              ; carry = coin: set = use the extra hull for this spawn
     ld a,c
-    jr nc,mxShipDone
+    ret nc
     IFDEF FL_1
-    cp 16                             ; Sidewinder -> Gecko, Krait -> Cobra Mk I
-    jr nz,.k1
+    cp 16                             ; Sidewinder -> Gecko, Krait -> Cobra Mk I: the two records are adjacent, so one base serves both types
+    ret c
+    cp 18
+    ret nc
     ld hl,mxEntryGecko-16*4
-    jr mxShipDone
-.k1 cp 17
-    jr nz,mxShipDone
-    ld hl,mxEntryCobraMk1-17*4
     ENDIF
     IFDEF FL_2
-    cp 16                             ; Sidewinder -> Worm, Krait -> Moray
-    jr nz,.k1
+    cp 16                             ; Sidewinder -> Worm, Krait -> Moray (adjacent records, as above)
+    ret c
+    cp 18
+    ret nc
     ld hl,mxEntryWorm-16*4
-    jr mxShipDone
-.k1 cp 17
-    jr nz,mxShipDone
-    ld hl,mxEntryMoray-17*4
     ENDIF
     IFDEF FL_3
     cp 16                             ; Sidewinder -> Mamba
-    jr nz,mxShipDone
+    ret nz
     ld hl,mxEntryMamba-16*4
     ENDIF
     IFDEF FL_4
     cp 17                             ; Krait -> Adder
-    jr nz,mxShipDone
+    ret nz
     ld hl,mxEntryAdder-17*4
     ENDIF
     IFDEF FL_5
     cp 10                             ; Python trader -> Boa (the Boulder hull, 165 bytes, does not fit beside it: 9 bytes over)
-    jr nz,mxShipDone
+    ret nz
     ld hl,mxEntryBoa-10*4
     ENDIF
     IFDEF FL_6
     cp 10                             ; Python trader -> Anaconda
-    jr nz,mxShipDone
+    ret nz
     ld hl,mxEntryAnaconda-10*4
     ENDIF
     IFDEF FL_7
     cp 9                              ; Cobra Mk III trader -> Shuttle
-    jr nz,mxShipDone
+    ret nz
     ld hl,mxEntryShuttle-9*4
     ENDIF
 mxShipDone:
-    pop bc
     ret
 
 ; Records like the stock table (`jp blueprint`, then a tag byte nothing reads).
@@ -90,6 +84,7 @@ mxEntryGecko:
 mxEntryCobraMk1:
     jp shipdatCobraMk1
     db 4
+    ASSERT mxEntryCobraMk1 == mxEntryGecko + 4, "the Gecko and Cobra Mk I records must be adjacent (one range test serves both types)"
     ENDIF
     IFDEF HULL_WORM
 mxEntryWorm:
@@ -100,6 +95,7 @@ mxEntryWorm:
 mxEntryMoray:
     jp shipdatMoray
     db 4
+    ASSERT mxEntryMoray == mxEntryWorm + 4, "the Worm and Moray records must be adjacent (one range test serves both types)"
     ENDIF
     IFDEF HULL_MAMBA
 mxEntryMamba:

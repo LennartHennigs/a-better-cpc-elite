@@ -710,6 +710,12 @@ sub_1FCC:
 ; LASER_SIGHTS_SIZE bytes of the free zero tail of COMMONXX (laserSightsBlock); LaserSights jumps to it. English with -DMISSIONS has no room there (the flight images fill the
 ; tail), so that build keeps the cross.
 LASER_SIGHTS_SIZE equ 128
+; Kill count on the status page (-DENHANCED, English only so far): killcount.asm, 21 bytes, in the shared head of the flight images (-DMISSIONS) or the zero tail.
+    IFDEF ENHANCED
+KILL_COUNT equ 1
+    ELSE
+KILL_COUNT equ 0
+    ENDIF
     IFNDEF LASER_SIGHTS
       IFDEF ENHANCED
         IFNDEF MISSIONS
@@ -846,6 +852,19 @@ chkCloak:
     xor a
     ld (todoActiveSlots),a
     ret
+    IF KILL_COUNT
+; The 10 dead bytes of unusedGetFlightMode and unusedGetCloakFlag (never executed, docs/_architecture.md) hold killSpace for killcount.asm: A = the rank token; prints one space
+; unless the rank string already ends in one (Poor, Average and Above Average, tokens &17-&19, end in a space in the stock text).
+killSpace:
+    sub 0x17
+    cp 0x03
+    ret c
+    call printStringFollowingByte
+    db " "
+    ret
+killSpaceEnd:
+    ASSERT killSpaceEnd - killSpace == 10, "killSpace must fill the 10 dead bytes of unusedGetFlightMode and unusedGetCloakFlag exactly"
+    ELSE
 ; Probably dead (no caller): return FlightMode in A, with Z set if it is zero.
 unusedGetFlightMode:
     ld a,(FlightMode)
@@ -856,6 +875,7 @@ unusedGetCloakFlag:
     ld a,(flagCloakingDeviceActive)
     and a
     ret
+    ENDIF
 ; Set the byte at &3933 to 1 unless FlightMode is zero (probably a redraw/state flag)
 SUB_ram_2058:
     ld a,(FlightMode)
@@ -6548,7 +6568,12 @@ LAB_ram_4895:
     call printStringFollowingByte
     db " "
     call getRank
+killHookSite:
+    IF KILL_COUNT
+    call killCountHook              ; killcount.asm: the rank, ". " and the kills instead of the rank alone
+    ELSE
     call anotherPrintwithTokeninA
+    ENDIF
     call printStringFollowingByte
     db 0x11
     call SUB_ram_491a
@@ -16633,6 +16658,11 @@ missionsFlightTail:
     IF LASER_SIGHTS
 laserSightsBlock:
     INCLUDE "lasersights.asm"
+    ENDIF
+    IFNDEF MISSIONS
+      IF KILL_COUNT
+    INCLUDE "killcount.asm"
+      ENDIF
     ENDIF
     ASSERT $ <= 0xA000
     DS 0xA000-$

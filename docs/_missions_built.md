@@ -59,9 +59,9 @@ Missions run one at a time, so their code is loaded when needed instead of being
 | Part | Constrictor | Plans | Stolen ship | Asteroids | Trumbles |
 |---|---|---|---|---|---|
 | Docked overlay file | `MISSIONC.BIN` 561 | `MISSIONP.BIN` 506 (also the stolen ship) | in `MISSIONP` | `MISSIONR.BIN` 170 | `MISSIONT.BIN` 178 |
-| Flight image file | `MFLIGHTC.BIN` 597 | `MFLIGHTP.BIN` 269 | `MFLIGHTS.BIN` 361 | `MFLIGHTR.BIN` 285 | `MFLIGHTT.BIN` 607 |
+| Flight image file | `MFLIGHTC.BIN` 606 | `MFLIGHTP.BIN` 284 | `MFLIGHTS.BIN` 379 | `MFLIGHTR.BIN` 303 | `MFLIGHTT.BIN` 608 |
 
-Default image `MFLIGHT0.BIN` 167 (what `COMMONXX.BIN` carries; 9 bytes more than before for the ship pack picker, which every image carries). **Limits:** docked stub (with the sell-all key, 48 bytes) plus largest overlay (Constrictor, trimmed 2026-11-13) ends at `&1A3C`, 3 bytes short of the end of the tail (`&1A3F`); the Constrictor flight image is 597 of 608 (11 spare), the Trumbles image 607 (1 spare), so any further change there
+Default image `MFLIGHT0.BIN` 182 (what `COMMONXX.BIN` carries). Every image carries the ship pack picker and, since 2026-11-15, the 26-byte kill count routine of the status page (`killcount.asm`, `killCountHook` at `&9E1A`, asserted); 2026-11-15 cuts made room for it: unused hooks jump straight to the stock routine (kill, inventory, draw: 3 bytes each), the Trumble sprite is 12 x 12 (36 bytes instead of 56), packs 1 and 2 test the type range once and no pack saves BC, the Constrictor tests its state bits once, the launch picker reads a (mask, value, image) table (2 bytes), the packs return with `ret cc`. **Limits:** docked stub (with the sell-all key, 48 bytes) plus largest overlay (Constrictor, trimmed 2026-11-13) ends at `&1A3C`, 3 bytes short of the end of the tail (`&1A3F`); the Constrictor flight image is 606 of 608 (2 spare), the Trumbles image exactly 608 (0 spare), pack 1 606 (2 spare), so any further change there
 needs trimming first. Every image carries the launch picker and the recharge hook. Text is tokenised with the game's own digrams and string references (`tools/textenc.py`), 25-31% smaller than raw text. Mission text is in the default capitalised-words
 style (all caps): the stock mission screens use `{0D}`/`{13}` sentence case instead, which would cost about 38 docked bytes in the Constrictor overlay, so it stays as is for now.
 **Time (emulated):** an overlay load about 1.9-2.1 s; a launch with an image swap about 3.9 s against 2.0 s for `loadIndicator` alone; nothing extra when nothing is active or the right image is in RAM.
@@ -72,7 +72,7 @@ All run in cpcxray (`work/xray`, `~/.local/share/uv/tools/cpcxray/bin/python -I 
 - `test_mission_hook.py` (docked stub and overlays, about 30 scenarios, the fast ones assert that no overlay is loaded), `test_launch.py` (image picker, about 20 scenarios), `test_mission_flight.py` (Constrictor spawn, kill, laser), `test_plans.py`, `test_stolen_ship.py`,
   `test_rocks.py` (spawn, kill, arrival, a live loop with the station-near test patched out), `test_trumbles.py`, `test_trumble_sprites.py` (draw, stray-byte regression, live screenshot), `test_flight_hull.py`.
 - Method: start from `output/firebird_in_flight.sna`, stop at `handleEntitys` (`&5066`, a safe point), write the freshly assembled `COMMONXX` patches, set variables, call a vector with a trap return address and restore registers when injecting calls.
-- Helpers: `tools/size_report.py`, `tools/textenc.py`, `tools/sprite_enc.py`, `tools/fessor_hull.py`, `tools/build_dsk.py` (shared DSK code in `tools/dskx.py`). Testing aids: the trainer `CHEAT.BAS` (kills, jumps, added-mission presets), `tools/saveedit.py` and `SHOWSAVE.BAS` (`docs/_cheats.md`).
+- Helpers: `tools/size_report.py`, `tools/textenc.py`, `tools/sprite_enc.py`, `tools/fessor_hull.py`, `tools/build_dsk.py` (shared DSK code in `tools/dskx.py`). Testing aids: the trainer `TRAINER.BAS` (kills, jumps, added-mission presets), `tools/saveedit.py` and `SHOWSAVE.BAS` (`docs/_cheats.md`).
 
 ## 6. Limits and open items
 
@@ -90,8 +90,8 @@ All run in cpcxray (`work/xray`, `~/.local/share/uv/tools/cpcxray/bin/python -I 
 
 ## 7. Pokes to start each mission (for testing)
 
-Two ways to set the state. **Trainer:** `RUN"CHEAT.BAS` on `work/missions_cheat.dsk` has the prompts Kills, Jumps and Added mission 1-4 (and Mission 0-3 for the stock missions); the table gives the answers. **Raw pokes:** the same values as plain `POKE`s in a loader
-(lines between the `LOAD` of `common2x` and `CALL &1C82`, as `CHEAT.ASC` does): while the loader runs the save block sits `&FC` higher than in the running game, so the runtime address `&38FD` is `&39F9` there. The runtime addresses
+Two ways to set the state. **Trainer:** `RUN"TRAINER.BAS` on `work/missions_cheat.dsk` has the prompts Kills, Jumps and Added mission 1-4 (and Mission 0-3 for the stock missions); the table gives the answers. **Raw pokes:** the same values as plain `POKE`s in a loader
+(lines between the `LOAD` of `common2x` and `CALL &1C82`, as `TRAINER.ASC` does): while the loader runs the save block sits `&FC` higher than in the running game, so the runtime address `&38FD` is `&39F9` there. The runtime addresses
 are for `memory_write` in an emulator, or a monitor on a running game. Kill points are the BBC-style count at `&38D8/&38D9` (`&39D4/&39D5` in the loader): `POKE &39D5,n` sets `n x 256`. All presets leave the other save bytes alone.
 
 | Mission | Trainer answers | Loader pokes | Runtime (running game) | Then |

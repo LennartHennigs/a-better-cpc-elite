@@ -122,7 +122,7 @@ mxTrumblesText:
 ; ---- Sprites ----------------------------------------------------------------------------------------------------------------------------------------------------
 ; Up to six Trumbles drawn into the off-screen bitmap (&A000, 64 bytes per line, Mode 1) just before it is copied to the screen, so there is nothing to erase: the
 ; game clears the bitmap every frame. Called in place of the `call transferBuffertoScreen` in Spaceflight (once per frame in the flight views; not in the hyperspace tunnel), it ends with that jump.
-; Shape: one 16 x 14 pixel furry blob (tools/sprite_enc.py from missions_trumble_art.txt), 4 x 14 bytes, OR-ed in.
+; Shape: one 12 x 12 pixel furry blob (tools/sprite_enc.py from missions_trumble_art.txt), 3 x 12 bytes, OR-ed in.
 ; Position: x in bytes (4 pixels, 3-56), y in lines (2-112), kept inside the view frame. Velocity -1, 0 or +1 in each axis. Like the C64, one Trumble moves per
 ; call (a tick counter mod 8, only those that are shown) and picks new velocities with an 8% chance (a roll of 235 or more) from 0, +1, -1, 0.
 ; How many are shown: one per Trumble, at most 6 (256 or more show six).
@@ -194,11 +194,11 @@ mxDrawDone:
     pop af
     jp transferBuffertoScreen
 
-; HL = destination in the bitmap, DE = shape: OR 14 rows of 4 bytes onto the bitmap (the next row is 64 bytes on).
+; HL = destination in the bitmap, DE = shape: OR 12 rows of 3 bytes onto the bitmap (the next row is 64 bytes on).
 mxBlit:
-    ld c,14
+    ld c,12
 mxBlitRow:
-    ld b,4
+    ld b,3
 mxBlitByte:
     ld a,(de)
     inc de
@@ -207,7 +207,7 @@ mxBlitByte:
     inc hl
     djnz mxBlitByte
     ld a,l
-    add a,60
+    add a,61
     ld l,a
     jr nc,mxBlitNext
     inc h
@@ -230,9 +230,9 @@ mxMoveSprite:
     call mxNewVelocity
 mxMoveGo:
     pop hl
-    ld bc,0x0338                      ; x from 3 to 56
+    ld bc,0x0339                      ; x from 3 to 57 (3 bytes wide)
     call mxAxis
-    ld bc,0x0270                      ; y from 2 to 112 (14 rows high, so the last line stays above the frame)
+    ld bc,0x0272                      ; y from 2 to 114 (12 rows high, so the last line stays above the frame)
 
 ; HL -> a position byte, (HL+2) its velocity, B = lowest and C = highest value: add, wrap at the ends, store; HL = HL + 1 on return.
 mxAxis:
