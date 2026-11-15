@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Hand-flown test of the parked firmware RAM in any emulator that loads and saves .sna snapshots (see tools/test_parked_ram.py, TODO.md).
 
+  python3 -I tools/parked_ram_sna.py markdocked IN.sna OUT.sna [MARK]  # IN = a docked snapshot: MARK in every zero run of the parked copy at &A600 (runs.txt is rewritten to match)
   python3 -I tools/parked_ram_sna.py make [MARK]        # work/parked_ram/flight_marked.sna: firebird_in_flight.sna with MARK (default AA) in every zero run of 16+ bytes of &0040-&1A3F
   python3 -I tools/parked_ram_sna.py check FILE.sna [MARK]  # count marker bytes that changed in a snapshot you saved afterwards
   python3 -I tools/parked_ram_sna.py markbin IN.bin OUT.bin [MARK]  # IN = 0x1A00 bytes dumped from &0040 (RVM debugger `save`); OUT = the same with MARK in its zero runs
@@ -70,6 +71,29 @@ elif mode == "checkbin":
     runs = [(int(a, 16), int(l)) for a, l in (x.split() for x in Path(sys.argv[2] + ".runs").read_text().splitlines())]
     bad = [0x40 + k for a, l in runs for k in range(a, a + l) if new[k] != mark]
     print(f"{len(bad)} of {sum(l for _, l in runs)} marker bytes changed", " ".join(spans(bad)[:40]))
+elif mode == "markdocked":
+    # docked snapshot (low memory holds LARGEAXX, the parked copy is at &A600): put MARK in every zero run of 16+ bytes of &A600-&BFFF and write runs.txt in the
+    # low-memory coordinates `check` expects (low address = &0040 + offset in the parked block)
+    mark = int(sys.argv[4], 16) if len(sys.argv) > 4 else 0xAA
+    data = bytearray(Path(sys.argv[2]).read_bytes())
+    img = data[0x100 + 0xA600:0x100 + 0xA600 + 0x1A00]
+    runs, i = [], 0
+    while i < len(img):
+        if img[i] == 0:
+            j = i
+            while j < len(img) and img[j] == 0:
+                j += 1
+            if j - i >= 16:
+                runs.append((0x40 + i, j - i))
+            i = j
+        else:
+            i += 1
+    for a, l in runs:
+        data[0x100 + 0xA600 + a - 0x40:0x100 + 0xA600 + a - 0x40 + l] = bytes([mark]) * l
+    OUT.mkdir(exist_ok=True)
+    Path(sys.argv[3]).write_bytes(data)
+    RUNS.write_text("\n".join(f"{a:04X} {l}" for a, l in runs))
+    print(f"{sys.argv[3]}: {len(runs)} runs in the A600 copy, {sum(l for _, l in runs)} bytes set to {mark:02X}")
 elif mode == "make":
     mark = int(sys.argv[2], 16) if len(sys.argv) > 2 else 0xAA
     data = bytearray(SRC.read_bytes())

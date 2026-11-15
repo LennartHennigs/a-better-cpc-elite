@@ -656,6 +656,21 @@ sub_1FCC:
     ret
 ; Star occlusion: with STAR_OCCLUDE (on with -DENHANCED, off by default = the original bytes; check_src.sh compares both) the stars no longer
 ; show through the planet or sun disc, ship lines and tunnel lines. The 31 dead bytes below hold dustPlotPixel, which the dust loop (dust70) calls.
+; Laser sights (-DENHANCED): one sight per laser type instead of the cross for all of them (lasersights.asm, drawn with drawLaserLine). The routine and its data take the first
+; LASER_SIGHTS_SIZE bytes of the free zero tail of COMMONXX (laserSightsBlock); LaserSights jumps to it. English with -DMISSIONS has no room there (the flight images fill the
+; tail), so that build keeps the cross.
+LASER_SIGHTS_SIZE equ 128
+    IFNDEF LASER_SIGHTS
+      IFDEF ENHANCED
+        IFNDEF MISSIONS
+LASER_SIGHTS equ 1
+        ELSE
+LASER_SIGHTS equ 0
+        ENDIF
+      ELSE
+LASER_SIGHTS equ 0
+      ENDIF
+    ENDIF
     IFNDEF STAR_OCCLUDE
       IFDEF ENHANCED
 STAR_OCCLUDE equ 1
@@ -13046,7 +13061,12 @@ aePlayECMSFX:
     ret
 ; Draws the four lines of the laser crosshair
 LaserSights:
+    IF LASER_SIGHTS
+laserSightsJp:
+    jp laserSightsNew               ; replaces the first instruction (3 bytes) of the cross below, which is then dead (lasersights.asm)
+    ELSE
     ld hl,0x0800
+    ENDIF
     ld de,0x1000
     ld c,0x0A
     call drawLaserLine
@@ -14278,7 +14298,7 @@ dat_8427:
     db 0xDD,0xCB,"&",0xF6,0xDD,0xCB," ",0xD6,0xC3,0x80,0x86
 ; ZX Spectrum: finish_ship_and_escort (&BBF2)
 ; Two entries: &8432 (this one) rolls a random byte against C: a low roll goes to the hostile pick, a middling one makes an asteroid, a high one
-; spawns nothing. The marked Asp's return address (dat_8427) enters at its own tail and spawns the 2-3 escort pack.
+; spawns nothing. The marked Asp's return address (dat_8427) enters at its own tail and spawns the escort pack (2-4 ships; 1-4 with -DTRAFFIC).
     IFDEF TRAFFIC
 ; -DTRAFFIC: spawn odds like the C64 (docs/_ship_packs.md). One check per 256 passes on both machines; these are the per-check chances out of 256.
 SPAWN_HOSTILE_LIMIT equ 0x5A        ; roll below this lets a hostile through: 90/256 = 35% (C64 CMP #90); stock 0x50 = 31%
@@ -14395,14 +14415,14 @@ HermitOrViper:
     and 0x01
     add a,0x07
     jr pushAFentrytoSpawnShip
-; ZX Spectrum: &BCAB. Spawn a pack of 2-3 ships (random count: (rnd&3)>>1 + 2 + carry), each a Sidewinder (&10) or Krait (&11).
+; ZX Spectrum: &BCAB. Spawn a pack of 2-4 ships (random count: (rnd&3)>>1 + 2 + carry, so 2,3,3,4), each a Sidewinder (&10) or Krait (&11).
 ; Entered by jr from the hostile/neutral pick and, for the marked Asp, by the jp in dat_8427. Stops early when no ship slot is free.
 spawnEscortPack:
     call getRandomNumber
     and 0x03
 spawnPackSlot:
     IFDEF TRAFFIC
-    inc a                           ; 1 to 4 ships like the C64 ((rnd & 3) + 1); stock: rra / adc a,0x02 = 2 to 3
+    inc a                           ; 1 to 4 ships like the C64 ((rnd & 3) + 1); stock: rra / adc a,0x02 = 2 to 4, mean 3.0; this one 1 to 4, mean 2.5
     nop
     nop
     ELSE
@@ -16134,134 +16154,12 @@ loc_9F38:
     nop
     nop
 loc_9F7C:
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
+laserSightsBlock:
+    IF LASER_SIGHTS
+    INCLUDE "lasersights.asm"
+    ELSE
+    DS LASER_SIGHTS_SIZE
+    ENDIF
     nop
     nop
     nop
