@@ -88,10 +88,10 @@ Prompts (Y or ENTER = yes, N = no):
 | Unlimited hold | `POKE &0998,0` (yes) or `&19` (no): the hold-capacity test (the Firebird `LARGEAXX` already has `0`) |
 | Own cloak | sets bit 6 of the default commander's `Missionflag` (`&3A23`): device listed, `Y` cloaks |
 | Cash Cr (default 100) | default commander block `&39C7`: high word `&39D9`, low word `&39DB` (see `_savegame.md`; up to 65,000,000 Cr) |
-| Mission 0-3 | 0 normal; 1 supernova, 2 cloak Asp, 3 Thargon invasion, each on the first jump. Sets the jump counter (`&39D6`) to 31/127/253, the earlier stage bits in `Missionflag` (1 for stage 2, 3 for stage 3) and removes the galaxy-0 gate (`POKE &4E5D,0`) |
-| Kills | 0-32767, pokes the kill count at `&38D8/&38D9` (256 gates the Constrictor and plans missions) |
+| Mission 0-3 | 0 normal; 1, 2 or 3 starts that stock mission (S1 to S3 in `_missions_built.md`) on the first jump. Sets the jump counter (`&39D6`) to 31/127/253, the earlier stage bits in `Missionflag` (1 for stage 2, 3 for stage 3) and removes the galaxy-0 gate (`POKE &4E5D,0`) |
+| Kills | 0-32767, pokes the kill count at `&38D8/&38D9` (256 gates added mission 1, 1280 added mission 2) |
 | Jumps | 0-65535, both bytes of `jumpCounter`; also patches `&4E5D` so jumps count in galaxy 1 |
-| Added mission 1-4 | presets for the chain in `_missions_built.md`: 1 Trumbles offered next, then plans; 2 stolen police ship next; 3 asteroids next; 4 all paid, asteroids state 3 |
+| Added mission 1-4 | presets for the chain in `_missions_built.md`: 1 T offered next, then mission 2; 2 mission 3 next; 3 mission 4 next; 4 all paid, mission 4 in state 3 |
 
 Why the default block: the game copies `&39C7` (104 bytes, save layout) to the live commander on `N` at "Load New Commander", so pokes
 there act as starting values and survive the game's init. Addresses are the save-block addresses plus `&FC` (`&39D4` kills, `&39D6`
@@ -117,7 +117,7 @@ BASIC pitfalls (Locomotive BASIC 1.1):
 ## Save editor and viewer
 
 - `tools/saveedit.py show|edit|roundtrip SAVE` edits a 104-byte save on the host: kills, jumps, cash, legal status, fuel, name, stock mission
-  stage, cloak, the added-mission chain (`--added 0-4`), raw mission bytes, Trumbles. It reads the key from a game disk, recomputes both
+  stage, cloak, the added-mission chain (`--added 0-4`), raw mission bytes, T. It reads the key from a game disk, recomputes both
   checksums, never writes without `-o`, and replaces a file in a copy of a disk image (or adds it). `--to-key-disk` converts a save between
   UK, French and German. The round trip is byte-identical on `PETER`, `PETE`, `LEN` (German) and `1.BIN` (UK).
 - `src/cheats/LISTSAVE.BAS` (from `tools/mk_listsave.py`, 2.1 KB): `RUN"LISTSAVE.BAS` lists every save on the disk in drive A (File, Build = UK, FRENCH or GERMAN: the key whose checksums
@@ -138,7 +138,7 @@ Screenshots (cpcxray, Mode 1): `docs/img/trainer_prompts.png`, `showsave_uk.png`
 
 ## Ship viewer (`SHOWSHIP.BAS`, `work/showship.dsk`)
 
-`bash tools/build_showship.sh` builds a blank data disk with `SHOWSHIP.BAS` (visible) and `SHIPS.BIN` (System-hidden); `RUN"SHOWSHIP` shows every ship with its name, a rotating wireframe with the game's hidden-line test, and the numbers that matter (kills, bounty in Cr, speed, energy, vertices, edges, faces). Left and right arrows (or `,` and `.`) step through the 30 ships (19 stock, 10 extras from `src/elite/missions_ships.asm`, the Constrictor), `Q` quits. The colours follow the game: black background, sky blue frame and lines (firmware ink 11, the game's `(0,128,255)`), pastel yellow text (ink 25).
+`bash tools/build_showship.sh` builds a blank data disk with `SHOWSHIP.BAS` (visible) and `SHIPS.BIN` (System-hidden); `RUN"SHOWSHIP` shows every model with its name (21 ships and 9 other objects: station, missile, escape pod, cargo canister, alloy plate, splinter, asteroid, rock hermit, Boulder), a rotating wireframe with the game's hidden-line test, and the numbers that matter (kills, bounty in Cr, speed, energy, vertices, edges, faces). Left and right arrows (or `,` and `.`) step through the 30 models (19 stock, 10 extras from `src/elite/missions_ships.asm`, the Constrictor), `Q` quits. The colours follow the game: black background, sky blue frame and lines (firmware ink 11, the game's `(0,128,255)`), pastel yellow text (ink 25).
 
 How it works: `tools/mk_showship.py` cuts every blueprint out of `work/bin_stock/COMMONXX.BIN` and the extra hull sources, scales the vertices to +-125 and the face normals to +-64, and packs them with the Z80 routine of `src/cheats/showship.asm` into `SHIPS.BIN` (loaded to `&4000`, ships from `&5000`; everything stays under `&A67B`, where AMSDOS keeps its work area, or the load fails with "read fail"). BASIC only handles keys and text and POKEs the sine and cosine of the spin angle (6 degrees a frame); `CALL &4000` rotates (spin about the ship's y axis, then a fixed 20 degree tilt, orthographic) and redraws every edge whose face points at the viewer, erasing the edge's segment of the previous frame first. The lines come from the routine's own DDA (8-bit slope fraction, XOR into the mode 1 screen at `&C000`, pen 2): the firmware's `GRA LINE` gave about 3 frames a second, this gives about 8 (Coriolis, counted with a breakpoint on `&4000`). The alternate registers are not used (the firmware's interrupt routine owns them). `CALL &4003` copies a ship's packed record into the tables. Shared line ends toggle twice in XOR, so a vertex pixel can flicker.
 
