@@ -1,6 +1,6 @@
 # CPC Elite
 
-Goal: disassemble and improve an old Amstrad CPC game (Elite) from `disks/Elite_UK_original_protected.dsk`: commented, reassemblable source (`src/`) plus a modified build that runs on a CPC emulator. Docs are in `docs/` (start with `_build.md`, `_my_changes.md`, `_memory_map.md`, `_open_questions.md`; there is no `docs/notes.md`).
+Goal: disassemble and improve an old Amstrad CPC game (Elite) from `disks/Elite_UK_original_protected.dsk`: commented, reassemblable source (`src/`) plus a modified build that runs on a CPC emulator. Docs are in `docs/` (start with `_build.md`, `_my_changes.md`, `_memory_map.md`, `_open_questions.md`).
 
 ## Quick start
 
