@@ -2,6 +2,7 @@ This repository mixes my own work with material that is not mine. Which licence 
 
 1. Code and tools written by me: MIT (text below)
    tools/, scripts/, Makefile, src/cheats/ (the BASIC trainers, save editors and the ship viewer)
+   Exception: `tools/proto_fill/` needs Ian Bell's ship table from ArcElite to run. The table is not in the repository and not covered (see NOTICE).
 
 2. Documentation written by me: Creative Commons Attribution 4.0 International (CC BY 4.0), https://creativecommons.org/licenses/by/4.0/legalcode
    README.md, CHANGELOG.md, TODO.md, CLAUDE.md, docs/ (text and the screenshots in docs/img/)

@@ -275,7 +275,7 @@ file is the only history. Dates are ISO.
 - `docs/_savegame.md` field map rewritten from the code: cargo table starts at `&38E2`, kill score is 24 bits, `&38F3` is free hold space, `&38FB` the large cargo bay, `&390D` the present system's seed, `&3914` market stock. `tools/savedec.py` prints these.
 - Disks renamed: `ELITE.DSK` to `Elite_UK_original_protected.dsk`, `Elite_1985_Firebird_Software.dsk` to
   `Elite_UK_Firebird_cracked_trainer.dsk`, `Elite - Gold [G].dsk` to `Elite_DE_cracked.dsk`,
-  `Elite Savegame.dsk` to `Elite_DE_savegames.dsk`; `IMG_9858.JPG` to `Elite_DE_controls_card.jpg`.
+  `Elite Savegame.dsk` to `Elite_DE_savegames.dsk`.
 - `extended/` reorganised into `archives/`, `forum/`, `reference/`, `source/`.
 - `notes.md` corrected: the beta build is byte-identical to the source (it said "not identical", which came
   from comparing files with and without the AMSDOS header).

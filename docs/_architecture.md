@@ -18,7 +18,7 @@
 
 ### Naming variables
 
-109 of 176 `dat_` labels were renamed with `tools/rename_dat.py` (maps in `tools/rename_maps/`); batch 2 named the data tables and turned two
+109 of 176 `dat_` labels were renamed with `tools/rename_labels.py` (maps in `tools/rename_maps/`); batch 2 named the data tables and turned two
 immediates into numeric operands. Evidence, in order of strength: Fessor's variable blocks in the same byte order as the stock block (anchored by a
 named neighbour such as `dustViewDirection` at `&6BF7` or `charXY` at `&38C4`, and matching initial values such as `0x55` at `&6BFD`); then the
 uses (`cargoHold` indexed by good number in `storeScoopedGood`; illegal goods 3, 6, 10 in `chkForIllegalGoods`); then save files (a 34 t cargo with

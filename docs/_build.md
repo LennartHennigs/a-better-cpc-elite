@@ -5,7 +5,7 @@ How to assemble the sources, what the switches do, what `check_src.sh` proves, a
 ## Requirements and inputs
 
 - **Tools:** Python 3 (scripts run as `python3 -I`), [sjasmplus](https://github.com/z00m128/sjasmplus) 1.24.0 and iDSK, both built by `bash scripts/install-tools.sh` into `~/.local/bin` (pinned versions; not in Homebrew).
-  cpcxray (via `uv tool`) runs the tests and the trainer tokeniser. RASM (`tools/bin/rasm`) is needed only for Fessor's source.
+  cpcxray (via `uv tool`) runs the tests and the trainer tokeniser. RASM (`tools/bin/rasm`, a local untracked build) is needed only for Fessor's source.
 - **Disks:** the original `.dsk` and `.cdt` images stay in `disks/`, untouched and untracked. The checker compares with files extracted from them:
 
   ```bash
@@ -97,7 +97,7 @@ sjasmplus -DTITLESEL                                  --raw=out/MUSIQUEX.BIN src
 ## Editing the source safely
 
 - `src/elite/` is hand-edited. **Never rerun `tools/disasm_stock.py` into it** (it overwrites); use a scratch directory (`python3 -I tools/disasm_stock.py /tmp/x`). Same for `src/elite_de/` (`map_german.py` + `disasm_german.py`) and `src/elite_fr/`.
-- Renames: for `dat_` labels use `tools/rename_dat.py` with a map in `tools/rename_maps/` (`--all-trees` applies it to German and French too; it refuses a name used twice). Otherwise `perl -pi -e 's/\bold\b/new/g'`
+- Renames: use `tools/rename_labels.py` with a map in `tools/rename_maps/` (it renames in en, de and fr where the label is defined, `--en-only` in English alone; it refuses a name used twice and runs `check_src.sh` for the three trees). Otherwise `perl -pi -e 's/\bold\b/new/g'`
   (BSD `sed` has no `\b` and silently changes nothing), then a grep count, then `check_src.sh` for all three trees.
 - Keep the mission tails honest: the stub plus the Constrictor overlay fill `&1714-&1A3F` exactly, the largest flight image is 608 of 610 bytes, and `ASSERT`s guard the fixed addresses (`&1714`, `&9D9E`, `&9FFE`). See `_memory_map.md`.
 - A new `-DENHANCED` byte change: label the operand (`name equ $ - 1`), add `X=$(off name)` plus `o==x` to the awk in `check_src.sh` (a tree without the label gets -99999) and do all three trees. In `LARGEAXX` the awk uses `esym` (`escQtyOperand`: `-v qe=...` plus `o==qe`). Retargeting a `jr` to another label keeps the size, so the save key does not move. The slots so far (`podCleanOperand`, `predelayOperand`, `hyperCountPos`, `cashHome`, `killHookSite`, `laserSightsJp`, `laserSightsBlock`, `escQtyOperand`) are described in `_my_changes.md`.

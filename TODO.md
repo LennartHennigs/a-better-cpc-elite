@@ -7,17 +7,17 @@ Open work first, finished items at the bottom (section *Done*). `CLAUDE.md` keep
 ### Game and build
 
 - [ ] Ship packs (`docs/_ship_packs.md`): play through a few jumps and launches (pack mix, 2 s load after a jump, asteroid crowding with `-DTRAFFIC`); try hiding the pack load (load at the end of `DockingSequence`, or chunked during the launch tunnel); Boulder and Transporter do not fit yet; check the new hulls' role flags and kill values against the C64 table.
-- [ ] Added missions (Constrictor, plans, stolen ship, asteroids, Trumbles) are English only: no translated texts, and the mission disk and hooks are built only from `src/elite` (`build_dsk.py --missions` refuses `--de`/`--fr`). The biggest gap between the builds.
+- [ ] Added missions (Constrictor, plans, stolen ship, asteroids, Trumbles) are English only: no translated texts, and the mission disk and hooks are built only from `src/elite` (`build_dsk.py --missions` refuses `--de`/`--fr`). The biggest gap between the builds. Suggested: port the texts to German first, then French (same free-space limit as the flight images; the overlays carry the text).
 - [ ] French "Statut Legal" is still long: it needs 4 padding bytes that print nothing, and no code in the French message table does (`docs/_my_changes.md`).
 - [ ] ships are still see-through (stars between the edges): options in `docs/_ship_occlusion.md`; try the bounding box (B) first, after measuring the free bytes in the `-DMISSIONS` build
 - [ ] Optional speed: `drawViewportFrame` redraws a constant frame each frame (about 1.5% of the frame); unroll or draw the edge bytes once. Needs free bytes in flight, so low priority.
-- [ ] Save on a write-protected disk resets to BASIC (seen in RVM on the mission disk). The game's own hook only catches AMSDOS's "Retry, Ignore or Cancel?" message (`LAB_ram_855e`, `checkMedia`); whether the stock game behaves the same, and what a graceful handler would cost in bytes, is untested (needs a clean boot in cpcxray on a read-only disk; `firebird_at_entry.sna` is not valid for disk-menu tests).
+- [ ] Save on a write-protected disk resets to BASIC (seen in RVM on the mission disk). The game's own hook only catches AMSDOS's "Retry, Ignore or Cancel?" message (`LAB_ram_855e`, `checkMedia`); whether the stock game behaves the same, and what a graceful handler would cost in bytes, is untested (needs a clean boot in cpcxray on a read-only disk; `firebird_at_entry.sna` is not valid for disk-menu tests). Suggested: catch the AMSDOS error in `checkMedia` and return to the menu; measure the byte cost in the flight image first.
 - [ ] (deferred 2026-11-16: no room in the mission build, left for now) Legal status number on the status line ("Status: Offender - 25"): a shared printing routine plus two small entries, about 14 bytes more in the head of every flight image; the images have 0 to 2 bytes left (2026-11-15), so it fits only without `-DMISSIONS` (about 450 bytes free in the tail) or after dropping the Trumble squeak (17 bytes, Trumbles only) and more in the packs. Also open: the kill count and the status number in German and French (spacing, width of the longer labels).
-- [ ] Laser sights on the English mission disk: `-DENHANCED -DMISSIONS` keeps the stock cross because the sights (108 bytes) do not fit beside the flight images (about 13 bytes short after the cuts that keep the missions as they are; measured launch-table cut: 2 bytes per image; see `docs/_my_changes.md` "Laser sights"). Needs space in the `COMMONXX` tail (images T 608, packs 1/2 606/604, C 606 of 608 since the kill count) or a hull less in packs 1 and 2. The French sights are untested in an emulator (the German ones were played by hand).
+- [ ] Laser sights on the English mission disk: `-DENHANCED -DMISSIONS` keeps the stock cross because the sights (108 bytes) do not fit beside the flight images (about 13 bytes short after the cuts that keep the missions as they are; measured launch-table cut: 2 bytes per image; see `docs/_my_changes.md` "Laser sights"). Needs space in the `COMMONXX` tail (images T 608, packs 1/2 606/604, C 606 of 608 since the kill count) or a hull less in packs 1 and 2. The French sights are untested in an emulator (the German ones were played by hand). Suggested: move the sights into an overlay, or drop a hull from packs 1 and 2 to make the 108 bytes.
 
 ### Missions
 
-- [ ] Real playthrough of the whole chain with save and load (so far only forced states, direct calls, the trainer pokes and a booted disk). A real docking triggering each offer has not been seen in the running game.
+- [ ] Real playthrough of the whole chain with save and load (so far only forced states, direct calls, the trainer pokes and a booted disk). A real docking triggering each offer has not been seen in the running game. Suggested: script it with cpcxray from `firebird_in_flight.sna`, forcing each offer by docking, saving a snapshot at each step.
 - [ ] Trumbles: a second end condition besides a sun or an escape pod (aboard they block every other added mission since 2026-11-13, so a player who never meets either stalls the chain), interplay with selling, the sprite-count thresholds.
 - [ ] More than six Trumbles drawn (a fuller screen at big counts): blocked, the Trumbles flight image is full (608 of 608); 12 sprites need about 25 bytes (state array and counter mask), only the sprite trim below frees some (`docs/_missions_built.md` section 6).
 - [ ] Tune the added missions (20 asteroids, 50% and 22% spawn rates, Birera as the police target); optionally the Cobra Mk III that Elite Plus adds to the asteroid mission.
@@ -67,6 +67,8 @@ Open work first, finished items at the bottom (section *Done*). `CLAUDE.md` keep
 ### Housekeeping
 
 - [ ] Update `work/xray/` disk copies and snapshots if they still use the old disk names.
+- [ ] Trim `TODO.md` and `CHANGELOG.md`: one line per open item plus a doc link, detail into `docs/`; move changelog entries from before the 2026-11-16 merge to `docs/changelog_archive.md`.
+- [ ] `.claude/` (holds only `scheduled_tasks.lock`): add it to `.gitignore` or leave it untracked.
 
 ## Done
 
@@ -99,7 +101,7 @@ Open work first, finished items at the bottom (section *Done*). `CLAUDE.md` keep
 
 ### Disassembly
 
-- [x] Name the `dat_` variables: 109 of 176 named on 2026-11-07 (`tools/rename_dat.py`, map in `tools/rename_maps/`); `tools/check_src.sh` still byte-exact.
+- [x] Name the `dat_` variables: 109 of 176 named on 2026-11-07 (`tools/rename_labels.py`, then called `rename_dat.py`; map in `tools/rename_maps/`); `tools/check_src.sh` still byte-exact.
 - [x] (done 2026-11-07: 8 tables, byte-exact) Turn pointer tables into `dw` and annotate; never rerun `tools/disasm_stock.py` into `src/elite`.
 - [x] (done 2026-11-07: searched by use, `ld hl,<table>` followed by a word fetch; only `CircleParmTable` was new) Look for more pointer tables hiding behind unlabeled targets. `dustParticleAdrTable` is a runtime buffer in the code area, not a table.
 - [x] (done 2026-11-07) Seed names from `work/fessor_to_stock.sym`: 1,471 of 1,581 descriptive names were already in `src/elite/`; the rest are Fessor-only code or weak `delta` matches. Last two (`cloakTick`, `commandsPatchTable`) named from callers. Remaining `LAB_ram_`/`dat_` labels need naming from callers or the Spectrum map.
