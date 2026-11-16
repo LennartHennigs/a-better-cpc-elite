@@ -38,7 +38,9 @@ Helpers for building, checking and analysing the project. Each script has a head
 ## Other systems and sources
 | File | Does |
 |---|---|
-| `spectrum_map.py`, `spectrum_data_map.py`, `apply_spectrum_names.py`, `gen_spectrum_map_doc.py` | match the CPC code to the ZX Spectrum disassembly and carry names over |
+| `spectrum_map.py`, `spectrum_data_map.py`, `apply_spectrum_names.py`, `gen_spectrum_map_doc.py` | match the CPC code to the ZX Spectrum disassembly and carry names over; regenerate `work/spectrum_map/` and `docs_other/_spectrum_map.md` with `python3 -I tools/spectrum_map.py && ... spectrum_data_map.py && ... gen_spectrum_map_doc.py`. Take only names and addresses from the Spectrum source, write comments in our own words and mark matches `; ZX Spectrum: name (&ADDR)` |
 | `cdt_direct_decode.py`, `unexepack.py`, `sparkx.py` | tape block decoder, DOS EXEPACK unpacker, SparkFS archive extractor |
 
 Other folders: `bin/` (the locally built RASM), `rename_maps/` (maps used by `rename_dat.py`), `proto_fill/` (filled-ship prototype), `tests/`.
+
+RASM (`tools/bin/rasm`, only for Fessor's source) is built locally: `cc -O2 -DNO_3RD_PARTIES -DNOAPI -o rasm rasm.c -lm -lpthread` (the repo's makefile fails to link). Never run it on `work/build_fessor`'s other `.asm` files: it overwrites `rasmoutput.sym`.
