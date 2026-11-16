@@ -9,7 +9,7 @@ Elite is copyrighted by its authors and rights holders (David Braben and Ian Bel
    It is my own work, but it only runs inside the original binary and follows the logic of other versions of the game. It is treated like item 1: no licence is granted.
 
 3. Material by Fessor (the ship hulls, including the Constrictor: src/elite/missions_hull.asm, src/elite/missions_ships.asm, tools/fessor_ships.py, the ship packs, docs/_ship_packs.md)
-   Used with his permission, given by private mail and credited in README.md. That permission does not extend to a licence. These files are excluded from the MIT licence of tools/ and from every other grant in LICENSE.
+   Used with his permission and credited in README.md. That permission does not extend to a licence. These files are excluded from the MIT licence of tools/ and from every other grant in LICENSE.
 
 4. Not in this repository
    Game disks, tape images, magazine scans, the sources and binaries of other versions (BBC, Atari ST, NES, MSX, Spectrum, ArcElite, PC Elite Plus) and Fessor's archives. They stay on the author's machine (see .gitignore). Their authors and rights holders keep all rights. You need your own copy of the game to build anything.
