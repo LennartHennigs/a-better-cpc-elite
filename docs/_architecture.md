@@ -114,7 +114,7 @@ Goal: find bytes a mission port can reclaim. **Conclusion: there is no reclaimab
    *Not code:* the zero entity area `&1A40-&1B7A`, variable blocks `&38C1-&3929`/`&392A-&3937`, tables `&1B81-&1B9A` and `&939D-&93A8`, tails of live routines
    (`&2997`, `&3D7B`, `&522A`, `&6BEB`, `&838B`). *Live (static check and cpcxray, 2026-11-08; with the fixed decoder 2026-11-11 these tails decode as code, `tools/exec_in_data.py` runs the game with breakpoints on every remaining data range), not the "130-155 bytes of dead code" first claimed:* each is the tail of a routine
    starting with `push ix`/`push iy`: `&53D7` in `LAB_ram_53cf` (`move_ship_forward` three times), `&5DD2` in `SUB_ram_5dcf` (called from `&51CC`, `&563C`), `&8243` in
-   `execSpawncmd4`, `&8365` in `spawnAtEntityCoordinates`, `&89F5` in `LAB_ram_89f4`/`LAB_ram_8a10`; `&6C0A` is in the runtime buffer `dustParticleAdrTable`; `&9751-&97A0` is filler.
+   `execSpawncmd4`, `&8365` in `spawnAtEntityCoordinates`, `&89F5` in `LAB_ram_89f4`/`LAB_ram_8a10`; `&6C0A` is in the runtime buffer `dustParticleAdrTable`; `&9751-&97A0` is the Python/Big Trader edge block (live hull data).
 5. **Trace** (`tools/dead_trace.py`, two runs of 700 random 1.3 s key presses from `firebird_in_flight.sna`, docking and cloak/Thargoid states forced every 25 presses;
    `traces/dead_run1.json`, `dead_run2.json`): the positive controls all fired (`LAB_ram_53cf`, `SUB_ram_5dcf`, `execSpawncmd4`, `LAB_ram_89f4`, `LAB_ram_8a10`, `chkCloak`,
    `handleEntitys`, `spawnCommand0` or `loadLARGEAXX`); `spawnAtEntityCoordinates` (`&8364`) did not (rare spawn command). `alt_animated_effect_reset` (`&719D`) fired;

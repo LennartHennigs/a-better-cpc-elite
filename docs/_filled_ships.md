@@ -107,7 +107,7 @@ Both do a RAM check first (write `&A5` at `&4000`, write `&5A` with bank 4 mappe
 | Resident main RAM free | |
 |---|---|
 | 3 bytes after `cashHome` (`&1FEA`), two 5-byte pockets (`&204E`, `&2053`) | about 13 in all |
-| `&9751-&97A0` | 80 bytes of filler, not verified |
+| `&9751-&97A0` | 80 bytes, NOT free: Python/Big Trader edge block (live hull data) |
 | flight tail `&9D9E-&9FFE` | 610 minus the mission flight image (0 spare with Constrictor, 8 with Trumbles) |
 
 Banks 4-7 are 64 KB the game does not use.
@@ -132,7 +132,7 @@ Banks 4-7 are 64 KB the game does not use.
 
 ## Risks and open points
 
-- The 14-byte glue does not fit one pocket: use `&9751-&97A0` after verifying it, or chain with `jp`.
+- The 14-byte glue does not fit one pocket: (`&9751-&97A0` is live hull data, not free) chain with `jp`.
 - Speed: 44 ms a close ship in this form; level of detail (a coarse hull or no fill for distant ships), merged coplanar faces and no sorting for convex hulls would be the first savings.
 - Concave hulls (Python, Thargoid?) could show wrong overlaps without grouping or sorting.
 - Not tested: RVM, a real keyboard, a real 6128, the disc motor after the program takes over (the prototype waits a few seconds with interrupts on).

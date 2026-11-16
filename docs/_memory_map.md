@@ -84,7 +84,7 @@ rely on the interrupt pushing its return address below the buffer: with SP at `&
 | `&1FD2-&1FF0` (`unusedViewBorderFill`) | 31 | always | `dustPlotPixel` and `mxPodHook`; 10 bytes left |
 | `&204E`, `&2053` (`unusedGetFlightMode`, `unusedGetCloakFlag`) | 10 | always (never referenced or executed) | `killSpace` of the kill count with `-DENHANCED` (English); nothing in the stock build |
 | `&6E21-&6FFF` (tail of `MUSIQUEX`) | about 480 | while the title screens run (the file is resident only then) | title ship selection, about 120 bytes |
-| `&9751-&97A0` | 80 | filler, not verified as free for new code | nothing |
+| `&9751-&97A0` | 80 | not free: the Python/Big Trader edge block (live hull data) | nothing |
 | German build tail | 282 | flight time | (no missions in the German build) |
 
 No other dead code exists: the supposed chains in `db` runs are live (tails of `push ix` routines), see `_architecture.md`. Re-encoding the string tables saves only 48 bytes. Memory is otherwise full and no address
