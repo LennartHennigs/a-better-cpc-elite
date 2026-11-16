@@ -7,7 +7,7 @@ The disassembly was made for educational purposes, and to improve the Elite expe
 
 **The goal** is a richer experience inside the existing game: more missions, more ships and busier space, and a few conveniences, with the same screens, rules and feel. It is deliberately not a rebuild like [Elite-A](https://elite.bbcelite.com/elite-a/), Angus Duggan's extended BBC version, which adds new mechanisms and components on top of the original.
 
-**The challenge** is the space. Everything has to run on a stock 64 KB CPC 464, and Elite was already a tight game: the added code lives in a few hundred free bytes, in overlays loaded from disk and in bytes saved elsewhere. The CPC also has no hardware sprites, so everything is drawn in software, which makes its code larger than the Z80 (Spectrum) and 6502 versions of the game.
+**The challenge** is the space. Everything has to run on a stock 64 KB CPC 464, and Elite was already a tight game: the added code lives in a few hundred free bytes, in overlays loaded from disk and in bytes saved elsewhere. The CPC also has no hardware sprites, so everything is drawn in software. Its code is about the size of the Spectrum version it was ported from (roughly 29 KB), with more graphics data, and the whole game is well over twice the size of the 6502 BBC Micro version.
 
 ## Secret Missions
 
