@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the ship viewer: work/showship/SHIPS.BIN (every blueprint in one file) and src/cheats/SHOWSHIP.ASC (the CPC BASIC program that draws them).
+"""Generate the ship viewer: work/showship/SHIPS.BIN (every blueprint in one file) and src/cheats/SHOWSHPS.ASC (the CPC BASIC program that draws them).
 
 usage: python3 -I tools/mk_showship.py        (then tools/build_showship.sh tokenises the program and builds work/showship.dsk)
 
@@ -18,7 +18,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 SJASM = Path.home() / ".local/bin/sjasmplus"
 OUT = ROOT / "work/showship/ships.dat"
-ASC = ROOT / "src/cheats/SHOWSHIP.ASC"
+ASC = ROOT / "src/cheats/SHOWSHPS.ASC"
 CODE = ROOT / "work/showship/SHOWCODE.BIN"
 COMBINED = ROOT / "work/showship/SHIPS.BIN"   # code at &4000, ships at &5000: one file
 

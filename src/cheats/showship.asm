@@ -1,4 +1,4 @@
-; Frame routine of the ship viewer (SHOWSHIP.BAS): CALL &4000 rotates the current ship by the angle in the parameter block and redraws its edges with its own Bresenham
+; Frame routine of the ship viewer (SHOWSHPS.BAS): CALL &4000 rotates the current ship by the angle in the parameter block and redraws its edges with its own Bresenham
 ; line routine, which XORs pen 1 straight into the mode 1 screen at &C000 (drawing a line twice erases it; the firmware's GRA LINE was about five times slower). Assembled by tools/mk_showship.py into SHOWCODE.BIN (sjasmplus, load &4000; below &A67B, where AMSDOS keeps its work area).
 ; The BASIC program fills the tables below once per ship (scaled to signed bytes: vertices to +-125, face normals to +-64) and POKEs the cosine and sine of the spin angle (x127)
 ; before every call. The view is orthographic: spin about the ship's y axis, then a fixed tilt about x (P_CT, P_ST), x and y of the result are the screen coordinates.

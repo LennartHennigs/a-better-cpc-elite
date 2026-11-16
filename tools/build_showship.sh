@@ -1,12 +1,12 @@
 #!/bin/bash
-# Build the ship viewer: work/showship/SHIPS.BIN and src/cheats/SHOWSHIP.ASC (tools/mk_showship.py), tokenise the program with the CPC's own BASIC (cpcxray headless,
-# as tools/build_cheat.sh does), write src/cheats/SHOWSHIP.BAS and its listing, and put both on work/showship.dsk (a blank data disk; SHOWSHIP.BAS visible, SHIPS.BIN
-# System-hidden like every other non-BAS file). Run it with `RUN"SHOWSHIP`.
+# Build the ship viewer: work/showship/SHIPS.BIN and src/cheats/SHOWSHPS.ASC (tools/mk_showship.py), tokenise the program with the CPC's own BASIC (cpcxray headless,
+# as tools/build_cheat.sh does), write src/cheats/SHOWSHPS.BAS and its listing, and put both on work/showship.dsk (a blank data disk; SHOWSHPS.BAS visible, SHIPS.BIN
+# System-hidden like every other non-BAS file). Run it with `RUN"SHOWSHPS`.
 set -e
 cd "$(dirname "$0")/.."
 export PATH="$HOME/.local/bin:$PATH"
 D=src/cheats
-P=SHOWSHIP
+P=SHOWSHPS
 python3 -I tools/mk_showship.py
 rm -f work/tmp_asc.dsk work/xray/disk/tmp_asc.dsk work/xray/disk/tmp_tok.dsk
 iDSK work/tmp_asc.dsk -n >/dev/null 2>&1
@@ -23,6 +23,5 @@ iDSK work/showship.dsk -n >/dev/null 2>&1   # a blank data disk: the Firebird di
 iDSK work/showship.dsk -i $D/$P.BAS -t 2 -f >/dev/null
 iDSK work/showship.dsk -i work/showship/SHIPS.BIN -t 1 -c 4000 -e 4000 -f >/dev/null
 python3 -I tools/hide_files.py work/showship.dsk
-cp work/showship.dsk work/xray/disk/showship.dsk
 rm -rf work/tmp_asc.dsk work/tmp_tok work/xray/disk/tmp_asc.dsk work/xray/disk/tmp_tok.dsk
-echo "built work/showship.dsk (RUN\"SHOWSHIP)"
+echo "built work/showship.dsk (RUN\"SHOWSHPS)"
