@@ -9,6 +9,14 @@ import struct
 import sys
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parent.parent
+
+
+def is_original(path):
+    """True for a file in the project root or anywhere under disks/: the original disks, which no tool may write (CLAUDE.md)."""
+    p = Path(path).resolve()
+    return p.parent == ROOT or (ROOT / "disks") in p.parents
+
 
 def load_sectors(path):
     d = Path(path).read_bytes()

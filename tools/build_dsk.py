@@ -36,7 +36,7 @@ if STOCK and MISSIONS:
     sys.exit("--stock and --missions cannot be combined: the missions need the enhanced build")
 args = [a for a in sys.argv[1:] if a not in ("--stock", "--missions", "--de", "--fr")]
 OUT = Path(args[0]) if args else ROOT / "work" / ("elite_original" + ("_de" if DE else "_fr" if FR else "") + ".dsk" if STOCK else "elite_de_rebuilt.dsk" if DE else "elite_fr_rebuilt.dsk" if FR else "elite_missions.dsk" if MISSIONS else "elite_rebuilt.dsk")
-if OUT.resolve() == BASE.resolve() or OUT.resolve().parent in (ROOT, ROOT / "disks"):   # CLAUDE.md: never modify the original disks (disks/)
+if OUT.resolve() == BASE.resolve() or dskx.is_original(OUT):   # CLAUDE.md: never modify the original disks (disks/)
     sys.exit(f"{OUT}: refusing to write a disk into the project root or disks/ (the originals live there); use work/")
 SJASM = Path.home() / ".local/bin/sjasmplus"
 FILES = {"LARGEAXX": [] if DE or FR else ["-DFIREBIRD"], "COMMONXX": ["-DTITLESEL", "-DTRAFFIC"], "COMMON2X": [], "MUSIQUEX": ["-DTITLESEL"]}   # TITLESEL: cursor keys change the title ship; TRAFFIC: C64-like spawn odds (docs/_ship_packs.md)

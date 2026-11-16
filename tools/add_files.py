@@ -12,14 +12,13 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import dskx  # noqa: E402
 
-ROOT = Path(__file__).resolve().parent.parent
 
 
 def main(argv):
     if len(argv) < 2:
         sys.exit(__doc__)
     disk = Path(argv[0])
-    if disk.resolve().parent in (ROOT, ROOT / "disks"):
+    if dskx.is_original(disk):
         sys.exit(f"{disk}: refusing to touch a disk in the project root or disks/")
     d = bytearray(disk.read_bytes())
     secs = dskx.sector_offsets(d)

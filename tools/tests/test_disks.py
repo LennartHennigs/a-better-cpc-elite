@@ -54,8 +54,9 @@ def check(path):
     data = dskx.read_files(secs)
     by_name = {k[1]: v for k, v in data.items()}
     for name, f in sorted(files.items()):
-        hidden = all(f["system"])
-        if len(set(f["system"])) != 1:
+        flags = set(f["system"])
+        hidden = flags == {True}
+        if len(flags) != 1:
             fails.append(f"{name}: the System attribute differs between extents")
         raw = by_name.get(name, b"")
         h = dskx.amsdos_header(raw)

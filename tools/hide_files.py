@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from dskx import sector_offsets  # noqa: E402
+from dskx import is_original, sector_offsets  # noqa: E402
 
 
 def hide_entries(d, secs, first):
@@ -38,6 +38,6 @@ def hide(path):
 
 if __name__ == "__main__":
     for p in sys.argv[1:]:
-        if Path(p).resolve().parent in (Path(__file__).resolve().parent.parent, Path(__file__).resolve().parent.parent / "disks"):
+        if is_original(p):
             sys.exit(f"{p}: refusing to touch a disk in the project root or disks/")
         hide(p)

@@ -6,6 +6,7 @@
 #   make missions   enhanced plus the added missions (English only): bootable disk -> build/elite_missions.dsk (no trainers or viewer; `expanded` is the full build)
 #   make check      bash tools/check_src.sh for en, de and fr
 #   make test       rebuild the disks, then the host tests: check_src (en, de, fr), saves, disk rules (about a minute; tools/tests/run_all.py)
+#   make test-quick the host tests alone, on the disks already in build/ (seconds)
 #   make test-emu   the cpcxray tests with a pass/fail result (several minutes; needs cpcxray and work/xray/output/firebird_in_flight.sna)
 #   make clean      delete build/
 # Everything a make target delivers lands in build/ (gitignored); intermediate files stay in work/.
@@ -19,7 +20,7 @@ TREE    = $(TREE_$(LOC))
 TITLE   = -DTITLESEL
 OUT     = build
 
-.PHONY: original expanded stock enhanced missions check test test-emu clean
+.PHONY: original expanded stock enhanced missions check test test-quick test-emu clean
 
 $(OUT)/README.md: tools/build_readme.md
 	@mkdir -p $(OUT)
@@ -42,7 +43,6 @@ enhanced: $(OUT)/README.md
 	@echo "enhanced ($(LOC)): $(OUT)/enhanced/$(LOC)/"
 
 missions: $(OUT)/README.md
-	@mkdir -p $(OUT)
 	python3 -I tools/build_dsk.py --missions $(OUT)/elite_missions.dsk
 
 check:
@@ -54,6 +54,9 @@ test:
 	$(MAKE) original LOC=fr
 	$(MAKE) expanded
 	$(MAKE) missions
+	python3 -I tools/tests/run_all.py --host
+
+test-quick:
 	python3 -I tools/tests/run_all.py --host
 
 test-emu:
