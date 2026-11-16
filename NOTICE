@@ -3,7 +3,7 @@ Elite for the Amstrad CPC: what is not covered by the licences in LICENSE
 Elite is copyrighted by its authors and rights holders (David Braben and Ian Bell; the CPC version was published by Firebird in 1985). This project is not affiliated with them and holds no rights to the game.
 
 1. The disassembled game source (src/elite/, src/elite_de/, src/elite_fr/, apart from the files named in 3)
-   It is a disassembly of the original game's code. The names, labels and comments are mine, but they cannot be separated from the code, which stays under the original copyright. It is published for study and preservation. No licence is granted, and nothing here allows redistribution of the game.
+   It is a disassembly of the original game's code. The names, labels and comments are mine, but they cannot be separated from the code, which stays under the original copyright. It is published for study and preservation: you may read it, learn from it and build it for your own use from your own copy of the game. No licence is granted beyond that: nothing here allows redistributing the game, the source, or disks built from it. Ask the rights holders, not me.
 
 2. The mission code (src/elite/missions_*.asm, src/disk/)
    It is my own work, but it only runs inside the original binary and follows the logic of other versions of the game. It is treated like item 1: no licence is granted.
