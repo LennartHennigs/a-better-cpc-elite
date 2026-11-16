@@ -24,6 +24,9 @@ __pycache__/
 # Internal notes (process, history, generated maps, third-party text); kept locally
 docs_other/
 
+# Local third-party build (RASM, only for Fessor's source; tools/README.md)
+tools/bin/
+
 # Original disks and tapes (the third-party games; moved from the project root)
 disks/
 *.pdf
