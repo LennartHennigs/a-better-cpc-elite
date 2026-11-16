@@ -14,7 +14,7 @@ def key_data_lines(first=300):
     """DATA lines with the three build keys (UK, French, German) as hex strings, numbered from `first`."""
     out = []
     for i, (name, disk) in enumerate(DISKS):
-        off, key = elitekey.key_from_disk(ROOT / disk)
+        off, key = elitekey.key_from_disk(ROOT / "disks" / disk)
         out.append(f"{first + 10 * i} DATA {name},{key.hex().upper()}")
     return out
 

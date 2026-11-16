@@ -2,7 +2,7 @@
 """Give every file that is not a .BAS or .TXT the System attribute, in place, so CAT lists only the programs and texts (LOAD and RUN still find the rest).
 
 usage: python3 -I tools/hide_files.py IMAGE.dsk [IMAGE.dsk ...]
-Used by tools/build_cheat.sh on the trainer disks; tools/build_dsk.py does the same while it builds. Never run it on the original disks in the project root.
+Used by tools/build_cheat.sh on the trainer disks; tools/build_dsk.py does the same while it builds. Never run it on the original disks in disks/.
 """
 import sys
 from pathlib import Path
@@ -38,6 +38,6 @@ def hide(path):
 
 if __name__ == "__main__":
     for p in sys.argv[1:]:
-        if Path(p).resolve().parent == Path(__file__).resolve().parent.parent:
-            sys.exit(f"{p}: refusing to touch a disk in the project root")
+        if Path(p).resolve().parent in (Path(__file__).resolve().parent.parent, Path(__file__).resolve().parent.parent / "disks"):
+            sys.exit(f"{p}: refusing to touch a disk in the project root or disks/")
         hide(p)

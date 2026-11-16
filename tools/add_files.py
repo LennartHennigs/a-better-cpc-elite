@@ -4,7 +4,7 @@
 usage: python3 -I tools/add_files.py IMAGE.dsk [-NAME.EXT] [NAME.EXT=]FILE ...
 -NAME.EXT deletes that file from the image first (the Firebird disk's own CHEAT.BAS, when TRAINER.BAS takes its place); a name that is not there is not an error.
 FILE is written as it is (AMSDOS header included); the disk name is NAME.EXT, or FILE's own name when no NAME.EXT= is given. Run tools/hide_files.py afterwards to
-hide what CAT should not show. Never run it on the original disks in the project root.
+hide what CAT should not show. Never run it on the original disks in disks/.
 """
 import sys
 from pathlib import Path
@@ -19,8 +19,8 @@ def main(argv):
     if len(argv) < 2:
         sys.exit(__doc__)
     disk = Path(argv[0])
-    if disk.resolve().parent == ROOT:
-        sys.exit(f"{disk}: refusing to touch a disk in the project root")
+    if disk.resolve().parent in (ROOT, ROOT / "disks"):
+        sys.exit(f"{disk}: refusing to touch a disk in the project root or disks/")
     d = bytearray(disk.read_bytes())
     secs = dskx.sector_offsets(d)
     first = min(r for (t, r) in secs if t == 0)

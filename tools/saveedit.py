@@ -41,7 +41,7 @@ import dskx  # noqa: E402
 import elitekey  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_KEY_DISK = ROOT / "Elite_UK_Firebird_cracked_trainer.dsk"
+DEFAULT_KEY_DISK = ROOT / "disks" / "Elite_UK_Firebird_cracked_trainer.dsk"
 LEN = 0x68
 O_NAME, O_LEGAL, O_KILLS, O_JUMPS, O_GALAXY, O_CASH, O_FUEL = 0x00, 0x0B, 0x0C, 0x0F, 0x11, 0x12, 0x2E
 O_STATE, O_STATE2, O_TRUMBLES, O_EXTRA_UNIT, O_THARGON, O_MISSIONFLAG = 0x32, 0x33, 0x3A, 0x37, 0x5B, 0x5C
@@ -154,8 +154,8 @@ def write_out(out_spec, data_with_header):
         Path(name).write_bytes(data_with_header)
         print("wrote", name, f"({len(data_with_header)} bytes with header)")
         return
-    if disk.resolve().parent == ROOT:   # CLAUDE.md: never modify the original disks in the project root
-        raise SystemExit(f"{disk}: refusing to write into a disk in the project root; copy it to work/ first")
+    if disk.resolve().parent in (ROOT, ROOT / "disks"):   # CLAUDE.md: never modify the original disks (disks/)
+        raise SystemExit(f"{disk}: refusing to write into a disk in the project root or disks/; copy it to work/ first")
     d = bytearray(disk.read_bytes())
     secs = dskx.sector_offsets(d)
     first = min(r for (t, r) in secs if t == 0)

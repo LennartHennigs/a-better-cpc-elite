@@ -3,6 +3,7 @@ extended/
 
 # Working files, builds, traces, scratch
 work/
+build/
 traces/
 tmp/
 
@@ -22,3 +23,10 @@ __pycache__/
 
 # Internal notes (process, history, generated maps, third-party text); kept locally
 docs_other/
+
+# Original disks and tapes (the third-party games; moved from the project root)
+disks/
+*.pdf
+
+# Finder duplicates ("name 2.ext")
+* 2.*

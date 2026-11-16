@@ -26,7 +26,7 @@ DE = "--de" in sys.argv
 FR = "--fr" in sys.argv
 if DE and FR:
     sys.exit("--de and --fr cannot be combined")
-BASE = ROOT / ("Elite_DE_cracked.dsk" if DE else "Elite (1985)(Firebird Software)(fr).dsk" if FR else "Elite_UK_Firebird_cracked_trainer.dsk")
+BASE = ROOT / "disks" / ("Elite_DE_cracked.dsk" if DE else "Elite (1985)(Firebird Software)(fr).dsk" if FR else "Elite_UK_Firebird_cracked_trainer.dsk")
 SRC = ROOT / ("src/elite_de" if DE else "src/elite_fr" if FR else "src/elite")
 STOCK = "--stock" in sys.argv         # original bytes: no -DENHANCED, -DTITLESEL or -DTRAFFIC
 MISSIONS = "--missions" in sys.argv   # assemble LARGEAXX and COMMONXX with -DMISSIONS (src/elite/missions_*.asm in the free tails)
@@ -36,8 +36,8 @@ if STOCK and MISSIONS:
     sys.exit("--stock and --missions cannot be combined: the missions need the enhanced build")
 args = [a for a in sys.argv[1:] if a not in ("--stock", "--missions", "--de", "--fr")]
 OUT = Path(args[0]) if args else ROOT / "work" / ("elite_original" + ("_de" if DE else "_fr" if FR else "") + ".dsk" if STOCK else "elite_de_rebuilt.dsk" if DE else "elite_fr_rebuilt.dsk" if FR else "elite_missions.dsk" if MISSIONS else "elite_rebuilt.dsk")
-if OUT.resolve() == BASE.resolve() or OUT.resolve().parent == ROOT:   # CLAUDE.md: never modify the original disks in the project root
-    sys.exit(f"{OUT}: refusing to write a disk into the project root (the originals live there); use work/")
+if OUT.resolve() == BASE.resolve() or OUT.resolve().parent in (ROOT, ROOT / "disks"):   # CLAUDE.md: never modify the original disks (disks/)
+    sys.exit(f"{OUT}: refusing to write a disk into the project root or disks/ (the originals live there); use work/")
 SJASM = Path.home() / ".local/bin/sjasmplus"
 FILES = {"LARGEAXX": [] if DE or FR else ["-DFIREBIRD"], "COMMONXX": ["-DTITLESEL", "-DTRAFFIC"], "COMMON2X": [], "MUSIQUEX": ["-DTITLESEL"]}   # TITLESEL: cursor keys change the title ship; TRAFFIC: C64-like spawn odds (docs/_ship_packs.md)
 if STOCK:
@@ -90,16 +90,16 @@ def add_readme(d, secs, first):
 
 
 def add_showship(d, secs, first):
-    """The ship viewer (tools/build_showship.sh): SHOWSHIP.BAS (visible) and SHIPS.BIN (hidden, loaded to &4000). Added with dskx, not iDSK: iDSK may put blocks on the
+    """The ship viewer (tools/build_showship.sh): SHOWSHPS.BAS (visible) and SHIPS.BIN (hidden, loaded to &4000). Added with dskx, not iDSK: iDSK may put blocks on the
     two odd-sector tracks of the base disk, which AMSDOS cannot read."""
-    bas, ships = ROOT / "src/cheats/SHOWSHIP.BAS", ROOT / "work/showship/SHIPS.BIN"
+    bas, ships = ROOT / "src/cheats/SHOWSHPS.BAS", ROOT / "work/showship/SHIPS.BIN"
     if not (bas.exists() and ships.exists()):
-        print("SHOWSHIP: not added (run tools/build_showship.sh first)")
+        print("SHOWSHPS: not added (run tools/build_showship.sh first)")
         return
     data = bas.read_bytes()   # AMSDOS header included
-    dskx.add_padded(d, secs, first, "SHOWSHIP", "BAS", data)
+    dskx.add_padded(d, secs, first, "SHOWSHPS", "BAS", data)
     add_file(d, secs, first, "SHIPS", "BIN", ships.read_bytes(), 0x4000)
-    print(f"SHOWSHIP.BAS {len(data)} bytes, SHIPS.BIN {ships.stat().st_size} bytes")
+    print(f"SHOWSHPS.BAS {len(data)} bytes, SHIPS.BIN {ships.stat().st_size} bytes")
 
 
 def replace_trainer(d, secs, first):
