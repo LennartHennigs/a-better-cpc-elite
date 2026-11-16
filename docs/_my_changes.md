@@ -1,7 +1,7 @@
 # What we changed in the game
 
 Every difference between our builds and the original game, with why it exists, where it lives, what it costs and how it is proven. Without any switch only the CPC+ byte differs from the original
-(`_build.md`); everything else is behind a `-D` flag. Source-only work (names, comments, `smc_`/`buf_` prefixes, `dw` tables) changes no byte and is not listed. The dated history is in `CHANGELOG.md`.
+(`_build.md`); everything else is behind a `-D` flag. Source-only work (names, comments, `smc_`/`buf_` prefixes, `dw` tables) changes no byte and is not listed. The dated history is in `CHANGELOG.md` (up to 2026-11-11: `changelog_archive.md`).
 
 ## At a glance
 

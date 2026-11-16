@@ -1,6 +1,6 @@
 # Stars behind ships (idea, not built)
 
-Stars already stay behind the planet and sun (`STAR_OCCLUDE`, `dustPlotPixel`, see `CHANGELOG.md`). Ships are still
+Stars already stay behind the planet and sun (`STAR_OCCLUDE`, `dustPlotPixel`, see `changelog_archive.md`). Ships are still
 see-through: stars show between their edge lines. Options for hiding them:
 
 ## Why ships are different

@@ -6,31 +6,31 @@ Open work first, finished items at the bottom (section *Done*). `CLAUDE.md` keep
 
 ### Game and build
 
-- [ ] Ship packs (`docs/_ship_packs.md`): play through a few jumps and launches (pack mix, 2 s load after a jump, asteroid crowding with `-DTRAFFIC`); try hiding the pack load (load at the end of `DockingSequence`, or chunked during the launch tunnel); Boulder and Transporter do not fit yet; check the new hulls' role flags and kill values against the C64 table.
-- [ ] Added missions (Constrictor, plans, stolen ship, asteroids, Trumbles) are English only: no translated texts, and the mission disk and hooks are built only from `src/elite` (`build_dsk.py --missions` refuses `--de`/`--fr`). The biggest gap between the builds. Suggested: port the texts to German first, then French (same free-space limit as the flight images; the overlays carry the text).
+- [ ] Ship packs (`docs/_ship_packs.md`): play through jumps and launches; try hiding the pack load; Boulder and Transporter do not fit yet; check role flags and kill values against the C64 table. [full text](docs/_todo_notes.md#ship-packs)
+- [ ] Added missions are English only (no translated texts; the mission disk is built from `src/elite` only). Suggested: German first, then French. [full text](docs/_todo_notes.md#added-missions-english-only)
 - [ ] French "Statut Legal" is still long: it needs 4 padding bytes that print nothing, and no code in the French message table does (`docs/_my_changes.md`).
 - [ ] ships are still see-through (stars between the edges): options in `docs/_ship_occlusion.md`; try the bounding box (B) first, after measuring the free bytes in the `-DMISSIONS` build
 - [ ] Optional speed: `drawViewportFrame` redraws a constant frame each frame (about 1.5% of the frame); unroll or draw the edge bytes once. Needs free bytes in flight, so low priority.
-- [ ] Save on a write-protected disk resets to BASIC (seen in RVM on the mission disk). The game's own hook only catches AMSDOS's "Retry, Ignore or Cancel?" message (`LAB_ram_855e`, `checkMedia`); whether the stock game behaves the same, and what a graceful handler would cost in bytes, is untested (needs a clean boot in cpcxray on a read-only disk; `firebird_at_entry.sna` is not valid for disk-menu tests). Suggested: catch the AMSDOS error in `checkMedia` and return to the menu; measure the byte cost in the flight image first.
-- [ ] (deferred 2026-11-16: no room in the mission build, left for now) Legal status number on the status line ("Status: Offender - 25"): a shared printing routine plus two small entries, about 14 bytes more in the head of every flight image; the images have 0 to 2 bytes left (2026-11-15), so it fits only without `-DMISSIONS` (about 450 bytes free in the tail) or after dropping the Trumble squeak (17 bytes, Trumbles only) and more in the packs. Also open: the kill count and the status number in German and French (spacing, width of the longer labels).
-- [ ] Laser sights on the English mission disk: `-DENHANCED -DMISSIONS` keeps the stock cross because the sights (108 bytes) do not fit beside the flight images (about 13 bytes short after the cuts that keep the missions as they are; measured launch-table cut: 2 bytes per image; see `docs/_my_changes.md` "Laser sights"). Needs space in the `COMMONXX` tail (images T 608, packs 1/2 606/604, C 606 of 608 since the kill count) or a hull less in packs 1 and 2. The French sights are untested in an emulator (the German ones were played by hand). Suggested: move the sights into an overlay, or drop a hull from packs 1 and 2 to make the 108 bytes.
+- [ ] Save on a write-protected disk resets to BASIC. Suggested: catch the AMSDOS error in `checkMedia`, return to the menu; measure the bytes first. [full text](docs/_todo_notes.md#write-protected-save)
+- [ ] (deferred 2026-11-16, no room with `-DMISSIONS`) Legal status number on the status line, about 14 bytes per flight image; kill count and status number in German and French. [full text](docs/_todo_notes.md#legal-status-number)
+- [ ] Laser sights on the English mission disk: 108 bytes, about 13 short in the `COMMONXX` tail; French sights untested in an emulator. Suggested: an overlay, or one hull less in packs 1 and 2. [full text](docs/_todo_notes.md#laser-sights-on-the-mission-disk)
 
 ### Missions
 
-- [ ] Real playthrough of the whole chain with save and load (so far only forced states, direct calls, the trainer pokes and a booted disk). A real docking triggering each offer has not been seen in the running game. Suggested: script it with cpcxray from `firebird_in_flight.sna`, forcing each offer by docking, saving a snapshot at each step.
+- [ ] Real playthrough of the whole chain with save and load; no real docking has triggered each offer yet. Suggested: script it with cpcxray from `firebird_in_flight.sna`. [full text](docs/_todo_notes.md#real-playthrough)
 - [ ] Trumbles: a second end condition besides a sun or an escape pod (aboard they block every other added mission since 2026-11-13, so a player who never meets either stalls the chain), interplay with selling, the sprite-count thresholds.
 - [ ] More than six Trumbles drawn (a fuller screen at big counts): blocked, the Trumbles flight image is full (608 of 608); 12 sprites need about 25 bytes (state array and counter mask), only the sprite trim below frees some (`docs/_missions_built.md` section 6).
 - [ ] Tune the added missions (20 asteroids, 50% and 22% spawn rates, Birera as the police target); optionally the Cobra Mk III that Elite Plus adds to the asteroid mission.
 - [ ] A per-commander random mission order (not built: no room in the stub plus Constrictor overlay).
 - [ ] Space: the stub plus Constrictor overlay (3 spare since 2026-11-13, with the sell-all key resident) have a little room; the flight images are full since the kill count (2026-11-15): Trumbles 608 of 608, pack 1 and the Constrictor 606, pack 2 604 (`docs/_missions_built.md`).
-- [ ] Optional: furs when the Trumbles die in a sun. Idea: when the sun brings the count to 0, add a fixed 4 t of furs (good 11, `cargoHold+11`), capped by `cargoSpaceFree`. Costs about 24 bytes in `mxSunImpl` (Trumbles image has 8 spare, limit `&9FFE`), so 16 bytes must be freed: cutting the sprite from 14 to 10 rows does it (drop rows 0, 6, 12, 13 of `missions_trumble_art.txt`, `ld c,10` in `mxBlit`). Once per commander (the offer is made once), so no trading exploit. A scaled amount (peak count) needs a stored byte and more space. Also a death sound for the sun: reuse an existing effect via a bit in `sfxFlags2Bitmap` (about 5 bytes), pick by ear with `TRUMBLE.BAS`.
+- [ ] Optional: furs (4 t) and a death sound when the Trumbles die in a sun; about 24 bytes, so the sprite must lose 4 rows. [full text](docs/_todo_notes.md#furs-when-the-trumbles-die-in-a-sun)
 - [ ] A CPC colour option for the Trumble fur.
 - [ ] Test `CHEAT` stock mission stages 2 and 3 (rows not run, `docs/_missions_built.md` section 7), the pirate-boarding poke and the unlimited-hold toggle in play.
 
 ### Space and speed
 
 - [ ] Cheap flight-space savings (2026-11-13; each is small, so do them together and measure the tail with `-DMISSIONS`):
-  - [ ] Hull dedup behind `-DENHANCED`/`-DMISSIONS` (default keeps the original bytes): point the Splinter header's edge offset (`shipdatSplinter` +14) at `shipdatCapsule`'s edge block and drop the duplicate 24 bytes; move the later hulls down so the free tail grows by the same amount. Check the Splinter and Capsule faces and all other sub-blocks for partial overlaps first (only whole equal blocks were compared; Cargo/Pirate1/Thargon differ). Risks as in the hull compression item: shifted tail addresses, `check_src.sh` marker, all three trees, `tools/tests/test_flight_hull.py` per ship.
+  - [ ] Hull dedup behind `-DENHANCED`/`-DMISSIONS`: point the Splinter edge offset at the Capsule's block, drop 24 duplicate bytes. [full text](docs/_todo_notes.md#hull-dedup)
   - [ ] String tables: re-encoding saves only about 48 bytes (`docs/_memory_map.md`); skip unless a mission needs exactly that.
 - [ ] Peephole pass in a separate variant build, not in the byte-exact `src/elite/`: in `commonxx` 28 unconditional and 28 conditional `jp` within
       +-127 bytes can be `jr` (56 bytes), 24 `call X` + `ret` can be `jp X` (24 bytes, only if nothing jumps to the `ret`), up to 19 `ld a,0`
@@ -67,14 +67,13 @@ Open work first, finished items at the bottom (section *Done*). `CLAUDE.md` keep
 ### Housekeeping
 
 - [ ] Update `work/xray/` disk copies and snapshots if they still use the old disk names.
-- [ ] Trim `TODO.md` and `CHANGELOG.md`: one line per open item plus a doc link, detail into `docs/`; move changelog entries from before the 2026-11-16 merge to `docs/changelog_archive.md`.
 - [ ] `.claude/` (holds only `scheduled_tasks.lock`): add it to `.gitignore` or leave it untracked.
 
 ## Done
 
 ### General
 
-- [x] allow Escape to exit the buy menu (goods): done (one byte, `CHANGELOG.md`)
+- [x] allow Escape to exit the buy menu (goods): done (one byte, `docs/changelog_archive.md`)
 - [x] Escape at the second digit of a buy or sell quantity undid nothing: fixed 2026-11-16 under `-DENHANCED` (`escQtyOperand`, same size, save key untouched).
 - [x] Key pre-delay 0.43 s -> 0.16 s (`sub_403E`, `-DENHANCED`, 2026-11-10); play-tested by the user, feels faster.
 - [x] `tools/z80dis.py` decoded no `push ix/iy` (missing case in `uses_hl`); fixed 2026-11-11, round trip of a fresh disassembly still byte-identical (49 instructions where 38 `db` runs were).
@@ -82,7 +81,7 @@ Open work first, finished items at the bottom (section *Done*). `CLAUDE.md` keep
 - [x] Status screen tidy-up in German and French (2026-11-10, `docs/_my_changes.md`).
 - [x] Station headlines in column 2 in German and French (2026-11-10).
 - [x] Cash on the quantity line in German and French (2026-11-10).
-- [x] stars no longer shine through the planet and sun (`STAR_OCCLUDE`, `CHANGELOG.md`)
+- [x] stars no longer shine through the planet and sun (`STAR_OCCLUDE`, `docs/changelog_archive.md`)
 - [x] star patch checked on the German and French builds by the user, 2026-11-16.
 - [x] `tools/build_dsk.py --fr` builds `work/elite_fr_rebuilt.dsk` from the French Firebird disk (2026-11-10)
 - [x] show different ships on load, arrow keys left/right for next (`TITLESEL`, all three builds, with the ship name; the press-space screen opens on the Cobra Mk III)
