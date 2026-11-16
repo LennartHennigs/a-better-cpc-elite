@@ -30,7 +30,7 @@ The stock game has few ship types and a quiet sky. This build fills it up, in th
 
 - **More ships in space.** The stock game has 19 ship types. Ten more (Gecko, Cobra Mk I, Worm, Moray, Mamba, Adder, Boa, Anaconda, Shuttle, Boulder, hulls by Fessor) come in seven small "ship packs" on the disk. With no mission active, one pack is chosen for each system visit and loaded at the first launch (about 2 s, only when the pack changes); in it the new ships replace some Sidewinders, Kraits and traders at random, and the stock ships stay. Missions in progress use their own images, so no extras then (`-DMISSIONS`, English only, for the same lack of space in the German and French builds; `docs/_ship_packs.md`).
 - **Busier space, like the C64.** The spawn roll is named and tuned towards the C64 version: more hostiles per check, about 3.5 times the asteroids, escort packs of one to four (`-DTRAFFIC`, all three languages, on in the disks; the stock values stay in comments; `docs/_ship_packs.md`).
-- **A viewer for ships and objects.** `RUN"SHOWSHPS` shows all 30 models of the game as a rotating hidden-line wireframe with name, kills, bounty, speed and energy: 21 ships (the 11 stock ones, the 9 new ones and the Constrictor) and 9 objects that are not ships (the Coriolis station, missile, escape pod, cargo canister, alloy plate, splinter, asteroid, rock hermit and the new Boulder). The arrow keys step through them, "Q" quits. It runs on the mission disk and on its own blank disk (`tools/build_showship.sh`, about 8 frames a second).
+- **A viewer for ships and objects.** `RUN"SHOWSHPS` shows all 30 models of the game as a rotating hidden-line wireframe with name, kills, bounty, speed and energy: 21 ships (the 11 stock ones, the 9 new ones and one more) and 9 objects that are not ships (the Coriolis station, missile, escape pod, cargo canister, alloy plate, splinter, asteroid, rock hermit and the new Boulder). The arrow keys step through them, "Q" quits. It runs on the mission disk and on its own blank disk (`tools/build_showship.sh`, about 8 frames a second).
 
 ## Small improvements
 
@@ -77,7 +77,7 @@ Requirements: Python 3, [sjasmplus](https://github.com/z00m128/sjasmplus), iDSK 
 
 ```bash
 bash tools/check_src.sh              # stock English source == original bytes, -DENHANCED differs only where documented (also: de, fr)
-make original                        # the original game, stock bytes: build/elite_original.dsk (LOC=de or LOC=fr for German / French)
+make original                        # the original game, unchanged, on a bootable disk: build/elite_original.dsk (LOC=de or LOC=fr for German / French)
 make expanded                        # everything on one disk: build/elite_expanded.dsk = enhancements, all missions and ship packs, CHEAT, EDITSAVE, LISTSAVE, SHOWSHPS (English only for now)
 ```
 
@@ -88,13 +88,19 @@ Boot the disk and `RUN"ELITE`. `RUN"SHOWSHPS` starts the ship viewer. `RUN"TRAIN
 The easy way is `make`:
 
 ```bash
-make original       # the original game on a disk -> build/elite_original.dsk
-make expanded       # the full build on one disk -> build/elite_expanded.dsk (runs tools/build_showship.sh and tools/build_cheat.sh in the right order)
-make stock          # original bytes -> build/stock/       (LOC=de or LOC=fr for German / French)
-make enhanced       # the improvements -> build/enhanced/
-make missions       # enhanced + added missions, bootable disk -> build/elite_missions.dsk
+# Bootable disks (boot with RUN"ELITE)
+make original       # the original game, unchanged: the stock bytes on a copy of the game disk -> build/elite_original.dsk (LOC=de or LOC=fr for German / French)
+make missions       # the improvements plus the added missions -> build/elite_missions.dsk
+make expanded       # everything: improvements, missions, ship packs, trainer, save tools, ship viewer -> build/elite_expanded.dsk (runs tools/build_showship.sh and tools/build_cheat.sh in the right order)
+
+# The four assembled code files only (raw .bin, no disk, no AMSDOS headers): for comparing bytes or building your own disk
+make stock          # the original bytes, no switches -> build/stock/<en,de,fr>/   (LOC=de or LOC=fr for German / French)
+make enhanced       # with the improvements -> build/enhanced/
+
 make check          # check_src.sh for en, de, fr
 ```
+
+`make original` and `make stock` contain the same bytes: `original` puts them on a disk you can play, `stock` only assembles them.
 
 Underneath, a plain `sjasmplus` run gives the **stock** game (`bash tools/check_src.sh` proves it), and our changes are assembler switches (`-D` flags):
 
@@ -114,12 +120,12 @@ Underneath, a plain `sjasmplus` run gives the **stock** game (`bash tools/check_
 
 | Where | Size | What lives there | Left |
 |---|---|---|---|
-| zero tail of `LARGEAXX` (`&1714-&1A3F`, reloaded from disk at every docking) | 812 | resident mission stub (251) and the sell-all key (48) plus the one docked overlay that is loaded on demand (largest: Constrictor, 511) | **3** |
-| zero tail of `COMMONXX` (`&9D9E-&9FFF`) | 610 | vector table, launch hook, the 26-byte kill count routine and one flight image, picked at every launch (largest: Trumbles, 608, and pack 1 and the Constrictor, 606; the image must end at `&9FFE` or below, because an interrupt can push at `&9FFE-&9FFF`, which an `ASSERT` checks). Without `MISSIONS` the tail holds the laser sights (128 bytes) and the kill count instead, with about 450 bytes free | **0** |
-| dead `unusedViewBorderFill` (`&1FD2-&1FF0`) | 31 | `dustPlotPixel` for star occlusion (11 bytes), `mxPodHook`, which zeroes the Trumble count when an escape pod is used (10 bytes), and `cashHome` for the cash display (7 bytes) | 3 |
+| zero tail of `LARGEAXX` (`&1714-&1A3F`, reloaded from disk at every docking) | 812 | resident mission stub (251) and the sell-all key (48) plus the one docked overlay that is loaded on demand (the largest overlay: 511) | **3** |
+| zero tail of `COMMONXX` (`&9D9E-&9FFF`) | 610 | vector table, launch hook, the 26-byte kill count routine and one flight image, picked at every launch (the images are 604 to 608 bytes; the image must end at `&9FFE` or below, because an interrupt can push at `&9FFE-&9FFF`, which an `ASSERT` checks). Without `MISSIONS` the tail holds the laser sights (128 bytes) and the kill count instead, with about 450 bytes free | **0** |
+| dead `unusedViewBorderFill` (`&1FD2-&1FF0`) | 31 | `dustPlotPixel` for star occlusion (11 bytes), `mxPodHook`, a mission hook for the escape pod (10 bytes), and `cashHome` for the cash display (7 bytes) | 3 |
 | dead `unusedGetFlightMode` and `unusedGetCloakFlag` (`&204E-&2057`) | 10 | `killSpace`, the helper of the kill count that prints one space before the dash (10 bytes) | 0 |
 
-Changes to existing stock bytes are small: the CPC+ keyboard fix and the Escape key code (one byte each), 16 bytes of the dust loop for star occlusion, and a handful of 3-byte call replacements at the mission hook sites. Nothing else moves. With the switches off only the CPC+ byte differs from the original, and `tools/check_src.sh` checks every one of these claims. So the two tails have 3 and 0 spare bytes (the Trumbles image is exactly 608 of 608): a further mission or change to the largest ones has to trim something first (sizes per mission in `docs/_missions_built.md`).
+Changes to existing stock bytes are small: the CPC+ keyboard fix and the Escape key code (one byte each), 16 bytes of the dust loop for star occlusion, and a handful of 3-byte call replacements at the mission hook sites. Nothing else moves. With the switches off only the CPC+ byte differs from the original, and `tools/check_src.sh` checks every one of these claims. So the two tails have 3 and 0 spare bytes (the largest image is exactly 608 of 608): a further mission or change to the largest ones has to trim something first (sizes per mission in `docs/_missions_built.md`).
 
 Example: assemble the four files with the mods (English, with missions) into a scratch directory, then put them on a disk:
 
@@ -137,7 +143,7 @@ Without `-DMISSIONS` you get the improvements only; without any flag, the origin
 
 ## Tests
 
-The missions are tested in an emulator driven from Python (`tools/tests/test_*.py`): the docked stub and overlays, the launch image picker (mission images and ship packs), the ship pack hooks, the spawn and kill hooks of every mission, the Trumble sprites and the save tools. The tests force game states and call routines directly. They do not replace playing through the whole game with save and load, which is still open.
+The missions are tested in an emulator driven from Python (`tools/tests/test_*.py`): the docked stub and overlays, the launch image picker (mission images and ship packs), the ship pack hooks, the spawn and kill hooks of every mission, the sprites of one mission and the save tools. The tests force game states and call routines directly. They do not replace playing through the whole game with save and load, which is still open.
 
 ## More
 
