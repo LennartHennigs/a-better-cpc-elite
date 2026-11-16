@@ -80,10 +80,11 @@ All run in cpcxray (`work/xray`, `~/.local/share/uv/tools/cpcxray/bin/python -I 
 - While Trumbles are aboard the chain waits: the docked stub returns when the Trumble count is nonzero (6 bytes at its start, 2026-11-13), so no mission is offered, paid or running with the Trumbles image loaded (that image has none of the hooks). A player who accepts them and never meets a sun or a pod stalls the chain. The original has no end for Trumbles other than a sun; ours also ends them with an escape pod (`mxPodHook` in the dead block at `&1FDD` zeroes the count; the original leaves 1-7).
 - A launch needs the game disk in the drive for the flight image (`loadFile` shows the firmware disk error and retries like every other game load; no mission-specific fallback).
 - The vector table and the stub sit at fixed addresses (`&9D9E`, `&1714`), guarded by `ASSERT`s; flight images must end at or below `&9FFE`.
+- At most six Trumbles are drawn, however many are aboard (the count itself goes up to `&7FFF` = 32,767; seven or more, and 256 or more, all show six; the original C64 also shows six, but only from 4,096 to 20,480 Trumbles). The limit cannot be raised: the Trumbles flight image is full (608 of 608 bytes), and more sprites need a larger state array (4 bytes each, and a counter mask of 15 for 12 sprites, about 25 bytes in all). Only cutting something else frees the space (the sprite trim in `TODO.md`, about 16 bytes).
 
 **Open:**
 - A real playthrough of the whole chain with save and load.
-- Tuning: 20 asteroids, 50% and 22% spawn rates, Birera as the police target. The Trumble squeak is settled (effect 13, chosen with `TRUMBLE.BAS`).
+- Tuning: 20 asteroids, 50% and 22% spawn rates, Birera as the police target. The Trumble squeak is settled (effect 13, chosen by ear with a BASIC sound test that has since been removed).
 - A Trumbles end condition other than a sun; the Cobra Mk III that Elite Plus adds to the asteroid mission; the Constrictor's ECM and missiles (from the hull header, unchecked).
 - A random per-commander order is not built: the last two missions are encoded differently and the stub plus Constrictor overlay has no room.
 - Merging `addon-missions` into `main`.
@@ -109,4 +110,4 @@ Notes. The added-mission presets keep the earlier stages consistent: preset 2 an
 (the seeds define it): reach galaxy 3 by two galactic jumps, with the trainer's free galactic jump, or load a save whose galaxy is already 3. The host save editor does the same presets on a save file (`tools/saveedit.py edit SAVE --kills 256 --added 2 -o ...`),
 and `EDITSAVE.BAS` on the CPC.
 
-Checked 2026-11-08 in cpcxray: for the Constrictor, plans, stolen ship, asteroids and Trumbles rows the trainer answers started the real game with exactly these values in memory (kills 256 or 1280, `&38FD/E` = `0000`, `0200`, `2E00`, `5E00`, `0000`, cash 6 thousand for the Trumbles); the status screen showed the rating Competent for 256 kills. That the offers then appear at a docking is covered by the docked tests with the same state values (`tools/test_mission_hook.py`), not by a real docking in the running game. The stock rows were not run.
+Checked 2026-11-08 in cpcxray: for the Constrictor, plans, stolen ship, asteroids and Trumbles rows the trainer answers started the real game with exactly these values in memory (kills 256 or 1280, `&38FD/E` = `0000`, `0200`, `2E00`, `5E00`, `0000`, cash 6 thousand for the Trumbles); the status screen showed the rating Competent for 256 kills. That the offers then appear at a docking is covered by the docked tests with the same state values (`tools/tests/test_mission_hook.py`), not by a real docking in the running game. The stock rows were not run.

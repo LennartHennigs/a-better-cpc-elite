@@ -36,12 +36,14 @@ In the original, ESC maps to `&FF` ("no key") in the ASCII keyboard table (`tblK
 pause mode compares specific letters; on the title screen ESC now counts as "any key" (starts a new commander; the "press space" loop still needs space). Runtime address of the byte: English `&8C98`, German `&8DE0`, French `&8E37`.
 Tested live in cpcxray at Lave (key 2, Esc). The built disk was not booted for this.
 
+Second digit (`-DENHANCED`, all three trees, 2026-11-16): the stock jump for "leave" after the first digit of a quantity skipped `restore_trade_state`, so Esc (or a letter) left that digit's trade applied while the caller took it as cancelled. The `jr nc` at that point now targets the DEL path (`LAB_ram_08f7`), which undoes the trade and re-prompts; a second Esc then leaves. Same instruction size, so nothing moves and the save key at `EquipShip` is untouched (marker `escQtyOperand`, allowed in `check_src.sh`). Checked by assembling only; not played.
+
 ## Stars behind planet and sun (`STAR_OCCLUDE`)
 
 The dust loop (`dust70`) plots each star with `AND NOT mask` over whatever is in the off-screen bitmap, and the dust is drawn after the planet and sun discs, so stars shone through them. It now calls `dustPlotPixel`, which plots only while the
 pixel is still background (`(byte XOR &0F) AND mask` is zero, the background being `&0F`): disc, tunnel and ship-edge pixels are left alone. The 11 bytes of code sit in the dead block `unusedViewBorderFill` (`&1FD2-&1FF0`, padded up to
 `ClearBitmap`), the dust loop keeps its length, and nothing moves. Ships stay see-through wireframes (as on the BBC); the options for hiding stars behind hulls are in `_ship_occlusion.md`. Proof: `check_src.sh` requires
-the default build to equal the original and the `-DENHANCED` build to differ only inside those two slots (plus the ESC byte). Test: `tools/test_star_occlusion.py [off] [far] [sun]` writes screenshots to `work/xray/output/stars_*.png`.
+the default build to equal the original and the `-DENHANCED` build to differ only inside those two slots (plus the ESC byte). Test: `tools/tests/test_star_occlusion.py [off] [far] [sun]` writes screenshots to `work/xray/output/stars_*.png`.
 
 ## Title screen ship choice (`TITLESEL`)
 
@@ -49,7 +51,7 @@ Cursor left/right and joystick left/right step the demo ship on the press-space 
 not fit the window). The code, about 120 bytes with its table, lives in the zero tail of `MUSIQUEX.BIN` (`&6E21-&6FFF`), which is resident only while the title screens run. `COMMONXX` reaches it through hooks of unchanged byte length:
 `TITLE_SCREEN2` replaces the `transferBuffertoScreen` call in the press-space loop, `TITLE_NEXT` replaces the automatic pick before that screen (it now selects the Cobra Mk III) (English also `TITLE_NAME`, below). `splash2Shipnr` (`&1DA8`) holds
 the ship index (bits 0-2) and "a key was already down" (bit 7), so a held key steps once and the choice carries over between screens and restarts. The raw PPI rows (`dataFromPPI`) are read because `irki2` rewrites `keybFlags2` into roll values.
-The eleven `COMMONXX` addresses `musiquex.asm` hard-codes are checked by `check_src.sh`. Test: `tools/test_title_ships.py [de]`.
+The eleven `COMMONXX` addresses `musiquex.asm` hard-codes are checked by `check_src.sh`. Test: `tools/tests/test_title_ships.py [de]`.
 
 **Ship name.** A fifth hook, `TITLE_NAME` (`&6E27`), replaces `call printELITE` in `printPressSpace`: `titleName` prints the name of the ship on show (table `titleNames`, 16 bytes per name, in `titleShips` order) centred on text row 1 in capitals (`todoPrintFlag3948` forced to 1 while printing). It then recolours that row of the off-screen bitmap from pen 0 to pen 3, the pen of the ship lines and frame: the background byte is `&0F`, text pixels have both planes clear, so `byte := &0F | (~byte & &0F) << 4`.
 
@@ -75,7 +77,7 @@ Place: the routine takes the first 128 bytes of the free zero tail of `COMMONXX`
 In the sell menu, A at a quantity prompt sells every good in the hold (the same row handler as typing the quantity, `sellQuantityofGood`) and leaves for the inventory screen. The old exit for any other key stays. `sell_all.asm` (48 bytes, one trade sound for the whole hold, no delay) sits in the free `LARGEAXX` tail
 (with `-DMISSIONS` inside the resident stub, before the overlay); the only changed stock bytes are the operand of the `jp Inventory` at `csGotoInventoryScreen`, which now reads `jp sellAllEntry`. Nothing before `EquipShip` moves, so the save key is untouched.
 `reAskifNotAllSold` counts the key down twice on its way there, so the routine compares with `"A"-2`; the other way in, the end of the menu loop, arrives with A = `0x11`. `check_src.sh` allows exactly the operand and the routine (`sellAllOperand`, `sellAllEntry..sellAllEnd`) as differences of `-DENHANCED`.
-Test: `tools/test_sellall.py` (boot, fill the hold, key 3, key A). English only so far; German and French need the hook and a localised key.
+Test: `tools/tests/test_sellall.py` (boot, fill the hold, key 3, key A). English only so far; German and French need the hook and a localised key.
 
 ## The added missions (`MISSIONS`)
 
@@ -101,7 +103,7 @@ Ten more hulls (Fessor's; `src/elite/missions_ships.asm`) in seven flight images
 - `TRAINER.BAS` (ours, replaces the Firebird disk's `CHEAT.BAS`, which is deleted on our disks; renamed from `CHEAT.BAS` on 2026-11-15): interactive trainer with prompts for each of the original pokes plus no pirate boarding, unlimited hold, own cloak, cash, stock mission stage, kills, jumps and added-mission presets;
   `EDITSAVE.BAS` edits and `LISTSAVE.BAS` lists commander saves on the CPC; `tools/saveedit.py` does the same on the host and converts saves between UK, French and German builds. `_cheats.md`, `_savegame.md`.
 - The original `CHEAT.BAS` has a wrong cloak entry (it only lists the device; `POKE &202B,0` makes the cloak work); ours sets the ownership bit instead.
-- The mission disk (`build_dsk.py --missions`) now carries our `TRAINER.BAS` (+ hidden `CHEATB.BIN`) instead of Firebird's, and `SHOWSHIP.BAS` + hidden `SHIPS.BIN`, the ship viewer (`_cheats.md`).
+- The mission disk (`build_dsk.py --missions`) now carries our `TRAINER.BAS` (+ hidden `CHEATB.BIN`) instead of Firebird's, and `SHOWSHPS.BAS` + hidden `SHIPS.BIN`, the ship viewer (`_cheats.md`).
 - Built disks show only `.BAS` and `.TXT` files in `CAT`, like the original protected disk; `RUN`, `LOAD` and the game's own loads still find the hidden files.
 
 ## Stock bugs we found and did not fix
@@ -120,4 +122,4 @@ German: "System:", "Ziel:" (were "Derzeitiges System", "Hyperraum-Ziel"), "Tank:
 message table and token `&68` in the main table. Konto stays, so the balance starts one column further right than the other values. French: "Syst.:" and "Cible:" (were "Systeme Present" and "Systeme Hyperespace"); "Fuel", "Argent" and "Niveau" already fit.
 **French "Statut Legal" is unchanged**: it needs four padding bytes, and every candidate code in the French message table prints something (`&14` an e-acute, `&0C` line breaks, `&11`-`&17` variables such as the planet name, `&06` flips a print flag and corrupts the screen), so its value stays in column 15.
 All three trees share the labels `statusLabels`/`statusLabelsEnd`, `statusColon`, `statusColonPrint`, `statusTitleCol`, `chartTitleCol`, `titleTab`, `fuelTab` (and `statusToken`/`statusTokenEnd`, `fuelToken`/`fuelTokenEnd` where a longer slot exists); `check_src.sh` takes the slot lengths from them.
-Screenshots: `tools/test_station_screens.py en|de|fr` writes `work/xray/output/station_<loc>_{status,chart,inventory,buy}.png` (the commander status page is key `9`, the market `8`).
+Screenshots: `tools/tests/test_station_screens.py en|de|fr` writes `work/xray/output/station_<loc>_{status,chart,inventory,buy}.png` (the commander status page is key `9`, the market `8`).

@@ -38,7 +38,7 @@ Local clones live under `work/` (untracked).
   https://www.lemon64.com/forum/viewtopic.php?t=6158, https://www.atari-forum.com/viewtopic.php?t=5985,
   https://www.tales-from-darkenedroom.com/post/elite-plus-missions-galaxy-9, NES quest list on GameFAQs
   (https://gamefaqs.gamespot.com/nes/581795-elite/answers/635813-can-anyone-give-me-a-full-list-of-quests-for-the-nes-version-with-their-triggers)
-- ArcElite (Archimedes): https://wiki.alioth.net/index.php/ArcElite_missions (four missions with triggers; checked against the code in `docs/_arcelite.md`), game and ship tables from
+- ArcElite (Archimedes): https://wiki.alioth.net/index.php/ArcElite_missions (four missions with triggers; checked against the code in `docs_other/_arcelite.md` (local only)), game and ship tables from
   http://www.iancgbell.clara.net/elite/arc/index.htm, commander file format in EliteCheat (Jon Ribbens)
 - Elite Plus decompilation: https://github.com/rembish/elite-plus-revamp
 

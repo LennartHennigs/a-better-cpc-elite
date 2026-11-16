@@ -1,6 +1,6 @@
 # Ship packs and traffic (`-DMISSIONS`, English; `-DTRAFFIC` in all three trees)
 
-The stock CPC game has 19 ship types, like the Spectrum. The BBC, C64 and Fessor's beta also have Mamba, Adder, Gecko, Cobra Mk I, Worm, Moray, Boa, Anaconda, Shuttle, Transporter, Boulder (and Cougar, Dodecahedron on the C64). Written 2026-11-14; the hook and the picker are tested in cpcxray (`tools/test_ship_packs.py`, `tools/test_launch.py`), nothing is played through yet.
+The stock CPC game has 19 ship types, like the Spectrum. The BBC, C64 and Fessor's beta also have Mamba, Adder, Gecko, Cobra Mk I, Worm, Moray, Boa, Anaconda, Shuttle, Transporter, Boulder (and Cougar, Dodecahedron on the C64). Written 2026-11-14; the hook and the picker are tested in cpcxray (`tools/tests/test_ship_packs.py`, `tools/tests/test_launch.py`), nothing is played through yet.
 
 ## Packs
 
@@ -22,7 +22,7 @@ The image limit is 608 bytes (`ASSERT mxFlightEnd <= &9FFE`); the default image 
 
 `mxLaunchEntry` (`missions_flight.asm`) keeps its mission priority (Trumbles, Constrictor, plans, stolen ship, asteroids). With no mission it asks for pack `(jumpCounter + presentSystemSeed) & 7`: `0` is the default image (no extras), `1` to `7` a pack. `jumpCounter` (`&38DA`) goes up at every arrival and `presentSystemSeed` changes with the system, so the pack changes from visit to visit but is the same for every launch from one station. The hook compares with `mxFlightId` (`&9DB9`) and loads only when the pack differs. No save byte is used. Cost: the picker is 9 bytes in every image (the Trumbles image saved 2 with `set 2,l`, so it is at 607 of 608).
 
-Measured in cpcxray (`tools/test_launch.py`): a launch that keeps the image in RAM takes 2.06 s (the `INDICATO` load alone), one that loads a pack or mission image 4.0 s. So the first launch after a jump pays about 2 s more in 7 of 8 visits; relaunching from the same station does not. During the load the docked screen stays frozen with the game's interrupt handler off; nothing is drawn.
+Measured in cpcxray (`tools/tests/test_launch.py`): a launch that keeps the image in RAM takes 2.06 s (the `INDICATO` load alone), one that loads a pack or mission image 4.0 s. So the first launch after a jump pays about 2 s more in 7 of 8 visits; relaunching from the same station does not. During the load the docked screen stays frozen with the game's interrupt handler off; nothing is drawn.
 
 Ideas to hide that load, not built: (1) load the pack at the end of `DockingSequence`, over the last tunnel frame that is already frozen for the `LARGEAXX` load; (2) read it in chunks with `CAS_IN_CHAR` during the launch tunnel (needs a 2 KB buffer that survives the tunnel: `&0040` is in use after the swap, `&A000` is cleared every frame, so probably not); appending a pack to `INDICATO.BIN` leaves room for one pack only (about 512 bytes).
 
@@ -42,6 +42,6 @@ Not changed: the slot count (the slot area is fixed in `_memory_map.md`), the C6
 
 ## Tests
 
-- `tools/test_ship_packs.py [PACK ...]` (from `work/xray`): for each pack, calls `mxShipTable` 60 times per redirected type and checks the extra hull comes up about half the time, the stock one otherwise, types 8, 15, 18 are never redirected, and A, BC, DE survive.
-- `tools/test_launch.py`: picker scenarios (`pack_*`, mission and Trumbles priority) and the image bytes against the disk files.
-- `tools/test_flight_hull.py 16 --fl 3 --extra shipdatMamba`: spawns the pack's hull and writes `output/missions_ship.png`.
+- `tools/tests/test_ship_packs.py [PACK ...]` (from `work/xray`): for each pack, calls `mxShipTable` 60 times per redirected type and checks the extra hull comes up about half the time, the stock one otherwise, types 8, 15, 18 are never redirected, and A, BC, DE survive.
+- `tools/tests/test_launch.py`: picker scenarios (`pack_*`, mission and Trumbles priority) and the image bytes against the disk files.
+- `tools/tests/test_flight_hull.py 16 --fl 3 --extra shipdatMamba`: spawns the pack's hull and writes `output/missions_ship.png`.

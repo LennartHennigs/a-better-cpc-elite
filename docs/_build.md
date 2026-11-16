@@ -5,11 +5,11 @@ How to assemble the sources, what the switches do, what `check_src.sh` proves, a
 ## Requirements and inputs
 
 - **Tools:** Python 3 (scripts run as `python3 -I`), [sjasmplus](https://github.com/z00m128/sjasmplus) 1.24.0 and iDSK, both built by `bash scripts/install-tools.sh` into `~/.local/bin` (pinned versions; not in Homebrew).
-  `scripts/install-caprice32.sh` adds the Caprice32 emulator. cpcxray (via `uv tool`) runs the tests and the trainer tokeniser. RASM (`tools/bin/rasm`) is needed only for Fessor's source.
-- **Disks:** the original `.dsk` images stay in the project root, untouched and untracked. The checker compares with files extracted from them:
+  cpcxray (via `uv tool`) runs the tests and the trainer tokeniser. RASM (`tools/bin/rasm`) is needed only for Fessor's source.
+- **Disks:** the original `.dsk` and `.cdt` images stay in `disks/`, untouched and untracked. The checker compares with files extracted from them:
 
   ```bash
-  python3 -I tools/dskx.py Elite_UK_original_protected.dsk work/bin_stock      # English: .BIN files, AMSDOS header kept in .raw
+  python3 -I tools/dskx.py disks/Elite_UK_original_protected.dsk work/bin_stock      # English: .BIN files, AMSDOS header kept in .raw
   # German: work/bin_german, French: work/bin_fr (tools/dskx.py on Elite_DE_cracked.dsk and the French disk)
   ```
 - Everything generated goes under `work/` (disks, snapshots, builds), `traces/` or `src/`; nothing is written to the project root.
@@ -45,11 +45,11 @@ What each change does in the game: `_my_changes.md`.
 ## `make`
 
 ```bash
-make original         # tools/build_original.sh: python3 -I tools/build_dsk.py --stock -> work/elite_original.dsk (LOC=de|fr: work/elite_original_de.dsk, _fr.dsk)
-make expanded         # tools/build_expanded.sh: build_showship.sh, then build_cheat.sh (which runs build_dsk.py --missions) -> work/elite_expanded.dsk; LOC=de|fr stops with a message (not ported yet)
-make stock            # work/build/stock/{en,de,fr}/      original bytes   (LOC=de or LOC=fr)
-make enhanced         # work/build/enhanced/{...}/        -DENHANCED, plus -DTITLESEL
-make missions         # python3 -I tools/build_dsk.py --missions work/elite_missions.dsk
+make original         # tools/build_original.sh: python3 -I tools/build_dsk.py --stock -> build/elite_original.dsk (LOC=de|fr: build/elite_original_de.dsk, _fr.dsk)
+make expanded         # tools/build_expanded.sh: build_showship.sh, then build_cheat.sh (which runs build_dsk.py --missions) -> build/elite_expanded.dsk; LOC=de|fr stops with a message (not ported yet)
+make stock            # build/stock/{en,de,fr}/      original bytes   (LOC=de or LOC=fr)
+make enhanced         # build/enhanced/{...}/        -DENHANCED, plus -DTITLESEL
+make missions         # python3 -I tools/build_dsk.py --missions build/elite_missions.dsk
 make check            # check_src.sh for en, de, fr
 ```
 
@@ -80,7 +80,7 @@ All disk builders start from a **copy** of a base disk and refuse to modify the 
 | `... --de` | `Elite_DE_cracked.dsk` | `work/elite_de_rebuilt.dsk` | `--de --missions` is refused |
 | `... --fr` | `Elite (1985)(Firebird Software)(fr).dsk` | `work/elite_fr_rebuilt.dsk` | `--fr --missions` is refused; boot with `RUN"EL` |
 | `bash tools/build_cheat.sh` | Firebird disk, mission disk | `work/firebird_cheat.dsk`, `work/missions_cheat.dsk` | tokenises `src/cheats/*.ASC` with the CPC's own BASIC (headless cpcxray), adds `TRAINER` (and deletes Firebird's `CHEAT.BAS`), `EDITSAVE` (and `LISTSAVE` on `work/de_savegames.dsk`); `TRUMBLE.BAS` is built but not put on the disks |
-| `python3 -I tools/hide_files.py DISK` | | in place | refuses a disk in the project root |
+| `python3 -I tools/hide_files.py DISK` | | in place | refuses a disk in the project root or `disks/` |
 
 Every built disk shows only `.BAS` and `.TXT` files in `CAT`; all other files get the System attribute (`hide_entries` in `tools/hide_files.py`, called by `build_dsk.py`). iDSK adds files unhidden, so hide again after any
 `iDSK -i` or `-r`. Check with `CAT` or the directory bytes, not `iDSK -l` (it lists hidden files). The disk README is `src/disk/README.TXT` (ASCII, CRLF, Ctrl-Z). A built disk's boot test: `RUN"ELITE`.
@@ -104,11 +104,13 @@ sjasmplus -DTITLESEL                                  --raw=out/MUSIQUEX.BIN src
 
 ## Tests and the emulator
 
-The tests in `tools/test_*.py` run in cpcxray from `work/xray/` with cpcxray's own Python, after a disk build and a copy of the disk to `work/xray/disk/`:
+`make test` rebuilds the disks and runs the host checks (`check_src.sh` for en, de and fr, `tools/tests/test_saves.py`, `tools/tests/test_disks.py`); `make test-emu` runs the emulator tests that report pass or fail (`tools/tests/run_all.py --emu`). The list and what each needs is in `tools/tests/README.md`.
+
+The tests in `tools/tests/test_*.py` run in cpcxray from `work/xray/` with cpcxray's own Python, after a disk build and a copy of the disk to `work/xray/disk/`:
 
 ```bash
 export PATH="$HOME/.local/bin:$PATH"
-cd work/xray && ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_launch.py
+cd work/xray && ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/tests/test_launch.py
 ```
 
 Suites: `test_mission_hook`, `test_launch`, `test_mission_flight`, `test_plans`, `test_stolen_ship`, `test_rocks`, `test_trumbles`, `test_trumble_sprites`, `test_flight_hull`, `test_title_ships` (`[de]`), `test_star_occlusion`.

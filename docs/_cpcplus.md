@@ -51,7 +51,7 @@ extracted to `work/plus_patch/x/`) against stock, 2026-11-07:
 - `src/elite/`, `src/elite_de/`, `src/elite_fr/` carry the fix; the assembled `COMMONXX` differs from stock in exactly that byte and
   equals `work/plus_patch/x/COMMONXX.BIN`. `tools/check_src.sh` expects it; the `TRAINER.ASC` pokes are unaffected.
 - `work/elite_plus.dsk` is the Firebird disk with that byte (AMSDOS headers untouched).
-- Caprice32 4.6.0 (`scripts/install-caprice32.sh`; `./cap32 -O system.model=3 DISK.dsk`, `model=2` is the classic 6128): at the Plus startup
+- Caprice32 4.6.0 (built from source by a script that was removed 2026-11-16; `./cap32 -O system.model=3 DISK.dsk`, `model=2` is the classic 6128): at the Plus startup
   menu press CPC f1 through the on-screen keyboard (Shift+F1; host F1 opens the emulator menu), then `run"elite`. The **unpatched**
   disk already works there, so Caprice32 does not reproduce the bug and cannot confirm the fix; the patched disk works on both models.
 - **Untested** on real hardware or an ASIC-accurate emulator (WinAPE with Plus PPI emulation on). The fix rests on Redbox's disk and

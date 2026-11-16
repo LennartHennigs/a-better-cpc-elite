@@ -92,4 +92,4 @@ the same binaries; it matters only to make the original boot after changing code
 | `Elite Savegame.dsk` | `Elite_DE_savegames.dsk` |
 | `IMG_9858.JPG` | `Elite_DE_controls_card.jpg` (photo of the German controls card) |
 
-Old names still appear in some `work/` file names; the tools take paths, so nothing breaks.
+Old names still appear in some `work/` file names; the tools take paths, so nothing breaks. All original disks and tapes live in `disks/` (gitignored; moved from the project root 2026-11-16).

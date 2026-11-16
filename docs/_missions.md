@@ -65,7 +65,7 @@ Spectrum use a marked Asp Mk II with 2-4 Sidewinder/Krait escorts and no bounty.
   one shared byte as a state machine and mark the Asp by a flag; that byte also steers the Spectrum's energy-regeneration throttle (`$A2D8`) and the spawn throttle,
   so resetting it is a side effect of other code (which is why a scooped random canister at state 3 also gives the cloak).
 - The CPC can lose the cloak by ramming or a non-laser kill (gate back to 0, spawns again later); the ST ends the mission at the first removal of the Cougar.
-- Traced 2026-11-10 (`tools/test_cloak_asp.py`, stock code, Asp spawned ahead with the marker bit and `aspMissionState` = 1): the wireframe is not drawn in the front view, but the scanner still shows its blip, because `UpdateScanner` plots every slot in range with no marker test. So the Asp is hidden from the view, not from the radar.
+- Traced 2026-11-10 (`tools/tests/test_cloak_asp.py`, stock code, Asp spawned ahead with the marker bit and `aspMissionState` = 1): the wireframe is not drawn in the front view, but the scanner still shows its blip, because `UpdateScanner` plots every slot in range with no marker test. So the Asp is hidden from the view, not from the radar.
 - Read from source, not traced: the laser-only draw test and the "other route" reset (`aspGateClearIfBlueprint1E` guards state 3, `aspGateReset` clears 1/2).
 - The MSX (`main-code.a99`, ricbit's `code.asm`) matches the ST: Cougar type `$1E`, flickering draw, `SCOOP_CLOAK_REWARD` (`$8BA6`) sets `CLOAK_FITTED`, `Y` toggles `CLOAK_ACTIVE`.
 
@@ -258,7 +258,7 @@ Source of the claims: [AFE FAQ2](https://wiki.alioth.net/index.php/AFE_FAQ2) (se
 - **9th galaxy in Elite Plus: confirmed in the EXE, and it is reachable.** The string `Welcome to the 9th Galaxy!` is at `DS:829D` and is chosen at `0x73DD` when the galaxy byte `DS:8315` is 8 (after a galactic jump, flag `DS:AE24`).
   The jump routine `0x7439`: at 8 it wraps to 0; otherwise it increments, and when the new value is 8 it calls the random routine and keeps 8 only if `ax < 0x12C` (300 of 65536, about 0.46 % per jump from galaxy 8), else wraps to 0.
   The wiki's "no-one has found a way" is therefore a probability, not a missing path, unless the hacked EXE differs from the original (unexamined); the forum hex patch `3D 2C 01` -> `90 90 F9` (carry set) makes it certain. The digit shown is `'1' + galaxy`, so a '9' is printed.
-- **ArcElite also has nine galaxy names** (index 8 "Trojane"; `docs/_arcelite.md`); how that index is reached was not found.
+- **ArcElite also has nine galaxy names** (index 8 "Trojane"; `docs_other/_arcelite.md` (local only)); how that index is reached was not found.
 - **Generation ships, dredgers:** the wiki gives the Space Trader's manual (p. 30, "more than seventy thousand") and a rumour that Ian Bell said none were ever implemented; for dredgers "no confirmed sightings". Our check: no string `generation`, `dredger`, `carrier` or `destroyer` in the CPC
   binaries (English, German), the Elite Plus image (its ship list: Dodo, Coriolis, Boa, Anaconda, Cobra Mk I, Asteroid, Boulder, Thargon, Shuttle, Transporter, Worm, Splinter, Plate, Gecko, Moray, Adder, Mamba, Cargo Canister, Constrictor,
   Cougar, Missile, Escape Pod, Thargoid, Ferdelance, Asp, Sidewinder, Cobra Mk III, Krait, Viper, Python) or ArcElite, and none in the cloned ST/Amiga, NES, MSX and C64 trees. So the claim holds for those builds; it says nothing about builds we do not have. The wiki's ArcElite "mystery ship" is held to be the Urutu (not checked).
@@ -290,7 +290,7 @@ CPC consequence (built, `docs/_missions_built.md`): a state byte instead of a `M
 ## 5. ArcElite (Acorn Archimedes, 1991)
 
 The Archimedes version has four missions of its own: none is a Constrictor, plans (as in the 6502 versions), Trumbles, supernova or Elite Plus mission, and no other port has them. No source is public; the game was unpacked and read in 2026-11
-(method, files and global variables: `docs/_arcelite.md`). Values are from the code, checked against the [wiki](https://wiki.alioth.net/index.php/ArcElite_missions) (one difference: mission 1 starts at 450 kills, not 550).
+(method, files and global variables: `docs_other/_arcelite.md` (local only)). Values are from the code, checked against the [wiki](https://wiki.alioth.net/index.php/ArcElite_missions) (one difference: mission 1 starts at 450 kills, not 550).
 
 | ArcElite | Start | Reward |
 |---|---|---|
@@ -301,4 +301,4 @@ The Archimedes version has four missions of its own: none is a Constrictor, plan
 
 Design points: mission state is one word per mission (`88888` failed, `99999` done, -999..-995 pending outcome codes written by the destroy handler or the jettison code, small positive values as progress bits); a single scheduler runs on
 every dock and returns 1 when it showed a message; chatter lines are random per dock and shown once each (a separate bit array); the kill thresholds sit in the rating bands. The Zartid mission is the nearest relative of the 6502 plans mission
-(a despot flying plans to the Thargoids), and the Pino hunt of the CPC stolen police ship (a marked ship that must be killed). ArcElite has nine galaxy names (index 8, "Trojane"); see `docs/_arcelite.md`. The ArcElite set is unrelated to the set built here (`docs/_missions_built.md`).
+(a despot flying plans to the Thargoids), and the Pino hunt of the CPC stolen police ship (a marked ship that must be killed). ArcElite has nine galaxy names (index 8, "Trojane"); see `docs_other/_arcelite.md` (local only). The ArcElite set is unrelated to the set built here (`docs/_missions_built.md`).

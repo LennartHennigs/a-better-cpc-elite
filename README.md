@@ -3,6 +3,12 @@
 This project takes the Amstrad CPC version of *Elite* (Firebird, 1985, a Z80 port of the Spectrum game), disassembles it into readable, commented, reassemblable source, and uses that source to build a **richer Elite**:
 a version with the missions the other versions of the game had, and a few they did not, plus a few quality-of-life improvements (see *Small improvements* below).
 
+The disassembly was made for educational purposes, and to improve the Elite experience more than four decades after the game's release.
+
+**The goal** is a richer experience inside the existing game: more missions, more ships and busier space, and a few conveniences, with the same screens, rules and feel. It is deliberately not a rebuild like [Elite-A](https://elite.bbcelite.com/elite-a/), Angus Duggan's extended BBC version, which adds new mechanisms and components on top of the original.
+
+**The challenge** is the space. Everything has to run on a stock 64 KB CPC 464, and Elite was already a tight game: the added code lives in a few hundred free bytes, in overlays loaded from disk and in bytes saved elsewhere. The CPC also has no hardware sprites, so everything is drawn in software, which makes its code larger than the Z80 (Spectrum) and 6502 versions of the game.
+
 ## Secret Missions
 
 The Amstrad CPC game came with three scripted missions, like most of the 8-bit ports. We extended them to **eight**: five more, borrowed from other versions of the game, play after the original three. Here is where each one comes from:
@@ -16,7 +22,7 @@ The Amstrad CPC game came with three scripted missions, like most of the 8-bit p
 
 The added missions are for the **English build only**: the German and French builds have too little free space for them (the tail of `COMMONXX` holds 282 bytes in German and 195 in French against 610 in English, and the English missions, their texts and the flight images already fill it), so the localized ports keep the three stock missions. What the missions are, where they start and what they pay is the point of finding out: **it is not written here**. Play it. (The research notes in `docs/` do spoil everything, so read those afterwards.)
 
-The repository contains no game binaries, disk images or third-party source: the original disks, scans and reference sources are listed in `.gitignore` and stay on the author's machine. You need your own copy of the game to build and test anything. The assembly source is a disassembly of the original game's code and stays subject to its copyright; it is here for study and preservation.
+The repository contains no game binaries, disk images or third-party source: the original disks, scans and reference sources are listed in `.gitignore` and stay on the author's machine. You need your own copy of the game to build and test anything. The assembly source is a disassembly of the original game's code and stays subject to its copyright; it is here for education, study and preservation.
 
 ## Fuller Skies
 
@@ -24,7 +30,7 @@ The stock game has few ship types and a quiet sky. This build fills it up, in th
 
 - **More ships in space.** The stock game has 19 ship types. Ten more (Gecko, Cobra Mk I, Worm, Moray, Mamba, Adder, Boa, Anaconda, Shuttle, Boulder, hulls by Fessor) come in seven small "ship packs" on the disk. With no mission active, one pack is chosen for each system visit and loaded at the first launch (about 2 s, only when the pack changes); in it the new ships replace some Sidewinders, Kraits and traders at random, and the stock ships stay. Missions in progress use their own images, so no extras then (`-DMISSIONS`, English only, for the same lack of space in the German and French builds; `docs/_ship_packs.md`).
 - **Busier space, like the C64.** The spawn roll is named and tuned towards the C64 version: more hostiles per check, about 3.5 times the asteroids, escort packs of one to four (`-DTRAFFIC`, all three languages, on in the disks; the stock values stay in comments; `docs/_ship_packs.md`).
-- **A viewer for ships and objects.** `RUN"SHOWSHIP` shows all 30 models of the game as a rotating hidden-line wireframe with name, kills, bounty, speed and energy: 21 ships (the 11 stock ones, the 9 new ones and the Constrictor) and 9 objects that are not ships (the Coriolis station, missile, escape pod, cargo canister, alloy plate, splinter, asteroid, rock hermit and the new Boulder). The arrow keys step through them, "Q" quits. It runs on the mission disk and on its own blank disk (`tools/build_showship.sh`, about 8 frames a second).
+- **A viewer for ships and objects.** `RUN"SHOWSHPS` shows all 30 models of the game as a rotating hidden-line wireframe with name, kills, bounty, speed and energy: 21 ships (the 11 stock ones, the 9 new ones and the Constrictor) and 9 objects that are not ships (the Coriolis station, missile, escape pod, cargo canister, alloy plate, splinter, asteroid, rock hermit and the new Boulder). The arrow keys step through them, "Q" quits. It runs on the mission disk and on its own blank disk (`tools/build_showship.sh`, about 8 frames a second).
 
 ## Small improvements
 
@@ -49,7 +55,7 @@ Besides the missions, the build has a few changes that make the game nicer to pl
 | `src/elite_de/`, `src/elite_fr/` | the German and French builds, same names and comments carried over, also byte-exact; without the missions and ship packs, which do not fit their smaller free tails |
 | `src/elite/missions_*.asm` | the added missions: code, text and one ship model, assembled only with `-DMISSIONS` so the stock build stays untouched; also the extra ship hulls and the ship packs (`missions_ships.asm`, `missions_flight_k.asm`) |
 | `src/*/lasersights.asm`, `src/elite/killcount.asm` | the per-laser sights (the same file in all three trees) and the kill count of the status page (English), included into the free tail of `COMMONXX` (`-DENHANCED`) |
-| `src/cheats/` | a trainer, a save viewer and a save editor, all written in CPC BASIC, and `SHOWSHIP.BAS`, a viewer for all the ships (BASIC plus a small Z80 routine) |
+| `src/cheats/` | a trainer, a save viewer and a save editor, all written in CPC BASIC, and `SHOWSHPS.BAS`, a viewer for all the ships (BASIC plus a small Z80 routine) |
 | `tools/` | Python helpers: disassembler and verifier, disk reader and writer, text compressor, sprite converter, savegame decoder and editor, emulator tests |
 | `docs/` | notes by topic: building and the switches, what we changed in the game, memory map, architecture, save format, cheats, disks, the other versions' missions (research), the implemented missions, and open questions |
 
@@ -71,22 +77,22 @@ Requirements: Python 3, [sjasmplus](https://github.com/z00m128/sjasmplus), iDSK 
 
 ```bash
 bash tools/check_src.sh              # stock English source == original bytes, -DENHANCED differs only where documented (also: de, fr)
-make original                        # the original game, stock bytes: work/elite_original.dsk (LOC=de or LOC=fr for German / French)
-make expanded                        # everything on one disk: work/elite_expanded.dsk = enhancements, all missions and ship packs, CHEAT, EDITSAVE, LISTSAVE, SHOWSHIP (English only for now)
+make original                        # the original game, stock bytes: build/elite_original.dsk (LOC=de or LOC=fr for German / French)
+make expanded                        # everything on one disk: build/elite_expanded.dsk = enhancements, all missions and ship packs, CHEAT, EDITSAVE, LISTSAVE, SHOWSHPS (English only for now)
 ```
 
-Boot the disk and `RUN"ELITE`. `RUN"SHOWSHIP` starts the ship viewer. `RUN"TRAINER.BAS` starts the trainer (ours, which replaces Firebird's `CHEAT.BAS` on the mission and expanded disks) (it has prompts for kills, jumps and mission presets, so the added missions can be reached without hours of play); `RUN"EDITSAVE.BAS` edits a save; `RUN"LISTSAVE.BAS` (on the mission, expanded and German saves disks) lists the saves on a disk with build, kills and cash. On the host, `tools/saveedit.py` does the same and can convert a save between the three builds.
+Boot the disk and `RUN"ELITE`. `RUN"SHOWSHPS` starts the ship viewer. `RUN"TRAINER.BAS` starts the trainer (ours, which replaces Firebird's `CHEAT.BAS` on the mission and expanded disks) (it has prompts for kills, jumps and mission presets, so the added missions can be reached without hours of play); `RUN"EDITSAVE.BAS` edits a save; `RUN"LISTSAVE.BAS` (on the mission, expanded and German saves disks) lists the saves on a disk with build, kills and cash. On the host, `tools/saveedit.py` does the same and can convert a save between the three builds.
 
 ## Build switches
 
 The easy way is `make`:
 
 ```bash
-make original       # the original game on a disk -> work/elite_original.dsk
-make expanded       # the full build on one disk -> work/elite_expanded.dsk (runs tools/build_showship.sh and tools/build_cheat.sh in the right order)
-make stock          # original bytes -> work/build/stock/       (LOC=de or LOC=fr for German / French)
-make enhanced       # the improvements -> work/build/enhanced/
-make missions       # enhanced + added missions, bootable disk -> work/elite_missions.dsk
+make original       # the original game on a disk -> build/elite_original.dsk
+make expanded       # the full build on one disk -> build/elite_expanded.dsk (runs tools/build_showship.sh and tools/build_cheat.sh in the right order)
+make stock          # original bytes -> build/stock/       (LOC=de or LOC=fr for German / French)
+make enhanced       # the improvements -> build/enhanced/
+make missions       # enhanced + added missions, bootable disk -> build/elite_missions.dsk
 make check          # check_src.sh for en, de, fr
 ```
 
@@ -131,7 +137,7 @@ Without `-DMISSIONS` you get the improvements only; without any flag, the origin
 
 ## Tests
 
-The missions are tested in an emulator driven from Python (`tools/test_*.py`): the docked stub and overlays, the launch image picker (mission images and ship packs), the ship pack hooks, the spawn and kill hooks of every mission, the Trumble sprites and the save tools. The tests force game states and call routines directly. They do not replace playing through the whole game with save and load, which is still open.
+The missions are tested in an emulator driven from Python (`tools/tests/test_*.py`): the docked stub and overlays, the launch image picker (mission images and ship packs), the ship pack hooks, the spawn and kill hooks of every mission, the Trumble sprites and the save tools. The tests force game states and call routines directly. They do not replace playing through the whole game with save and load, which is still open.
 
 ## More
 
