@@ -2,7 +2,7 @@
 """Test the docked mission stub and both overlays (Constrictor MISSIONC.BIN, Thargoid plans MISSIONP.BIN) in cpcxray.
 
 Build first:  python3 -I tools/build_dsk.py --missions   and copy work/elite_missions.dsk to work/xray/disk/.
-usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_mission_hook.py
+usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/tests/test_mission_hook.py
 
 From output/firebird_in_flight.sna the script lets the launch finish, stops at handleEntitys (&5066), calls loadLARGEAXX (&8732) so the stub in the LARGEAXX tail is in
 RAM, then for each scenario sets variables with memory_write (missionState &38FD, killScoreHigh &38D9, galaxy &38DC, system x/y &3910/&390E), clears

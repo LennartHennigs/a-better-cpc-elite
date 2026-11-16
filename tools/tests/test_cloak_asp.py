@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Is the cloaking-mission Asp visible? Spawn an Asp (type &0D) ahead in cpcxray and look at the view and the scanner.
 
-usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_cloak_asp.py GATE plain|mark TAG
+usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/tests/test_cloak_asp.py GATE plain|mark TAG
   GATE = value written to aspMissionState (&504D in the stock code), `mark` sets the marker bit 6 of (ix+38), TAG names output/asp_TAG.png.
 Result 2026-11-10 (stock code): `1 mark` hides the wireframe in the front view, the scanner blip stays (UpdateScanner has no marker test); `0 plain` shows both.
 """

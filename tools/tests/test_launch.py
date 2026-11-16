@@ -2,9 +2,9 @@
 """Test the launch hook (mxLaunchEntry in the flight tail) in cpcxray: the right flight image must be in the COMMONXX tail after it.
 
 Build first:  python3 -I tools/build_dsk.py --missions ; cp work/elite_missions.dsk work/xray/disk/
-usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_launch.py
+usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/tests/test_launch.py
 
-Method as in tools/test_mission_hook.py: stop at handleEntitys (&5066), write the built COMMONXX patches (default image, -DENHANCED -DTITLESEL -DTRAFFIC -DMISSIONS as on the disk), call loadLARGEAXX so the stub is in
+Method as in tools/tests/test_mission_hook.py: stop at handleEntitys (&5066), write the built COMMONXX patches (default image, -DENHANCED -DTITLESEL -DTRAFFIC -DMISSIONS as on the disk), call loadLARGEAXX so the stub is in
 RAM, then for each scenario set missionState (&38FD), the Trumble count (&3905) and the flight id byte (mxFlightId, the image "already loaded"), call mxLaunchEntry with a trap return address and compare
 the tail (&9D9E..) with the MFLIGHTx.BIN file on the disk. The stub loads the file with the game's loadFile, then continues with loadIndicator.
 """
@@ -18,7 +18,7 @@ from pathlib import Path
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
 import dskx  # noqa: E402
 

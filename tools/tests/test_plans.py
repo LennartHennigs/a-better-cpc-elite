@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Test the flight side of the stolen police ship (-DFL_S image) in cpcxray: one non-police Viper at Birera in stage 3, its kill makes stage 4, jumps are counted in stage 1. (The docked part is tested by tools/test_mission_hook.py.)
+"""Test the flight side of the Thargoid plans mission in cpcxray: 22% Thargoid + Thargon spawn, Navy energy unit recharge. (The docked modules are tested by tools/tests/test_mission_hook.py.)
 
 Build first:  python3 -I tools/build_dsk.py --missions ; cp work/elite_missions.dsk work/xray/disk/
-usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_stolen_ship.py
+usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/tests/test_plans.py
 
-Same method as tools/test_mission_flight.py: start from output/firebird_in_flight.sna, let the launch finish, stop at handleEntitys (&5066), write the
+Same method as tools/tests/test_mission_flight.py: start from output/firebird_in_flight.sna, let the launch finish, stop at handleEntitys (&5066), write the
 freshly assembled COMMONXX patches (-DMISSIONS), set variables, call the routine with a trap return address. The docked module is in LARGEAXX, which comes
 from the disk after a call to loadLARGEAXX (&8732).
 """
@@ -18,9 +18,10 @@ from pathlib import Path
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parent.parent.parent
 TRAP = 0x9F90
-DOCKED_UNUSED = {   # name: (state, killScoreHigh, galaxy, x, y, state after, message, reward)
+SITES = ((0x72A8, 0x72AB), (0x80CD, 0x80D0), (0x83EF, 0x83F2), (0x518E, 0x5191), (0x7AA2, 0x7AA5), (0x3691, 0x3694), (0x9D9E, 0xA000))
+DOCKED = {   # name: (state, killScoreHigh, galaxy, x, y, state after, message, reward)
     "brief":           (0x02, 5, 2, 10, 10, 0x06, True, False),
     "brief_low_rank":  (0x02, 4, 2, 10, 10, 0x02, False, False),
     "brief_galaxy_1":  (0x02, 5, 0, 10, 10, 0x02, False, False),
@@ -46,7 +47,7 @@ def patch_ranges(new, gap=8):
     return [(0x1A40 + lo, 0x1A40 + hi) for lo, hi in ranges]
 
 
-def build(flag):
+def build(flag="-DFL_P"):
     with tempfile.TemporaryDirectory() as d:
         out, sym = Path(d) / "c.bin", Path(d) / "c.sym"
         subprocess.run([str(Path.home() / ".local/bin/sjasmplus"), "-DMISSIONS", flag, f"--raw={out}", f"--sym={sym}", str(ROOT / "src/elite/commonxx.asm")],
@@ -56,7 +57,7 @@ def build(flag):
 
 
 async def main():
-    new, syms = build("-DFL_S")
+    new, syms = build()
     SITES = patch_ranges(new)
     params = StdioServerParameters(command="cpcxray", args=["mcp", "--config", "config/cpc6128.toml"])
     async with stdio_client(params) as (r, w):
@@ -96,48 +97,40 @@ async def main():
                 return await c("run", {"max_us": limit, "timeout_s": 120})
 
             ok = True
-            CNT = 0x38FE
-
-            async def vipers():
-                out = []
+            # flight: 22% Thargoid + Thargon
+            for label, st, calls in (("plans aboard", 0x0A, 60), ("not aboard", 0x06, 60)):
+                await start()
+                await wr(0x38FD, st)
+                for _ in range(calls):
+                    await call(syms["mxSpawnCheck"])
+                kinds, pos = {}, {}
                 for i in range(1, 7):
                     ix = 0x1A40 + 0x27 * i
-                    b = await rd(ix + 33, 4)     # +33 flags, +34 energy, +35/36 blueprint
-                    if b[1] and (b[2] | b[3] << 8) == syms["shipdatViper"]:
-                        out.append((ix, b[0], b[1], (await rd(ix + 37))[0]))
-                return out
-
-            for label, state, gal, x, y, want in (("hunting at Birera", 0x3E, 2, 63, 72, True), ("wrong place", 0x3E, 2, 63, 73, False), ("wrong galaxy", 0x3E, 1, 63, 72, False),
-                                                  ("waiting (stage 1)", 0x1E, 2, 63, 72, False), ("killed (stage 4)", 0x4E, 2, 63, 72, False), ("plans not finished", 0x32, 2, 63, 72, False)):
-                await start()
-                await wr(0x38FD, state); await wr(syms["currentGalaxy"], gal); await wr(syms["presentSystemX"], x); await wr(syms["presentSystemY"], y)
-                for _ in range(60):
-                    await call(syms["mxSpawnCheck"])
-                v = await vipers()
-                good = (len(v) == 1 and (v[0][1] & 0x62) == 0 and v[0][2] == 0xC8 and (v[0][3] & 1) == 1 and (v[0][1] & 0x60) == 0) if want else (len(v) == 0)
+                    b = await rd(ix + 34, 3)
+                    if b[0]:
+                        bp = b[1] | b[2] << 8
+                        kinds[bp] = kinds.get(bp, 0) + 1
+                        pos.setdefault(bp, []).append(bytes(await rd(ix, 9)))
+                th, tg = kinds.get(syms["shipdatThargoid"], 0), kinds.get(syms["shipdatThargon"], 0)
+                good = (th >= 1 and tg >= 1 and th == tg) if st == 0x0A else (th == 0 and tg == 0)
+                if st == 0x0A:   # each Thargon sits on a Thargoid: same x, y, z (regression: HL was clobbered before the ldir)
+                    same = sorted(pos.get(syms["shipdatThargon"], [])) == sorted(pos.get(syms["shipdatThargoid"], []))
+                    good &= same
+                    print(f"{'ok  ' if same else 'FAIL'} flight {label:13s} Thargons at their mother ship's x, y, z")
                 ok &= good
-                print(f"{'ok  ' if good else 'FAIL'} spawn {label:20s} after 60 checks: {len(v)} Viper(s) {[(hex(f), hex(e)) for _, f, e, _ in v]} ({'exactly one, flags 0 (no offence), energy 0xC8, hostile' if want else 'none'})")
-            for label, flags, x, state, want in (("stolen Viper", 0x00, 63, 0x3E, 0x4E), ("police Viper", 0x42, 63, 0x3E, 0x3E), ("stolen Viper elsewhere", 0x00, 64, 0x3E, 0x3E), ("stolen Viper, not hunting", 0x00, 63, 0x1E, 0x1E)):
+                print(f"{'ok  ' if good else 'FAIL'} flight {label:13s} after {calls} spawn checks: Thargoids {th}, Thargons {tg}")
+            # recharge: steps per call
+            for unit, want in ((0x00, 1), (0xFF, 2), (0xFE, 3)):
                 await start()
-                ix = 0x1A40 + 0x27
-                bp = syms["shipdatViper"]
-                await c("memory_write", {"address": ix + 33, "data": "%02X C8 %02X %02X" % (flags, bp & 255, bp >> 8)})
-                await wr(0x38FD, state); await wr(syms["currentGalaxy"], 2); await wr(syms["presentSystemX"], x); await wr(syms["presentSystemY"], 72)
-                await call(syms["mxKillHook"], ix=ix, iy=bp, de=0)
-                s1 = (await rd(0x38FD))[0]
-                good = s1 == want
+                await wr(0x3902, unit)
+                bank = syms["shipEnergyBank4"]
+                for i in range(4):
+                    await wr(bank + i, 0x10)
+                await call(syms["RechargeEnergy"])
+                got = sum(await rd(bank, 4)) - 4 * 0x10
+                good = got == want
                 ok &= good
-                print(f"{'ok  ' if good else 'FAIL'} kill  {label:26s} state {state:02X} -> {s1:02X} (want {want:02X})")
-            for label, st, cnt, want_cnt, want_st in (("waiting, 5 left", 0x1E, 5, 4, 0x1E), ("waiting, last jump", 0x1E, 1, 0, 0x2E), ("hunting: jumps do not count", 0x3E, 9, 9, 0x3E),
-                                                      ("plans done, no stage", 0x0E, 7, 7, 0x0E)):
-                await start()
-                await wr(0x38FD, st); await wr(CNT, cnt); await wr(syms["tunnelFlag2"], 0)
-                await call(syms["mxArrive"], af=0x0100)
-                regs = await c("registers_get")
-                c1, s1, tf = (await rd(CNT))[0], (await rd(0x38FD))[0], (await rd(syms["tunnelFlag2"]))[0]
-                good = c1 == want_cnt and s1 == want_st and tf == 1 and (regs["af"] >> 8) == 1
-                ok &= good
-                print(f"{'ok  ' if good else 'FAIL'} arrive {label:28s} count {cnt} -> {c1} (want {want_cnt}), state {st:02X} -> {s1:02X} (want {want_st:02X}), tunnelFlag2 {tf}, A {regs['af'] >> 8}")
+                print(f"{'ok  ' if good else 'FAIL'} recharge unit {unit:02X}: {got} step(s) per call (want {want})")
             print("ALL OK" if ok else "FAILURES")
 
 

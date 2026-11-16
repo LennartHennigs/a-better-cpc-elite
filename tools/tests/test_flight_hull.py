@@ -2,7 +2,7 @@
 """Spawn the Constrictor (ship type 19) in cpcxray and look at it.
 
 Build and copy first:  python3 -I tools/build_dsk.py --missions ; cp work/elite_missions.dsk work/xray/disk/
-usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_flight_hull.py [TYPE] [--fl TAG] [--extra LABEL]
+usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/tests/test_flight_hull.py [TYPE] [--fl TAG] [--extra LABEL]
 (--fl 3 --extra shipdatMamba 16 builds ship pack 3 and spawns type 16 until the pack's Mamba comes up, as the pack hook redirects half the spawns)
 
 From output/firebird_in_flight.sna: lookforFreeSlot (&816B) gives IX, spawnShip (&80CD) builds type TYPE (default 19) there, the position is set
@@ -20,7 +20,7 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
 TRAP = 0x9F00
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parent.parent.parent
 
 
 def patch_ranges(new, gap=8):

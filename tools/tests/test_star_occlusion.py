@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Look at the star occlusion (STAR_OCCLUDE in src/elite/commonxx.asm) in cpcxray: stars must not be drawn over the planet or sun disc.
 
-usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_star_occlusion.py [off] [far] [sun]
+usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/tests/test_star_occlusion.py [off] [far] [sun]
 
 Loads output/firebird_in_flight.sna (stock code), writes the two patched slots of the built COMMONXX (dustPlotPixel..ClearBitmap and dust70..+16; with `off`
 nothing is written, the stock game), runs a few seconds in flight and saves output/stars_on.png (or stars_off.png). With `far` the planet is pushed
-away first (as tools/test_flight_hull.py does), so the view is open space and the stars must still be there.
+away first (as tools/tests/test_flight_hull.py does), so the view is open space and the stars must still be there.
 """
 import asyncio
 import json
@@ -17,7 +17,7 @@ from pathlib import Path
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parent.parent.parent
 OFF = "off" in sys.argv
 FAR = "far" in sys.argv
 SUN = "sun" in sys.argv   # the sun (posDataSun &1C26) straight ahead, the planet (posDataPlanet &1C2F) moved far to the side

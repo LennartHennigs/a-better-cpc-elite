@@ -2,8 +2,8 @@
 """Test the ship pack ship table hook (missions_flight_k.asm) in cpcxray: with pack N in the flight tail, spawnShip must hand out the extra hull for the redirected
 stock types about half the time, the stock hull the rest, and never touch types 8, 15 and 18. A, B and DE must survive the hook (C is scratch: BC is dead there, spawnShip sets B from A and BC for the ldir).
 
-usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_ship_packs.py [PACK ...]      (default: packs 1 to 7)
-Needs output/firebird_in_flight.sna and any disk in drive A (the tail is written straight into RAM, no disk load). Method as in tools/test_flight_hull.py.
+usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/tests/test_ship_packs.py [PACK ...]      (default: packs 1 to 7)
+Needs output/firebird_in_flight.sna and any disk in drive A (the tail is written straight into RAM, no disk load). Method as in tools/tests/test_flight_hull.py.
 """
 import asyncio
 import json
@@ -16,7 +16,7 @@ from pathlib import Path
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parent.parent.parent
 TRAP = 0x9F00 + 0x00
 N = 60
 # pack: {stock type: (stock label, extra label)}

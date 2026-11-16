@@ -2,7 +2,7 @@
 """Screenshots of the docked screens with the -DENHANCED changes (headlines in column 2, status labels, cash on the quantity line) in cpcxray.
 
 Build first:  python3 -I tools/build_dsk.py --de|--fr ; cp work/elite_{de,fr}_rebuilt.dsk work/xray/disk/
-usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_station_screens.py en|de|fr
+usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/tests/test_station_screens.py en|de|fr
 Boots the disk, starts a new commander (N, then Space), then writes output/station_<loc>_{status,chart,buy,inventory}.png (keys 8, 5, 2 + a good, 9).
 """
 import asyncio

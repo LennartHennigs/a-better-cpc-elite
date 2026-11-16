@@ -4,7 +4,7 @@
 Method: load firebird_in_flight.sna, fill every zero run of 16+ bytes in &0040-&1A3F with a marker, fly (chart screens, keys), jump into the end of the docking
 sequence (after todoDockingProcedure: InitVariables, loadLARGEAXX, docked screens), wait, launch (F1 + launchSequence swap), fly again. After each phase save a
 snapshot and count the marker bytes that changed; in the docked phase the parked copy lives at &A600 (low memory holds LARGEAXX), so the marker run is read there.
-usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_parked_ram.py [MARK]
+usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/tests/test_parked_ram.py [MARK]
 """
 import asyncio
 import sys

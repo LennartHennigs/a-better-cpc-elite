@@ -2,9 +2,9 @@
 """Test the Trumbles flight image (-DFL_T) in cpcxray: breeding on arrival, slow breeding, heat death, inventory line.
 
 Build first:  python3 -I tools/build_dsk.py --missions ; cp work/elite_missions.dsk work/xray/disk/
-usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_trumbles.py
+usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/tests/test_trumbles.py
 
-As tools/test_mission_flight.py: start from output/firebird_in_flight.sna, stop at handleEntitys (&5066), write the patches of a COMMONXX built with -DMISSIONS -DFL_T
+As tools/tests/test_mission_flight.py: start from output/firebird_in_flight.sna, stop at handleEntitys (&5066), write the patches of a COMMONXX built with -DMISSIONS -DFL_T
 (call sites and tail), set variables, call the vector with a trap return address. The Trumble count is the word at &3905.
 """
 import asyncio
@@ -17,7 +17,7 @@ from pathlib import Path
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parent.parent.parent
 TRAP = 0x9FF0
 COUNT, FOOD, NARC, FREE, TUNNEL2, TEMP, STORED = 0x3905, 0x38E2, 0x38E8, 0x38F3, 0x38C2, 0x1C0D, None
 

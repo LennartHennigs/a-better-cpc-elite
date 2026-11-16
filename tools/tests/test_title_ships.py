@@ -2,7 +2,7 @@
 """Test the title-screen ship selection (-DTITLESEL, hook code in the MUSIQUEX tail at &6E21) in cpcxray.
 
 Build first:  python3 -I tools/build_dsk.py ; cp work/elite_rebuilt.dsk work/xray/disk/
-usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_title_ships.py [de|fr]
+usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/tests/test_title_ships.py [de|fr]
 With `de` the German build is tested: python3 -I tools/build_dsk.py --de ; cp work/elite_de_rebuilt.dsk work/xray/disk/ ; it is booted from the disk (RUN"ELITE),
 because the entry snapshot holds the English code.
 With `fr` likewise: python3 -I tools/build_dsk.py --fr ; cp work/elite_fr_rebuilt.dsk work/xray/disk/ ; booted with RUN"EL.
@@ -20,7 +20,7 @@ from pathlib import Path
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parent.parent.parent
 IDX, SHIP = 0x1DA8, 0x1B51 + 35
 COBRA_AT_START = 2
 

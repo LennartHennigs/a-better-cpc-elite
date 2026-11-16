@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Which zero runs of the parked firmware RAM survive the game's disk operations while docked? Companion of tools/test_parked_ram.py (TODO.md "Parked firmware RAM").
+"""Which zero runs of the parked firmware RAM survive the game's disk operations while docked? Companion of tools/tests/test_parked_ram.py (TODO.md "Parked firmware RAM").
 
 Docked, the parked copy of &0040-&1A3F lives at &A600-&BFFF, the firmware's own upper RAM, which AMSDOS uses as workspace during disk writes. Method: copy the Firebird
 disk to work/xray/disk/parked_probe.dsk (inserted writable), load firebird_in_flight.sna, fill every zero run of 16+ bytes in &0040-&1A3F with a marker, fly, jump into the end of
@@ -7,7 +7,7 @@ the docking sequence (as test_parked_ram.py) and save that docked state. Then, e
 saveGame, &0E63), a second save under another name, a load of the saved file (`call loadFile` in loadGame, &0DA8), a load of a file that does not exist (the DISK ERROR path), and
 a launch followed by flight. After each, the marker bytes that changed are collected; the end of the run lists, per run, how many bytes any operation touched and the longest span
 nothing touched.
-usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_parked_save.py [MARK]
+usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/tests/test_parked_save.py [MARK]
 """
 import asyncio
 import shutil

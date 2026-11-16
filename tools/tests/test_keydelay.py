@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Time the key pre-delay (sub_403E, src/elite/commonxx.asm) in cpcxray: stock operand 0x80 against the -DENHANCED one.
 
-usage (from work/xray):  PATH=$HOME/.local/bin:$PATH ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_keydelay.py
+usage (from work/xray):  PATH=$HOME/.local/bin:$PATH ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/tests/test_keydelay.py
 
 From output/firebird_in_flight.sna, stopped at handleEntitys (&5066, normal stack), calls sub_403E (&403E) with each operand and prints the emulated time
 until it returns (a halt loop: B interrupts, 300 per second). The operand of the built ENHANCED file comes from its symbol file.
@@ -15,7 +15,7 @@ from pathlib import Path
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parent.parent.parent
 TRAP = 0x9F00
 SUB = 0x403E
 

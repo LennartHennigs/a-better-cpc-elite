@@ -2,7 +2,7 @@
 """Test the flight-time mission code in cpcxray: mxSpawnCheck (Constrictor at Orarra) and mxKillHook (kill marks state 3).
 
 Build first:  python3 -I tools/build_dsk.py --missions ; cp work/elite_missions.dsk work/xray/disk/
-usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_mission_flight.py
+usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/tests/test_mission_flight.py
 
 Each scenario starts from output/firebird_in_flight.sna, lets the launch finish, stops at handleEntitys (&5066, a safe point: the fill routines use SP as a
 write pointer in the bitmap), writes the freshly assembled COMMONXX patches (call sites and tail), sets variables and calls the routine with a trap return address.
@@ -18,7 +18,7 @@ from pathlib import Path
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parent.parent.parent
 TRAP = 0x9F80
 SITES = ((0x72A8, 0x72AB), (0x80CD, 0x80D0), (0x83EF, 0x83F2), (0x518E, 0x5191), (0x7AA2, 0x7AA5), (0x9D9E, 0xA000))   # call sites and the tail (see size_report output)
 HULL = None

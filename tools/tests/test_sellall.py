@@ -2,7 +2,7 @@
 """Test the A key of the sell menu (src/elite/sell_all.asm, -DENHANCED) in cpcxray.
 
 Build first:  python3 -I tools/build_dsk.py --missions   (or without --missions) and copy the disk to work/xray/disk/.
-usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_sellall.py [disk/NAME.dsk]
+usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/tests/test_sellall.py [disk/NAME.dsk]
 
 Boots the disk, starts a new commander (N, Space), fills the hold (cargoHold &38E2, 17 goods) and the cash, opens the sell menu (key 3) and presses a key at the first
 quantity prompt. Then it runs to Inventory (&4A40), where the menu has ended. Cases: A sells every good (the hold ends empty, the cash rises), another letter leaves with the

@@ -2,9 +2,9 @@
 """Test the Trumble sprites (mxFlightDraw in the -DFL_T image) in cpcxray.
 
 Build first:  python3 -I tools/build_dsk.py --missions ; cp work/elite_missions.dsk work/xray/disk/
-usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_trumble_sprites.py
+usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/tests/test_trumble_sprites.py
 
-As tools/test_trumbles.py (stop at handleEntitys, write the patches of a COMMONXX built with -DMISSIONS -DFL_T, call the vector with a trap return address). mxFlightDraw draws into
+As tools/tests/test_trumbles.py (stop at handleEntitys, write the patches of a COMMONXX built with -DMISSIONS -DFL_T, call the vector with a trap return address). mxFlightDraw draws into
 the off-screen bitmap at &A000 and ends with `jp transferBuffertoScreen`, so after the call the sprites are also on the screen. Checks:
  - blit: with the bitmap cleared and the Trumble at x 10, y 20, the shape bytes there equal the right-facing shape; the second Trumble (odd) uses the mirrored one;
  - how many are drawn for counts 0, 1, 3, 11 and 300 (0, 1, 3, 6, 6): each Trumble's rectangle is non-zero, an undrawn one's stays zero;
@@ -21,7 +21,7 @@ from pathlib import Path
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parent.parent.parent
 TRAP = 0x9FF4 - 4
 COUNT = 0x3905
 BITMAP = 0xA000
