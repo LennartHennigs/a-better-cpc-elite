@@ -123,4 +123,8 @@ mxEntryShuttle:
     db 4
     ENDIF
 
+    IFDEF HULL_128
+    INCLUDE "../elite128/missions_ships.asm"       ; the 128K tree: vertices-only hulls and the type chain for hullFindType (tools/ship128.py)
+    ELSE
     INCLUDE "missions_ships.asm"
+    ENDIF

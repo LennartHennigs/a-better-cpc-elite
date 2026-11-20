@@ -7262,7 +7262,6 @@ hullRegion:
     INCLUDE "../../work/elite128/shipdata128.asm"
     ASSERT $ - hullRegion <= HULL_REGION_SIZE, "the hull blueprints do not fit their slot: fewer vertices (the designs in tools/hullfill.py cost 6 bytes each), or a larger HULL_REGION_SIZE (then every address after it moves: run tools/sync_equs.py)"
     DS HULL_REGION_SIZE - ($ - hullRegion)
-    ASSERT $ <= hullConstrictorBP & 0xFF00, "hullFindType takes every blueprint in the page of hullConstrictorBP for the Constrictor"
 
 ; Filled hulls (128K build, docs: src/elite128/README.md). todo_parseEdges is replaced by hullDraw: hulls with a fill record are drawn by the module in RAM bank 6
 ; (src/elite128/fill.asm, mapped at &4000 by config C6 for the call), all others fall back to the wireframe edge walk.
@@ -7495,7 +7494,6 @@ curCfg:
     db 0xC1                             ; RAM configuration the CPU draws with (C1: screen A = bank 1 at &4000, C3: screen B = bank 3)
 hullDummy:
     ds 8
-hullConstrictorBP equ 0x9ED0        ; the Constrictor blueprint inside flight image C (the ASSERT in missions_hull.asm checks it)
 hullDraw:
     call hullFindType                   ; A = ship type 0..18 from the blueprint pointer in IY, carry if none
     jp c,todo_parseEdges
@@ -7588,6 +7586,10 @@ bankInitGo:
     ld hl,bankInitStageData
     ld de,0x6000
     ld bc,0x0800
+    ldir
+    ld hl,STAGE+0x2800                  ; the records of the ship pack hulls (fill128_packs.bin, types 20-28) at &6800
+    ld de,0x6800
+    ld bc,0x0600
     ldir
     call fillInitEntry                              ; fillInit
     call installVBL                     ; loadFile's setFilemenuColors puts back the firmware interrupt vector from oldIRHandler, which holds garbage until installVBL has saved it
@@ -8200,12 +8202,7 @@ hftNext:
     inc hl
     inc c
     djnz hftLoop
-    ld hl,hullConstrictorBP             ; ship type 19 is served by flight image C, outside the stock table: exactly its blueprint (the ship pack images have other hulls in the same page)
-    and a
-    sbc hl,de
-    scf
-    ret nz
-    ld c,19
+    jp mxHullType                       ; not in the stock table: the flight image knows its hulls (the Constrictor in image C, the ship pack hulls: types 19-28), A = type or carry
 hftFound:
     ld a,c
     or a

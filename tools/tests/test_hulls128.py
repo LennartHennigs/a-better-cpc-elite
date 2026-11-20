@@ -52,7 +52,7 @@ async def main():
             await c("memory_write", {"address": 0x1C2F, "data": "00 FF 80  00 00 00  B6 7C 01"})      # planet far to the left
             if os.environ.get("CBLOB"):      # type 19 (Constrictor) lives in flight image C: put that image's tail (&9D9E-&9FFF, assembled with -DFL_C) in place
                 await c("memory_write", {"address": 0x9D9E, "data": open(os.environ["CBLOB"], "rb").read().hex()})
-            for t in TYPES:
+            for n, t in enumerate(TYPES):
                 await call(0x816B)
                 ix = (await c("registers_get"))["ix"]
                 await call(0x80CD, a=t, ix=ix)
@@ -65,7 +65,7 @@ async def main():
                 await call(0x82B8, ix=ix)
                 await c("registers_set", {"values": {k: saved[k] for k in ("af", "bc", "de", "hl", "ix", "iy", "sp", "pc", "af_", "bc_", "de_", "hl_") if k in saved}})
                 await c("run", {"max_us": 1_000_000, "timeout_s": 60})
-                await c("screen_image", {"path": f"output/hulls128_{t:02d}.png"})
+                await c("screen_image", {"path": f"output/hulls128_{t:02d}" + (f"_{n}" if os.environ.get("SEQ") else "") + ".png"})      # SEQ=1: one file per spawn (the same type twice: a ship pack hull comes up on half of the spawns)
                 if os.environ.get("DUMPVB"):      # the last projected vertices (x lo/hi, y lo/hi... as copied by hullDraw), address from commonxx.sym
                     print((await c("memory_read", {"address": int(os.environ["DUMPVB"], 0), "length": 84}))["hex"])
                 reg = await c("registers_get")

@@ -14,7 +14,7 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
 JUMP_COUNTER, SYSTEM_SEED, MISSION, MISSION2, TRUMBLES = 0x38DA, 0x390D, 0x38FD, 0x38FE, 0x3905
-FLIGHT_ID = 0x9DB9
+FLIGHT_ID = 0x9DBC
 RANDOM_SEED = 0xFA56      # storedRandomSeed (common2x.asm, bank 7 at &C000+)
 N = int(sys.argv[1]) if len(sys.argv) > 1 else 10      # launches
 

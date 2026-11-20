@@ -81,12 +81,14 @@ def laser_sights():
 
 def main():
     work = ROOT / "work/elite128"
-    for f in ("fill.bin", "fill128.bin", "fill128_late.bin", "tt.bin"):
+    for f in ("fill.bin", "fill128.bin", "fill128_late.bin", "fill128_packs.bin", "tt.bin"):
         if not (work / f).exists():
             sys.exit(f"missing {work / f}: run bash tools/check_src128.sh first")
     hulls = (work / "hulls_source.txt").read_text().strip() if (work / "hulls_source.txt").exists() else "unknown"
     print(f"hull source: {hulls} (HULLS=stock|arcelite, tools/ship128.py)")
     fill, data = (work / "fill.bin").read_bytes(), (work / "fill128.bin").read_bytes()
+    packs_records = (work / "fill128_packs.bin").read_bytes()
+    assert len(packs_records) <= 0x600, len(packs_records)      # the stage area at +0x2800 is one blank 0x600 block; bankInit copies it to bank 6 &6800
     assert len(data) <= 0x540, f"fill128.bin ({len(data)} bytes) runs into the title cache module at 0x6540"
     data = data.ljust(0x540, b"\0") + (work / "tt.bin").read_bytes()      # fill_tt.asm is assembled for 0x6540: its bytes follow the records
     assert len(data) <= 0x5C0, f"the title cache module ({len(data)} bytes in all) runs into the late records at 0x65C0"
@@ -106,7 +108,7 @@ def main():
             new = bytearray(out.read_bytes())
             if n == "COMMONXX":
                 PAGE = 0x4000 - 0x1A40                       # the window page inside COMMONXX.BIN: blank screen rows that bankInit finds at &C000+offset in RAM bank 3
-                stage = [(STAGE_FILL, fill), (STAGE_DATA, data), (STAGE_DATA + 0x700, laser_sights())]
+                stage = [(STAGE_FILL, fill), (STAGE_DATA, data), (STAGE_DATA + 0x700, laser_sights()), (0x2800, packs_records)]
                 if MISSIONS:      # overlays (bank 4: slots of 0x240 at &D800, &DC80, &E000, &E480) and flight images (bank 5: 0x260 at &E800, &EC60, &F000, &F460, &F800, &FC60); bankInit copies them
                     for i, tag in enumerate("CPTR"):
                         base, blob = sliced("largeaxx.asm", [f"-DOVL_{tag}"], "mxOverlayBase", "mxOverlayEnd", 0x840)

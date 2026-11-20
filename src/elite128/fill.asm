@@ -7,7 +7,7 @@
 ;
 ; Entry points (all with bank 6 mapped at &4000):
 ;   fillInit   &4003     once at start: builds the tables (edge block, column and mask tables, quarter squares, reciprocals, bitmap row table)
-;   fillHull   &4000     A = ship type (0..19). Draws the hull's triangles from VBUF. Carry set on return = the type has no fill record (draw wireframe instead)
+;   fillHull   &4000     A = ship type (0..28). Draws the hull's triangles from VBUF. Carry set on return = the type has no fill record (draw wireframe instead)
 ;
 ; Bank layout (page numbers are the high bytes of the addresses): code &4000-&4EFF, variables &4F00, XL &5000, XR &5100, column &5200, left mask &5300,
 ; right mask &5400, quarter squares &5500-&5800 (low bytes &5500, &5600; high bytes &5700, &5800), reciprocals &5900 (low) &5A00 (high), bitmap row table &5B00 (low)
@@ -83,7 +83,7 @@ fillHull:
     jp fillHullGo
     jp fillInit                 ; &4003
 fillHullGo:
-    cp 20
+    cp 29                       ; types 0-19 stock and Constrictor, 20-28 the ship pack hulls (tools/ship128.py)
     jp nc,fhNone
     add a,a
     ld l,a

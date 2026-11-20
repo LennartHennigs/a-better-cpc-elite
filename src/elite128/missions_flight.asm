@@ -73,6 +73,10 @@ mxTypeConstrictor equ 19            ; ship type after the 19 stock ships (0-18)
     ENDIF
     IFDEF FL_PACK
     DEFINE HAS_SHIP
+    DEFINE HAS_HULLTYPE
+    ENDIF
+    IFDEF FL_C
+    DEFINE HAS_HULLTYPE
     ENDIF
     IFNDEF FLID
     DEFINE FLID 0
@@ -99,6 +103,8 @@ mxInvHook:                          ; replaces `call prQuantityofGoodinCargohold
     jp mxInvHookImpl
 mxFlightDraw:                       ; replaces the `call transferBuffertoScreen` in Spaceflight (draws into the off-screen bitmap, then jumps there)
     jp mxFlightDrawImpl
+mxHullType:                          ; hullFindType (commonxx.asm) jumps here for a blueprint outside the stock table: DE = address, A = type with carry clear, or carry set
+    jp mxHullTypeImpl
 mxFlightId:
     db FLID                         ; slot number of the image in RAM (0 default, 1-7 ship packs, FLS_x mission images): the launch hook compares it
 
@@ -148,6 +154,11 @@ mxFlightGo:
     jp loadIndicator
 
 ; Defaults for the vectors the image does not use.
+    IFNDEF HAS_HULLTYPE
+mxHullTypeImpl:
+    scf
+    ret
+    ENDIF
     IFNDEF HAS_SHIP
 mxShipTableImpl:
     ld hl,shipGFXdataTable

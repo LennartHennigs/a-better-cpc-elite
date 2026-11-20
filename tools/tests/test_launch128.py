@@ -2,7 +2,7 @@
 """Launch from the docked snapshot (tools/snap_docked128.py) with a mission state set and check the flight image copied from bank 5.
 
 usage (from work/xray):  DISK128=disk/elite128.dsk PATH=$HOME/.local/bin:$PATH ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/tests/test_launch128.py [STATE_HEX]    (default 71: Constrictor hunting)
-Sets &38D9 = 1 and &38FD = STATE, presses f1, stops at the bank copy routine (&9C83 jump table, mxBankFlight) and at its end, then reports the tail &9D9E and the flight id (&9DB9).
+Sets &38D9 = 1 and &38FD = STATE, presses f1, stops at the bank copy routine (&9C83 jump table, mxBankFlight) and at its end, then reports the tail &9D9E and the flight id (&9DBC).
 """
 import asyncio
 import json
@@ -45,7 +45,7 @@ async def main():
             await c("memory_write", {"address": 0x38D9, "data": "01"})
             await c("memory_write", {"address": 0x38FD, "data": "%02X" % STATE})
             await c("memory_write", {"address": 0x3905, "data": "%02X %02X" % (TR & 255, TR >> 8)})
-            print("tail before:", (await rd(0x9D9E, 8)).hex(" "), " id:", nm((await rd(0x9DB9))[0]))
+            print("tail before:", (await rd(0x9D9E, 8)).hex(" "), " id:", nm((await rd(0x9DBC))[0]))
             bp = (await c("breakpoint_add", {"address": 0x9C83, "kind": "pc"}))["id"]
             await c("key_press", {"key": "f1"})
             rep = await c("run", {"max_us": 6_000_000, "timeout_s": 120})
@@ -56,7 +56,7 @@ async def main():
                 print("A =", nm(reg["af"] >> 8), " sp=%04X" % reg["sp"])
                 await c("breakpoint_remove", {"breakpoint_id": bp})
                 await c("run", {"max_us": 400_000, "timeout_s": 60})
-                print("tail after the copy:", (await rd(0x9D9E, 8)).hex(" "), " id:", nm((await rd(0x9DB9))[0]))
+                print("tail after the copy:", (await rd(0x9D9E, 8)).hex(" "), " id:", nm((await rd(0x9DBC))[0]))
                 await c("run", {"max_us": 6_000_000, "timeout_s": 120})
             reg = await c("registers_get")
             print("tail at the end:", (await rd(0x9D9E, 8)).hex(" "), " pc=%04X sp=%04X" % (reg["pc"], reg["sp"]))
