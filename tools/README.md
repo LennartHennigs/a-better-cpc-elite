@@ -13,7 +13,7 @@ Helpers for building, checking and analysing the project. Each script has a head
 | `dskx.py`, `add_files.py`, `hide_files.py` | list/extract, add files to, and hide files on DSK images (never write to `disks/`) |
 | `cheat_tokenise.py`, `bastok.py` | tokenise CPC BASIC with the CPC's own BASIC (cpcxray), detokenise to text |
 | `size_report.py` | bytes used in the free tails against the stock files |
-| `rvmstate.py` | read an RVM `.rvmstate` file: registers, the 64 KB RAM image, the ship slots (`docs/_build.md` "RVM state files") |
+| `rvmstate.py` | read an RVM `.rvmstate` file: registers, the 64 KB RAM image, the ship slots, and `--sna` to convert it to a snapshot cpcxray loads (`docs/_build.md` "RVM state files") |
 
 ## Saves and text
 | File | Does |
