@@ -82,9 +82,12 @@ laserSightsEnd:
 ; musicState (commonxx.asm: bankInit + 0x80): 0 = no music, 1 = on, no tick owed, n > 1 = n - 1 ticks owed. It starts at 1 (the overlay is copied at the end of bankInit, after the
 ; player was loaded) and loadNotMusique sets it to 0 before the player is overwritten. dbIsr jumps to musicHook (bankInit + 0x81) on the title (view 0), after the key latch.
 ; As in the stock IRSound the music replaces the sound effects (no IRdrivenSound): the hook drops the return into IRSound and returns to the ISR itself.
-; The player sits in bank 7 (&C000-&FFFF), which is only visible in the draw configurations: while a far call has another bank mapped (the title ship fill, bank 6, runs on the
-; resident stack) the interrupted SP, which myVBL keeps in stack5 (the ISR runs on its own stack), is below &C000: the tick is owed (counted up to 255) and runs later (MusicRun with
-; B = 1 + owed). The player runs with interrupts disabled: its PSG writes no longer end in ei (a nested myVBL would overwrite stack5).
+; The player sits in bank 7 (&C000-&FFFF), which is only visible in the draw configurations C1/C3. myVBL runs the ISR on its own stack and keeps the interrupted SP in stack5:
+;  - SP at or above &C000: the main thread runs in a draw configuration, bank 7 is visible: run the owed ticks (MusicRun with B = 1 + owed).
+;  - SP below &C000 and the interrupted PC (the word at stack5) in the window &4000-&7FFF: the ship fill runs, bank 6 is mapped at &4000 (C6) and nothing else (the hull call
+;    switches the stack and the map together, but the PC is in the glue then): map C1 for the ticks and put C6 back.
+;  - anything else (setup code on another stack, the glue around the far calls): the configuration is not known, the tick is owed (counted up to 255) and runs later.
+; The player runs with interrupts disabled: its PSG writes no longer end in ei (a nested myVBL would overwrite stack5).
 ; Externals: MUSICRUN (MusicRun in musiquex.asm), STACK5 (stack5), both given by tools/build_dsk128.py.
 musicState:
     db 1
@@ -95,13 +98,27 @@ musicHook:
     pop hl                              ; the music replaces the sound effects: return to the ISR from here
     ld hl,(STACK5)                      ; the interrupted SP
     ld a,h
-    cp 0xC0                             ; carry: SP below &C000
-    ld hl,musicState                    ; (no flags change)
+    cp 0xC0
+    jr nc,musicRun                      ; a draw configuration: bank 7 is visible
+    inc hl
+    ld a,(hl)                           ; high byte of the interrupted PC
+    cp 0x40
     jr c,musicOwe
+    cp 0x80
+    jr nc,musicOwe
+    ld bc,0x7FC1                        ; C6 (bank 6 at &4000, bank 3 at &C000) -> C1 (bank 7 at &C000) ...
+    out (c),c
+    call musicRun
+    ld bc,0x7FC6                        ; ... and back
+    out (c),c
+    ret
+musicRun:
+    ld hl,musicState
     ld b,(hl)                           ; 1 + the ticks owed
     ld (hl),1
     jp MUSICRUN
 musicOwe:
+    ld hl,musicState
     inc (hl)
     ret nz
     dec (hl)                            ; not past 255: 0 would switch the music off

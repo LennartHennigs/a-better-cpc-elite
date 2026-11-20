@@ -7527,7 +7527,7 @@ hullDraw:
     jp todo_parseEdges                  ; carry: no record, wireframe
 bankCopy equ bankInit                   ; the first 20 bytes of the overlay on bankInit (lasersights128.asm): A = count, HL = source (window address in bank 6), DE = destination (resident)
 laserSightsHome equ bankInit + 20       ; the laser sights follow it (see lasersights128.asm)
-laserSightsSize equ 0xA0                ; bytes the last step of bankInit copies over bankInit
+laserSightsSize equ 0xC0                ; bytes the last step of bankInit copies over bankInit
 musicState equ bankInit + 0x80          ; the title music (lasersights128.asm, the hook rides in the same overlay): 0 = off, 1 = on, n > 1 = n - 1 ticks owed
 musicHook equ bankInit + 0x81
 musicSlot equ loc_604A - 0x4A           ; the 4 KB of the code block in RAM bank 7 (stock &6000-&6FFF, flight-only code) that the player overlays while the title runs (musiquex.asm)
