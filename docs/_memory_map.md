@@ -134,7 +134,7 @@ Banks not visible at once (mapped over the window by `out (c),c`, never while th
 | Bank | Content | Used | Free |
 |---|---|---|---|
 | 4 (`&4000-&7FFF`) | `&4000-&48FF` four docked mission overlays (4 x `&240`, largest C 561 B), `&4900-&5AFF` copy of `LARGEAXX` (4608 B, copied to `&0840` at every docking) | 6,912 B | **9,472 B** (`&5B00-&7FFF`; the music slots are gone) |
-| 5 | `&4000-&4E3F` six flight images (6 x `&260`), `&5000-&5FFF` `INDICATO` (dashboard graphics, 4096 B) | 7,744 B | **8,640 B** (`&4E40-&4FFF` 448, `&6000-&7FFF` 8,192) |
+| 5 | `&5000-&5FFF` `INDICATO` (dashboard graphics, 4096 B), `&6000-&7EDF` 13 flight images (default, packs 1-7, C P T S R: 13 x `&260`), loaded from the one file `INDICATO.BIN` | 11,744 B | **4,640 B** (`&4000-&4FFF` 4,096, `&7EE0-&7FFF` 288) |
 | 6 | `&4000-&45DB` fill module + flip code (1,489 B built, copy length `&600`), variables `&4F00`, tables `&5000-&5F00` (built by `fillInit`), `&6000-&6534` hull records (1,333 B) | about 5,100 B | **about 9,200 B** (`&45DC-&4EFF` 2,340 incl. up to 47 B to the copy limit, `&6535-&7FFF` 6,859) |
 | 1 / 3 | the two screens (the CRTC shows one, the CPU draws the other) | 32 KB | 0 |
 

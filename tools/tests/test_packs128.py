@@ -50,6 +50,8 @@ async def main():
                 fid = (await rd(FLIGHT_ID))[0]
                 reg = await c("registers_get")
                 await c("screen_image", {"path": f"output/packs128_{k}.png"})
+                if os.environ.get("SAVE"):      # a flight snapshot with pack k loaded, for test_hulls128.py (SNA=output/pack128_k.sna, types 16 17 9 10 ...)
+                    await c("sna_save", {"path": f"output/pack128_{k}.sna"})
                 good = fid == k
                 ok &= good
                 print(f"{'ok  ' if good else 'FAIL'} pack {k}: flight id {fid}, tail {(await rd(0x9D9E, 6)).hex(' ')}, pc={reg['pc']:04X}")

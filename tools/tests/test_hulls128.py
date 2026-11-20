@@ -41,7 +41,7 @@ async def main():
                 return await c("run", {"max_us": 2_000_000, "timeout_s": 60})
 
             await c("disk_insert", {"drive": "A", "path": os.environ.get("DISK128", "disk/elite128.dsk")})
-            await c("sna_load", {"path": "output/flight128.sna"})
+            await c("sna_load", {"path": os.environ.get("SNA", "output/flight128.sna")})
             await c("run", {"max_us": 4_000_000, "timeout_s": 60})
             safe = (await c("breakpoint_add", {"address": 0xCF68, "kind": "pc"}))["id"]
             rep = await c("run", {"max_us": 10_000_000, "timeout_s": 60})
