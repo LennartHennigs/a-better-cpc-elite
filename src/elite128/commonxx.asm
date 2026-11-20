@@ -6180,14 +6180,17 @@ loadLARGEAXX:
     db 0xC9
 ; Loads the music file, sets the music-loaded flag and patches the load indicator
 loadMusicnIndicator:
-    call loadIndicator                  ; 128K build: no music (the player is an overlay at &6000, which is the screen window now)
+    call loadIndicator                  ; 128K build: no music here (the music is loaded once by bankInit and plays on the title screen only, see musiquex.asm)
     ret
 ; Mutes the music and loads LARGEAXX and the non-music replacement file
 loadNotMusique:
-    call mute
-    call loadLARGEAXX
     xor a
-    ld (flagMusicLoaded),a
+    ld (musicState),a                   ; first: the interrupt must stop calling the player before the slot gets its flight code back
+    call mute
+    call loadLARGEAXX                   ; before the disc read, as in the stock game: it puts the parked firmware RAM (jump block at &BB00) back, which the disc routines need
+    call loadFile                       ; NOTMUSIC.BIN (the 4096 bytes of COMMON2X that the player replaced; tools/build_dsk128.py writes them) back over the player
+    dw musicSlot
+    dw FilenameNOTMUSIC
     ret
 ; Loads LARGEAXX and the music for the docked screens
 loadExtensionsforDockingmode:
@@ -7524,7 +7527,10 @@ hullDraw:
     jp todo_parseEdges                  ; carry: no record, wireframe
 bankCopy equ bankInit                   ; the first 20 bytes of the overlay on bankInit (lasersights128.asm): A = count, HL = source (window address in bank 6), DE = destination (resident)
 laserSightsHome equ bankInit + 20       ; the laser sights follow it (see lasersights128.asm)
-laserSightsSize equ 0x80                ; bytes the last step of bankInit copies over bankInit
+laserSightsSize equ 0xA0                ; bytes the last step of bankInit copies over bankInit
+musicState equ bankInit + 0x80          ; the title music (lasersights128.asm, the hook rides in the same overlay): 0 = off, 1 = on, n > 1 = n - 1 ticks owed
+musicHook equ bankInit + 0x81
+musicSlot equ loc_604A - 0x4A           ; the 4 KB of the code block in RAM bank 7 (stock &6000-&6FFF, flight-only code) that the player overlays while the title runs (musiquex.asm)
 bankInitStageFill  equ STAGE+0x800
 bankInitStageData  equ STAGE+0x1000
 ; Once, at the start of Init_: the loader put the fill module and its records into blank screen bytes of COMMON2X (tools/build_dsk128.py), which are still
@@ -7602,6 +7608,11 @@ bankInitGo:
     call loadFile
     dw 0x5000
     dw bankNameIndicator
+    ld bc,0x7FC7                        ; the title music (MUSIQUEX.BIN, 4096 bytes assembled for the slot) over the flight-only slot of the code block in RAM bank 7, seen at &4000 with C7
+    out (c),c
+    call loadFile
+    dw musicSlot - 0x8000
+    dw FilenameMUSIQUEX
     ld bc,0x7FC0
     out (c),c
     di                                  ; loadFile ends with installVBL: put the firmware's interrupt vector back, so that the installVBL of Init_ saves the right one
@@ -8155,7 +8166,8 @@ dbIsr:
     and a
     ret nz
     ld a,(todoUnknownStatusFlags)       ; view 0: the title (status 0) latches its keys; the screens flip in dbFlip6, nothing to follow
-    jp titleKeyIsr
+    call titleKeyIsr
+    jp musicHook                        ; the title music (overlay on bankInit, lasersights128.asm): returns to the ISR itself while it plays
 dbIsrFollow:
     ld hl,curCfg
     ld a,(dbShown)

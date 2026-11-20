@@ -24,7 +24,7 @@ XRAY = ROOT / "work" / "xray"
 CPCX = Path.home() / ".local/share/uv/tools/cpcxray/bin/python"
 HOST = [("check_src en", ["bash", "tools/check_src.sh"]), ("check_src de", ["bash", "tools/check_src.sh", "de"]), ("check_src fr", ["bash", "tools/check_src.sh", "fr"]),
         ("test_saves", [sys.executable, "-I", "tools/tests/test_saves.py"]), ("test_disks", [sys.executable, "-I", "tools/tests/test_disks.py"])]
-EMU128 = ["packs128", "sellall128", "escdigit128", "filemenu128"]
+EMU128 = ["packs128", "sellall128", "escdigit128", "filemenu128", "music128"]
 EMU = ["mission_hook", "mission_flight", "plans", "stolen_ship", "rocks", "trumbles", "trumble_sprites", "launch", "ship_packs", "sellall", "title_ships"]
 TIMEOUT = 420
 

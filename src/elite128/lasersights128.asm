@@ -76,3 +76,34 @@ lsData:
     db 5,5,13,13,  7,5,15,13,  7,5,15,13       ; military: four double diagonals pointing at the centre (the third line repeats the second)
     db 0,7,15,7,   0,7,0,11,   0,0,0,0         ; mining: the same bars and ticks without the ends, plus a dot in the centre
 laserSightsEnd:
+    ASSERT laserSightsEnd <= HOME + 0x80, "the laser sights must end before the title music block (musicState = bankInit + 0x80 in commonxx.asm)"
+    DS HOME + 0x80 - $
+; ---- Title music hook (src/elite128/musiquex.asm): resident code needs bytes the glue does not have, so it rides in this overlay too ----------------------------------------------
+; musicState (commonxx.asm: bankInit + 0x80): 0 = no music, 1 = on, no tick owed, n > 1 = n - 1 ticks owed. It starts at 1 (the overlay is copied at the end of bankInit, after the
+; player was loaded) and loadNotMusique sets it to 0 before the player is overwritten. dbIsr jumps to musicHook (bankInit + 0x81) on the title (view 0), after the key latch.
+; As in the stock IRSound the music replaces the sound effects (no IRdrivenSound): the hook drops the return into IRSound and returns to the ISR itself.
+; The player sits in bank 7 (&C000-&FFFF), which is only visible in the draw configurations: while a far call has another bank mapped (the title ship fill, bank 6, runs on the
+; resident stack) the interrupted SP, which myVBL keeps in stack5 (the ISR runs on its own stack), is below &C000: the tick is owed (counted up to 255) and runs later (MusicRun with
+; B = 1 + owed). The player runs with interrupts disabled: its PSG writes no longer end in ei (a nested myVBL would overwrite stack5).
+; Externals: MUSICRUN (MusicRun in musiquex.asm), STACK5 (stack5), both given by tools/build_dsk128.py.
+musicState:
+    db 1
+musicHook:
+    ld a,(musicState)
+    and a
+    ret z                               ; music off: IRSound goes on with the sound effects
+    pop hl                              ; the music replaces the sound effects: return to the ISR from here
+    ld hl,(STACK5)                      ; the interrupted SP
+    ld a,h
+    cp 0xC0                             ; carry: SP below &C000
+    ld hl,musicState                    ; (no flags change)
+    jr c,musicOwe
+    ld b,(hl)                           ; 1 + the ticks owed
+    ld (hl),1
+    jp MUSICRUN
+musicOwe:
+    inc (hl)
+    ret nz
+    dec (hl)                            ; not past 255: 0 would switch the music off
+    ret
+musicHookEnd:

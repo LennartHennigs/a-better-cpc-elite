@@ -65,8 +65,8 @@ def symbols(src, flags=()):
 
 def laser_sights():
     """The laser sights overlay (lasersights128.asm): assembled at the address of bankInit, carried in the data stage and copied over bankInit by its last step."""
-    cx, c2 = symbols("commonxx.asm"), symbols("common2x.asm")
-    defs = [f"-DHOME={cx['bankInit']}", f"-DVIEWDIR={cx['Viewdirection']}", f"-DLASERTYPES={cx['laserTypes']}", f"-DCURCFG={cx['curCfg']}", f"-DDRAWLINE={c2['drawLaserLine']}"]
+    cx, c2, mq = symbols("commonxx.asm"), symbols("common2x.asm"), symbols("musiquex.asm")
+    defs = [f"-DMUSICRUN={mq['MusicRun']}", f"-DSTACK5={cx['stack5']}", f"-DHOME={cx['bankInit']}", f"-DVIEWDIR={cx['Viewdirection']}", f"-DLASERTYPES={cx['laserTypes']}", f"-DCURCFG={cx['curCfg']}", f"-DDRAWLINE={c2['drawLaserLine']}"]
     with tempfile.TemporaryDirectory() as tmp:
         out = Path(tmp) / "ls.bin"
         r = subprocess.run([str(SJASM), *defs, f"--raw={out}", str(SRC / "lasersights128.asm")], capture_output=True, text=True)
@@ -124,6 +124,10 @@ def main():
                     new[PAGE + off:PAGE + off + len(blob)] = blob
             h = dskx.overwrite_file(d, secs, first, f"{n}.BIN", new)
             print(f"{n}.BIN: {len(new)} bytes written, header kept (load {h['load']:04X})")
+            if n == "COMMON2X":      # the title music overlays 4 KB of this code block in RAM bank 7 (musiquex.asm): NOTMUSIC.BIN holds those bytes, loadNotMusique reads them back
+                slot = symbols("common2x.asm")["loc_604A"] - 0x4A - 0xC000
+                dskx.overwrite_file(d, secs, first, "NOTMUSIC.BIN", bytes(new[slot:slot + 0x1000]))
+                print(f"NOTMUSIC.BIN: COMMON2X offset {slot:04X}, 4096 bytes")
     # The flight images (mission images, order FLIGHT_TAGS, 0x260 bytes each) ride behind INDICATO: bankInit loads the file into bank 5 at &5000, so slot 0 is at &6000 (mxBankFlightImpl).
     ind = dskx.read_files(dskx.load_sectors(BASE))[(0, "INDICATO.BIN")]
     ind_data = ind[128:128 + 0x1000]
