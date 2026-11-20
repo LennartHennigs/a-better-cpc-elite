@@ -7,7 +7,7 @@ Diary: `CHANGELOG_128K.md`. Open work, including what `main` did since the fork:
 
 - Forked from `main` at `d6b6ed0` (2026-11-11). `main` was merged into the branch on 2026-11-20 (`957072a`, `main` at `0b257db`): the branch is `main` plus the 128K work, and the features `main` got since the fork (ship packs and traffic, laser sights, sell-all, kill count, Esc at the second digit, `elite64.dsk`) are ported (`TODO_128K.md` section 2).
 - Works in the emulator (cpcxray): boots, title with the ship selector (29 ships), docking, launch, flight, hyperspace, charts, save and load, missions, ship packs. `python3 -I tools/tests/run_all.py --emu128` runs the four tests with a pass/fail result (packs, sell-all, Esc digit, file menu: all pass 2026-11-21); the other 128K tests are screenshots, probes and soaks (soaks of 5 and 10 minutes ran without a reset). Not played through by hand.
-- **Missing:** the music (title and docked screens). It has no home in the 128K memory layout; findings and options in `TODO_128K.md` ("Title music").
+- **Music:** on the title screens only (2026-11-21), not on the docked screens. It plays from RAM bank 7 and is tick-skipped while the ship fill hides that bank, so the notes come in bursts (`TODO_128K.md` "Title music": listen to it).
 - 128K only. The 64K game on `main` is untouched: `src/elite` stays byte-exact. `src/elite128` may differ from the stock bytes; the README and the plan say save-key compatibility is not required, but the branch's `CLAUDE.md` still carries the 64K rule that the 104 bytes at `EquipShip` stay stock. The 128K build relocates the code the key is read from, so saves of the 64K disks do not load: `tools/tests/test_disks.py` skips the key check for `elite128.dsk`, and a BASIC save converter is a TODO (`TODO_128K.md`).
 - The plan (phases, risks, the language and particle-explosion ideas) lives outside the repo in `~/.claude/plans/delegated-seeking-aho.md`.
 
@@ -20,11 +20,11 @@ Diary: `CHANGELOG_128K.md`. Open work, including what `main` did since the fork:
 | Title screens | single buffered | double buffered with a cached text overlay (frame 320 to 255 ms) and a key latch for short taps |
 | Draw order | entity order | far to near, through a deferred queue sorted on the 16-bit depth |
 | Disk use | loads `LARGEAXX`, music, progress bar, mission files from disk | everything is copied into RAM banks at start (`bankInit`); only saves and the catalogue read the disk |
-| Music | the Blue Danube on the title and docked screens | none (no resident home for the player; `TODO_128K.md`) |
+| Music | the Blue Danube on the title and docked screens | title screens only: the player overlays 4 KB of flight-only code in bank 7 (`&DF02`) from the interrupt, `NOTMUSIC.BIN` restores it at the title exit (`src/elite128/musiquex.asm`) |
 | Ship packs, traffic | 7 packs of Fessor's hulls, C64-like traffic (`-DTRAFFIC`) | the same, all filled (hull types 20-28); the pack is drawn at random at every launch from 13 flight images in bank 5 |
 | Ship viewer | `RUN"SHOWSHPS`, wireframe | `RUN"SHOWSHPS` shows 26 ships filled (page flip prototype, banks 4-6); the title screen's ship selector (N, then the cursor keys) shows all 29 |
 | Disk | `elite64.dsk` (expanded): `ELITE64.BAS`, trainer, save tools | `build/elite128.dsk`: `RUN"ELITE128` (Firebird's `ELITE.BAS` renamed), `README.TXT`, `SHOWSHPS.BAS`; no trainer (it pokes 64K addresses) |
-| Memory | 64 KB, about 610 free bytes in flight | 128 KB, about 27.5 KB free but only in banks 4-6 (data); resident code space is **22 + 16 + 15 bytes** (measured 2026-11-21: the glue ends at `&9C6A`, the fixed mission table starts at `&9C80`; `docs/_memory_map.md` still says 172, see the TODO to split it) |
+| Memory | 64 KB, about 610 free bytes in flight | 128 KB, about 27.5 KB free but only in banks 4-6 (data); resident code space is **3 + 13 + 15 bytes** (measured 2026-11-21 after the title music: the glue ends at `&9C7D`, the fixed mission table starts at `&9C80`; `docs/_memory_map.md` still says 172, see the TODO to split it). New resident code goes into the overlay on `bankInit` (`lasersights128.asm`, 4 of its 160 bytes are free) or into a far-call module |
 | Build flags | `-DENHANCED -DMISSIONS -DTRAFFIC -DTITLESEL` per disk | one variant (`src/elite128/config.inc`): enhanced UI, missions, title ship selection, Firebird loader |
 | Machines | 464, 664, 6128 | 6128 only; a 464/664 shows "128K CPC REQUIRED" |
 | Languages | English, German, French | English only |
@@ -47,6 +47,7 @@ Diary: `CHANGELOG_128K.md`. Open work, including what `main` did since the fork:
 ## Things to know before touching it
 
 - Pointer tables and self-patch targets must be labels, not numbers. Resident `commonxx` labels from `&293F` up must stay at their stock addresses (the sources use raw numbers for variables). Constants that only look like screen addresses stay literal (`0xC624`, the bitmap-end clamp). The pitfalls list is in the README ("Relocated layout").
+- **Title music:** the slot, the hook and the stop order are described in `TODO_128K.md` ("Title music") and the header of `musiquex.asm`; the order in `loadNotMusique` matters (`musicState` = 0, `mute`, `loadLARGEAXX`, then the disc read).
 - `&0040-&1A3F` is not free memory at any time: in flight and on the title it holds the firmware's parked RAM (`loadIndicator` swaps it with `&A600-&BFFF`; the first docking puts it back), docked it holds `LARGEAXX`. The interrupt can only call code in banks 0 and 2: bank 7 at `&C000` is hidden while a far call (config C6) is active.
 - The fill module file (`fill.bin`) must stay within `&600` bytes; it rides in blank screen pixels of the window page.
 - ArcElite source only: hull axis maps and convexity flags in `tools/ship128.py` are plausible, not proven for every hull (`AXIS_OVERRIDE`). The stock source has no axis map (the blueprints are already in the engine's axes); its convexity is measured.

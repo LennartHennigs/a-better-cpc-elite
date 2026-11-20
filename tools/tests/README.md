@@ -57,7 +57,7 @@ cd work/xray                      # the scripts use relative paths (output/, dis
 
 ## 128K tests (branch `elite128`)
 
-Run from `work/xray` with absolute script paths (in this worktree `work/xray` is a symlink to the main checkout). They need `build/elite128.dsk` copied to `work/xray/disk/elite128.dsk` (or `DISK128=...`); `python3 -I tools/tests/run_all.py --emu128` builds the disk and runs `packs`, `sellall`, `escdigit` and `filemenu` (the ones with an `ALL OK` line); the rest are screenshots and probes, run by hand. Flight tests start from `output/flight128.sna` (`test_flight128.py 3`), launch and docking tests from `output/docked128.sna` (`snap_docked128.py`; regenerate it after any code change).
+Run from `work/xray` with absolute script paths (in this worktree `work/xray` is a symlink to the main checkout). They need `build/elite128.dsk` copied to `work/xray/disk/elite128.dsk` (or `DISK128=...`); `python3 -I tools/tests/run_all.py --emu128` builds the disk and runs `packs`, `sellall`, `escdigit`, `filemenu` and `music` (the ones with an `ALL OK` line); the rest are screenshots and probes, run by hand. Flight tests start from `output/flight128.sna` (`test_flight128.py 3`), launch and docking tests from `output/docked128.sna` (`snap_docked128.py`; regenerate it after any code change).
 
 | Test | Checks |
 |---|---|
@@ -67,5 +67,6 @@ Run from `work/xray` with absolute script paths (in this worktree `work/xray` is
 | `test_launch128`, `test_mission128`, `test_packs128` | flight image copied from bank 5, mission overlays from RAM, the random ship pack per launch |
 | `test_titleships128`, `test_viewer128` | the title ship selector, `RUN"SHOWSHPS` |
 | `test_sellall128`, `test_escdigit128`, `test_killcount128`, `test_sights128`, `test_filemenu128` | A key of the sell menu, Esc at the second digit, kill count on the commander page, laser sights, catalogue/save/load |
+| `test_music128` | the title music: PSG registers change on the title, stop after it, the bank 7 slot is `NOTMUSIC.BIN` again |
 
 Tips: stop at `handleEntitys` (`&5066`) and restore the registers when injecting calls; `run` reports `time_limit`, not a breakpoint stop, so count hits with `breakpoint_list`; hold keys 1.2 to 1.5 s. More in `docs/_build.md` ("Tests and the emulator").
