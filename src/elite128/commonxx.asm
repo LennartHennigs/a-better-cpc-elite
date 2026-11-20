@@ -7495,7 +7495,7 @@ curCfg:
     db 0xC1                             ; RAM configuration the CPU draws with (C1: screen A = bank 1 at &4000, C3: screen B = bank 3)
 hullDummy:
     ds 8
-hullConstrictorBP equ 0x9ECD        ; the Constrictor blueprint inside flight image C (the ASSERT in missions_hull.asm checks it)
+hullConstrictorBP equ 0x9ED4        ; the Constrictor blueprint inside flight image C (the ASSERT in missions_hull.asm checks it)
 hullDraw:
     call hullFindType                   ; A = ship type 0..18 from the blueprint pointer in IY, carry if none
     jp c,todo_parseEdges
@@ -8039,7 +8039,7 @@ hullGlueEnd:
 mxBankTable:
     ASSERT mxBankTable == 0x9C80, "LARGEAXX calls the bank routines at 0x9C80 / 0x9C83 (missions_docked_defs.asm)"
     jp mxBankOverlayImpl                ; &9C80: A = "C"/"P"/"T"/"R", DE = destination -> the overlay
-    jp mxBankFlightImpl                 ; &9C83: A = "0"/"C"/"P"/"T"/"S"/"R" -> flight image at mxFlightBase
+    jp mxBankFlightImpl                 ; &9C83: A = slot number 0-12 -> flight image at mxFlightBase
 mxBankFlight equ mxBankTable + 3
 bankLargeaxx:                           ; LARGEAXX (4608 bytes) from bank 4 offset 0x900 to &0840; no stack use while the bank is mapped
     di
@@ -8066,12 +8066,12 @@ mxBankOverlayImpl:                      ; DE = destination (mxOverlayBase, a LAR
     mapMain
     ei
     ret
-mxBankFlightImpl:
-    ld hl,mxLettersFlight
+mxBankFlightImpl:                       ; A = slot number (missions_flight.asm: 0 default, 1-7 ship packs, 8-12 C P T S R)
+    ld b,a
+    inc b
+    ld hl,0x6000                        ; the images follow INDICATO in the file that bankInit loads into bank 5 at &5000: slot 0 is at &6000 (tools/build_dsk128.py)
     ld de,0x0260
-    call mxBankSlot
-    ld bc,0x2000                        ; the images follow INDICATO in the file that bankInit loads into bank 5 at &5000: slot 0 is at &6000 (tools/build_dsk128.py)
-    add hl,bc
+    call mxBankAdd
     ld de,0x9D9E
     di
     ld bc,0x7FC5
@@ -8097,8 +8097,6 @@ mxBankAdd:
     jr mxBankAdd
 mxLettersOverlay:
     db "CPTR"
-mxLettersFlight:
-    db "0CPTSR"
 ; --- page flip (128K build), resident part: the flip body dbFlip6 is in bank 6 (fill.asm) ---
 ; dbShown: config value (C1 or C3) of the bank the CRTC displays. In flight the game draws into the other one (curCfg), dbFlip6 swaps them after each transferBuffertoScreen.
 dbShown:
@@ -8202,8 +8200,9 @@ hftNext:
     inc hl
     inc c
     djnz hftLoop
-    ld a,d                              ; ship type 19 is served by flight image C, outside the stock table: its blueprint is the only one in page hullConstrictorBP >> 8
-    cp hullConstrictorBP >> 8
+    ld hl,hullConstrictorBP             ; ship type 19 is served by flight image C, outside the stock table: exactly its blueprint (the ship pack images have other hulls in the same page)
+    and a
+    sbc hl,de
     scf
     ret nz
     ld c,19

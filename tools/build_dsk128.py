@@ -28,7 +28,7 @@ if OUT.resolve() == BASE.resolve() or dskx.is_original(OUT):      # CLAUDE.md: n
     sys.exit(f"{OUT}: refusing to write a disk into the project root or disks/ (the originals live there); use build/ or work/")
 SJASM = Path.home() / ".local/bin/sjasmplus"
 SRC = ROOT / "src/elite128"
-FLIGHT_TAGS = "0CPTSR"      # flight image letters in slot order (mxLettersFlight in commonxx.asm)
+FLIGHT_TAGS = "01234567CPTSR"      # flight image tags in slot order (the FLS_x numbers of missions_flight.asm)
 FILES = {"LARGEAXX": [], "COMMONXX": [], "COMMON2X": [], "MUSIQUEX": []}      # flags live in src/elite128/config.inc
 STAGE_FILL, STAGE_DATA = 0x0800, 0x1000          # offsets in COMMON2X (&C800, &D000); the mission overlays and images use &D800-&FDFF
 

@@ -10,9 +10,9 @@ mxLaserHook equ 0x9DA7   ; generated: label of commonxx
 mxLaunchEntry equ 0x9DBA   ; generated: label of commonxx
 mxSun equ 0x9DB0   ; generated: label of commonxx
 curCfg equ 0x9854   ; generated: label of commonxx
-dbCopy equ 0x9D68   ; generated: label of commonxx
-dbOn equ 0x9D01   ; generated: label of commonxx
-dbShown equ 0x9CFD   ; generated: label of commonxx
+dbCopy equ 0x9D60   ; generated: label of commonxx
+dbOn equ 0x9CF9   ; generated: label of commonxx
+dbShown equ 0x9CF5   ; generated: label of commonxx
 ActDeponEnergy equ 0x881C   ; generated: label of commonxx
 AddDEtoKillScore equ 0x39A5   ; generated: label of commonxx
 Altitude equ 0x1C11   ; generated: label of commonxx

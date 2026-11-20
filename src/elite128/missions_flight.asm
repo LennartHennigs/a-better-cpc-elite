@@ -5,21 +5,27 @@
 mxTrCount equ 0x3905                ; Trumble count, 16 bit, kept at 0x7FFF or less (save bytes the stock game never uses; docs/_savegame.md)
 mxStateByte equ 0x38FD              ; missionState (see missions_docked.asm): bits 0-1 Constrictor, bits 2-3 Thargoid plans, bits 4-6 hint stage, bit 7 Trumbles
 mxMissionByte2 equ 0x38FE            ; first mission: jumps to wait; second mission (after the first is paid): state in bits 0-1, asteroids to go in bits 2-7
+; Flight image ids = slot numbers in bank 5 (mxBankFlightImpl): 0 default, 1-7 the ship packs, then the mission images
+FLS_C equ 8
+FLS_P equ 9
+FLS_T equ 10
+FLS_S equ 11
+FLS_R equ 12
 mxTypeConstrictor equ 19            ; ship type after the 19 stock ships (0-18)
 
     IFDEF FL_C
-    DEFINE FLID "C"
+    DEFINE FLID FLS_C
     DEFINE HAS_SHIP
     DEFINE HAS_SPAWN
     DEFINE HAS_KILL
     DEFINE HAS_LASER
     ENDIF
     IFDEF FL_P
-    DEFINE FLID "P"
+    DEFINE FLID FLS_P
     DEFINE HAS_SPAWN
     ENDIF
     IFDEF FL_T
-    DEFINE FLID "T"
+    DEFINE FLID FLS_T
     DEFINE HAS_SPAWN
     DEFINE HAS_ARRIVE
     DEFINE HAS_SUN
@@ -27,18 +33,49 @@ mxTypeConstrictor equ 19            ; ship type after the 19 stock ships (0-18)
     DEFINE HAS_DRAW
     ENDIF
     IFDEF FL_S
-    DEFINE FLID "S"
+    DEFINE FLID FLS_S
     DEFINE HAS_SPAWN
     DEFINE HAS_KILL
     DEFINE HAS_ARRIVE
     ENDIF
     IFDEF FL_R
-    DEFINE FLID "R"
+    DEFINE FLID FLS_R
     DEFINE HAS_SPAWN
     DEFINE HAS_KILL
     ENDIF
+    IFDEF FL_1
+    DEFINE FLID 1
+    DEFINE FL_PACK
+    ENDIF
+    IFDEF FL_2
+    DEFINE FLID 2
+    DEFINE FL_PACK
+    ENDIF
+    IFDEF FL_3
+    DEFINE FLID 3
+    DEFINE FL_PACK
+    ENDIF
+    IFDEF FL_4
+    DEFINE FLID 4
+    DEFINE FL_PACK
+    ENDIF
+    IFDEF FL_5
+    DEFINE FLID 5
+    DEFINE FL_PACK
+    ENDIF
+    IFDEF FL_6
+    DEFINE FLID 6
+    DEFINE FL_PACK
+    ENDIF
+    IFDEF FL_7
+    DEFINE FLID 7
+    DEFINE FL_PACK
+    ENDIF
+    IFDEF FL_PACK
+    DEFINE HAS_SHIP
+    ENDIF
     IFNDEF FLID
-    DEFINE FLID "0"
+    DEFINE FLID 0
     ENDIF
 
 mxFlightBase:
@@ -63,7 +100,7 @@ mxInvHook:                          ; replaces `call prQuantityofGoodinCargohold
 mxFlightDraw:                       ; replaces the `call transferBuffertoScreen` in Spaceflight (draws into the off-screen bitmap, then jumps there)
     jp mxFlightDrawImpl
 mxFlightId:
-    db FLID                         ; "0" default, "C", "P": which image is in RAM (the launch hook compares it)
+    db FLID                         ; slot number of the image in RAM (0 default, 1-7 ship packs, FLS_x mission images): the launch hook compares it
 
 ; Launch hook: replaces the first call of launchSequence (`call loadIndicator`). Makes sure the flight image the state asks for is in this tail, then carries on with
 ; loadIndicator. "C" while the Constrictor hunt is on (state 1 or 3), "P" while the plans are aboard, "S" while the stolen-ship mission waits or hunts, "R" while Ceerdi is being cleared, else "T" while Trumbles are aboard, else "0" (this default image). A mission in progress wins over the Trumbles, so its hooks keep working.
@@ -74,17 +111,17 @@ mxLaunchEntry:
     and 0x03
     jr z,mxFlightNone                 ; Constrictor not offered
     cp 0x02
-    ld a,"C"
+    ld a,FLS_C
     jr nz,mxFlightGo                  ; hunting or killed
     ld a,b
     and 0x0C
     cp 0x08
-    ld a,"P"
+    ld a,FLS_P
     jr z,mxFlightGo                   ; plans aboard
     ld a,b
     and 0x5C
     cp 0x1C                           ; plans finished and the asteroid stage is 1 (waiting: the image counts the jumps) or 3 (clearing Ceerdi); bit 5 tells them apart
-    ld a,"S"
+    ld a,FLS_S
     jr z,mxFlightGo
     ld a,b
     and 0x7C
@@ -93,15 +130,18 @@ mxLaunchEntry:
     ld a,(mxMissionByte2)
     and 0x03
     cp 0x01
-    ld a,"R"
+    ld a,FLS_R
     jr z,mxFlightGo
 mxFlightNone:
-    ld hl,(mxTrCount)                 ; no mission image wanted: the Trumbles image while they are aboard (a mission in progress must keep its own hooks), else the default
+    ld hl,(mxTrCount)                 ; no mission image wanted: the Trumbles image while they are aboard (a mission in progress must keep its own hooks)
     ld a,h
     or l
-    ld a,"T"
+    ld a,FLS_T
     jr nz,mxFlightGo
-    ld a,"0"
+    ld a,(jumpCounter)                ; else a ship pack "0" (none) to "7" for this visit, as in main (docs/_ship_packs.md): jumpCounter changes at every arrival and the system byte
+    ld hl,presentSystemSeed           ; with the system, so a relaunch from the same station asks for the same pack
+    add a,(hl)
+    and 0x07
 mxFlightGo:
     ld hl,mxFlightId
     cp (hl)
@@ -172,6 +212,9 @@ mxRechargeImpl:
     ENDIF
     IFDEF FL_R
     INCLUDE "missions_flight_r.asm"
+    ENDIF
+    IFDEF FL_PACK
+    INCLUDE "missions_flight_k.asm"
     ENDIF
 mxFlightEnd:
     ASSERT mxFlightEnd <= 0x9FFE              ; with SP at &A000 an interrupt pushes at &9FFE-&9FFF (docs/_architecture.md): no image byte may sit there
