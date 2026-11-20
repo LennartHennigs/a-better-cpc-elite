@@ -78,20 +78,20 @@ Requirements: Python 3, [sjasmplus](https://github.com/z00m128/sjasmplus), iDSK 
 ```bash
 bash tools/check_src.sh              # stock English source == original bytes, -DENHANCED differs only where documented (also: de, fr)
 make original                        # the original game, unchanged, on a bootable disk: build/elite_original.dsk (LOC=de or LOC=fr for German / French)
-make expanded                        # everything on one disk: build/elite_expanded.dsk = enhancements, all missions and ship packs, CHEAT, EDITSAVE, LISTSAVE, SHOWSHPS (English only for now)
+make expanded                        # everything on one disk: build/elite64.dsk = enhancements, all missions and ship packs, CHEAT, EDITSAVE, LISTSAVE, SHOWSHPS (English only for now)
 ```
 
-Boot the disk and `RUN"ELITE`. `RUN"SHOWSHPS` starts the ship viewer. `RUN"TRAINER.BAS` starts the trainer (ours, which replaces Firebird's `CHEAT.BAS` on the mission and expanded disks) (it has prompts for kills, jumps and mission presets, so the added missions can be reached without hours of play); `RUN"EDITSAVE.BAS` edits a save; `RUN"LISTSAVE.BAS` (on the mission, expanded and German saves disks) lists the saves on a disk with build, kills and cash. On the host, `tools/saveedit.py` does the same and can convert a save between the three builds.
+Boot the disk with `RUN"ELITE` (the expanded disk: `RUN"ELITE64`). `RUN"SHOWSHPS` starts the ship viewer. `RUN"TRAINER.BAS` starts the trainer (ours, which replaces Firebird's `CHEAT.BAS` on the mission and expanded disks) (it has prompts for kills, jumps and mission presets, so the added missions can be reached without hours of play); `RUN"EDITSAVE.BAS` edits a save; `RUN"LISTSAVE.BAS` (on the mission, expanded and German saves disks) lists the saves on a disk with build, kills and cash. On the host, `tools/saveedit.py` does the same and can convert a save between the three builds.
 
 ## Build switches
 
 The easy way is `make`:
 
 ```bash
-# Bootable disks (boot with RUN"ELITE)
+# Bootable disks (boot with RUN"ELITE; the expanded disk with RUN"ELITE64)
 make original       # the original game, unchanged: the stock bytes on a copy of the game disk -> build/elite_original.dsk (LOC=de or LOC=fr for German / French)
 make missions       # the improvements plus the added missions -> build/elite_missions.dsk
-make expanded       # everything: improvements, missions, ship packs, trainer, save tools, ship viewer -> build/elite_expanded.dsk (runs tools/build_showship.sh and tools/build_cheat.sh in the right order)
+make expanded       # everything: improvements, missions, ship packs, trainer, save tools, ship viewer -> build/elite64.dsk (runs tools/build_showship.sh and tools/build_cheat.sh in the right order)
 
 # The four assembled code files only (raw .bin, no disk, no AMSDOS headers): for comparing bytes or building your own disk
 make stock          # the original bytes, no switches -> build/stock/<en,de,fr>/   (LOC=de or LOC=fr for German / French)

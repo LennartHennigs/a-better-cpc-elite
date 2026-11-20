@@ -10,7 +10,7 @@ make test-quick           # the host tests on the disks already in build/ (secon
 make test-emu             # cpcxray tests with pass/fail (~4 min: run it in the background, wait for the completion notice); needs `work/xray/output/firebird_in_flight.sna`
 bash tools/check_src.sh [de|fr]   # assemble src/elite* and compare with the original bytes (the byte-exact proof)
 make original [LOC=de|fr] # stock bytes on a bootable disk -> build/elite_original*.dsk; make stock = raw .bin only -> build/stock/ (LOC works; so for make enhanced)
-make expanded             # everything on one disk -> build/elite_expanded.dsk (~50 s); make missions -> build/elite_missions.dsk (both English only)
+make expanded             # everything on one disk -> build/elite64.dsk (~50 s); make missions -> build/elite_missions.dsk (both English only)
 ```
 
 `tools/README.md` indexes the tools (run Python ones with `python3 -I`), `tools/tests/README.md` the tests: add a row when you add a script or test.

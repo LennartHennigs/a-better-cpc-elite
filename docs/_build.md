@@ -46,7 +46,7 @@ What each change does in the game: `_my_changes.md`.
 
 ```bash
 make original         # tools/build_original.sh: python3 -I tools/build_dsk.py --stock -> build/elite_original.dsk (LOC=de|fr: build/elite_original_de.dsk, _fr.dsk)
-make expanded         # tools/build_expanded.sh: build_showship.sh, then build_cheat.sh (which runs build_dsk.py --missions) -> build/elite_expanded.dsk; LOC=de|fr stops with a message (not ported yet)
+make expanded         # tools/build_expanded.sh: build_showship.sh, then build_cheat.sh (which runs build_dsk.py --missions) -> build/elite64.dsk; LOC=de|fr stops with a message (not ported yet)
 make stock            # build/stock/{en,de,fr}/      original bytes   (LOC=de or LOC=fr)
 make enhanced         # build/enhanced/{...}/        -DENHANCED, plus -DTITLESEL
 make missions         # python3 -I tools/build_dsk.py --missions build/elite_missions.dsk

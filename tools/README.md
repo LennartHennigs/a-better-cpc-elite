@@ -10,7 +10,7 @@ Helpers for building, checking and analysing the project. Each script has a head
 | `build_original.sh`, `build_expanded.sh` | the two `make` disks, written to `build/` |
 | `build_cheat.sh`, `build_showship.sh` | tokenise the BASIC programs of `src/cheats/` and build the trainer and viewer disks (in `work/`) |
 | `build_readme.md` | template for `build/README.md` |
-| `dskx.py`, `add_files.py`, `hide_files.py` | list/extract, add files to, and hide files on DSK images (never write to `disks/`) |
+| `dskx.py`, `add_files.py`, `hide_files.py` | list/extract, add, delete and rename (`OLD.EXT>NEW`, header included) files on DSK images, hide files (never write to `disks/`) |
 | `cheat_tokenise.py`, `bastok.py` | tokenise CPC BASIC with the CPC's own BASIC (cpcxray), detokenise to text |
 | `size_report.py` | bytes used in the free tails against the stock files |
 | `rvmstate.py` | read an RVM `.rvmstate` file: registers, the 64 KB RAM image, the ship slots, and `--sna` to convert it to a snapshot cpcxray loads (`--curcfg` for a 128K game state; `docs/_build.md` "RVM state files") |

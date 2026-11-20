@@ -1,6 +1,6 @@
 # Assemble the four code files. Needs sjasmplus (scripts/install-tools.sh puts it in ~/.local/bin).
 #   make original   the original game on a disk (stock bytes)                     -> build/elite_original.dsk
-#   make expanded   everything: enhancements, missions, ship packs, trainers, viewer -> build/elite_expanded.dsk (English only for now)
+#   make expanded   everything: enhancements, missions, ship packs, trainers, viewer -> build/elite64.dsk (English only for now)
 #   make stock      original bytes (CPC+ keyboard fix included in en/fr)           -> build/stock/
 #   make enhanced   star occlusion, Escape in the menus, title-screen ship choice  -> build/enhanced/
 #   make missions   enhanced plus the added missions (English only): bootable disk -> build/elite_missions.dsk (no trainers or viewer; `expanded` is the full build)
