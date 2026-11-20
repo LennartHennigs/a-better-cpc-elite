@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""Ship packs on the 128K build: launch from the docked snapshot with no mission and each pack number k = (jumpCounter + system seed byte) & 7, and check that image k is the one in the tail
-(flight id &9DB9 = k, the vector table is the pack's) and that the game then runs (flight pc, screenshot output/packs128_<k>.png).
+"""Ship packs on the 128K build: the pack is drawn at random at every launch (mxFlightNone: getRandomNumber & 7). This test launches from the docked snapshot with no mission N times
+(the random seed is poked differently each time), checks that the id in the tail (&9DB9) is a pack 0-7 whose vector table is in place and that the game runs,
+and that more than one pack turns up. Screenshots output/packs128_<n>.png; with SAVE=1 a flight snapshot output/pack128_<id>.sna per pack seen.
 
 Needs output/docked128.sna (tools/tests/snap_docked128.py, rebuild it after every code change) and disk/elite128.dsk. usage (from work/xray): <cpcxray python> -I ../../tools/tests/test_packs128.py [K ...]
 """
@@ -14,7 +15,8 @@ from mcp.client.stdio import stdio_client
 
 JUMP_COUNTER, SYSTEM_SEED, MISSION, MISSION2, TRUMBLES = 0x38DA, 0x390D, 0x38FD, 0x38FE, 0x3905
 FLIGHT_ID = 0x9DB9
-PACKS = [int(a) for a in sys.argv[1:]] or list(range(8))
+RANDOM_SEED = 0xFA56      # storedRandomSeed (common2x.asm, bank 7 at &C000+)
+N = int(sys.argv[1]) if len(sys.argv) > 1 else 10      # launches
 
 
 async def main():
@@ -33,28 +35,31 @@ async def main():
             async def rd(a, n=1):
                 return bytes.fromhex((await c("memory_read", {"address": a, "length": n}))["hex"])
 
-            ok = True
-            for k in PACKS:
+            ok, seen = True, []
+            for n in range(N):
                 await c("disk_insert", {"drive": "A", "path": os.environ.get("DISK128", "disk/elite128.dsk")})
                 await c("sna_load", {"path": "output/docked128.sna"})
                 await c("run", {"max_us": 1_000_000, "timeout_s": 60})
+                await c("memory_write", {"address": RANDOM_SEED, "data": "%02X %02X" % ((n * 37 + 11) & 255, (n * 91 + 5) & 255)})      # a different random state at the launch (the generator only moves when called)
                 await c("memory_write", {"address": MISSION, "data": "00"})
                 await c("memory_write", {"address": MISSION2, "data": "00"})
                 await c("memory_write", {"address": TRUMBLES, "data": "00 00"})
-                await c("memory_write", {"address": JUMP_COUNTER, "data": "%02X" % k})
-                await c("memory_write", {"address": SYSTEM_SEED, "data": "00"})
                 await c("key_press", {"key": "f1"})
                 await c("run", {"max_us": 6_000_000, "timeout_s": 120})
                 await c("key_release", {"key": "f1"})
                 await c("run", {"max_us": 8_000_000, "timeout_s": 120})
                 fid = (await rd(FLIGHT_ID))[0]
                 reg = await c("registers_get")
-                await c("screen_image", {"path": f"output/packs128_{k}.png"})
-                if os.environ.get("SAVE"):      # a flight snapshot with pack k loaded, for test_hulls128.py (SNA=output/pack128_k.sna, types 16 17 9 10 ...)
-                    await c("sna_save", {"path": f"output/pack128_{k}.sna"})
-                good = fid == k
+                tail = await rd(0x9D9E, 3)
+                await c("screen_image", {"path": f"output/packs128_{n}.png"})
+                if os.environ.get("SAVE"):
+                    await c("sna_save", {"path": f"output/pack128_{fid}.sna"})
+                good = fid <= 7 and tail[0] == 0xC3
                 ok &= good
-                print(f"{'ok  ' if good else 'FAIL'} pack {k}: flight id {fid}, tail {(await rd(0x9D9E, 6)).hex(' ')}, pc={reg['pc']:04X}")
+                seen.append(fid)
+                print(f"{'ok  ' if good else 'FAIL'} launch {n}: pack {fid}, tail {tail.hex(' ')}, pc={reg['pc']:04X}", flush=True)
+            print("packs seen:", sorted(set(seen)))
+            ok &= len(set(seen)) > 1
             print("ALL OK" if ok else "FAILURES")
 
 

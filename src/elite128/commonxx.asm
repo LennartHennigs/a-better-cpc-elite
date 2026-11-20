@@ -7495,7 +7495,7 @@ curCfg:
     db 0xC1                             ; RAM configuration the CPU draws with (C1: screen A = bank 1 at &4000, C3: screen B = bank 3)
 hullDummy:
     ds 8
-hullConstrictorBP equ 0x9ED4        ; the Constrictor blueprint inside flight image C (the ASSERT in missions_hull.asm checks it)
+hullConstrictorBP equ 0x9ED0        ; the Constrictor blueprint inside flight image C (the ASSERT in missions_hull.asm checks it)
 hullDraw:
     call hullFindType                   ; A = ship type 0..18 from the blueprint pointer in IY, carry if none
     jp c,todo_parseEdges

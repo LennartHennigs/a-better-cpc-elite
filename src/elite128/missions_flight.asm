@@ -138,10 +138,8 @@ mxFlightNone:
     or l
     ld a,FLS_T
     jr nz,mxFlightGo
-    ld a,(jumpCounter)                ; else a ship pack "0" (none) to "7" for this visit, as in main (docs/_ship_packs.md): jumpCounter changes at every arrival and the system byte
-    ld hl,presentSystemSeed           ; with the system, so a relaunch from the same station asks for the same pack
-    add a,(hl)
-    and 0x07
+    call getRandomNumber              ; else a ship pack "0" (none) to "7", drawn at every launch (main keeps one pack per visit because its images come from the disk; here a change is a bank copy,
+    and 0x07                          ; and the same pack again copies nothing)
 mxFlightGo:
     ld hl,mxFlightId
     cp (hl)
