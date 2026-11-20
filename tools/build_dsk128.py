@@ -52,6 +52,8 @@ def main():
     for f in ("fill.bin", "fill128.bin", "fill128_late.bin", "tt.bin"):
         if not (work / f).exists():
             sys.exit(f"missing {work / f}: run bash tools/check_src128.sh first")
+    hulls = (work / "hulls_source.txt").read_text().strip() if (work / "hulls_source.txt").exists() else "unknown"
+    print(f"hull source: {hulls} (HULLS=stock|arcelite, tools/ship128.py)")
     fill, data = (work / "fill.bin").read_bytes(), (work / "fill128.bin").read_bytes()
     assert len(data) <= 0x540, f"fill128.bin ({len(data)} bytes) runs into the title cache module at 0x6540"
     data = data.ljust(0x540, b"\0") + (work / "tt.bin").read_bytes()      # fill_tt.asm is assembled for 0x6540: its bytes follow the records

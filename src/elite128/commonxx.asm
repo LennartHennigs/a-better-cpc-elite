@@ -7253,9 +7253,15 @@ tblKeyFlagOffsetMask:
 ; Vertex: x, y, z magnitudes, then sign bits (7-5) with visibility distance (4-0), then four face numbers as nybbles.
 ; Edge: visibility distance, start vertex, end vertex, two face numbers as nybbles. Face: normal x, y, z magnitudes, then sign bits (7-5) with visibility distance (4-0).
 ; Blueprint: Asp Mk II - 19 vertices, 28 edges, 12 faces, max speed 40, max energy 150, bounty 200
-; 128K build: the blueprints come from tools/ship128.py (ArcElite hulls: vertices only, edges and faces empty, stock headers; the alloy plate keeps its four stock vertices).
+; 128K build: the blueprints come from tools/ship128.py, from the stock blueprints (HULLS=stock, the default) or from ArcElite's hulls (HULLS=arcelite): vertices only,
+; edges and faces empty, stock headers; the alloy plate keeps its four stock vertices.
 ; work/elite128/ is generated and not in the repository: run `python3 -I tools/ship128.py` first (tools/check_src128.sh does).
+; The blueprints fill a slot of a fixed size whichever source made them, so every address after it is the same for both and switching sources needs no sync_equs.
+HULL_REGION_SIZE equ 1781           ; the size of the ArcElite blueprints (ship128_report.txt: "blueprints replaced")
+hullRegion:
     INCLUDE "../../work/elite128/shipdata128.asm"
+    ASSERT $ - hullRegion <= HULL_REGION_SIZE, "the hull blueprints do not fit their slot: fewer vertices (the designs in tools/hullfill.py cost 6 bytes each), or a larger HULL_REGION_SIZE (then every address after it moves: run tools/sync_equs.py)"
+    DS HULL_REGION_SIZE - ($ - hullRegion)
     ASSERT $ <= hullConstrictorBP & 0xFF00, "hullFindType takes every blueprint in the page of hullConstrictorBP for the Constrictor"
 
 ; Filled hulls (128K build, docs: src/elite128/README.md). todo_parseEdges is replaced by hullDraw: hulls with a fill record are drawn by the module in RAM bank 6

@@ -1,10 +1,17 @@
 #!/usr/bin/env python3
-"""Turn the prototype's ArcElite hulls into CPC engine blueprints plus fill data for the 128K build (plan: Phase 1, step 5).
+"""Blueprints plus fill data for the 128K build: the filled hulls, from one of two sources (--source, or the HULLS environment variable; default stock).
 
-usage: python3 -I tools/ship128.py [--report]
+usage: python3 -I tools/ship128.py [--source stock|arcelite]
+  stock     the triangles are built from the CPC's own blueprints (tools/hullfill.py): vertices, edges and face normals of the stock game, plus a few details of our
+            own; no third-party data. The Constrictor is based on Fessor's hull (src/elite/missions_hull.asm): his header and vertices, the triangles built from his edges
+            and faces.
+  arcelite  ArcElite's hulls (Ian Bell's ship table, third party, work/arcelite/) turned into CPC blueprints: the original look of this build. That data and everything
+            generated from it stay out of git (NOTICE_128K.md).
+Both fill the same fixed slot of the resident area (HULL_REGION_SIZE in src/elite128/commonxx.asm), so every address stays the same and switching needs no sync_equs.
+The text below describes the ArcElite path (the stock path is the same pipeline with tools/hullfill.py in place of the axis fit).
 
 Inputs (all under work/, third party data never enters the repo):
-  work/stock_mem_image.bin       the stock game in a 64K image (blueprints and the ship table `shipGFXdataTable` at &1B78)
+  src/elite/commonxx.asm         assembled here (work/elite128/c.bin, c.sym): the blueprints and the ship table `shipGFXdataTable` at &1B78
   work/elite128/c.sym            symbol file of src/elite/commonxx.asm (made here with sjasmplus if missing)
   work/arcelite/x_ships/B5052480.C   ArcElite's tables, read through tools/proto_fill/gen.py (`parse`)
 Outputs in work/elite128/:
@@ -16,10 +23,11 @@ Outputs in work/elite128/:
   fill128.bin       bank 6 payload: byte 20 (ship types), 20 words (offset of the type's record from the start of the file, 0 = none), then records
                     ntri, flags (bit 0: convex), ntri x (v0, v1, v2, pattern<<5 | group). The records of the alloy plate and the Constrictor do not fit in front of
                     the title cache module (0x540): they are in fill128_late.bin, which tools/build_dsk128.py places at LATE (after that module)
-  hull_constrictor.asm  the mission hull (ship type 19) for src/elite128/missions_hull.asm: Fessor's header, the ArcElite CONSTRICTOR vertices fitted to
-                    his hull (his own vertices are only used to pick the axis map and the scale)
+  hull_constrictor.asm  the mission hull (ship type 19) for src/elite128/missions_hull.asm, based on Fessor's hull: his header, with vertices only: his own vertices
+                    (stock) or the ArcElite CONSTRICTOR vertices fitted to his hull (arcelite; his own vertices only pick the axis map and the scale)
   ship128_points.json  the quantised vertices per ship type (for tests)
   ship128_report.txt  per hull: chosen axis map, quantisation error, vertex/triangle/group counts
+  hulls_source.txt  which source (stock or arcelite) made the files in this folder
 
 The axis map (permutation and signs, 48 candidates) is chosen per hull by a scale-free nearest-point match between the stock vertices and the ArcElite
 vertices; ArcElite and the CPC do not agree on the nose direction. The match is only a guess: look at every hull in the engine before relying on it,
@@ -27,7 +35,9 @@ and override a wrong pick in AXIS_OVERRIDE.
 """
 import importlib.util
 import itertools
+import os
 import subprocess
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -35,6 +45,12 @@ OUT = ROOT / "work/elite128"
 spec = importlib.util.spec_from_file_location("gen", ROOT / "tools/proto_fill/gen.py")
 gen = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(gen)
+spec = importlib.util.spec_from_file_location("hullfill", ROOT / "tools/hullfill.py")
+hullfill = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(hullfill)
+SOURCE = (sys.argv[sys.argv.index("--source") + 1] if "--source" in sys.argv else os.environ.get("HULLS", "stock")).lower()
+if SOURCE not in ("stock", "arcelite"):
+    sys.exit(f"ship128.py: unknown hull source {SOURCE!r} (stock or arcelite)")
 
 # stock blueprint label -> ArcElite hull ("ALLOY": no ArcElite hull, see alloy()). Stubs (RockHermit, SingleTrader, BigTrader) share the geometry of the blueprint
 # that follows them and are patched from it.
@@ -56,7 +72,9 @@ PATTERNS = [p for p in gen.PATTERN_ORDER if p != 0]      # brightest first; patt
 
 
 def stock_image():
-    return (ROOT / "work/stock_mem_image.bin").read_bytes()
+    """the stock game's COMMONXX in a 64K image (index = address): assembled from src/elite, so nothing under work/ but the generated files is needed"""
+    symbols()
+    return bytes(0x1A40) + (OUT / "c.bin").read_bytes()
 
 
 def symbols():
@@ -187,7 +205,22 @@ def fit(stock, pts_a, facets, label):
     return q, tris, ngroups, (perm, sg), err, k
 
 
-def record(label, tris):
+def stock_fit(m, a, label):
+    """stock source: the blueprint's own vertices (already the engine's axes: no mapping), triangles with their dither patterns from tools/hullfill.py"""
+    b = hullfill.build_stock(m, a, label)
+    q, tris = b["verts"], b["tris"]
+    assert all(abs(c) <= 255 for p in q for c in p) and len(q) <= 28, (label, len(q))
+    ngroups = len({t[4] for t in tris})
+    assert ngroups <= 31 and len(tris) < 256, (label, ngroups, len(tris))
+    if b["stats"]["convex"]:
+        CONVEX.add(label)
+    return q, tris, ngroups, ((0, 1, 2), (1, 1, 1)), 0.0, 1.0
+
+
+def record(label, tris, direct=False):
+    """direct: the triangles carry their dither pattern (tools/hullfill.py); otherwise their colour, ranked into the patterns"""
+    if direct:
+        return bytes([len(tris), 1 if label in CONVEX else 0]) + b"".join(bytes([t[0], t[1], t[2], t[3] << 5 | t[4]]) for t in tris)
     cols = sorted({t[3] for t in tris}, reverse=True)
     pat = {c: PATTERNS[i % len(PATTERNS)] for i, c in enumerate(cols)}
     return bytes([len(tris), 1 if label in CONVEX else 0]) + b"".join(bytes([t[0], t[1], t[2], pat[t[3]] << 5 | t[4]]) for t in tris)
@@ -217,12 +250,25 @@ def fessor_constrictor():
 
 
 def constrictor():
-    """-> (asm text of the blueprint, vertices, triangles)."""
+    """-> (asm text of the blueprint, vertices, triangles, report line). Based on Fessor's Constrictor hull in src/elite/missions_hull.asm (used with his permission):
+    his header in both sources; the vertices and triangles from ArcElite's CONSTRICTOR (arcelite) or from his own vertices, edges and faces (stock)."""
     head, stock = fessor_constrictor()
-    pts_a, facets = gen.parse("CONSTRICTOR")
-    ctr = [min(p[i] for p in pts_a) + max(p[i] for p in pts_a) for i in range(3)]       # this hull is not centred on its origin (x runs -52..17): centre the bounding box (doubled units)
-    pts_a = [[2 * p[i] - ctr[i] for i in range(3)] for p in pts_a]
-    q, tris, ngroups, (perm, sg), err, k = fit(stock, pts_a, facets, "Constrictor")
+    if SOURCE == "arcelite":
+        pts_a, facets = gen.parse("CONSTRICTOR")
+        ctr = [min(p[i] for p in pts_a) + max(p[i] for p in pts_a) for i in range(3)]       # this hull is not centred on its origin (x runs -52..17): centre the bounding box (doubled units)
+        pts_a = [[2 * p[i] - ctr[i] for i in range(3)] for p in pts_a]
+        q, tris, ngroups, (perm, sg), err, k = fit(stock, pts_a, facets, "Constrictor")
+        title = "based on Fessor's Constrictor hull: his header with the ArcElite CONSTRICTOR vertices (third party data): do not commit, see NOTICE_128K.md"
+        note = f"{'shipdatConstrictor':24s} CONSTRICTOR axes {perm} signs {sg}  match error {err:.3f}  scale {k:.3f}  {len(q)} vertices {len(tris)} triangles {ngroups} groups  (Fessor's {len(stock)} vertices as reference)"
+    else:
+        b = hullfill.build(*hullfill.parse_asm_blueprint(FESSOR_HULL, "constrictor"), label="shipdatConstrictor")
+        q, tris = b["verts"], b["tris"]
+        ngroups = len({t[4] for t in tris})
+        assert len(q) <= 28 and ngroups <= 31 and len(tris) < 256, (len(q), ngroups, len(tris))
+        if b["stats"]["convex"]:
+            CONVEX.add("shipdatConstrictor")
+        title = "based on Fessor's Constrictor hull: his header and vertices, the triangles built from his edges and faces (tools/hullfill.py)"
+        note = f"{'shipdatConstrictor':24s} CONSTRICTOR (Fessor's own hull) {len(q)} vertices {len(tris)} triangles {ngroups} groups"
     out = []
     for n, l in enumerate(head):
         code = l.split(";")[0].strip()
@@ -233,11 +279,10 @@ def constrictor():
         out.append(l)
     # header byte 20 is the gun vertex: the line holding "Gun-Vertex"
     out = [f"    db {gun_vertex(q)}   ; Gun-Vertex (the nose)" if "Gun-Vertex" in l else l for l in out]
-    lines = ["; generated by tools/ship128.py: Fessor's Constrictor header with the ArcElite CONSTRICTOR vertices (third party data): do not commit", "shipdatConstrictor:"]
+    lines = [f"; generated by tools/ship128.py: {title}", "shipdatConstrictor:"]
     lines += out + ["constrictorVertices:"]
     lines += ["    db " + ",".join(f"0x{x:02X}" for x in vertex_bytes(p)) for p in q]
     lines += ["constrictorEnd:", ""]
-    note = f"{'shipdatConstrictor':24s} CONSTRICTOR axes {perm} signs {sg}  match error {err:.3f}  scale {k:.3f}  {len(q)} vertices {len(tris)} triangles {ngroups} groups  (Fessor's {len(stock)} vertices as reference)"
     return "\n".join(lines), q, tris, note
 
 
@@ -264,6 +309,8 @@ def main():
             blobs[label] = m[a:end] if end else m[a:a + 23]
             report.append(f"{label:24s} kept (stock bytes)")
             continue
+        elif SOURCE == "stock":
+            q, tris, ngroups, (perm, sg), err, k = stock_fit(m, a, label)
         else:
             q, tris, ngroups, (perm, sg), err, k = fit(stock_points(m, a), *gen.parse(HULL[label]), label)
         hdr = bytearray(m[a:a + 23])
@@ -276,7 +323,7 @@ def main():
         hdr[14:16] = end_off.to_bytes(2, "little")
         hdr[16:18] = end_off.to_bytes(2, "little")
         blobs[label] = bytes(hdr) + vert
-        fill[label] = record(label, tris)
+        fill[label] = record(label, tris, direct=SOURCE == "stock" and label != "shipdatAlloy")
         pts_by[label] = q
         report.append(f"{label:24s} {HULL.get(label) or 'ALLOY':10s} axes {perm} signs {sg}  match error {err:.3f}  scale {k:.3f}  {len(q)} vertices {len(tris)} triangles {ngroups} groups  blueprint {len(blobs[label])} bytes (stock {ends[label] - a if ends[label] else '?'})")
     for stub, donor in STUB_OF.items():
@@ -290,7 +337,8 @@ def main():
         blobs[stub] = bytes(hdr)
         report.append(f"{stub:24s} stub of {donor}")
     # asm in the stock label order
-    lines = ["; generated by tools/ship128.py from ArcElite hulls (third party data): do not commit"]
+    lines = ["; generated by tools/ship128.py from ArcElite hulls (third party data): do not commit, see NOTICE_128K.md" if SOURCE == "arcelite"
+             else "; generated by tools/ship128.py from the stock blueprints (HULLS=stock): triangles from tools/hullfill.py"]
     for a, label in order:
         lines.append(f"{label}:")
         b = blobs[label]
@@ -306,7 +354,7 @@ def main():
     asm, cq, ctris, note = constrictor()
     (OUT / "hull_constrictor.asm").write_text(asm)
     report.append(note)
-    fill["shipdatConstrictor"] = record("shipdatConstrictor", ctris)
+    fill["shipdatConstrictor"] = record("shipdatConstrictor", ctris, direct=SOURCE == "stock")
     pts_by["shipdatConstrictor"] = cq
     types.append("shipdatConstrictor")
     assert len(types) == TYPE_CONSTRICTOR + 1
@@ -333,6 +381,7 @@ def main():
     report.extend(report_note)
     report.append(f"fill128.bin: {1 + 40 + len(body)} bytes (limit {MAIN_END}), late records {len(late)} bytes at {LATE:#x}; blueprints replaced: {sum(len(b) for b in blobs.values())} bytes (stock region {sum((ends[n] or a + 23) - a for a, n in order)})")
     (OUT / "ship128_report.txt").write_text("\n".join(report) + "\n")
+    (OUT / "hulls_source.txt").write_text(SOURCE + "\n")      # which source the generated files in this folder come from (tools/build_dsk128.py prints it)
     print("\n".join(report))
 
 
