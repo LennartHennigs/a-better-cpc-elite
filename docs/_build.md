@@ -144,7 +144,14 @@ Test patterns that work: start from the in-flight snapshot, stop at `handleEntit
 
 ### RVM state files (`*.rvmstate`)
 
-Retro Virtual Machine's "save state" (menu or the disk icon in its emulator window) writes one file; `tools/rvmstate.py STATE [--regs] [--ram OUT.bin] [--slots]` reads it. cpcxray cannot load it: use the tool to get the RAM and registers out, then rebuild the situation in cpcxray (write the bytes you need into a free slot with `memory_write`, as `tools/tests/test_flight_hull.py` does).
+Retro Virtual Machine's "save state" (menu or the disk icon in its emulator window) writes one file; `tools/rvmstate.py STATE [--regs] [--ram OUT.bin] [--slots] [--sna OUT.sna]` reads it. cpcxray cannot load the state itself, so `--sna` writes a standard snapshot (version 3, 128 KB) that it can:
+
+```bash
+python3 -I tools/rvmstate.py ~/Desktop/Untitled.rvmstate --sna work/xray/output/user_state.sna
+# in cpcxray (from work/xray): sna_load {"path": "output/user_state.sna"}, then run 500000 us and screen_image
+```
+
+  The game resumes where the state was saved (mid-frame if RVM was paused there; the first frames finish the interrupted one) and draws the same picture, colours included; edit RAM with `memory_write` and run again to try variants. The snapshot takes registers, Gate Array (pens, border, mode, ROM switches), CRTC, PPI, PSG and all eight RAM pages from the state. The RAM configuration is not in the state and is written as 0; disk, tape and timers are not carried over (load the disk yourself with `disk_insert` before `sna_load`).
 
 - **Container:** one zlib stream. Inside is text in a JavaScript-like notation, not JSON: keys carry no quotes, strings use `'`, and an array prints its elements 1 to n first and **element 0 last, as `0 : value`** (so the last RAM page in the file is page 0; the same holds for `palette`, `crtc` and `ay`).
 - **Layout** (`snap`): `chain` (a large base64 block, about 1 MB, not decoded), `ram` (eight 16 KB pages, each `<base64 of a zlib stream>`: pages 0 to 3 are the 64 KB the CPU sees, 4 to 7 are the 6128's extra banks, filled with a repeated pattern when unused), `cpu` (`pc`, `sp`, `af`, `bc`, `de`, `hl`, `ix`, `iy`, shadow registers as `afp`, `bcp`, `dep`, `hlp`), `crtc`, `palette`, `gateArray`, `romSelect`, `ay`, `upd765`, `time`. `media` is empty: the state does not remember the disk.

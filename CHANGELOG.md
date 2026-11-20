@@ -2,6 +2,8 @@
 
 Newest first. Entries up to 2026-11-11 are in `docs/changelog_archive.md`. The project root is a git repository from 2026-11-07; before that, the archive is the only history. Dates are ISO.
 
+- **Trainer no longer corrupts the Asp (2026-11-20).** `TRAINER.BAS` kept its answers as strings across the `CHAIN`, and BASIC copied them over the Asp's vertex data (`&8FED-&9000`) once the game was loaded, so Asps were drawn as fans of long lines; line 164 now empties the strings and collects them before the `CHAIN` (`docs/_cheats.md`).
+
 - **Folders and cleanup (2026-11-16).** Original disks and tapes moved to `disks/` and `make` targets deliver to `build/` (both gitignored; `build/README.md` explains the contents); the tools that guard the originals refuse `disks/`. `SHOWSHIP.BAS` renamed `SHOWSHPS.BAS`. `LICENSE` (MIT for tools, CC BY 4.0 for docs) and `NOTICE` added. Removed: the Spectrum/ArcElite one-offs (`arc_*.py`, `armdis.py`, `adfs_e.py`), `parked_ram_*.py`, three installer scripts, three `showsave_*` screenshots. `docs/_arcelite.md` and `docs/_filled_ships.md` moved to `docs_other/`; `TODO.md` and this file shortened (older wording is in git history).
 
 - **Esc at the second digit of a quantity (2026-11-16, `-DENHANCED`, all three trees).** Esc (or any non-digit) after the first digit of a buy or sell quantity left that digit's trade applied; it now undoes it like DEL (`jr nc,LAB_ram_095f` became `jr nc,LAB_ram_08f7`, same size, so the save key does not move; marker `escQtyOperand`, `check_src.sh` allows it).

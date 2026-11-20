@@ -109,6 +109,10 @@ BASIC pitfalls (Locomotive BASIC 1.1):
 - `MEMORY &A000` (kept from the original loaders) always fails with "Memory full"; the `ON ERROR GOTO` handler continues to the
   `common2x` load. Do not put `ON ERROR GOTO 0` in the handler: it re-raises the pending error.
 - Strings are not safe after `MEMORY &A000`; the poke phase uses only numbers (choices in `DIM f(9)`).
+- Strings that survive the `CHAIN` corrupt the game: BASIC moves its string pool down by `&1000` (the disc buffers the `OPENOUT` trick reserves) with a
+  firmware `LDIR` after `commonxx` is loaded, so `&9FED-&A000` lands on `&8FED-&9000`, in the Asp's vertices 2 to 5 in the UK build (found 2026-11-20 from
+  an RVM state: the Asp was drawn as a fan of long lines; the 20 bytes were `*`, `2`, `1`, `100000`, `N`). `TRAINER` line 164 empties every string and
+  calls `FRE("")` before the `CHAIN`; keep any new string variable in that line. Check: after a run, the bytes at `&8FED` must equal the stock hull.
 - `f AND b` with a mask of 256 or more silently failed inside `IF`; per-cheat array flags fixed it. `x MOD 256` overflows above 32767
   (use `x-256*INT(x/256)`); `IF ... THEN a:NEXT` skips the `NEXT` when false.
 - Reading results in cpcxray: below `&4000` use `memory_view` with `view="ram:0"`, above use `view="cpu"` (`ram:N` is a 16 KB block with offset
