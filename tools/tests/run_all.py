@@ -42,16 +42,21 @@ def run(name, cmd, cwd, env=None, need_ok_text=False):
     return ok
 
 
+def cpcx_env():
+    """the environment for the cpcxray scripts (cpcxray is in ~/.local/bin, not on PATH); makes sure work/xray/disk/ exists"""
+    (XRAY / "disk").mkdir(exist_ok=True)
+    return dict(os.environ, PATH=f"{Path.home() / '.local/bin'}:{os.environ['PATH']}")
+
+
 def emu128(only):
     if not CPCX.exists():
         print("cpcxray missing: see docs/_build.md (Tests and the emulator)")
         return [False]
-    env = dict(os.environ, PATH=f"{Path.home() / '.local/bin'}:{os.environ['PATH']}")
+    env = cpcx_env()
     for cmd in (["bash", "tools/check_src128.sh"], [sys.executable, "-I", "tools/build_dsk128.py"]):
         if subprocess.run(cmd, cwd=ROOT, capture_output=True).returncode:
             print("FAIL", " ".join(cmd[-1:]), "(run it by hand for the output)")
             return [False]
-    (XRAY / "disk").mkdir(exist_ok=True)
     shutil.copy(ROOT / "build/elite128.dsk", XRAY / "disk" / "elite128.dsk")
     # absolute script paths: in a worktree work/xray is a symlink to the main checkout, so a relative ../../tools would resolve there
     if subprocess.run([str(CPCX), "-I", str(T / "snap_docked128.py")], cwd=XRAY, env=env, capture_output=True, timeout=TIMEOUT).returncode:
@@ -78,8 +83,7 @@ def main():
         if not CPCX.exists() or not (XRAY / "output/firebird_in_flight.sna").exists():
             print("cpcxray or work/xray/output/firebird_in_flight.sna missing: see docs/_build.md (Tests and the emulator)")
             return 2
-        env = dict(os.environ, PATH=f"{Path.home() / '.local/bin'}:{os.environ['PATH']}")
-        (XRAY / "disk").mkdir(exist_ok=True)
+        env = cpcx_env()
         for flags, default, dest in ((["--missions"], "work/elite_missions.dsk", "elite_missions.dsk"), ([], "work/elite_rebuilt.dsk", "elite_rebuilt.dsk")):
             subprocess.run([sys.executable, "-I", "tools/build_dsk.py"] + flags, cwd=ROOT, check=True, capture_output=True)
             shutil.copy(ROOT / default, XRAY / "disk" / dest)

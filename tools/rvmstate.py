@@ -96,7 +96,7 @@ def hardware_ink(rgb):
     return min(HW_INKS, key=lambda k: sum((c - 127.5 * lv) ** 2 for c, lv in zip(chan, HW_INKS[k])))
 
 
-def sna(text, cfg=0):
+def sna(text, cfg=0, pages=None):
     """a version 3 snapshot with 128 KB of RAM. Header layout: CPCWiki "Snapshot Format Version 3" (offsets in the comments)"""
     r = regs(text)
     h = bytearray(0x100)
@@ -133,10 +133,10 @@ def sna(text, cfg=0):
         h[0x5B + i] = v
     h[0x6B], h[0x6C] = 128, 0                                                      # dump size in KB
     h[0x6D] = 2                                                                    # CPC 6128
-    return bytes(h) + b"".join(ram_pages(text))
+    return bytes(h) + b"".join(pages or ram_pages(text))
 
 
-def curcfg_value(text, spec):
+def curcfg_value(pages, spec):
     """the RAM configuration byte (&C0-&C7) of a 128K game state: the game variable curCfg, at the address SPEC (number) or, when SPEC is None, the address of the
     label curCfg in work/elite128/c128.sym (written by tools/check_src128.sh). RAM bank 2 sits at &8000 in every configuration, so the address is read there."""
     if spec is None:
@@ -148,7 +148,7 @@ def curcfg_value(text, spec):
     addr = int(spec, 0)
     if not 0x8000 <= addr <= 0xBFFF:
         sys.exit("--curcfg: the address must be in &8000-&BFFF (RAM bank 2, the same in every configuration)")
-    cfg = ram_pages(text)[2][addr - 0x8000]
+    cfg = pages[2][addr - 0x8000]
     if not 0xC0 <= cfg <= 0xC7:
         sys.exit(f"--curcfg: byte at &{addr:04X} is {cfg:02X}, not a RAM configuration (&C0-&C7): wrong address or not a 128K game state")
     return cfg
@@ -166,11 +166,11 @@ def main():
         print("wrote", out)
     if "--sna" in opts:
         out = opts[opts.index("--sna") + 1]
-        cfg = 0
+        cfg, pages = 0, ram_pages(text)
         if "--curcfg" in opts:
             nxt = opts[opts.index("--curcfg") + 1:][:1]
-            cfg = curcfg_value(text, nxt[0] if nxt and not nxt[0].startswith("-") else None)
-        open(out, "wb").write(sna(text, cfg))
+            cfg = curcfg_value(pages, nxt[0] if nxt and not nxt[0].startswith("-") else None)
+        open(out, "wb").write(sna(text, cfg, pages))
         print("wrote", out, f"(RAM configuration &{cfg:02X})")
     if "--regs" in opts or not opts:
         r = regs(text)

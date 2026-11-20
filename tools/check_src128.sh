@@ -43,7 +43,5 @@ if [ -n "$VB" ] && sjasmplus -DVBUF=$((VB)) $DBDEF ${LST[@]+"${LST[@]}"} --raw="
   if sjasmplus -DDBBASES=$((DBB)) -DDB_CURCFG=$(($(sym curCfg))) -DDB_COPY=$(($(sym dbCopy))) -DDB_SHIPNR=$(($(sym splash2Shipnr))) -DDB_PRT1=$(($(sym printSplashscreen1))) -DDB_PRT2=$(($(sym printPressSpace))) -DDB_SEEN=$(($(sym titleSeen))) ${LST[@]+"${LST[@]}"} --raw="$ROOT/work/elite128/tt.bin" "$ROOT/src/elite128/fill_tt.asm" >"$OUT/tt.log" 2>&1; then echo "tt: $(wc -c <"$ROOT/work/elite128/tt.bin") bytes"; else echo "tt: assemble FAILED"; tail -3 "$OUT/tt.log"; rc=1; fi
 else echo "fill: assemble FAILED"; tail -3 "$OUT/fill.log"; rc=1; fi
 # cross-file equ lines (common2x.asm, largeaxx.asm) go stale when commonxx.asm changes size: everything assembles, the game crashes at runtime
-# (sync_equs.py exits 0 either way: judge its last line, "N stale equ line(s)")
-python3 -I "$ROOT/tools/sync_equs.py" "$ROOT/src/elite128" >"$OUT/equs.log" 2>&1
-if [ "$(tail -1 "$OUT/equs.log")" = "0 stale equ line(s)" ]; then echo "equs: in sync"; else echo "equs: STALE or sync_equs.py failed (fix: python3 -I tools/sync_equs.py src/elite128 --write)"; tail -8 "$OUT/equs.log"; rc=1; fi
+if python3 -I "$ROOT/tools/sync_equs.py" "$ROOT/src/elite128" --check >"$OUT/equs.log" 2>&1; then echo "equs: in sync"; else echo "equs: STALE or sync_equs.py failed (fix: python3 -I tools/sync_equs.py src/elite128 --write)"; tail -8 "$OUT/equs.log"; rc=1; fi
 exit $rc

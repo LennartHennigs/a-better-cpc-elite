@@ -28,8 +28,9 @@ def main(argv):
     for arg in argv[1:]:
         if ">" in arg:
             old, _, new = arg.upper().partition(">")
-            (name, _, ext), (nname, _, next_) = old.partition("."), new.partition(".")
-            n = dskx.rename_file(d, secs, first, name, ext, nname, next_ if "." in new else ext)
+            name, _, ext = old.partition(".")
+            nname, _, next_ = new.partition(".")
+            n = dskx.rename_file(d, secs, first, name, ext, nname, next_ or None)
             if not n:
                 sys.exit(f"{disk.name}: {name}.{ext} is not on the disk")
             print(f"{disk.name}: {name}.{ext} renamed {new}")

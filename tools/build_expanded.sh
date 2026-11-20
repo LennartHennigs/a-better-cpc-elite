@@ -17,7 +17,6 @@ bash tools/build_cheat.sh
 mkdir -p build
 cp work/missions_cheat.dsk build/elite64.dsk
 # the 64K expanded disk starts with RUN"ELITE64: Firebird's ELITE.BAS renamed in place (directory entry, AMSDOS header name and checksum), and the README says so
-python3 -I tools/add_files.py build/elite64.dsk "ELITE.BAS>ELITE64.BAS" >/dev/null
 python3 -I - <<'PY'
 import sys
 from pathlib import Path
@@ -27,6 +26,7 @@ p = Path("build/elite64.dsk")
 d = bytearray(p.read_bytes())
 secs = dskx.sector_offsets(d)
 first = min(r for (t, r) in secs if t == 0)
+assert dskx.rename_file(d, secs, first, "ELITE", "BAS", "ELITE64"), "ELITE.BAS is not on the disk"
 txt = dskx.read_files(dskx.load_sectors(p))[(0, "README.TXT")].rstrip(b"\x1a")
 new = txt.replace(b'RUN"ELITE\r\n', b'RUN"ELITE64\r\n').replace(b'RUN"ELITE\n', b'RUN"ELITE64\n')
 assert new != txt, 'README.TXT has no RUN"ELITE line'

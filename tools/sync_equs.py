@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Keep the numeric `name equ 0xNNNN` lines of one source file equal to the real address of the label of that name in another file (128K plan, phase 3).
 
-usage: python3 -I tools/sync_equs.py DIR [--write]      DIR = src/elite128
+usage: python3 -I tools/sync_equs.py DIR [--write | --check]      DIR = src/elite128; --check exits 1 when any equ line is stale (tools/check_src128.sh), no option only reports
 The four files are assembled separately and name each other's labels with numeric equ lines. After code moves (the &3F60-&7D5D block to bank 7, COMMON2X's contents to the &4000 page) those numbers go
 stale. For every equ line `name equ 0xNNNN` in file F whose name is a label (`name:`) of another file G, the address from G's symbol file replaces the number. Mid-instruction equates
 (`; inside the instruction at ...`) and names defined as labels in their own file are skipped. Assembles with the flags of the mission disk. Repeat until it reports nothing: a value can
@@ -16,6 +16,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 d = Path(sys.argv[1])
 write = "--write" in sys.argv
+check = "--check" in sys.argv
 FLAGS = {"commonxx": [], "largeaxx": [], "common2x": [], "musiquex": []}      # flags live in src/elite128/config.inc
 SJ = str(Path.home() / ".local/bin/sjasmplus")
 syms, owner = {}, {}
@@ -61,3 +62,5 @@ for f in FLAGS:
     if write:
         p.write_text("\n".join(lines))
 print(f"{changes} stale equ line(s)" + (" fixed" if write and changes else ""))
+if check and changes:
+    sys.exit(1)

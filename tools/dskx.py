@@ -128,6 +128,11 @@ def remove_file(d, secs, first, name, ext):
     return n
 
 
+def _half_pos(secs, first, ls):
+    """Image offset of logical 512-byte half block `ls` (a 1 KB directory block b is halves 2b and 2b+1)."""
+    return secs[(ls // 9, first + ls % 9)][0]
+
+
 def rename_file(d, secs, first, name, ext, new_name, new_ext=None):
     """Rename NAME.EXT in place: every directory entry (the attribute bits, e.g. System, stay) and, when the file starts with a valid AMSDOS header, the name inside it
     with its checksum, so `RUN"NEWNAME` and the header agree. No block moves. new_ext defaults to the old extension. Returns the number of entries renamed (0 = no such file)."""
@@ -139,7 +144,7 @@ def rename_file(d, secs, first, name, ext, new_name, new_ext=None):
     if not ext0:
         return 0
     blk = ext0[0][2][0]                                 # the first block holds the header
-    pos = secs[(blk * 2 // 9, first + blk * 2 % 9)][0]
+    pos = _half_pos(secs, first, blk * 2)
     if amsdos_header(bytes(d[pos:pos + 128])) is not None:
         d[pos + 1:pos + 9], d[pos + 9:pos + 12] = nm, ex
         d[pos + 67:pos + 69] = (sum(d[pos:pos + 67]) & 0xFFFF).to_bytes(2, "little")
@@ -224,8 +229,7 @@ def overwrite_file(d, secs, first, name, new):
         total += d[off + 15] * 128
         for b in blocks:
             for s in (0, 1):
-                ls = b * 2 + s
-                slots.append(secs[(ls // 9, first + ls % 9)][0])
+                slots.append(_half_pos(secs, first, b * 2 + s))
     hdr = bytes(d[slots[0]:slots[0] + 128])
     h = amsdos_header(hdr)
     if h is None or h["length"] != len(new):
