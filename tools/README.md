@@ -13,7 +13,15 @@ Helpers for building, checking and analysing the project. Each script has a head
 | `dskx.py`, `add_files.py`, `hide_files.py` | list/extract, add files to, and hide files on DSK images (never write to `disks/`) |
 | `cheat_tokenise.py`, `bastok.py` | tokenise CPC BASIC with the CPC's own BASIC (cpcxray), detokenise to text |
 | `size_report.py` | bytes used in the free tails against the stock files |
-| `rvmstate.py` | read an RVM `.rvmstate` file: registers, the 64 KB RAM image, the ship slots, and `--sna` to convert it to a snapshot cpcxray loads (`docs/_build.md` "RVM state files") |
+| `rvmstate.py` | read an RVM `.rvmstate` file: registers, the 64 KB RAM image, the ship slots, and `--sna` to convert it to a snapshot cpcxray loads (`--curcfg` for a 128K game state; `docs/_build.md` "RVM state files") |
+
+## 128K build (branch `elite128`; `src/elite128/README.md`)
+| File | Does |
+|---|---|
+| `check_src128.sh` | assembles the four 128K files, builds the fill and title-text modules, fails on a stale cross-file `equ` (`make disk6128`) |
+| `build_dsk128.py`, `build_show128.sh`, `listing6128.sh` | the 128K disk (`build/elite128.dsk`), the `SHOWSHPS` viewer programs, the readable listing (`make listing6128`) |
+| `ship128.py`, `hullfill.py`, `mk_viewer128.py` | filled hulls (stock blueprints or ArcElite), their fill records, the viewer's ship data; generated files go to `work/elite128/` |
+| `gen_equs.py`, `sync_equs.py`, `check_moved_labels.py` | cross-file `equ` lines after any size change (`sync_equs.py` exits 0 even when stale: read its last line), raw numbers that still point at a stock address whose label moved |
 
 ## Saves and text
 | File | Does |
