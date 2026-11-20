@@ -141,3 +141,12 @@ Run long sweeps in the background (`nohup ... &`, one output file each); the for
 
 Test patterns that work: start from the in-flight snapshot, stop at `handleEntitys`, write the freshly assembled patches, set variables, call a vector with a trap return address, restore registers. Missions mostly use forced state values
 (`_missions_built.md` section 5 and 7).
+
+### RVM state files (`*.rvmstate`)
+
+Retro Virtual Machine's "save state" (menu or the disk icon in its emulator window) writes one file; `tools/rvmstate.py STATE [--regs] [--ram OUT.bin] [--slots]` reads it. cpcxray cannot load it: use the tool to get the RAM and registers out, then rebuild the situation in cpcxray (write the bytes you need into a free slot with `memory_write`, as `tools/tests/test_flight_hull.py` does).
+
+- **Container:** one zlib stream. Inside is text in a JavaScript-like notation, not JSON: keys carry no quotes, strings use `'`, and an array prints its elements 1 to n first and **element 0 last, as `0 : value`** (so the last RAM page in the file is page 0; the same holds for `palette`, `crtc` and `ay`).
+- **Layout** (`snap`): `chain` (a large base64 block, about 1 MB, not decoded), `ram` (eight 16 KB pages, each `<base64 of a zlib stream>`: pages 0 to 3 are the 64 KB the CPU sees, 4 to 7 are the 6128's extra banks, filled with a repeated pattern when unused), `cpu` (`pc`, `sp`, `af`, `bc`, `de`, `hl`, `ix`, `iy`, shadow registers as `afp`, `bcp`, `dep`, `hlp`), `crtc`, `palette`, `gateArray`, `romSelect`, `ay`, `upd765`, `time`. `media` is empty: the state does not remember the disk.
+- **Address map:** I assumed the default RAM configuration (page n at `n * &4000`) and checked it on one state: the Asp Mk II blueprint at `&8FC7` and the entity slots at `&1A40` matched the stock build byte for byte. I found no key for the gate array's RAM configuration; a state saved with another bank layout would need a closer look.
+- **Ship slots** (`--slots`): seven slots of 39 bytes from `&1A40` (slot 0 is the station, 1 to 6 are what `lookforFreeSlot` hands out). In a slot: `+0..8` x, y, z as lo, hi, sign (bit 7 of the sign byte = negative), `+9..26` nine sign-magnitude words for the orientation (&7FFF = 1.0; the tool prints them as fractions in the order they are stored), `+27` speed, `+34` flags (0 = free slot), `+35/36` blueprint address. A blueprint address names the hull: look it up in the build's `--sym` file (`shipdat...` labels).
