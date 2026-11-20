@@ -224,17 +224,18 @@ def brightness(n):
     return W_KEY * dot(nn, norm(LIGHT)) + W_FILL * dot(nn, norm(FILL))
 
 
-NARROW = 0.65                  # a hull whose faces differ less than this in brightness (the Thargoid's rim facets: 0.57; every other hull is above 0.7) ...
-SPREAD = 1.2                   # ... is stretched to this spread, so it uses the whole ramp
+# Saucer hulls (the Thargoid and the Thargon): the ring of rim facets is lit from the front instead, so the facets that face the viewer in a front view are bright and
+# the slanted ones next to them dark: a bright trapezoid, as on ArcElite's Thargoid. FRONT_BINS: below the first value dim, below the second mixed, above solid.
+FRONT_LIT = {"shipdatThargoid", "shipdatThargon"}
+FRONT_BINS = (0.3, 0.35)
+SHIMMER = True                 # the second triangle of each bright rim facet gets the mixed pattern, so the trapezoid is not one flat slab
 
 
-def pattern_of(n, stretch=None):
-    """stretch = (centre, spread) of the hull's face brightness: only widens, never narrows"""
+def pattern_of(n, label=None):
+    if label in FRONT_LIT:
+        b = dot(norm(n), (0, 0, 1))
+        return DIM if b < FRONT_BINS[0] else (MIX if b < FRONT_BINS[1] else MAIN)
     b = brightness(n)
-    if stretch:
-        mid, spread = stretch
-        if spread < NARROW:
-            b = (b - mid) / (spread or 1) * SPREAD
     if BINS:
         k = sum(1 for x in BINS if b >= x)
     else:
@@ -242,12 +243,10 @@ def pattern_of(n, stretch=None):
     return RAMP[max(0, min(len(RAMP) - 1, k))]
 
 
-def build_struct(verts, edges, faces):
+def build_struct(verts, edges, faces, label=None):
     """-> dict: tris [(v0, v1, v2, tone, group)] (a face's base triangles first, its decals after: same group, drawn on top), stats"""
     st = {"faces": len(faces), "exact": 0, "hull": 0, "decals": 0, "skipped": 0, "nonplanar": 0, "unsupported": 0}
     tris = []
-    bs = [brightness(n) for n in faces] or [0]
-    stretch = ((max(bs) + min(bs)) / 2, max(bs) - min(bs))
     for f, n in enumerate(faces):
         pairs = [(e[0], e[1]) for e in edges if f in (e[2], e[3])]
         polys = []
@@ -272,7 +271,7 @@ def build_struct(verts, edges, faces):
         areas = [abs(area2(poly2(p, verts, n))) for p in polys]
         bi = max(range(len(polys)), key=lambda k: areas[k])
         base2 = poly2(polys[bi], verts, n)
-        tone = pattern_of(n, stretch)
+        tone = pattern_of(n, label)
         dtone = ACC
         order = [(bi, tone)]
         for k, p in enumerate(polys):
@@ -333,6 +332,12 @@ def design(label, verts, faces, tris):
             cen = tuple(int(round(sum(verts[i][k] for i in (a, b, c)) / 3)) for k in range(3))
             verts.append(cen)                                                                          # 1 new vertex per wing
             add_tri(verts, tris, (wing[0], wing[1], len(verts) - 1), faces[face], ACC, face)
+    elif label in FRONT_LIT and SHIMMER:                # break up the bright rim facets: the second triangle of each gets the mixed pattern
+        seen = set()
+        for i, tr in enumerate(tris):
+            if tr[3] == MAIN and tr[4] in seen:
+                tris[i] = (tr[0], tr[1], tr[2], MIX, tr[4])
+            seen.add(tr[4])
     elif label == "shipdatViper":                     # Viper: a canopy triangle on the ridge behind the nose
         ids = []
         for p in ((0, 4, 60), (-9, 13, 15), (9, 13, 15)):       # on the two front slopes (planes z = 72 -+ 2x - 3y), meeting on the ridge
@@ -343,7 +348,7 @@ def design(label, verts, faces, tris):
 
 def build(verts, edges, faces, label=None):
     """-> dict: verts (the hull's, plus any the designs add), tris [(v0, v1, v2, pattern, group)], stats"""
-    b = build_struct(verts, edges, faces)
+    b = build_struct(verts, edges, faces, label)
     if label:
         design(label, b["verts"], faces, b["tris"])
     return b
