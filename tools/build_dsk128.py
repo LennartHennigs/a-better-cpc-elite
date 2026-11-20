@@ -28,6 +28,7 @@ if OUT.resolve() == BASE.resolve() or dskx.is_original(OUT):      # CLAUDE.md: n
     sys.exit(f"{OUT}: refusing to write a disk into the project root or disks/ (the originals live there); use build/ or work/")
 SJASM = Path.home() / ".local/bin/sjasmplus"
 SRC = ROOT / "src/elite128"
+FLIGHT_TAGS = "0CPTSR"      # flight image letters in slot order (mxLettersFlight in commonxx.asm)
 FILES = {"LARGEAXX": [], "COMMONXX": [], "COMMON2X": [], "MUSIQUEX": []}      # flags live in src/elite128/config.inc
 STAGE_FILL, STAGE_DATA = 0x0800, 0x1000          # offsets in COMMON2X (&C800, &D000); the mission overlays and images use &D800-&FDFF
 
@@ -94,6 +95,7 @@ def main():
     d = bytearray(BASE.read_bytes())
     secs = sector_offsets(d)
     first = min(r for (t, r) in secs if t == 0)
+    flight_images = []
     with tempfile.TemporaryDirectory() as tmp:
         for n, defs in FILES.items():
             out = Path(tmp) / f"{n}.bin"
@@ -110,16 +112,25 @@ def main():
                         base, blob = sliced("largeaxx.asm", [f"-DOVL_{tag}"], "mxOverlayBase", "mxOverlayEnd", 0x840)
                         assert len(blob) <= 0x240, (tag, len(blob))
                         stage.append((0x1800 + (i // 2) * 0x800 + (i % 2) * 0x240, blob))
-                    for i, tag in enumerate("0CPTSR"):
+                    for tag in FLIGHT_TAGS:
                         flags = ([f"-DFL_{tag}"] if tag != "0" else [])
                         base, blob = sliced("commonxx.asm", flags, "mxFlightBase", "mxFlightEnd", 0x1A40)
                         assert len(blob) <= 0x260, (tag, len(blob))
-                        stage.append((0x2800 + (i // 2) * 0x800 + (i % 2) * 0x260, blob))
+                        flight_images.append(blob.ljust(0x260, b"\0"))
                 for off, blob in stage:
                     assert not any(new[PAGE + off:PAGE + off + len(blob)]), f"the window page is not blank at +{off:04X}"
                     new[PAGE + off:PAGE + off + len(blob)] = blob
             h = dskx.overwrite_file(d, secs, first, f"{n}.BIN", new)
             print(f"{n}.BIN: {len(new)} bytes written, header kept (load {h['load']:04X})")
+    # The flight images (mission images, order FLIGHT_TAGS, 0x260 bytes each) ride behind INDICATO: bankInit loads the file into bank 5 at &5000, so slot 0 is at &6000 (mxBankFlightImpl).
+    ind = dskx.read_files(dskx.load_sectors(BASE))[(0, "INDICATO.BIN")]
+    ind_data = ind[128:128 + 0x1000]
+    assert len(ind_data) == 0x1000 and dskx.amsdos_header(ind)["length"] == 0x1000, "unexpected INDICATO.BIN"
+    new_ind = ind_data + b"".join(flight_images)
+    assert 0x1000 + len(flight_images) * 0x260 <= 0x3000, "the flight images run past the end of bank 5"
+    dskx.remove_file(d, secs, first, "INDICATO", "BIN")
+    dskx.add_file(d, secs, first, "INDICATO", "BIN", new_ind, 0x5000)
+    print(f"INDICATO.BIN: {len(new_ind)} bytes (INDICATO + {len(flight_images)} flight images)")
     if MISSIONS:
         txt = (ROOT / "src/disk/README.TXT").read_bytes()
         recs = -(-len(txt) // 128)

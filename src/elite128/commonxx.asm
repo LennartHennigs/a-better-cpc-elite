@@ -7608,7 +7608,7 @@ bankInitGo:
     ld bc,0x1200
     ldir
     IFDEF MISSIONS
-    ld bc,0x7FC4                        ; the overlays into bank 4 (slots 0 and 1 from stage &D800, 2 and 3 from &E000), then the flight images into bank 5 (&E800, &F000, &F800: two each)
+    ld bc,0x7FC4                        ; the overlays into bank 4 (slots 0 and 1 from stage &D800, 2 and 3 from &E000); the flight images come with INDICATO (bank 5 &6000, see mxBankFlightImpl)
     out (c),c
     ld hl,STAGE+0x1800
     ld de,0x4000
@@ -7617,20 +7617,6 @@ bankInitGo:
     ld hl,STAGE+0x2000
     ld de,0x4480
     ld bc,0x0480
-    ldir
-    ld bc,0x7FC5
-    out (c),c
-    ld hl,STAGE+0x2800
-    ld de,0x4000
-    ld bc,0x04C0
-    ldir
-    ld hl,STAGE+0x3000
-    ld de,0x44C0
-    ld bc,0x04C0
-    ldir
-    ld hl,STAGE+0x3800
-    ld de,0x4980
-    ld bc,0x04C0
     ldir
     ENDIF
     ld hl,bankInitStageData+0x700       ; the laser sights (lasersights128.asm, built at the address of bankInit): over the boot code above, which has run by now. Everything from
@@ -8084,6 +8070,8 @@ mxBankFlightImpl:
     ld hl,mxLettersFlight
     ld de,0x0260
     call mxBankSlot
+    ld bc,0x2000                        ; the images follow INDICATO in the file that bankInit loads into bank 5 at &5000: slot 0 is at &6000 (tools/build_dsk128.py)
+    add hl,bc
     ld de,0x9D9E
     di
     ld bc,0x7FC5
@@ -8094,14 +8082,12 @@ mxBankFlightImpl:
     ei
     ret
 mxBankSlot:                             ; A = letter, HL = letter string, DE = slot size -> HL = 0x4000 + index * size
-    ld b,0
+    ld b,0xFF
 mxBankScan:
-    cp (hl)
-    jr z,mxBankFound
-    inc hl
     inc b
-    jr mxBankScan
-mxBankFound:
+    cp (hl)
+    inc hl
+    jr nz,mxBankScan                    ; B = index of the letter
     ld hl,0x4000
     inc b
 mxBankAdd:
@@ -8199,8 +8185,7 @@ hullFindType:
     push iy
     pop de                              ; DE = blueprint address
     ld hl,shipGFXdataTable+1
-    ld b,19
-    ld c,0
+    ld bc,19 << 8                       ; B = 19 types, C = type counter
 hftLoop:
     ld a,(hl)
     cp e
@@ -8222,7 +8207,6 @@ hftNext:
     scf
     ret nz
     ld c,19
-    jr hftFound
 hftFound:
     ld a,c
     or a

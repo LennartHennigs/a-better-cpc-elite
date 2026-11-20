@@ -1,7 +1,7 @@
     INCLUDE "config.inc"
 SCREEN equ 0x4000            ; the screen page (the 128K layout); the block below runs in RAM bank 7 at &C000
 laserSightsHome equ 0x989C   ; generated: label of commonxx
-killHook equ 0x9C58   ; generated: label of commonxx
+killHook equ 0x9C32   ; generated: label of commonxx
 irki2_8 equ 0x8EB2   ; generated: label of commonxx
 mxArrive equ 0x9DAD   ; generated: label of commonxx
 mxInvHook equ 0x9DB3   ; generated: label of commonxx
@@ -10,9 +10,9 @@ mxLaserHook equ 0x9DA7   ; generated: label of commonxx
 mxLaunchEntry equ 0x9DBA   ; generated: label of commonxx
 mxSun equ 0x9DB0   ; generated: label of commonxx
 curCfg equ 0x9854   ; generated: label of commonxx
-dbCopy equ 0x9D66   ; generated: label of commonxx
-dbOn equ 0x9CFF   ; generated: label of commonxx
-dbShown equ 0x9CFB   ; generated: label of commonxx
+dbCopy equ 0x9D68   ; generated: label of commonxx
+dbOn equ 0x9D01   ; generated: label of commonxx
+dbShown equ 0x9CFD   ; generated: label of commonxx
 ActDeponEnergy equ 0x881C   ; generated: label of commonxx
 AddDEtoKillScore equ 0x39A5   ; generated: label of commonxx
 Altitude equ 0x1C11   ; generated: label of commonxx
@@ -102,11 +102,11 @@ galacticHyperdrive equ 0x3904   ; generated: label of commonxx
 galaxySeed equ 0x3907   ; generated: label of commonxx
 getBounty equ 0x39B7   ; generated: label of commonxx
 government equ 0x3D5F   ; generated: label of commonxx
-hullBegin equ 0x99E6   ; generated: label of commonxx
-hullDeferEntry equ 0x9A00   ; generated: label of commonxx
+hullBegin equ 0x99C0   ; generated: label of commonxx
+hullDeferEntry equ 0x99DA   ; generated: label of commonxx
 hullDraw equ 0x985D   ; generated: label of commonxx
 hullDummy equ 0x9855   ; generated: label of commonxx
-hullFlush equ 0x9A4F   ; generated: label of commonxx
+hullFlush equ 0x9A29   ; generated: label of commonxx
 inputPitch equ 0x1C04   ; generated: label of commonxx
 inputRoll equ 0x1C03   ; generated: label of commonxx
 irki2_dat1 equ 0x8F3E   ; generated: label of commonxx
