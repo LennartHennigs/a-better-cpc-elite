@@ -91,6 +91,12 @@ def main():
         txt = (ROOT / "src/disk/README.TXT").read_bytes()
         recs = -(-len(txt) // 128)
         dskx.add_payload(d, secs, first, "README", "TXT", txt.ljust(recs * 128, b"\x1a"), recs)
+    # Firebird's own CHEAT.BAS pokes 64K addresses (docs/_cheats.md): on the relocated layout it would write into the wrong bytes, so the disk does not carry it.
+    # (main's tools/dskx.py has remove_file for this; use it here once main is merged.)
+    cheat = dskx.find_extents(d, secs, first, "CHEAT.BAS")
+    for _ext, off, _blocks in cheat:
+        d[off] = 0xE5
+    print(f"CHEAT.BAS (Firebird's, 64K pokes): {len(cheat)} directory entries removed")
     hidden, shown = hide_entries(d, secs, first)
     print(f"{len(hidden)} directory entries hidden (System attribute), visible: {', '.join(sorted(shown))}")
     OUT.write_bytes(d)
