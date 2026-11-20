@@ -28,6 +28,7 @@ for p in "largeaxx" "commonxx" "common2x" "musiquex"; do
 done
 # the bank 6 module needs the address of the resident vertex buffer from commonxx.asm
 sjasmplus --raw="$OUT/c.bin" --sym="$OUT/c.sym" "$ROOT/src/elite128/commonxx.asm" >/dev/null 2>&1
+cp "$OUT/c.sym" "$ROOT/work/elite128/c128.sym" 2>/dev/null     # tools/rvmstate.py --curcfg reads curCfg from here (c.sym there is ship128.py's stock one: do not overwrite it)
 VB=$(awk '$1 == "hullVertexBuf:" || $2 == "hullVertexBuf:" { print $NF }' "$OUT/c.sym")
 sym() { awk -v n="$1:" '$1 == n || $2 == n { print $NF }' "$OUT/c.sym"; }
 # every symbol the flip module needs must exist: an empty one would make the shell arithmetic below silently 0 (a module that pokes address 0)
@@ -41,4 +42,8 @@ if [ -n "$VB" ] && sjasmplus -DVBUF=$((VB)) $DBDEF ${LST[@]+"${LST[@]}"} --raw="
   lst tt
   if sjasmplus -DDBBASES=$((DBB)) -DDB_CURCFG=$(($(sym curCfg))) -DDB_COPY=$(($(sym dbCopy))) -DDB_SHIPNR=$(($(sym splash2Shipnr))) -DDB_PRT1=$(($(sym printSplashscreen1))) -DDB_PRT2=$(($(sym printPressSpace))) -DDB_SEEN=$(($(sym titleSeen))) ${LST[@]+"${LST[@]}"} --raw="$ROOT/work/elite128/tt.bin" "$ROOT/src/elite128/fill_tt.asm" >"$OUT/tt.log" 2>&1; then echo "tt: $(wc -c <"$ROOT/work/elite128/tt.bin") bytes"; else echo "tt: assemble FAILED"; tail -3 "$OUT/tt.log"; rc=1; fi
 else echo "fill: assemble FAILED"; tail -3 "$OUT/fill.log"; rc=1; fi
+# cross-file equ lines (common2x.asm, largeaxx.asm) go stale when commonxx.asm changes size: everything assembles, the game crashes at runtime
+# (sync_equs.py exits 0 either way: judge its last line, "N stale equ line(s)")
+python3 -I "$ROOT/tools/sync_equs.py" "$ROOT/src/elite128" >"$OUT/equs.log" 2>&1
+if [ "$(tail -1 "$OUT/equs.log")" = "0 stale equ line(s)" ]; then echo "equs: in sync"; else echo "equs: STALE or sync_equs.py failed (fix: python3 -I tools/sync_equs.py src/elite128 --write)"; tail -8 "$OUT/equs.log"; rc=1; fi
 exit $rc

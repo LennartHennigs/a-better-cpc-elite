@@ -45,7 +45,7 @@ async def main():
             await tap("esc", 0.12)
             end = (await rd(0x38E2, 1), await rd(0x38DD, 4))
             print("start", [x.hex() for x in start], "after 1", [x.hex() for x in mid], "after Esc", [x.hex() for x in end])
-            print("ok" if mid != start and end == start else "FAIL")
+            print("ALL OK" if mid != start and end == start else "FAIL")
 
 
 asyncio.run(main())

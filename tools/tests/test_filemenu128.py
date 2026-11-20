@@ -72,7 +72,7 @@ async def main():
             print("load: byte %02X -> %02X -> %02X" % (before, before ^ 0x55, after))
             ok &= after == before
             await c("screen_image", {"path": "output/fm_load.png"})
-            print("PASS" if ok else "FAIL")
+            print("ALL OK" if ok else "FAIL")
             return ok
 
 

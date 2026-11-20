@@ -91,7 +91,7 @@ def add_showship(d, secs, first):
         return
     data = bas.read_bytes()   # AMSDOS header included
     dskx.add_padded(d, secs, first, "SHOWSHPS", "BAS", data)
-    add_file(d, secs, first, "SHIPS", "BIN", ships.read_bytes(), 0x4000)
+    dskx.add_file(d, secs, first, "SHIPS", "BIN", ships.read_bytes(), 0x4000)
     print(f"SHOWSHPS.BAS {len(data)} bytes, SHIPS.BIN {ships.stat().st_size} bytes")
 
 
