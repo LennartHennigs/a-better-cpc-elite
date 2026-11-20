@@ -1,7 +1,13 @@
     INCLUDE "config.inc"
 SCREEN equ 0x4000            ; the screen page (the 128K layout); the block below runs in RAM bank 7 at &C000
+bankCopy equ 0x9C46   ; generated: label of commonxx
+hullVertexBuf equ 0x97FF   ; generated: label of commonxx
+mxBankFlight equ 0x9C83   ; generated: label of commonxx
+mxHullType equ 0x9DB9   ; generated: label of commonxx
+splash2Shipnr equ 0x1DA8   ; generated: label of commonxx
+titleSpawnShip equ 0x83B1   ; generated: label of commonxx
 laserSightsHome equ 0x989C   ; generated: label of commonxx
-killHook equ 0x9C3D   ; generated: label of commonxx
+killHook equ 0x9C5A   ; generated: label of commonxx
 irki2_8 equ 0x8EB2   ; generated: label of commonxx
 mxArrive equ 0x9DAD   ; generated: label of commonxx
 mxInvHook equ 0x9DB3   ; generated: label of commonxx
@@ -9156,33 +9162,49 @@ dh3SetnextByteadr:
     inc l
     jr drawHorizontalsPixelbyte3
  IFDEF TITLESEL
-; spawnCommandParser actions: ship type in the high nibble, action 9 (title ship) in the low one
-titleShips:
-    db 0x69                         ; Viper
-    db 0xB9                         ; Asp Mk II
-    db 0x79                         ; Cobra Mk III (index 2 is where splash2Shipnr starts)
-    db 0xC9                         ; Fer-de-Lance
-    db 0xE9                         ; Sidewinder
-    db 0xF9                         ; Krait
-    db 0x59                         ; Rock Hermit (the Python is too long for the window)
-    db 0xD9                         ; Thargoid
-; Ship names in the order of titleShips, zero-terminated, 16 bytes each
-titleNames:
-    db "VIPER",0
-    ds 16 - 6
-    db "ASP MK II",0
-    ds 16 - 10
-    db "COBRA MK III",0
-    ds 16 - 13
-    db "FER-DE-LANCE",0
-    ds 16 - 13
-    db "SIDEWINDER",0
-    ds 16 - 11
-    db "KRAIT",0
-    ds 16 - 6
-    db "ROCK HERMIT",0
-    ds 16 - 12
-    db "THARGOID",0
-    ds 16 - 9
+; The title screen's ship viewer: the press-space screen shows the ship of the table entry splash2Shipnr & 0x1F (cursor keys step it). The 4-byte entries and the names are in bank 6
+; (titleViewTable, titleViewNames: tools/ship128.py), this routine reads its entry into hullVertexBuf (free until the hull is drawn), puts the flight image the ship needs into the
+; flight tail (slot 0 = no pack, 1-7 = a ship pack, 8 = the Constrictor's image) and spawns it ahead. A pack hull comes up on half of the spawns of its base type (the ship table hook
+; tosses a coin), so the spawn is repeated until mxHullType names the wanted hull. Entry: +0 base ship type, +1 image slot, +2 wanted hull type (0xFF: take what comes), +3 distance (z high byte).
+titleSpawn:
+    ld a,(splash2Shipnr)
+    and 0x1F
+    ld l,a
+    ld h,0
+    add hl,hl
+    add hl,hl
+    ld de,titleViewTable
+    add hl,de
+    ld de,hullVertexBuf
+    ld a,4
+    call bankCopy
+    ld a,0x20
+    ld (hullVertexBuf+4),a          ; tries
+    ld a,(hullVertexBuf+1)
+    call mxBankFlight               ; the image of that slot into the flight tail (nothing else touches it on the title screen)
+titleTry:
+    ld ix,buf_1B51
+    ld a,(hullVertexBuf)
+    call titleSpawnShip
+    ld a,(hullVertexBuf+2)
+    inc a
+    jr z,titleDone
+    ld e,(ix+35)
+    ld d,(ix+36)
+    call mxHullType                 ; A = hull type, carry clear, or carry set
+    jr c,titleRetry
+    ld hl,hullVertexBuf+2
+    cp (hl)
+    jr z,titleDone
+titleRetry:
+    ld hl,hullVertexBuf+4
+    dec (hl)
+    jr nz,titleTry
+titleDone:
+    ld a,(hullVertexBuf+3)
+    ld (ix+7),a                     ; the distance
+    ret
+titleSpawnEnd:
+    ASSERT titleSpawnEnd <= 0xFFFF, "the title viewer does not fit at the end of the code block"
  ENDIF
     ds 0xC000 + 16384 - $               ; the file is 16384 bytes (tools/build_dsk128.py keeps the AMSDOS header length)

@@ -72,6 +72,17 @@ PACKS_ASM = ROOT / "src/elite/missions_ships.asm"      # Fessor's hulls in the C
 PACK_HULLS = ["Gecko", "CobraMk1", "Worm", "Moray", "Mamba", "Adder", "Boa", "Anaconda", "Shuttle"]      # ship types 20..28 (src/elite128/missions_ships.asm has the same order in its type chain)
 TYPE_PACK0 = 20
 N_TYPES = TYPE_PACK0 + len(PACK_HULLS)
+# The title screen's ship viewer (src/elite128/common2x.asm titleSpawn): per ship (name, base ship type, flight image slot, wanted hull type or 0xFF, distance = z high byte).
+# Slot 0 = the default image (no pack), 1-7 = ship pack k, 8 = the Constrictor's image. A pack hull is spawned from its base type until the image's mxHullType names the wanted type.
+# The first eight are the ships the title screen always had (index 2, the Cobra Mk III, is where the press-space screen starts).
+VIEW = [("VIPER", 8, 0, 0xFF, 2), ("ASP MK II", 13, 0, 0xFF, 2), ("COBRA MK III", 9, 0, 0xFF, 2), ("FER-DE-LANCE", 14, 0, 0xFF, 2), ("SIDEWINDER", 16, 0, 0xFF, 2),
+        ("KRAIT", 17, 0, 0xFF, 2), ("ROCK HERMIT", 7, 0, 0xFF, 2), ("THARGOID", 15, 0, 0xFF, 2),
+        ("CORIOLIS", 0, 0, 0xFF, 7), ("MISSILE", 1, 0, 0xFF, 1), ("ESCAPE POD", 2, 0, 0xFF, 1), ("ALLOY PLATE", 3, 0, 0xFF, 1), ("CARGO CANISTER", 4, 0, 0xFF, 1),
+        ("SPLINTER", 5, 0, 0xFF, 1), ("ASTEROID", 6, 0, 0xFF, 3), ("PYTHON", 10, 0, 0xFF, 4), ("PYTHON PIRATE", 11, 0, 0xFF, 4), ("COBRA PIRATE", 12, 0, 0xFF, 2),
+        ("THARGON", 18, 0, 0xFF, 1), ("CONSTRICTOR", 19, 8, 0xFF, 2),
+        ("GECKO", 16, 1, 20, 2), ("COBRA MK I", 17, 1, 21, 2), ("WORM", 16, 2, 22, 1), ("MORAY", 17, 2, 23, 2), ("MAMBA", 16, 3, 24, 2), ("ADDER", 17, 4, 25, 1),
+        ("BOA", 10, 5, 26, 3), ("ANACONDA", 10, 6, 27, 4), ("SHUTTLE", 9, 7, 28, 1)]
+VIEW_TABLE, VIEW_NAMES = 0x300, 0x380      # offsets in the pack file (titleViewTable &6B00, titleViewNames &6B80 in bank 6)
 PACKS_AT = 0x800             # offset in the fill file (bank 6 &6800) of the pack hulls' records (fill128_packs.bin, staged at STAGE+0x2800, copied by bankInit)
 PATTERNS = [p for p in gen.PATTERN_ORDER if p != 0]      # brightest first; pattern 0 is solid pen 1, the colour of the empty view, so a hull face in it would vanish
 
@@ -445,8 +456,15 @@ def main():
     (OUT / "ship128_points.json").write_text(json.dumps({str(t): {"name": types[t], "points": pts_by[types[t]]} for t in range(N_TYPES) if types[t] in pts_by}))
     (OUT / "fill128.bin").write_bytes(bytes([N_TYPES]) + b"".join(o.to_bytes(2, "little") for o in offs) + body)
     (OUT / "fill128_late.bin").write_bytes(late)
-    assert len(packs_bin) <= 0x600, f"the pack records ({len(packs_bin)} bytes) do not fit their stage area"
-    (OUT / "fill128_packs.bin").write_bytes(packs_bin)
+    assert len(packs_bin) <= 0x300, f"the pack records ({len(packs_bin)} bytes) run into the title viewer table"
+    assert len(VIEW) == 29 and len(packs_bin) <= VIEW_TABLE, (len(VIEW), len(packs_bin))      # TITLE_SHIPS in src/elite128/config.inc
+    view = bytearray(0x600)
+    view[:len(packs_bin)] = packs_bin
+    for i, (name, base, slot, want, z) in enumerate(VIEW):
+        assert len(name) <= 15, name
+        view[VIEW_TABLE + 4 * i:VIEW_TABLE + 4 * i + 4] = bytes([base, slot, want, z])
+        view[VIEW_NAMES + 16 * i:VIEW_NAMES + 16 * i + len(name)] = name.encode()
+    (OUT / "fill128_packs.bin").write_bytes(bytes(view))
     report.extend(report_note)
     report.append(f"fill128.bin: {base + len(body)} bytes (limit {MAIN_END}), pack records {len(packs_bin)} bytes, late records {len(late)} bytes at {LATE:#x}; blueprints replaced: {sum(len(b) for b in blobs.values())} bytes (stock region {sum((ends[n] or a + 23) - a for a, n in order)})")
     (OUT / "ship128_report.txt").write_text("\n".join(report) + "\n")

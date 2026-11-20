@@ -1,5 +1,6 @@
     INCLUDE "config.inc"
 SCREEN equ 0x4000            ; the screen page: &C000 in the 64K layout, &4000 in the 128K one (docs: src/elite128/README.md)
+titleSpawn equ 0xFF77   ; generated: label of common2x
 LAB_ram_43a0 equ 0xC2A0   ; generated: label of common2x
 LAB_ram_475e equ 0xC660   ; generated: label of common2x
 drawHorLineAt0xd880 equ 0xC58C   ; generated: label of common2x
@@ -120,8 +121,6 @@ storePresPlanetX equ 0xCF4B   ; generated: label of common2x
 storePresPlanetY equ 0xCF4C   ; generated: label of common2x
 sub_4622 equ 0xC522   ; generated: label of common2x
 text_rng equ 0xC4E6   ; generated: label of common2x
-titleNames equ 0xFF7F   ; generated: label of common2x
-titleShips equ 0xFF77   ; generated: label of common2x
 todoActiveSlots equ 0xCF57   ; generated: label of common2x
 todoDrawExplosions equ 0xE788   ; generated: label of common2x
 todoLaserVar3 equ 0xCF5A   ; generated: label of common2x
@@ -5669,6 +5668,7 @@ loc_83AA:
     ld ix,buf_1B51
     ld a,c
     add a,0x02
+titleSpawnShip:                     ; the title ship viewer (titleSpawn in common2x.asm) enters here with IX = buf_1B51 and A = the ship type
     call spawnShip
     ld a,0xC0
     ld (ix+29),a
@@ -7875,20 +7875,21 @@ titleArrows:
 titleLeft:
     dec a
 titleStep:
-    and 0x07
-    or 0x80                         ; keep "key is down" (a wrap from 0 to 7 would otherwise clear it)
+    and 0x1F                        ; the ship index is bits 0-4 (bit 6 = press-space screen marker, bit 7 = key down)
+    cp 0x1F
+    jr nz,titleNoUnder
+    ld a,TITLE_SHIPS - 1            ; a step left from 0 wraps to the last ship
+titleNoUnder:
+    cp TITLE_SHIPS
+    jr nz,titleNoOver
+    xor a                           ; a step right from the last ship wraps to 0
+titleNoOver:
+    or 0x80                         ; keep "key is down" (a wrap from 0 to the last ship would otherwise clear it)
     ld (hl),a
 ; Spawn the demo ship for the current index (the command patches go to NOP for the spawn and back to CPL after it)
 titleShow:
     call setCommandsNOP
-    ld a,(splash2Shipnr)
-    and 0x07
-    ld e,a
-    ld d,0
-    ld hl,titleShips
-    add hl,de
-    ld a,(hl)
-    call spawnCommandParser
+    call titleSpawn                 ; common2x.asm: the table entry of the current ship (bank 6), its image into the flight tail, the ship spawned ahead
     jp setCommandsCPL
 titleKeyUp:
     res 7,(hl)
@@ -7896,15 +7897,19 @@ titleKeyUp:
 ; Print the current ship's name centred on the title line (text row 1), where the ELITE title stood
 titleName:
     ld a,(splash2Shipnr)
-    and 0x07
-    add a,a
-    add a,a
-    add a,a
-    add a,a                         ; 16 bytes per name
-    ld e,a
-    ld d,0
-    ld hl,titleNames
+    and 0x1F
+    ld l,a
+    ld h,0
+    add hl,hl
+    add hl,hl
+    add hl,hl
+    add hl,hl                       ; 16 bytes per name, in bank 6 (fill128_packs.bin, tools/ship128.py)
+    ld de,titleViewNames
     add hl,de
+    ld de,hullVertexBuf             ; the drawing of the hull is over: its scratch buffer holds the name
+    ld a,16
+    call bankCopy
+    ld hl,hullVertexBuf
     push hl
     ld b,0
 titleNameLen:
@@ -8016,6 +8021,17 @@ titleKeyIsr:
     ret
 ; Kill count on the commander page (called from common2x.asm in place of `call anotherPrintwithTokeninA`, A = rank token): the rank name, " - 1234", then the new line.
 ; The count is the word at killScore+1: the low byte of the 24-bit score is a fraction (getRank compares the middle byte).
+; A = count, HL = source (window address in bank 6), DE = destination (resident): maps RAM bank 6 for the copy only, no stack use while it is mapped
+bankCopy:
+    di
+    ld bc,0x7FC6
+    out (c),c
+    ld c,a
+    ld b,0
+    ldir
+    mapMain
+    ei
+    ret
 killHook:
     push af                             ; the rank token
     call printString                    ; no new line yet (CallprintString would add it)
