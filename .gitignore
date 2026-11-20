@@ -10,6 +10,8 @@ tmp/
 # Disk images, scans and photos of other people's work
 *.dsk
 *.DSK
+*.cdt
+*.CDT
 magazines/*
 !magazines/README.md
 *.jpg
@@ -21,3 +23,13 @@ __pycache__/
 
 # Internal notes (process, history, generated maps, third-party text); kept locally
 docs_other/
+
+# Local third-party build (RASM, only for Fessor's source; tools/README.md)
+tools/bin/
+
+# Original disks and tapes (the third-party games; moved from the project root)
+disks/
+*.pdf
+
+# Finder duplicates ("name 2.ext")
+* 2.*

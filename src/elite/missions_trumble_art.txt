@@ -1,17 +1,15 @@
-# Trumble: 16 x 14 pixels, one character per pixel. '.' = pen 0 (nothing drawn), '1' '2' '3' = pen 1, 2, 3. One lumpy, slightly off-round blob with irregular stubby spikes,
+# Trumble: 12 x 12 pixels, one character per pixel. '.' = pen 0 (nothing drawn), '1' '2' '3' = pen 1, 2, 3. One lumpy, slightly off-round blob with irregular stubby spikes,
 # like the Claude Code asterisk, to suggest fur: a round body with a bumpy edge and one-pixel tufts. No eyes, one shape (the C64 has two facing shapes). Pen 3 is the body: in the flight view the pens 0, 1 and 3 change with the
 # system but are always four different inks, so a pen 3 body always shows against the background.
-....3..3..3.....
-..3.33333333.3..
-...3333333333...
-.3.3333333333.3.
-..333333333333..
-.3333333333333.3
-..333333333333..
-.3333333333333..
-..333333333333.3
-.3.3333333333.3.
-...3333333333...
-..3.33333333.3..
-....3..33..3....
-.....3....3.....
+...3..3.3...
+.3.333333.3.
+..33333333..
+.3333333333.
+3.33333333.3
+.3333333333.
+.3333333333.
+3.33333333..
+..33333333.3
+.3.333333.3.
+...3333333.3
+....3..3..3.

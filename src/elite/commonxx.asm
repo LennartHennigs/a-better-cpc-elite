@@ -706,6 +706,27 @@ sub_1FCC:
     ret
 ; Star occlusion: with STAR_OCCLUDE (on with -DENHANCED, off by default = the original bytes; check_src.sh compares both) the stars no longer
 ; show through the planet or sun disc, ship lines and tunnel lines. The 31 dead bytes below hold dustPlotPixel, which the dust loop (dust70) calls.
+; Laser sights (-DENHANCED): one sight per laser type instead of the cross for all of them (lasersights.asm, drawn with drawLaserLine). The routine and its data take the first
+; LASER_SIGHTS_SIZE bytes of the free zero tail of COMMONXX (laserSightsBlock); LaserSights jumps to it. English with -DMISSIONS has no room there (the flight images fill the
+; tail), so that build keeps the cross.
+LASER_SIGHTS_SIZE equ 128
+; Kill count on the status page (-DENHANCED, English only so far): killcount.asm, 21 bytes, in the shared head of the flight images (-DMISSIONS) or the zero tail.
+    IFDEF ENHANCED
+KILL_COUNT equ 1
+    ELSE
+KILL_COUNT equ 0
+    ENDIF
+    IFNDEF LASER_SIGHTS
+      IFDEF ENHANCED
+        IFNDEF MISSIONS
+LASER_SIGHTS equ 1
+        ELSE
+LASER_SIGHTS equ 0
+        ENDIF
+      ELSE
+LASER_SIGHTS equ 0
+      ENDIF
+    ENDIF
     IFNDEF STAR_OCCLUDE
       IFDEF ENHANCED
 STAR_OCCLUDE equ 1
@@ -831,6 +852,19 @@ chkCloak:
     xor a
     ld (todoActiveSlots),a
     ret
+    IF KILL_COUNT
+; The 10 dead bytes of unusedGetFlightMode and unusedGetCloakFlag (never executed, docs/_architecture.md) hold killSpace for killcount.asm: A = the rank token; prints one space
+; unless the rank string already ends in one (Poor, Average and Above Average, tokens &17-&19, end in a space in the stock text).
+killSpace:
+    sub 0x17
+    cp 0x03
+    ret c
+    call printStringFollowingByte
+    db " "
+    ret
+killSpaceEnd:
+    ASSERT killSpaceEnd - killSpace == 10, "killSpace must fill the 10 dead bytes of unusedGetFlightMode and unusedGetCloakFlag exactly"
+    ELSE
 ; Probably dead (no caller): return FlightMode in A, with Z set if it is zero.
 unusedGetFlightMode:
     ld a,(FlightMode)
@@ -841,6 +875,7 @@ unusedGetCloakFlag:
     ld a,(flagCloakingDeviceActive)
     and a
     ret
+    ENDIF
 ; Set the byte at &3933 to 1 unless FlightMode is zero (probably a redraw/state flag)
 SUB_ram_2058:
     ld a,(FlightMode)
@@ -6533,7 +6568,12 @@ LAB_ram_4895:
     call printStringFollowingByte
     db " "
     call getRank
+killHookSite:
+    IF KILL_COUNT
+    call killCountHook              ; killcount.asm: the rank, ". " and the kills instead of the rank alone
+    ELSE
     call anotherPrintwithTokeninA
+    ENDIF
     call printStringFollowingByte
     db 0x11
     call SUB_ram_491a
@@ -13442,7 +13482,12 @@ aePlayECMSFX:
     ret
 ; Draws the four lines of the laser crosshair
 LaserSights:
+    IF LASER_SIGHTS
+laserSightsJp:
+    jp laserSightsNew               ; replaces the first instruction (3 bytes) of the cross below, which is then dead (lasersights.asm)
+    ELSE
     ld hl,0x0800
+    ENDIF
     ld de,0x1000
     ld c,0x0A
     call drawLaserLine
@@ -14738,14 +14783,24 @@ dat_8427:
     db 0xDD,0xCB,"&",0xF6,0xDD,0xCB," ",0xD6,0xC3,0xE0,0x84
 ; ZX Spectrum: finish_ship_and_escort (&BBF2)
 ; Two entries: &8432 (this one) rolls a random byte against C: a low roll goes to the hostile pick, a middling one makes an asteroid, a high one
-; spawns nothing. The marked Asp's return address (dat_8427) enters at its own tail and spawns the 2-3 escort pack.
+; spawns nothing. The marked Asp's return address (dat_8427) enters at its own tail and spawns the escort pack (2-4 ships; 1-4 with -DTRAFFIC).
+    IFDEF TRAFFIC
+; -DTRAFFIC: spawn odds like the C64 (docs/_ship_packs.md). One check per 256 passes on both machines; these are the per-check chances out of 256.
+SPAWN_HOSTILE_LIMIT equ 0x5A        ; roll below this lets a hostile through: 90/256 = 35% (C64 CMP #90); stock 0x50 = 31%
+SPAWN_JUNK_WIDTH equ 35             ; the next 35 values make an asteroid: 13.7% (C64 CMP #35); stock 10 = 3.9%
+    ELSE
+SPAWN_HOSTILE_LIMIT equ 0x50
+SPAWN_JUNK_WIDTH equ 10
+    ENDIF
 chkSpawnAsteroid:
     call getRandomNumber
     sub c
     jr c,cmd0ChkSendHostileAfterUs
-    cp 0x5A
+    cp SPAWN_HOSTILE_LIMIT + SPAWN_JUNK_WIDTH   ; stock cp 0x5A
+spawnJunkEndOperand equ $ - 1
     ret nc
-    cp 0x50
+    cp SPAWN_HOSTILE_LIMIT                      ; stock cp 0x50
+spawnHostileOperand equ $ - 1
     jr c,cmd0ChkSendHostileAfterUs
     call lookforFreeSlot
     ret nz
@@ -14845,13 +14900,20 @@ HermitOrViper:
     and 0x01
     add a,0x07
     jr pushAFentrytoSpawnShip
-; ZX Spectrum: &BCAB. Spawn a pack of 2-3 ships (random count: (rnd&3)>>1 + 2 + carry), each a Sidewinder (&10) or Krait (&11).
+; ZX Spectrum: &BCAB. Spawn a pack of 2-4 ships (random count: (rnd&3)>>1 + 2 + carry, so 2,3,3,4), each a Sidewinder (&10) or Krait (&11).
 ; Entered by jr from the hostile/neutral pick and, for the marked Asp, by the jp in dat_8427. Stops early when no ship slot is free.
 spawnEscortPack:
     call getRandomNumber
     and 0x03
+spawnPackSlot:
+    IFDEF TRAFFIC
+    inc a                           ; 1 to 4 ships like the C64 ((rnd & 3) + 1); stock: rra / adc a,0x02 = 2 to 4, mean 3.0; this one 1 to 4, mean 2.5
+    nop
+    nop
+    ELSE
     rra
     adc a,0x02
+    ENDIF
     ld c,a
 spawnEscortLoop:
     call lookforFreeSlot
@@ -16592,6 +16654,15 @@ shipdatViper:
 missionsFlightTail:
     IFDEF MISSIONS
     INCLUDE "missions_flight.asm"
+    ENDIF
+    IF LASER_SIGHTS
+laserSightsBlock:
+    INCLUDE "lasersights.asm"
+    ENDIF
+    IFNDEF MISSIONS
+      IF KILL_COUNT
+    INCLUDE "killcount.asm"
+      ENDIF
     ENDIF
     ASSERT $ <= 0xA000
     DS 0xA000-$

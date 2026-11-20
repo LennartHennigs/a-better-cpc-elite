@@ -5,11 +5,11 @@ How to assemble the sources, what the switches do, what `check_src.sh` proves, a
 ## Requirements and inputs
 
 - **Tools:** Python 3 (scripts run as `python3 -I`), [sjasmplus](https://github.com/z00m128/sjasmplus) 1.24.0 and iDSK, both built by `bash scripts/install-tools.sh` into `~/.local/bin` (pinned versions; not in Homebrew).
-  `scripts/install-caprice32.sh` adds the Caprice32 emulator. cpcxray (via `uv tool`) runs the tests and the trainer tokeniser. RASM (`tools/bin/rasm`) is needed only for Fessor's source.
-- **Disks:** the original `.dsk` images stay in the project root, untouched and untracked. The checker compares with files extracted from them:
+  cpcxray (via `uv tool`) runs the tests and the trainer tokeniser. RASM (`tools/bin/rasm`, a local untracked build) is needed only for Fessor's source.
+- **Disks:** the original `.dsk` and `.cdt` images stay in `disks/`, untouched and untracked. The checker compares with files extracted from them:
 
   ```bash
-  python3 -I tools/dskx.py Elite_UK_original_protected.dsk work/bin_stock      # English: .BIN files, AMSDOS header kept in .raw
+  python3 -I tools/dskx.py disks/Elite_UK_original_protected.dsk work/bin_stock      # English: .BIN files, AMSDOS header kept in .raw
   # German: work/bin_german, French: work/bin_fr (tools/dskx.py on Elite_DE_cracked.dsk and the French disk)
   ```
 - Everything generated goes under `work/` (disks, snapshots, builds), `traces/` or `src/`; nothing is written to the project root.
@@ -34,8 +34,9 @@ A flag-less `sjasmplus` run gives the **original bytes** (plus the one-byte CPC+
 | `STAR_OCCLUDE` (`=1`/`=0`) | stars stay behind planet and sun; overrides `ENHANCED` | `commonxx.asm` |
 | `ESC_KEYCODE` (`=0x7F`/`0xFF`) | key code of ESC in the keyboard table; `0x7F` leaves the buy, sell and equipment prompts | `commonxx.asm` |
 | `TITLESEL` | choose the demo ship on the title screens | `commonxx.asm`, `musiquex.asm` |
+| `TRAFFIC` | C64-like spawn odds (`SPAWN_HOSTILE_LIMIT`, `SPAWN_JUNK_WIDTH`, escort pack size); `check_src.sh` proves default = original and TRAFFIC = five bytes | `commonxx.asm` (all three trees) |
 | `MISSIONS` | added missions: stub, hooks, vector table, default flight image | `largeaxx.asm`, `commonxx.asm` |
-| `FL_C` `FL_P` `FL_T` `FL_S` `FL_R` | with `MISSIONS`: which flight image goes in the `COMMONXX` tail (default image if none) | `commonxx.asm` |
+| `FL_C` `FL_P` `FL_T` `FL_S` `FL_R` `FL_1`-`FL_7` | with `MISSIONS`: which flight image (mission image or ship pack, `_ship_packs.md`) goes in the `COMMONXX` tail (default image if none) | `commonxx.asm` |
 | `OVL_C` `OVL_P` `OVL_T` `OVL_R` | with `MISSIONS`: which docked overlay goes after the stub | `largeaxx.asm` |
 | `FIREBIRD` | the Firebird disk's `LARGEAXX` (`&0998`: `38 19` -> `38 00`, no hold-capacity test) | `largeaxx.asm` |
 
@@ -44,9 +45,11 @@ What each change does in the game: `_my_changes.md`.
 ## `make`
 
 ```bash
-make stock            # work/build/stock/{en,de,fr}/      original bytes   (LOC=de or LOC=fr)
-make enhanced         # work/build/enhanced/{...}/        -DENHANCED, plus -DTITLESEL
-make missions         # python3 -I tools/build_dsk.py --missions work/elite_missions.dsk
+make original         # tools/build_original.sh: python3 -I tools/build_dsk.py --stock -> build/elite_original.dsk (LOC=de|fr: build/elite_original_de.dsk, _fr.dsk)
+make expanded         # tools/build_expanded.sh: build_showship.sh, then build_cheat.sh (which runs build_dsk.py --missions) -> build/elite_expanded.dsk; LOC=de|fr stops with a message (not ported yet)
+make stock            # build/stock/{en,de,fr}/      original bytes   (LOC=de or LOC=fr)
+make enhanced         # build/enhanced/{...}/        -DENHANCED, plus -DTITLESEL
+make missions         # python3 -I tools/build_dsk.py --missions build/elite_missions.dsk
 make check            # check_src.sh for en, de, fr
 ```
 
@@ -72,11 +75,12 @@ All disk builders start from a **copy** of a base disk and refuse to modify the 
 | Command | Base disk | Output | Notes |
 |---|---|---|---|
 | `python3 -I tools/build_dsk.py` | `Elite_UK_Firebird_cracked_trainer.dsk` | `work/elite_rebuilt.dsk` | the four files with `-DENHANCED -DTITLESEL` (LARGEAXX with `-DFIREBIRD`), AMSDOS headers kept, sizes must not change |
+| `... --stock` | same (`--de`, `--fr` work) | `work/elite_original.dsk` (`_de`, `_fr`) | no flags at all: the original bytes plus the CPC+ fix (LARGEAXX with `-DFIREBIRD` on the Firebird disk); Firebird's own `CHEAT.BAS` stays; refused with `--missions` |
 | `... --missions` | same | `work/elite_missions.dsk` | adds the mission overlays and flight images (assembled per tag), `README.TXT` |
 | `... --de` | `Elite_DE_cracked.dsk` | `work/elite_de_rebuilt.dsk` | `--de --missions` is refused |
 | `... --fr` | `Elite (1985)(Firebird Software)(fr).dsk` | `work/elite_fr_rebuilt.dsk` | `--fr --missions` is refused; boot with `RUN"EL` |
-| `bash tools/build_cheat.sh` | Firebird disk, mission disk | `work/firebird_cheat.dsk`, `work/missions_cheat.dsk` | tokenises `src/cheats/*.ASC` with the CPC's own BASIC (headless cpcxray), adds `CHEAT`, `EDITSAVE` (and `LISTSAVE` on `work/de_savegames.dsk`); `TRUMBLE.BAS` is built but not put on the disks |
-| `python3 -I tools/hide_files.py DISK` | | in place | refuses a disk in the project root |
+| `bash tools/build_cheat.sh` | Firebird disk, mission disk | `work/firebird_cheat.dsk`, `work/missions_cheat.dsk` | tokenises `src/cheats/*.ASC` with the CPC's own BASIC (headless cpcxray), adds `TRAINER` (and deletes Firebird's `CHEAT.BAS`), `EDITSAVE` (and `LISTSAVE` on `work/de_savegames.dsk`); `TRUMBLE.BAS` is built but not put on the disks |
+| `python3 -I tools/hide_files.py DISK` | | in place | refuses a disk in the project root or `disks/` |
 
 Every built disk shows only `.BAS` and `.TXT` files in `CAT`; all other files get the System attribute (`hide_entries` in `tools/hide_files.py`, called by `build_dsk.py`). iDSK adds files unhidden, so hide again after any
 `iDSK -i` or `-r`. Check with `CAT` or the directory bytes, not `iDSK -l` (it lists hidden files). The disk README is `src/disk/README.TXT` (ASCII, CRLF, Ctrl-Z). A built disk's boot test: `RUN"ELITE`.
@@ -93,18 +97,22 @@ sjasmplus -DTITLESEL                                  --raw=out/MUSIQUEX.BIN src
 ## Editing the source safely
 
 - `src/elite/` is hand-edited. **Never rerun `tools/disasm_stock.py` into it** (it overwrites); use a scratch directory (`python3 -I tools/disasm_stock.py /tmp/x`). Same for `src/elite_de/` (`map_german.py` + `disasm_german.py`) and `src/elite_fr/`.
-- Renames: for `dat_` labels use `tools/rename_dat.py` with a map in `tools/rename_maps/` (`--all-trees` applies it to German and French too; it refuses a name used twice). Otherwise `perl -pi -e 's/\bold\b/new/g'`
+- Renames: use `tools/rename_labels.py` with a map in `tools/rename_maps/` (it renames in en, de and fr where the label is defined, `--en-only` in English alone; it refuses a name used twice and runs `check_src.sh` for the three trees). Otherwise `perl -pi -e 's/\bold\b/new/g'`
   (BSD `sed` has no `\b` and silently changes nothing), then a grep count, then `check_src.sh` for all three trees.
 - Keep the mission tails honest: the stub plus the Constrictor overlay fill `&1714-&1A3F` exactly, the largest flight image is 608 of 610 bytes, and `ASSERT`s guard the fixed addresses (`&1714`, `&9D9E`, `&9FFE`). See `_memory_map.md`.
+- A new `-DENHANCED` byte change: label the operand (`name equ $ - 1`), add `X=$(off name)` plus `o==x` to the awk in `check_src.sh` (a tree without the label gets -99999) and do all three trees. In `LARGEAXX` the awk uses `esym` (`escQtyOperand`: `-v qe=...` plus `o==qe`). Retargeting a `jr` to another label keeps the size, so the save key does not move. The slots so far (`podCleanOperand`, `predelayOperand`, `hyperCountPos`, `cashHome`, `killHookSite`, `laserSightsJp`, `laserSightsBlock`, `escQtyOperand`) are described in `_my_changes.md`.
+- Measure a flight image with `-DENHANCED -DTITLESEL -DTRAFFIC -DMISSIONS -DFL_x` (the disk's flags: plain `-DMISSIONS` gives different layouts, and `test_launch.py` needs the same flags): size = `mxFlightEnd - mxFlightBase` from the sym file.
 - A new language: extract the disk with `tools/dskx.py` into `work/bin_X/`, add it to `LOCALES` in `tools/map_locale.py` and `tools/disasm_locale.py`, run both, add a branch to `check_src.sh`, and check `getPPI_Input` for the CPC+ fix (`out (c),c` = fixed).
 
 ## Tests and the emulator
 
-The tests in `tools/test_*.py` run in cpcxray from `work/xray/` with cpcxray's own Python, after a disk build and a copy of the disk to `work/xray/disk/`:
+`make test` rebuilds the disks and runs the host checks (`check_src.sh` for en, de and fr, `tools/tests/test_saves.py`, `tools/tests/test_disks.py`); `make test-emu` runs the emulator tests that report pass or fail (`tools/tests/run_all.py --emu`). The list and what each needs is in `tools/tests/README.md`.
+
+The tests in `tools/tests/test_*.py` run in cpcxray from `work/xray/` with cpcxray's own Python, after a disk build and a copy of the disk to `work/xray/disk/`:
 
 ```bash
 export PATH="$HOME/.local/bin:$PATH"
-cd work/xray && ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_launch.py
+cd work/xray && ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/tests/test_launch.py
 ```
 
 Suites: `test_mission_hook`, `test_launch`, `test_mission_flight`, `test_plans`, `test_stolen_ship`, `test_rocks`, `test_trumbles`, `test_trumble_sprites`, `test_flight_hull`, `test_title_ships` (`[de]`), `test_star_occlusion`.
@@ -126,7 +134,26 @@ Run long sweeps in the background (`nohup ... &`, one output file each); the for
 | Writes | `memory_write(address, data="3E 05")`; `registers_set(values={"pc": 0x9000})`; `breakpoint_add(address, kind="pc"|"write")`; `bus_trace_read` returns the last 100 records unless `last=` (max 2000) |
 | Looking | the GUI flickers (it draws unsynced); use `screen_image` for screenshots (`output/*.png`) and cpcxray for tracing, a real emulator (Virtual Retro) to play |
 | In-game steps | `5` galactic chart, `6` short range chart, `7` data on present system, `h` hyperspace to the system nearest the chart cursor (needs fuel; keep the cursor within about 7 LY, e.g. a 0.2 s `cursor_left` tap from Lave reaches Diso); the cursor lives at `PresentPlanetX/Y` `&3934/&3935`; the planet is `posDataPlanet` `&1C2F`, the sun `posDataSun` `&1C26` |
+| In the title and docked screens | title `y` opens the disk menu (`1` load, `2` save, `4` exit); `FileMenu` is only called from the title loop, so scripts cannot reach a save in play. The status page is key `9` (press `8` between values: it does not redraw on itself). Kills are the word at `&38D8` (`killScore` `&38D7`), set with `memory_write` |
+| Snapshots | `sna_save`, then read 64 KB at offset `0x100` of the .sna (flat RAM layout, also for 128K: bank n at `0x100 + n*0x4000`); `memory_read` shows only the CPU's current map and `view="ram:N"` returned the same bytes for every N. Disc loads take several emulated seconds: run 10-15 s before reading results. `step` single-steps; `emulated_us` in `run` results is per call; `machine_status["clock_us"]` is the total |
+| Key to flag mapping | `tblKeyboardMatrix2` (`&8D37`, line*8+bit; code>>3 is the `&8D87` byte, code&7 == 0 is bit 7) |
 | Symbols | `sjasmplus --raw=o.bin --lst=x.lst --sym=x.sym src/elite/commonxx.asm` into a scratch directory gives addresses; grep the `.lst` for an address |
 
 Test patterns that work: start from the in-flight snapshot, stop at `handleEntitys`, write the freshly assembled patches, set variables, call a vector with a trap return address, restore registers. Missions mostly use forced state values
 (`_missions_built.md` section 5 and 7).
+
+### RVM state files (`*.rvmstate`)
+
+Retro Virtual Machine's "save state" (menu or the disk icon in its emulator window) writes one file; `tools/rvmstate.py STATE [--regs] [--ram OUT.bin] [--slots] [--sna OUT.sna]` reads it. cpcxray cannot load the state itself, so `--sna` writes a standard snapshot (version 3, 128 KB) that it can:
+
+```bash
+python3 -I tools/rvmstate.py ~/Desktop/Untitled.rvmstate --sna work/xray/output/user_state.sna
+# in cpcxray (from work/xray): sna_load {"path": "output/user_state.sna"}, then run 500000 us and screen_image
+```
+
+  The game resumes where the state was saved (mid-frame if RVM was paused there; the first frames finish the interrupted one) and draws the same picture, colours included; edit RAM with `memory_write` and run again to try variants. The snapshot takes registers, Gate Array (pens, border, mode, ROM switches), CRTC, PPI, PSG and all eight RAM pages from the state. The RAM configuration is not in the state and is written as 0; disk, tape and timers are not carried over (load the disk yourself with `disk_insert` before `sna_load`).
+
+- **Container:** one zlib stream. Inside is text in a JavaScript-like notation, not JSON: keys carry no quotes, strings use `'`, and an array prints its elements 1 to n first and **element 0 last, as `0 : value`** (so the last RAM page in the file is page 0; the same holds for `palette`, `crtc` and `ay`).
+- **Layout** (`snap`): `chain` (a large base64 block, about 1 MB, not decoded), `ram` (eight 16 KB pages, each `<base64 of a zlib stream>`: pages 0 to 3 are the 64 KB the CPU sees, 4 to 7 are the 6128's extra banks, filled with a repeated pattern when unused), `cpu` (`pc`, `sp`, `af`, `bc`, `de`, `hl`, `ix`, `iy`, shadow registers as `afp`, `bcp`, `dep`, `hlp`), `crtc`, `palette`, `gateArray`, `romSelect`, `ay`, `upd765`, `time`. `media` is empty: the state does not remember the disk.
+- **Address map:** I assumed the default RAM configuration (page n at `n * &4000`) and checked it on one state: the Asp Mk II blueprint at `&8FC7` and the entity slots at `&1A40` matched the stock build byte for byte. I found no key for the gate array's RAM configuration; a state saved with another bank layout would need a closer look.
+- **Ship slots** (`--slots`): seven slots of 39 bytes from `&1A40` (slot 0 is the station, 1 to 6 are what `lookforFreeSlot` hands out). In a slot: `+0..8` x, y, z as lo, hi, sign (bit 7 of the sign byte = negative), `+9..26` nine sign-magnitude words for the orientation (&7FFF = 1.0; the tool prints them as fractions in the order they are stored), `+27` speed, `+34` flags (0 = free slot), `+35/36` blueprint address. A blueprint address names the hull: look it up in the build's `--sym` file (`shipdat...` labels).

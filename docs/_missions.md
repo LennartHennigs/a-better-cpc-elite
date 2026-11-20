@@ -45,7 +45,7 @@ heats the cabin; the ST pays 1 kg of gems, the CPC rank +1 and gems.
 **2. Cloaking device** (CPC, ST #4, MSX #4). Arrival hook stage 2 (>= 128, needs bit 0, sets bit 1); random encounters (`&8404`: random byte below 30/256 and
 `Missionflag & &42 == 2`) spawn a special Asp Mk II with a marker flag; scooping cargo type `&FF` (`&3961`) sets bit 6, rank +1; `chkCloak` `&2017` and the `Y` key;
 enemy aiming returns early; shut-off when energy bank 3 is below `&28`. The ST and MSX use a Cougar (own hull, 5,000 bounty = 500 Cr) with two Asp escorts; the CPC and
-Spectrum use a marked Asp Mk II with 2-3 Sidewinder/Krait escorts and no bounty.
+Spectrum use a marked Asp Mk II with 2-4 Sidewinder/Krait escorts and no bounty.
 
 *Cougar and cloak compared (read 2026-11-07; ST = `work/ext_st/repo/src_orig/asm`; Spectrum = `work/ext_msx/skoolkit/src/elite.skool`; CPC = `src/elite/commonxx.asm`):*
 
@@ -53,7 +53,7 @@ Spectrum use a marked Asp Mk II with 2-3 Sidewinder/Krait escorts and no bounty.
 |---|---|---|
 | Start | `new_mission` (`missions.m68:64`): galaxy 2+, no mission, `jump_count` (64 per mission) hits 0, `next_mission` 4 gives `$40` | `Missionflag` stage 2 on the 128th jump (`&4EDB`), no state byte |
 | Briefing | next docking, `dock_check` at `$40` runs `warning4` (text21 "Warning to all Traders"); state `$41` | none |
-| Spawn | `create_pirates` (deep space, fewer than 2 pirates) calls `pirate_attack`; at `$41`, only if no Cougar exists, creates a Cougar plus exactly 2 Asps | `spawnCommand0`: random below 30/256, `Missionflag & &42 == 2`, gate byte `aspMissionState` zero; gate := 1, spawns ship `&0D` (Asp), patch `dat_8427` sets bit 6 of `(ix+38)` (marker) and bit 2 of `(ix+32)`, then `jp &84E0` = `spawnEscortPack` (2-3 escorts; Spectrum `$BCAB`) |
+| Spawn | `create_pirates` (deep space, fewer than 2 pirates) calls `pirate_attack`; at `$41`, only if no Cougar exists, creates a Cougar plus exactly 2 Asps | `spawnCommand0`: random below 30/256, `Missionflag & &42 == 2`, gate byte `aspMissionState` zero; gate := 1, spawns ship `&0D` (Asp), patch `dat_8427` sets bit 6 of `(ix+38)` (marker) and bit 2 of `(ix+32)`, then `jp &84E0` = `spawnEscortPack` (2-4 escorts, 1-4 with `-DTRAFFIC`; Spectrum `$BCAB`) |
 | Hidden? | Cougar blinks invisible half the time (`vector.m68:151`), always ECMs missiles, ignores the energy bomb, cannot be collided with | while the gate is 1 the marked Asp is drawn as its laser only (Spectrum `$A7D9`; CPC `drawShipDistanceCheck`, the test just before it) |
 | Gate states | none (state `$41` is the gate) | `aspMissionState` (Spectrum `$9CB2`): 1 spawned, 2 it has you lined up with the cloak off (`loc_884A`, back to 1 when the bearing grows), 3 shot down by the player's laser (`targetisKilled`), canister pending; 0 on hyperspace, ramming, or death by another route |
 | Kill | `explode_object`, `release_cargo` (`orbit.m68:504`): blueprint `cargo_type` -1 releases one canister with cargo -1 | `targetisKilled`: marked Asp with gate 1 or 2 sets the gate to 3 and ejects a canister (action 6); cargo is not a blueprint field |
@@ -65,7 +65,7 @@ Spectrum use a marked Asp Mk II with 2-3 Sidewinder/Krait escorts and no bounty.
   one shared byte as a state machine and mark the Asp by a flag; that byte also steers the Spectrum's energy-regeneration throttle (`$A2D8`) and the spawn throttle,
   so resetting it is a side effect of other code (which is why a scooped random canister at state 3 also gives the cloak).
 - The CPC can lose the cloak by ramming or a non-laser kill (gate back to 0, spawns again later); the ST ends the mission at the first removal of the Cougar.
-- Traced 2026-11-10 (`tools/test_cloak_asp.py`, stock code, Asp spawned ahead with the marker bit and `aspMissionState` = 1): the wireframe is not drawn in the front view, but the scanner still shows its blip, because `UpdateScanner` plots every slot in range with no marker test. So the Asp is hidden from the view, not from the radar.
+- Traced 2026-11-10 (`tools/tests/test_cloak_asp.py`, stock code, Asp spawned ahead with the marker bit and `aspMissionState` = 1): the wireframe is not drawn in the front view, but the scanner still shows its blip, because `UpdateScanner` plots every slot in range with no marker test. So the Asp is hidden from the view, not from the radar.
 - Read from source, not traced: the laser-only draw test and the "other route" reset (`aspGateClearIfBlueprint1E` guards state 3, `aspGateReset` clears 1/2).
 - The MSX (`main-code.a99`, ricbit's `code.asm`) matches the ST: Cougar type `$1E`, flickering draw, `SCOOP_CLOAK_REWARD` (`$8BA6`) sets `CLOAK_FITTED`, `Y` toggles `CLOAK_ACTIVE`.
 
@@ -212,7 +212,7 @@ each frame (read at `&28D8`). Not tested: the pen 3 flicker during explosions. T
   station-launched ships, it calls `spawnCommandParser` with action 0 = `spawnCommand0`. That rolls a random byte minus the contraband weight C: below zero picks a hostile (`cmd0ChkSendHostileAfterUs`), `&50-&59` an asteroid, `&5A`+ nothing.
   The mission spawn checks hook in at its top. The invasion already forces a Thargoid there when `ThargonMissionVar` is 4.
 - **The escape pod (answered 2026-11-07):** a bug that affects no reward. `cargoHold` is `&38E2-&38F2` (17 goods), but the pod clear (`mleCleanInvLoop`) clears 17 bytes from `&38E1`, wiping `&38E1` (the market random byte) and goods 0-15
-  and **keeping alien items (good 16, `&38F2`)**; `cargoSpaceFree` is reset to the full capacity, so a pilot who ejects with alien items can hold more than the capacity. Fix: start the loop at `&38E2` (`ld hl,cargoHold`); not applied.
+  and **keeping alien items (good 16, `&38F2`)**; `cargoSpaceFree` is reset to the full capacity, so a pilot who ejects with alien items can hold more than the capacity. Fix: start the loop at `&38E2` (`ld hl,cargoHold`); applied under `-DENHANCED` in all three trees (`podCleanOperand`), the default build keeps the original bytes.
 - Not planned: Elite-A delivery missions, the Apple II's graphics, music. The BBC code is under Mark Moxon's annotations: behaviour only, the Z80 is written fresh. Builds start from the Firebird or German cracked disks, not the protected original.
 
 ## 4. Elite Plus
@@ -258,7 +258,7 @@ Source of the claims: [AFE FAQ2](https://wiki.alioth.net/index.php/AFE_FAQ2) (se
 - **9th galaxy in Elite Plus: confirmed in the EXE, and it is reachable.** The string `Welcome to the 9th Galaxy!` is at `DS:829D` and is chosen at `0x73DD` when the galaxy byte `DS:8315` is 8 (after a galactic jump, flag `DS:AE24`).
   The jump routine `0x7439`: at 8 it wraps to 0; otherwise it increments, and when the new value is 8 it calls the random routine and keeps 8 only if `ax < 0x12C` (300 of 65536, about 0.46 % per jump from galaxy 8), else wraps to 0.
   The wiki's "no-one has found a way" is therefore a probability, not a missing path, unless the hacked EXE differs from the original (unexamined); the forum hex patch `3D 2C 01` -> `90 90 F9` (carry set) makes it certain. The digit shown is `'1' + galaxy`, so a '9' is printed.
-- **ArcElite also has nine galaxy names** (index 8 "Trojane"; `docs/_arcelite.md`); how that index is reached was not found.
+- **ArcElite also has nine galaxy names** (index 8 "Trojane"; `docs_other/_arcelite.md` (local only)); how that index is reached was not found.
 - **Generation ships, dredgers:** the wiki gives the Space Trader's manual (p. 30, "more than seventy thousand") and a rumour that Ian Bell said none were ever implemented; for dredgers "no confirmed sightings". Our check: no string `generation`, `dredger`, `carrier` or `destroyer` in the CPC
   binaries (English, German), the Elite Plus image (its ship list: Dodo, Coriolis, Boa, Anaconda, Cobra Mk I, Asteroid, Boulder, Thargon, Shuttle, Transporter, Worm, Splinter, Plate, Gecko, Moray, Adder, Mamba, Cargo Canister, Constrictor,
   Cougar, Missile, Escape Pod, Thargoid, Ferdelance, Asp, Sidewinder, Cobra Mk III, Krait, Viper, Python) or ArcElite, and none in the cloned ST/Amiga, NES, MSX and C64 trees. So the claim holds for those builds; it says nothing about builds we do not have. The wiki's ArcElite "mystery ship" is held to be the Urutu (not checked).
@@ -290,7 +290,7 @@ CPC consequence (built, `docs/_missions_built.md`): a state byte instead of a `M
 ## 5. ArcElite (Acorn Archimedes, 1991)
 
 The Archimedes version has four missions of its own: none is a Constrictor, plans (as in the 6502 versions), Trumbles, supernova or Elite Plus mission, and no other port has them. No source is public; the game was unpacked and read in 2026-11
-(method, files and global variables: `docs/_arcelite.md`). Values are from the code, checked against the [wiki](https://wiki.alioth.net/index.php/ArcElite_missions) (one difference: mission 1 starts at 450 kills, not 550).
+(method, files and global variables: `docs_other/_arcelite.md` (local only)). Values are from the code, checked against the [wiki](https://wiki.alioth.net/index.php/ArcElite_missions) (one difference: mission 1 starts at 450 kills, not 550).
 
 | ArcElite | Start | Reward |
 |---|---|---|
@@ -301,4 +301,4 @@ The Archimedes version has four missions of its own: none is a Constrictor, plan
 
 Design points: mission state is one word per mission (`88888` failed, `99999` done, -999..-995 pending outcome codes written by the destroy handler or the jettison code, small positive values as progress bits); a single scheduler runs on
 every dock and returns 1 when it showed a message; chatter lines are random per dock and shown once each (a separate bit array); the kill thresholds sit in the rating bands. The Zartid mission is the nearest relative of the 6502 plans mission
-(a despot flying plans to the Thargoids), and the Pino hunt of the CPC stolen police ship (a marked ship that must be killed). ArcElite has nine galaxy names (index 8, "Trojane"); see `docs/_arcelite.md`. The ArcElite set is unrelated to the set built here (`docs/_missions_built.md`).
+(a despot flying plans to the Thargoids), and the Pino hunt of the CPC stolen police ship (a marked ship that must be killed). ArcElite has nine galaxy names (index 8, "Trojane"); see `docs_other/_arcelite.md` (local only). The ArcElite set is unrelated to the set built here (`docs/_missions_built.md`).

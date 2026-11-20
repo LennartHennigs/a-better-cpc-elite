@@ -18,7 +18,7 @@
 
 ### Naming variables
 
-109 of 176 `dat_` labels were renamed with `tools/rename_dat.py` (maps in `tools/rename_maps/`); batch 2 named the data tables and turned two
+109 of 176 `dat_` labels were renamed with `tools/rename_labels.py` (maps in `tools/rename_maps/`); batch 2 named the data tables and turned two
 immediates into numeric operands. Evidence, in order of strength: Fessor's variable blocks in the same byte order as the stock block (anchored by a
 named neighbour such as `dustViewDirection` at `&6BF7` or `charXY` at `&38C4`, and matching initial values such as `0x55` at `&6BFD`); then the
 uses (`cargoHold` indexed by good number in `storeScoopedGood`; illegal goods 3, 6, 10 in `chkForIllegalGoods`); then save files (a 34 t cargo with
@@ -98,7 +98,7 @@ square tables at `&57FE-&57FF` this way (flattened station every 90 degrees). Re
 ## Dead code and free space (2026-11-07/08)
 
 Goal: find bytes a mission port can reclaim. **Conclusion: there is no reclaimable dead code in the `db` runs.** Reliable free space is the 610-byte tail of
-`COMMONXX` (`&9D9E-&9FFF`) minus the top bytes the stack uses, plus 10 bytes of `unusedGetFlightMode` (`&204E`) and `unusedGetCloakFlag` (`&2053`).
+`COMMONXX` (`&9D9E-&9FFF`) minus the top bytes the stack uses, plus 10 bytes of `unusedGetFlightMode` (`&204E`) and `unusedGetCloakFlag` (`&2053`) (taken by `killSpace` since 2026-11-15 with `-DENHANCED`).
 `unusedViewBorderFill` (`&1FD2-&1FF0`, 31 bytes, no references) now holds `dustPlotPixel` under `STAR_OCCLUDE`.
 
 1. **Fessor's switches** (`extended/source/EliteMasterSource.asm`): `defdeactivate`, `defdeactivate1-13`, `defdeactivatereal` and `defdeactivatechar` (all on in the
@@ -114,7 +114,7 @@ Goal: find bytes a mission port can reclaim. **Conclusion: there is no reclaimab
    *Not code:* the zero entity area `&1A40-&1B7A`, variable blocks `&38C1-&3929`/`&392A-&3937`, tables `&1B81-&1B9A` and `&939D-&93A8`, tails of live routines
    (`&2997`, `&3D7B`, `&522A`, `&6BEB`, `&838B`). *Live (static check and cpcxray, 2026-11-08; with the fixed decoder 2026-11-11 these tails decode as code, `tools/exec_in_data.py` runs the game with breakpoints on every remaining data range), not the "130-155 bytes of dead code" first claimed:* each is the tail of a routine
    starting with `push ix`/`push iy`: `&53D7` in `LAB_ram_53cf` (`move_ship_forward` three times), `&5DD2` in `SUB_ram_5dcf` (called from `&51CC`, `&563C`), `&8243` in
-   `execSpawncmd4`, `&8365` in `spawnAtEntityCoordinates`, `&89F5` in `LAB_ram_89f4`/`LAB_ram_8a10`; `&6C0A` is in the runtime buffer `dustParticleAdrTable`; `&9751-&97A0` is filler.
+   `execSpawncmd4`, `&8365` in `spawnAtEntityCoordinates`, `&89F5` in `LAB_ram_89f4`/`LAB_ram_8a10`; `&6C0A` is in the runtime buffer `dustParticleAdrTable`; `&9751-&97A0` is the Python/Big Trader edge block (live hull data).
 5. **Trace** (`tools/dead_trace.py`, two runs of 700 random 1.3 s key presses from `firebird_in_flight.sna`, docking and cloak/Thargoid states forced every 25 presses;
    `traces/dead_run1.json`, `dead_run2.json`): the positive controls all fired (`LAB_ram_53cf`, `SUB_ram_5dcf`, `execSpawncmd4`, `LAB_ram_89f4`, `LAB_ram_8a10`, `chkCloak`,
    `handleEntitys`, `spawnCommand0` or `loadLARGEAXX`); `spawnAtEntityCoordinates` (`&8364`) did not (rare spawn command). `alt_animated_effect_reset` (`&719D`) fired;
@@ -179,5 +179,5 @@ Cursor and joystick left/right step the demo ship on both title screens. The cod
 resident only while the title screens run, and a failed load is retried by `loadFile`, so the hooks cannot meet `NOTMUSIC`). A jump table at `&6E21` (`TITLE_SCREEN1`,
 `TITLE_SCREEN2`, `TITLE_NEXT`, `TITLE_SHOW`) is called from four places in `COMMONXX` that keep their byte length. `splash2Shipnr` (`&1DA8`) holds the ship index in bits 0-2 and
 "direction key already down" in bit 7; the eight hulls are in `titleShips` (spawn actions, high nibble = ship type - 2). The raw PPI rows (`dataFromPPI`) are read because `irki2`
-rewrites `keybFlags2` into roll values. `tools/check_src.sh` checks the eleven `COMMONXX` addresses `musiquex.asm` hard-codes (plain and `-DMISSIONS`); test `tools/test_title_ships.py`.
+rewrites `keybFlags2` into roll values. `tools/check_src.sh` checks the eleven `COMMONXX` addresses `musiquex.asm` hard-codes (plain and `-DMISSIONS`); test `tools/tests/test_title_ships.py`.
 The press-space screen opens on the Cobra Mk III (index 2); the arrows step through this list from there. English, German and French (their `musiquex.asm` differ only in the six equates).

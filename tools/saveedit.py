@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Edit an Elite CPC commander save (104 bytes): the savegame counterpart of the interactive trainer (src/cheats/CHEAT.ASC).
+"""Edit an Elite CPC commander save (104 bytes): the savegame counterpart of the interactive trainer (src/cheats/TRAINER.ASC).
 
 usage:
   saveedit.py show   SAVE  [--key-disk GAME.dsk]
@@ -19,7 +19,7 @@ options (all optional, each sets one thing; the numbers match the trainer; --to-
   --kills N            kill count 0-65535 (bytes &38D8/&38D9, the BBC TALLY: 256 = the Constrictor/plans gate "256 kill points"; the fraction byte is kept)
   --jumps N            jump counter 0-65535 (the stock missions start at 32, 128 and 254; counted from galaxy 2 on in the game)
   --cash CR            credits in Cr (0-65,535,999.9)
-  --legal N            legal status (0 clean, 25 offender, 40+ fugitive)
+  --legal N            legal status (0 clean, 1-49 offender, 50+ fugitive on the status page)
   --fuel LY            fuel in light years (0-7.0)
   --stock 0-3          stock missions like the trainer: 1 supernova stage, 2 cloak stage (also bit 0), 3 invasion stage (bits 0 and 1): sets the jump counter 31, 127 or 253
   --cloak yes|no       own the cloaking device (Missionflag bit 6)
@@ -41,7 +41,7 @@ import dskx  # noqa: E402
 import elitekey  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_KEY_DISK = ROOT / "Elite_UK_Firebird_cracked_trainer.dsk"
+DEFAULT_KEY_DISK = ROOT / "disks" / "Elite_UK_Firebird_cracked_trainer.dsk"
 LEN = 0x68
 O_NAME, O_LEGAL, O_KILLS, O_JUMPS, O_GALAXY, O_CASH, O_FUEL = 0x00, 0x0B, 0x0C, 0x0F, 0x11, 0x12, 0x2E
 O_STATE, O_STATE2, O_TRUMBLES, O_EXTRA_UNIT, O_THARGON, O_MISSIONFLAG = 0x32, 0x33, 0x3A, 0x37, 0x5B, 0x5C
@@ -154,8 +154,8 @@ def write_out(out_spec, data_with_header):
         Path(name).write_bytes(data_with_header)
         print("wrote", name, f"({len(data_with_header)} bytes with header)")
         return
-    if disk.resolve().parent == ROOT:   # CLAUDE.md: never modify the original disks in the project root
-        raise SystemExit(f"{disk}: refusing to write into a disk in the project root; copy it to work/ first")
+    if dskx.is_original(disk):   # CLAUDE.md: never modify the original disks (disks/)
+        raise SystemExit(f"{disk}: refusing to write into a disk in the project root or disks/; copy it to work/ first")
     d = bytearray(disk.read_bytes())
     secs = dskx.sector_offsets(d)
     first = min(r for (t, r) in secs if t == 0)

@@ -36,3 +36,43 @@ Name fixes for the next `src/` edit: `todoLaunchFlag` means "in witchspace"; `to
 **Flicker-free C64 patch** (`work/ext_c64_flicker`): interleaves erase and redraw of ship lines to cure 6502 flicker. Its
 author says it does not apply to the Z80 ports, which draw off-screen and copy (`Spaceflight` -> `transferBuffertoScreen`),
 so there is nothing to port. It is only a model for finding space in a packed binary (unused sprite data, NOP runs).
+
+## Kill score per ship (read from the code 2026-11-14; not yet confirmed in a run)
+
+`todo_killedsomeone` adds half of the dead ship's blueprint word (bytes +21/+22) to `killScore`, a 3-byte value: byte 0 is 1/256 kill, byte 1 the low and byte 2 the high byte of the kill count. The rank tables (`getRank`) count whole kills: Harmless below 8, then 16, 32, 64, 128, 256 (Competent), 512, 2560, 6400 (Elite). Asteroids and every other ship type with a non-zero word count. The bounty (blueprint +8/+9) is separate.
+
+Kills per ship (word / 512), with the C64 value (`KWL%`/`KWH%`, `work/ext_c64`) and the BBC (`EXNO2` in `work/ext_bbc`: `INC TALLY`, 1 kill for everything, asteroids too):
+
+| CPC ship | CPC | C64 |
+|---|---|---|
+| Thargoid | 4 | 2.66 |
+| Constrictor (our hull, `missions_hull.asm`) | 8 | 5.33, plus 256 kills |
+| Cobra Mk III pirate / Python pirate | 1.75 | 1.16 |
+| Asp Mk II | 1.63 | 1.08 |
+| Fer-de-lance | 1.5 | 1.25 |
+| Cobra Mk III trader / Python trader | 1 | 0.91 / 0.66 |
+| Missile | 0.88 | 0.58 |
+| Sidewinder (`SHIPDATPIRATE1`), Krait (`SHIPDATPIRATE2`), rock hermit | 0.5 | 0.33 each |
+| Thargon | 0.2 | 0.13 |
+| Viper | 0.16 | 0.10 |
+| Escape pod | 0.1 | 0.06 |
+| Alloy, cargo canister, splinter | 0.06 | 0.04 |
+| Asteroid | 0.05 | 0.03 |
+| Coriolis | 0 | 0 |
+
+The CPC has the same 19 ship types as the Spectrum (`shipGFXdataTable`; `SHIPDATPIRATE1/2` match the Spectrum's Sidewinder and Krait blueprints byte for byte). The C64 and BBC also have Boulder, Shuttle, Transporter, Boa, Anaconda, Mamba, Adder, Gecko, Cobra Mk I, Worm, Moray, Cougar and the Dodecahedron station, which the CPC lacks. The CPC missions add no scoring: `mxKillHook` only wraps `getBounty`. The Constrictor and plans missions pay a rank step (`inc killScoreHigh`, +256 kills), like the C64's flat +256 for the Constrictor kill and mission 2.
+
+## Legal status (read from the code 2026-11-16; not yet confirmed in a run)
+
+`legalStatus` (`&38D6`, one byte in the save) is 0 clean, 1-49 offender, 50-255 fugitive (`cp &32` in the status page code).
+
+Raised by:
+- **Illegal goods**, in `chkForIllegalGoods` (a purchase, with B = the quantity bought, or a scooped canister, B = 1): the byte gets B added, saturating at 255. Slaves (good 3) and narcotics (6) count B x 4, firearms (10) B x 2.
+- **A kill**, in `todo_killedsomeone`: if the dead ship's flag byte `ix+33` has bit 5 or 6 set (police or innocent), `legalStatus |= &40`, so the commander is a fugitive at once. Missed shots and hits that do not kill change nothing: no other code writes the byte, which differs from the BBC.
+
+Lowered by:
+- every hyperspace jump halves it (`srl`);
+- a galactic jump sets it to 0;
+- the escape pod sets it to 0 (the same routine that clears the cargo).
+
+Effect in flight: `chkCopHuntergettingHostile` sets the hostile flag (`ix+33` bit 2) on a ship with bit 1 set (the cop AI) once the byte is 40 or more, so police turn on the commander before the status page says Fugitive.

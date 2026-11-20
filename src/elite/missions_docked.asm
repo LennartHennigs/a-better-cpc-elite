@@ -8,6 +8,10 @@ missionsDockedEntry:                  ; = &1714, the fixed entry the docking cod
     ld a,(mxThargonMissionVar)
     and a
     jp nz,mxChkMissions               ; an existing mission offer or reward is pending: its turn, returns to the docking code
+    ld hl,(mxTrCount)
+    ld a,h
+    or l
+    ret nz                            ; Trumbles aboard: no chain mission starts or runs until a sun or an escape pod ends them (the Trumbles flight image has none of the hooks)
     ld a,(missionState)
     ld b,a
     and 0x8F
@@ -153,6 +157,10 @@ missionPrint:                          ; A = string number: print it at the curs
     ld d,a
     ld hl,(mxOverlayBase+3)           ; the module's missionTextTable
     jp mxPrintStringScan
+
+    IFDEF SELL_ALL
+    INCLUDE "sell_all.asm"            ; the A key of the sell menu: resident, so before the overlay
+    ENDIF
 
 mxOverlayBase:                        ; the overlay file is loaded here
     IFDEF OVL_C

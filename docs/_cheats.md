@@ -50,13 +50,13 @@ Other known variables: laser temperature `&1C0F`, frame counter `&1DA8`, hypersp
   supersedes this (it sets the ownership bit instead).
 - Notes: `FlightMode` (`&38F8`) stayed 0 in all runs, so do not read it as docked/flying. cpcxray tips are in `CLAUDE.md`.
 
-## Our interactive trainer (`CHEAT.BAS`, from `src/cheats/CHEAT.ASC`)
+## Our interactive trainer (`TRAINER.BAS`, from `src/cheats/TRAINER.ASC`; called `CHEAT.BAS` until 2026-11-15)
 
-`RUN"CHEAT` on `work/firebird_cheat.dsk` (the Firebird disk plus this file; built, not shipped), `work/de_cheat.dsk` (German) or
+`RUN"TRAINER` on `work/firebird_cheat.dsk` (the Firebird disk plus this file; built, not shipped), `work/de_cheat.dsk` (German) or
 `work/fr_cheat.dsk` (French): the same file runs on the UK, German and French builds (and on the mission build). It asks, loads the game
 and applies only what you chose.
 
-Two stages (the BASIC program and its variables must fit under `&83F`, one program with the three address tables did not): `CHEAT.BAS`
+Two stages (the BASIC program and its variables must fit under `&83F`, one program with the three address tables did not): `TRAINER.BAS`
 asks and converts the answers to numbers, then `CHAIN"cheatb.bin"`. `CHEATB.BAS` (disk file `CHEATB.BIN`, so it stays hidden; built from
 `src/cheats/CHEATB.ASC`) loads the game, finds the build and pokes. CHAIN keeps the variables but puts HIMEM back to `&A000`, so stage two
 repeats `OPENOUT"d":MEMORY &83F:CLOSEOUT` before the `LOAD`s (without it: "Memory full in 2"). Build detection: the byte pattern around the
@@ -71,13 +71,13 @@ label + offset in the three source trees (`sjasmplus --sym`) and checked byte by
 | galaxy-gate byte | `&4E5D` | `&4F71` | `&4FAF` |
 | `setFuel` operand | `&4F02` | `&5016` | `&5054` |
 
-`work/de_savegames.dsk` (built by the same script) is `work/de_cheat.dsk` (German game, `CHEAT.BAS`, `EDITSAVE.BAS`) plus `LISTSAVE.BAS` and the four saves of `Elite_DE_savegames.dsk`; all find the build from the save's key, so they work on any of the three builds' saves. The saves stay visible on this disk: `LISTSAVE` lists them by running `CAT` into a hidden screen buffer and reading it back, and `CAT` does not show System files. It only loads files `CAT` shows as 1K (a save is 232 bytes with its header), so large `.BIN` files are skipped; the key and checksum test still decides what is a save.
+`work/de_savegames.dsk` (built by the same script) is `work/de_cheat.dsk` (German game, `TRAINER.BAS`, `EDITSAVE.BAS`) plus `LISTSAVE.BAS` and the four saves of `Elite_DE_savegames.dsk`; all find the build from the save's key, so they work on any of the three builds' saves. The saves stay visible on this disk: `LISTSAVE` lists them by running `CAT` into a hidden screen buffer and reading it back, and `CAT` does not show System files. It only loads files `CAT` shows as 1K (a save is 232 bytes with its header), so large `.BIN` files are skipped; the key and checksum test still decides what is a save.
 
 Tested in cpcxray on all three disks with every cheat on, cash 5000, mission 2, kills 300, jumps 40: all pokes landed, the title screen came
 up. The added-mission pokes (`+50`, `+51`) only mean something in the English `-DMISSIONS` build.
- Edit `src/cheats/CHEAT.ASC` (ASCII); `CHEAT.BAS` is the tokenised file with AMSDOS header, `CHEAT.BAS.txt` its listing.
+ Edit `src/cheats/TRAINER.ASC` (ASCII, CRLF lines and a Ctrl-Z at the end: LF-only lines tokenise to an empty program); `TRAINER.BAS` is the tokenised file with AMSDOS header, `TRAINER.BAS.txt` its listing.
 `bash tools/build_cheat.sh` rebuilds them and the disks (the CPC's own BASIC tokenises, via headless cpcxray), and also writes
-`work/missions_cheat.dsk` (the mission build plus `CHEAT.BAS` and `EDITSAVE.BAS`).
+`work/missions_cheat.dsk` (the mission build plus `TRAINER.BAS`, `EDITSAVE.BAS` and `LISTSAVE.BAS`; `make expanded` copies it to `build/elite_expanded.dsk`).
 
 Prompts (Y or ENTER = yes, N = no):
 
@@ -88,10 +88,10 @@ Prompts (Y or ENTER = yes, N = no):
 | Unlimited hold | `POKE &0998,0` (yes) or `&19` (no): the hold-capacity test (the Firebird `LARGEAXX` already has `0`) |
 | Own cloak | sets bit 6 of the default commander's `Missionflag` (`&3A23`): device listed, `Y` cloaks |
 | Cash Cr (default 100) | default commander block `&39C7`: high word `&39D9`, low word `&39DB` (see `_savegame.md`; up to 65,000,000 Cr) |
-| Mission 0-3 | 0 normal; 1 supernova, 2 cloak Asp, 3 Thargon invasion, each on the first jump. Sets the jump counter (`&39D6`) to 31/127/253, the earlier stage bits in `Missionflag` (1 for stage 2, 3 for stage 3) and removes the galaxy-0 gate (`POKE &4E5D,0`) |
-| Kills | 0-32767, pokes the kill count at `&38D8/&38D9` (256 gates the Constrictor and plans missions) |
+| Mission 0-3 | 0 normal; 1, 2 or 3 starts that stock mission (S1 to S3 in `_missions_built.md`) on the first jump. Sets the jump counter (`&39D6`) to 31/127/253, the earlier stage bits in `Missionflag` (1 for stage 2, 3 for stage 3) and removes the galaxy-0 gate (`POKE &4E5D,0`) |
+| Kills | 0-32767, pokes the kill count at `&38D8/&38D9` (256 gates added mission 1, 1280 added mission 2) |
 | Jumps | 0-65535, both bytes of `jumpCounter`; also patches `&4E5D` so jumps count in galaxy 1 |
-| Added mission 1-4 | presets for the chain in `_missions_built.md`: 1 Trumbles offered next, then plans; 2 stolen police ship next; 3 asteroids next; 4 all paid, asteroids state 3 |
+| Added mission 1-4 | presets for the chain in `_missions_built.md`: 1 T offered next, then mission 2; 2 mission 3 next; 3 mission 4 next; 4 all paid, mission 4 in state 3 |
 
 Why the default block: the game copies `&39C7` (104 bytes, save layout) to the live commander on `N` at "Load New Commander", so pokes
 there act as starting values and survive the game's init. Addresses are the save-block addresses plus `&FC` (`&39D4` kills, `&39D6`
@@ -109,6 +109,10 @@ BASIC pitfalls (Locomotive BASIC 1.1):
 - `MEMORY &A000` (kept from the original loaders) always fails with "Memory full"; the `ON ERROR GOTO` handler continues to the
   `common2x` load. Do not put `ON ERROR GOTO 0` in the handler: it re-raises the pending error.
 - Strings are not safe after `MEMORY &A000`; the poke phase uses only numbers (choices in `DIM f(9)`).
+- Strings that survive the `CHAIN` corrupt the game: BASIC moves its string pool down by `&1000` (the disc buffers the `OPENOUT` trick reserves) with a
+  firmware `LDIR` after `commonxx` is loaded, so `&9FED-&A000` lands on `&8FED-&9000`, in the Asp's vertices 2 to 5 in the UK build (found 2026-11-20 from
+  an RVM state: the Asp was drawn as a fan of long lines; the 20 bytes were `*`, `2`, `1`, `100000`, `N`). `TRAINER` line 164 empties every string and
+  calls `FRE("")` before the `CHAIN`; keep any new string variable in that line. Check: after a run, the bytes at `&8FED` must equal the stock hull.
 - `f AND b` with a mask of 256 or more silently failed inside `IF`; per-cheat array flags fixed it. `x MOD 256` overflows above 32767
   (use `x-256*INT(x/256)`); `IF ... THEN a:NEXT` skips the `NEXT` when false.
 - Reading results in cpcxray: below `&4000` use `memory_view` with `view="ram:0"`, above use `view="cpu"` (`ram:N` is a 16 KB block with offset
@@ -117,7 +121,7 @@ BASIC pitfalls (Locomotive BASIC 1.1):
 ## Save editor and viewer
 
 - `tools/saveedit.py show|edit|roundtrip SAVE` edits a 104-byte save on the host: kills, jumps, cash, legal status, fuel, name, stock mission
-  stage, cloak, the added-mission chain (`--added 0-4`), raw mission bytes, Trumbles. It reads the key from a game disk, recomputes both
+  stage, cloak, the added-mission chain (`--added 0-4`), raw mission bytes, T. It reads the key from a game disk, recomputes both
   checksums, never writes without `-o`, and replaces a file in a copy of a disk image (or adds it). `--to-key-disk` converts a save between
   UK, French and German. The round trip is byte-identical on `PETER`, `PETE`, `LEN` (German) and `1.BIN` (UK).
 - `src/cheats/LISTSAVE.BAS` (from `tools/mk_listsave.py`, 2.1 KB): `RUN"LISTSAVE.BAS` lists every save on the disk in drive A (File, Build = UK, FRENCH or GERMAN: the key whose checksums
@@ -134,4 +138,14 @@ BASIC pitfalls (Locomotive BASIC 1.1):
   from `saveedit.py` and loaded kills, cash, mission byte and name. cpcxray key timing: title-screen `y` held 1.4 s, `1` held 1.4 s (it also
   types a `1` into the name prompt: delete it with two `del` taps), then each letter and `return` tapped 0.33 s (longer types it twice, 0.25 s misses).
 
-Screenshots (cpcxray, Mode 1): `docs/img/trainer_prompts.png`, `showsave_uk.png`, `showsave_fr.png`, `showsave_de.png` (from the removed `SHOWSAVE`), `editsave_fr.png`.
+Screenshots (cpcxray, Mode 1): `docs/img/trainer_prompts.png` and `docs/img/editsave_fr.png`.
+
+## Ship viewer (`SHOWSHPS.BAS`, `work/showship.dsk`)
+
+`bash tools/build_showship.sh` builds a blank data disk with `SHOWSHPS.BAS` (visible) and `SHIPS.BIN` (System-hidden); `RUN"SHOWSHPS` shows every model with its name (21 ships and 9 other objects: station, missile, escape pod, cargo canister, alloy plate, splinter, asteroid, rock hermit, Boulder), a rotating wireframe with the game's hidden-line test, and the numbers that matter (kills, bounty in Cr, speed, energy, vertices, edges, faces). Left and right arrows (or `,` and `.`) step through the 30 models (19 stock, 10 extras from `src/elite/missions_ships.asm`, the Constrictor), `Q` quits. The colours follow the game: black background, sky blue frame and lines (firmware ink 11, the game's `(0,128,255)`), pastel yellow text (ink 25).
+
+How it works: `tools/mk_showship.py` cuts every blueprint out of `work/bin_stock/COMMONXX.BIN` and the extra hull sources, scales the vertices to +-125 and the face normals to +-64, and packs them with the Z80 routine of `src/cheats/showship.asm` into `SHIPS.BIN` (loaded to `&4000`, ships from `&5000`; everything stays under `&A67B`, where AMSDOS keeps its work area, or the load fails with "read fail"). BASIC only handles keys and text and POKEs the sine and cosine of the spin angle (6 degrees a frame); `CALL &4000` rotates (spin about the ship's y axis, then a fixed 20 degree tilt, orthographic) and redraws every edge whose face points at the viewer, erasing the edge's segment of the previous frame first. The lines come from the routine's own DDA (8-bit slope fraction, XOR into the mode 1 screen at `&C000`, pen 2): the firmware's `GRA LINE` gave about 3 frames a second, this gives about 8 (Coriolis, counted with a breakpoint on `&4000`). The alternate registers are not used (the firmware's interrupt routine owns them). `CALL &4003` copies a ship's packed record into the tables. Shared line ends toggle twice in XOR, so a vertex pixel can flicker.
+
+The mission disk (`python3 -I tools/build_dsk.py --missions`, `work/elite_missions.dsk`) carries it too: `SHOWSHPS.BAS` visible in `CAT`, `SHIPS.BIN` hidden, added with `dskx` (`add_showship` in `tools/build_dsk.py`; run `tools/build_showship.sh` first, otherwise the build skips it). `RUN"SHOWSHPS` there works as on the blank disk (checked in cpcxray); `src/disk/README.TXT` mentions it. The same build now **replaces Firebird's own `CHEAT.BAS` on that disk with ours** (`replace_trainer`: the original is deleted, `src/cheats/TRAINER.BAS` (named `CHEAT.BAS` then) and the hidden `CHEATB.BIN` are added; checked: `RUN"TRAINER` asks "ELITE CHEATS"). The old file only held nine poke groups with a wrong cloak entry; its addresses are still right in our build (all in `COMMONXX`, bytes unchanged there).
+
+The standalone disk is a blank one because the Firebird disk has two tracks with odd sector ids that iDSK may fill; AMSDOS cannot read them (`Drive A: read fail`).

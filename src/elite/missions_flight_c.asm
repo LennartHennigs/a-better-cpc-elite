@@ -23,14 +23,9 @@ mxSpawnCheckImpl:
     push ix
     push iy
     ld a,(mxStateByte)
-    ld b,a
-    and 0x03
-    cp 0x01
-    jr nz,mxSpawnDone                 ; not hunting
-    ld a,b
-    and 0x70
-    cp 0x70
-    jr nz,mxSpawnDone                 ; hints not finished
+    and 0x73
+    cp 0x71
+    jr nz,mxSpawnDone                 ; not hunting (bits 0-1 = 01) or the hints are not finished (bits 4-6 all set)
     ld a,(currentGalaxy)
     cp 0x01
     jr nz,mxSpawnDone
@@ -48,11 +43,8 @@ mxSpawnScan:
     ld a,(ix+34)
     and a
     jr z,mxSpawnNext
-    ld a,(ix+35)
-    cp shipdatConstrictor & 0xFF
-    jr nz,mxSpawnNext
     ld a,(ix+36)
-    cp shipdatConstrictor >> 8
+    cp shipdatConstrictor >> 8        ; the high byte alone is enough (see the ASSERT below)
     jr z,mxSpawnDone                  ; already there
 mxSpawnNext:
     djnz mxSpawnScan
@@ -88,16 +80,13 @@ mxKillHookImpl:
     call getBounty
     push af
     push hl
-    ld a,iyl
-    cp shipdatConstrictor & 0xFF
-    jr nz,mxKillDone
     ld a,iyh
     cp shipdatConstrictor >> 8
     jr nz,mxKillDone
     ld hl,mxStateByte
     ld a,(hl)
     and 0x03
-    cp 0x01
+    dec a
     jr nz,mxKillDone
     set 1,(hl)                        ; 01 -> 11
 mxKillDone:
@@ -110,9 +99,6 @@ mxKillDone:
 ; unchanged and returns NZ/NC, so the caller neither kills nor counts it. Every other ship gets the original store, flags untouched.
 mxLaserHookImpl:
     push af
-    ld a,(ix+35)
-    cp shipdatConstrictor & 0xFF
-    jr nz,mxLaserNormal
     ld a,(ix+36)
     cp shipdatConstrictor >> 8
     jr nz,mxLaserNormal
@@ -131,4 +117,5 @@ mxLaserNormal:
     INCLUDE "../elite128/missions_hull.asm"     ; the 128K tree has its own hull (filled like every other: ArcElite vertices, see that file)
     ELSE
     INCLUDE "missions_hull.asm"
+    ASSERT shipdatConstrictor >= 0x9E00         ; the three tests above compare only the blueprint pointer's high byte: no other hull may start at or above &9E00 (stock hulls end below &9D9E, the other flight images carry none)
     ENDIF

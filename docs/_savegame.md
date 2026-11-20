@@ -16,7 +16,7 @@ save disk (`&38CB` for `1.BIN`). `tools/savedec.py` decodes one; `tools/saveedit
 | Offset (RAM) | Meaning |
 |---|---|
 | 0-10 (`&38CB`) | name, up to 10 characters plus NUL; bytes after the NUL are leftovers of "JAMESON". The disk file name uses the first 8 |
-| 11 (`&38D6`) | `legalStatus` (0 clean, 25 offender, 40+ fugitive, hostile cops) |
+| 11 (`&38D6`) | `legalStatus` (status page: 0 clean, 1-49 offender, 50-255 fugitive: `cp &32` in the status code; the game halves it at every jump; the cops are said to turn hostile from about 40, not checked) |
 | 12-14 (`&38D7-&38D9`) | `killScore`, 24 bits: `&38D7`/`&38D8` low word, `&38D9` `killScoreHigh` (a carry into it prints "RIGHT ON COMMANDER"; the cloaking-device and supernova rewards add 1); `getRank` reads them |
 | 15-16 (`&38DA`) | `jumpCounter` (missions) |
 | 17 (`&38DC`) | `currentGalaxy`, 0-7 |

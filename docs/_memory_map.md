@@ -80,11 +80,11 @@ rely on the interrupt pushing its return address below the buffer: with SP at `&
 | Region | Bytes | Free when | Used by |
 |---|---|---|---|
 | `&9D9E-&9FFF` (end of `COMMONXX`) | 610, of which `&9FFE-&9FFF` stack | flight time (cannot hold docked-only code: it is resident always) | mission vector table (`&9D9E`), launch hook and one flight image, up to `&9FFE` (an `ASSERT` checks it) |
-| `&1714-&1A3F` (end of `LARGEAXX`) | 812 | docked only (fresh at each docking) | mission stub (251) plus one overlay loaded at `mxOverlayBase` `&1775`; 0 spare with the Constrictor overlay |
+| `&1714-&1A3F` (end of `LARGEAXX`) | 812 | docked only (fresh at each docking) | mission stub (251), the sell-all key (48) plus one overlay loaded at `mxOverlayBase` `&1775`; 0 spare with the Constrictor overlay |
 | `&1FD2-&1FF0` (`unusedViewBorderFill`) | 31 | always | `dustPlotPixel` and `mxPodHook`; 10 bytes left |
-| `&204E`, `&2053` (`unusedGetFlightMode`, `unusedGetCloakFlag`) | 10 | always (never referenced or executed) | nothing |
+| `&204E`, `&2053` (`unusedGetFlightMode`, `unusedGetCloakFlag`) | 10 | always (never referenced or executed) | `killSpace` of the kill count with `-DENHANCED` (English); nothing in the stock build |
 | `&6E21-&6FFF` (tail of `MUSIQUEX`) | about 480 | while the title screens run (the file is resident only then) | title ship selection, about 120 bytes |
-| `&9751-&97A0` | 80 | filler, not verified as free for new code | nothing |
+| `&9751-&97A0` | 80 | not free: the Python/Big Trader edge block (live hull data) | nothing |
 | German build tail | 282 | flight time | (no missions in the German build) |
 
 No other dead code exists: the supposed chains in `db` runs are live (tails of `push ix` routines), see `_architecture.md`. Re-encoding the string tables saves only 48 bytes. Memory is otherwise full and no address
@@ -96,7 +96,7 @@ may move, because saves are XORed with the code at `EquipShip`.
 |---|---|---|
 | docked stub (251 bytes) and the call from the docking sequence | `&1714` | with `LARGEAXX`, every docking |
 | docked overlay `MISSIONC/P/T/R.BIN` | `&1775` (`mxOverlayBase`) | on demand, only where something can happen (about 2 s of disk time) |
-| vector table (ten 3-byte `jp`s), id byte `mxFlightId` `&9DB6`, launch hook `mxLaunchEntry`, flight image `MFLIGHT0/C/P/T/S/R.BIN` | `&9D9E-&9FFE` | image chosen at every launch, loaded only if it differs from the one in RAM |
+| vector table (nine 3-byte `jp`s), id byte `mxFlightId` `&9DB9`, launch hook `mxLaunchEntry`, flight image `MFLIGHT0/C/P/T/S/R.BIN` or a ship pack `MFLIGHT1-7.BIN` (`_ship_packs.md`) | `&9D9E-&9FFE` | image chosen at every launch, loaded only if it differs from the one in RAM |
 | mission state bytes | `&38FD` (state), `&38FE` (counter), `&3905-&3906` (Trumbles) | in the save |
 
 Details, sizes and tests: `_missions_built.md`.

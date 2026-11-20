@@ -213,7 +213,13 @@ todoInputNumber0to9:
     cp 0xFE
     jr z,LAB_ram_08f7
     cp 0x3A
+    IFDEF ENHANCED
+; Esc (or any non-digit) at the second digit undoes the first digit's trade like DEL does; the stock jump to LAB_ram_095f left it applied.
+    jr nc,LAB_ram_08f7
+    ELSE
     jr nc,LAB_ram_095f
+    ENDIF
+escQtyOperand equ $ - 1
     ld d,a
     sub 0x30
     ld b,a

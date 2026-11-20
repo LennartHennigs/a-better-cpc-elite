@@ -1,0 +1,21 @@
+Elite for the Amstrad CPC: what is not covered by the licences in LICENSE
+
+Elite is copyrighted by its authors and rights holders (David Braben and Ian Bell; the CPC version was published by Firebird in 1985). This project is not affiliated with them and holds no rights to the game.
+
+1. The disassembled game source (src/elite/, src/elite_de/, src/elite_fr/, apart from the files named in 3)
+   It is a disassembly of the original game's code. The names, labels and comments are mine, but they cannot be separated from the code, which stays under the original copyright. It is published for study and preservation: you may read it, learn from it and build it for your own use from your own copy of the game. No licence is granted beyond that: nothing here allows redistributing the game, the source, or disks built from it. Ask the rights holders, not me.
+
+2. The mission code (src/elite/missions_*.asm, src/disk/)
+   It is my own work, but it only runs inside the original binary and follows the logic of other versions of the game. It is treated like item 1: no licence is granted.
+
+3. Material by Fessor (the ship hulls, including the Constrictor: src/elite/missions_hull.asm, src/elite/missions_ships.asm, tools/fessor_ships.py, the ship packs, docs/_ship_packs.md)
+   Used with his permission and credited in README.md. That permission does not extend to a licence. These files are excluded from the MIT licence of tools/ and from every other grant in LICENSE.
+
+4. Third-party material the tools use but the repository does not hold
+   - RASM (assembler, only for reading Fessor's source): built locally from its upstream source into `tools/bin/` (gitignored). It has its own licence and author.
+   - `tools/proto_fill/` (a filled-ship prototype) is my code, but `gen.py` reads Ian Bell's ship table from the ArcElite sources (`work/arcelite/x_ships/B5052480.C`). The table and everything generated from it stay in `work/` and are not in the repository; they are not covered by the MIT licence.
+
+5. Not in this repository
+   Game disks, tape images, magazine scans, the sources and binaries of other versions (BBC, Atari ST, NES, MSX, Spectrum, ArcElite, PC Elite Plus) and Fessor's archives. They stay on the author's machine (see .gitignore). Their authors and rights holders keep all rights. You need your own copy of the game to build anything.
+
+If you hold rights to anything here and want it removed or credited differently, please open an issue.
