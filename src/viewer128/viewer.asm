@@ -75,6 +75,7 @@ V_BOXES   equ 0x9730            ; boxes of the two pages, 4 bytes each
 V_SHIP    equ 0x9740            ; selected ship
 V_KPREV   equ 0x9741            ; keys down at the last frame: bit 0 left, bit 1 right
 V_NAMEFL  equ 0x9742            ; frames still to draw the name and the hint into (one per page)
+V_HOLD    equ 0x9746            ; byte: counts the flips, the frame advances on every second one
 V_TXT     equ 0x9744            ; word: screen address of the next character
 tickLog   equ 0x9800            ; per frame: word ticks for the erase, word ticks for the draw
 
@@ -286,6 +287,10 @@ flip1:
     ld (V_PIX),a
 frameDone:
     nop                         ; the runner breaks here, once per frame
+    ld hl,V_HOLD                ; every frame is shown for two flips (12 frames a turn at the page flip rate turned too fast)
+    inc (hl)
+    bit 0,(hl)
+    jr nz,fnHold
     ld a,(frameNo)
     inc a
     ld hl,(V_CURF)
@@ -298,6 +303,7 @@ frameDone:
 fnOk:
     ld (frameNo),a
     ld (V_CURF),hl
+fnHold:
     jp mainLoop
 
 ; A new ship: start at its first frame, erase the whole view on both pages, draw the name into both pages.
