@@ -18,7 +18,7 @@ Outputs in work/elite128/:
   shipdata128.asm   one blueprint per stock ship label, same label names and order as the stock data: the 23-byte header is the stock header
                     (energy, laser, bounty, scale, ... stay classic) with the counts and offsets patched; the geometry is the ArcElite hull as
                     vertices only (6 bytes each: |x|, |y|, |z|, signs<<5 | 0x1F, face nibbles 0x00 = always visible); edges and faces are empty
-                    (the filled path culls by screen winding, see docs/_filled_ships.md). The alloy plate has no ArcElite hull: its four stock
+                    (the filled path culls by screen winding, see docs_other/_filled_ships.md, local only). The alloy plate has no ArcElite hull: its four stock
                     vertices become two double-sided quads' worth of triangles (one colour per side).
   fill128.bin       bank 6 payload: byte 20 (ship types), 20 words (offset of the type's record from the start of the file, 0 = none), then records
                     ntri, flags (bit 0: convex), ntri x (v0, v1, v2, pattern<<5 | group). The records of the alloy plate and the Constrictor do not fit in front of
