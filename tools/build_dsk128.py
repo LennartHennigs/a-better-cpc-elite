@@ -137,6 +137,15 @@ def main():
         txt = (ROOT / "src/disk/README.TXT").read_bytes()
         recs = -(-len(txt) // 128)
         dskx.add_payload(d, secs, first, "README", "TXT", txt.ljust(recs * 128, b"\x1a"), recs)
+    # The ship viewer (tools/build_showship.sh, src/cheats/showship.asm) is a stand-alone BASIC program with its own wireframe renderer and ship data (the stock blueprints and
+    # Fessor's hulls), so it runs unchanged from this disk with RUN"SHOWSHPS (it does not touch the game): SHOWSHPS.BAS visible, SHIPS.BIN hidden like every other binary.
+    bas, ships = ROOT / "src/cheats/SHOWSHPS.BAS", ROOT / "work/showship/SHIPS.BIN"
+    if bas.exists() and ships.exists():
+        dskx.add_padded(d, secs, first, "SHOWSHPS", "BAS", bas.read_bytes())
+        dskx.add_file(d, secs, first, "SHIPS", "BIN", ships.read_bytes(), 0x4000)
+        print(f"SHOWSHPS.BAS {bas.stat().st_size} bytes, SHIPS.BIN {ships.stat().st_size} bytes (ship viewer)")
+    else:
+        print("SHOWSHPS: not added (python3 -I tools/mk_showship.py makes SHIPS.BIN)")
     # Firebird's own CHEAT.BAS pokes 64K addresses (docs/_cheats.md): on the relocated layout it would write into the wrong bytes, so the disk does not carry it.
     removed = dskx.remove_file(d, secs, first, "CHEAT", "BAS")
     print(f"CHEAT.BAS (Firebird's, 64K pokes): {removed} directory entries removed")
