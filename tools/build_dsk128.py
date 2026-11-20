@@ -134,7 +134,11 @@ def main():
     dskx.add_file(d, secs, first, "INDICATO", "BIN", new_ind, 0x5000)
     print(f"INDICATO.BIN: {len(new_ind)} bytes (INDICATO + {len(flight_images)} flight images)")
     if MISSIONS:
-        txt = (ROOT / "src/disk/README.TXT").read_bytes()
+        txt = (ROOT / "src/disk/README.TXT").read_bytes().replace(b'RUN"ELITE\r\n', b'RUN"ELITE128\r\n').replace(b'RUN"ELITE\n', b'RUN"ELITE128\n')
+        txt = txt.replace(b"Amstrad CPC 464 / 6128", b"Amstrad CPC 6128 only")
+        for gone in (b'RUN"TRAINER   cheats', b'RUN"EDITSAVE  edit a saved CMDR', b'RUN"LISTSAVE  list saved CMDRs'):      # tools of the 64K disk, not on this one
+            txt = txt.replace(gone + b"\r\n", b"").replace(gone + b"\n", b"")
+        txt = txt.replace(b"every ship in 3D", b"the ships, filled")
         recs = -(-len(txt) // 128)
         dskx.add_payload(d, secs, first, "README", "TXT", txt.ljust(recs * 128, b"\x1a"), recs)
     # The ship viewer: SHOWSHPS.BAS (tools/build_show128.sh) is Firebird's loader with one POKE that makes the first title screen take an N at once, so the game opens on the press-space
@@ -145,6 +149,14 @@ def main():
         print(f"SHOWSHPS.BAS {bas.stat().st_size} bytes (RUN\"SHOWSHPS: the game on the ship viewer)")
     else:
         print("SHOWSHPS: not added (bash tools/build_show128.sh makes it)")
+    # The loader is ELITE128.BAS on this disk (RUN"ELITE128): Firebird's ELITE.BAS, same program, renamed with its AMSDOS header (name and checksum) so that nobody starts the 128K disk as the 64K game.
+    old = dskx.read_files(dskx.load_sectors(BASE))[(0, "ELITE.BAS")]
+    hdr = bytearray(old[:128])
+    hdr[1:9] = b"ELITE128"
+    hdr[67:69] = (sum(hdr[:67]) & 0xFFFF).to_bytes(2, "little")
+    dskx.remove_file(d, secs, first, "ELITE", "BAS")
+    dskx.add_padded(d, secs, first, "ELITE128", "BAS", bytes(hdr) + old[128:])
+    print("ELITE.BAS renamed ELITE128.BAS")
     # Firebird's own CHEAT.BAS pokes 64K addresses (docs/_cheats.md): on the relocated layout it would write into the wrong bytes, so the disk does not carry it.
     removed = dskx.remove_file(d, secs, first, "CHEAT", "BAS")
     print(f"CHEAT.BAS (Firebird's, 64K pokes): {removed} directory entries removed")

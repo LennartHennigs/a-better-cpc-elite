@@ -31,7 +31,7 @@ async def main():
 
             await c("disk_insert", {"drive": "A", "path": os.environ.get("DISK128", "disk/elite128.dsk")})
             await c("run", {"max_us": 4_000_000, "timeout_s": 60})
-            await c("type_text", {"text": 'RUN"ELITE\n', "wait": False})
+            await c("type_text", {"text": 'RUN"ELITE128\n', "wait": False})
             await c("run", {"max_us": 36_000_000, "timeout_s": 120})
             await press("n", 1.4)
             await c("run", {"max_us": 8_000_000, "timeout_s": 120})

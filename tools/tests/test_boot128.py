@@ -2,7 +2,7 @@
 """Boot work/xray/disk/elite128.dsk (tools/build_dsk128.py) in cpcxray and look at the title screen: screenshots and the state of bank 6.
 
 usage (from work/xray):  PATH=$HOME/.local/bin:$PATH ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/tests/test_boot128.py [SECONDS]
-Types RUN"ELITE, runs SECONDS (default 40) of emulated time in 5 s steps, saves output/boot128_NN.png each step, then saves output/boot128.sna and checks the
+Types RUN"ELITE128, runs SECONDS (default 40) of emulated time in 5 s steps, saves output/boot128_NN.png each step, then saves output/boot128.sna and checks the
 snapshot: RAM config (byte 0x41), the first bytes of bank 6 (the fill module, flat 128K layout: bank n at 0x100 + n * 0x4000) and the fill table.
 """
 import asyncio
@@ -32,7 +32,7 @@ async def main():
 
             await c("disk_insert", {"drive": "A", "path": os.environ.get("DISK128", "disk/elite128.dsk")})
             await c("run", {"max_us": 4_000_000, "timeout_s": 60})
-            await c("type_text", {"text": 'RUN"ELITE\n', "wait": False})
+            await c("type_text", {"text": 'RUN"ELITE128\n', "wait": False})
             for i in range(SECS // 5):
                 await c("run", {"max_us": 5_000_000, "timeout_s": 120})
                 await c("screen_image", {"path": f"output/boot128_{i:02d}.png"})

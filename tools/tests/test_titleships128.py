@@ -33,7 +33,7 @@ async def main():
 
             await c("disk_insert", {"drive": "A", "path": os.environ.get("DISK128", "disk/elite128.dsk")})
             await c("run", {"max_us": 4_000_000, "timeout_s": 60})
-            await c("type_text", {"text": 'RUN"ELITE\n', "wait": False})
+            await c("type_text", {"text": 'RUN"ELITE128\n', "wait": False})
             await c("run", {"max_us": 28_000_000, "timeout_s": 120})
             await c("key_press", {"key": "n"})                  # the ship choice works on the second title screen ("Press Space, Commander")
             await c("run", {"max_us": 1_400_000, "timeout_s": 60})
