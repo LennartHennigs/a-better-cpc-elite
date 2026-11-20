@@ -7,7 +7,7 @@ mxHullType equ 0x9DB9   ; generated: label of commonxx
 splash2Shipnr equ 0x1DA8   ; generated: label of commonxx
 titleSpawnShip equ 0x83B1   ; generated: label of commonxx
 laserSightsHome equ 0x98B0   ; generated: label of commonxx
-killHook equ 0x9C53   ; generated: label of commonxx
+killHook equ 0x9C46   ; generated: label of commonxx
 irki2_8 equ 0x8EB2   ; generated: label of commonxx
 mxArrive equ 0x9DAD   ; generated: label of commonxx
 mxInvHook equ 0x9DB3   ; generated: label of commonxx
