@@ -3,6 +3,7 @@ extended/
 
 # Working files, builds, traces, scratch
 work/
+build/
 traces/
 tmp/
 
