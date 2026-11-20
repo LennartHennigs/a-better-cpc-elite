@@ -8019,9 +8019,15 @@ titleKeyIsr:
 ; Kill count on the commander page (called from common2x.asm in place of `call anotherPrintwithTokeninA`, A = rank token): the rank name, " - 1234", then the new line.
 ; The count is the word at killScore+1: the low byte of the 24-bit score is a fraction (getRank compares the middle byte).
 killHook:
+    push af                             ; the rank token
     call printString                    ; no new line yet (CallprintString would add it)
+    pop af
+    sub 0x17                            ; Poor, Average and Above Average (tokens &17-&19) end in a space in the stock text: no second one (same as main's killSpace)
+    cp 0x03
+    jr c,killNoSpace
     call printStringFollowingByte
     db " "
+killNoSpace:
     call printStringFollowingByte
     db "-"
     call printStringFollowingByte
