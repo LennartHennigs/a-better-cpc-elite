@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Assemble src/elite128 and write the four code files into a copy of the Firebird DSK (128K build, filled hulls). Based on tools/build_dsk.py.
 
-usage: python3 -I tools/build_dsk128.py [OUT.dsk]    (default work/elite128.dsk; base is
-       Elite_UK_Firebird_cracked_trainer.dsk, never modified). The disk always carries the mission overlays and flight images (src/elite128/config.inc defines the flags; --missions is accepted and ignored)
+usage: python3 -I tools/build_dsk128.py [OUT.dsk]    (default build/elite128.dsk; base is
+       disks/Elite_UK_Firebird_cracked_trainer.dsk, never modified). The disk always carries the mission overlays and flight images (src/elite128/config.inc defines the flags; --missions is accepted and ignored)
        as tools/build_dsk.py does (README.TXT included).
 
 Needs the generated inputs of tools/check_src128.sh (it makes them): work/elite128/shipdata128.asm, fill.bin (assembled with the address of hullVertexBuf) and fill128.bin.
@@ -20,12 +20,12 @@ from dskx import sector_offsets  # noqa: E402
 from hide_files import hide_entries  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
-BASE = ROOT / "Elite_UK_Firebird_cracked_trainer.dsk"
+BASE = ROOT / "disks" / "Elite_UK_Firebird_cracked_trainer.dsk"
 MISSIONS = True      # the 128K build has one variant (src/elite128/config.inc): missions, enhanced UI, title selection
 _args = [a for a in sys.argv[1:] if a != "--missions"]      # --missions is accepted and ignored (old command lines)
-OUT = Path(_args[0]) if _args else ROOT / "work/elite128.dsk"
-if OUT.resolve() == BASE.resolve() or OUT.resolve().parent == ROOT:
-    sys.exit(f"{OUT}: refusing to write a disk into the project root (the originals live there); use work/")
+OUT = Path(_args[0]) if _args else ROOT / "build/elite128.dsk"
+if OUT.resolve() == BASE.resolve() or dskx.is_original(OUT):      # CLAUDE.md: never modify the original disks (disks/)
+    sys.exit(f"{OUT}: refusing to write a disk into the project root or disks/ (the originals live there); use build/ or work/")
 SJASM = Path.home() / ".local/bin/sjasmplus"
 SRC = ROOT / "src/elite128"
 FILES = {"LARGEAXX": [], "COMMONXX": [], "COMMON2X": [], "MUSIQUEX": []}      # flags live in src/elite128/config.inc
@@ -94,13 +94,11 @@ def main():
         recs = -(-len(txt) // 128)
         dskx.add_payload(d, secs, first, "README", "TXT", txt.ljust(recs * 128, b"\x1a"), recs)
     # Firebird's own CHEAT.BAS pokes 64K addresses (docs/_cheats.md): on the relocated layout it would write into the wrong bytes, so the disk does not carry it.
-    # (main's tools/dskx.py has remove_file for this; use it here once main is merged.)
-    cheat = dskx.find_extents(d, secs, first, "CHEAT.BAS")
-    for _ext, off, _blocks in cheat:
-        d[off] = 0xE5
-    print(f"CHEAT.BAS (Firebird's, 64K pokes): {len(cheat)} directory entries removed")
+    removed = dskx.remove_file(d, secs, first, "CHEAT", "BAS")
+    print(f"CHEAT.BAS (Firebird's, 64K pokes): {removed} directory entries removed")
     hidden, shown = hide_entries(d, secs, first)
     print(f"{len(hidden)} directory entries hidden (System attribute), visible: {', '.join(sorted(shown))}")
+    OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_bytes(d)
     print("wrote", OUT)
 

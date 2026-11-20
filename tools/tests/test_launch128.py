@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Launch from the docked snapshot (tools/snap_docked128.py) with a mission state set and check the flight image copied from bank 5.
 
-usage (from work/xray):  DISK128=disk/elite128.dsk PATH=$HOME/.local/bin:$PATH ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_launch128.py [STATE_HEX]    (default 71: Constrictor hunting)
+usage (from work/xray):  DISK128=disk/elite128.dsk PATH=$HOME/.local/bin:$PATH ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/tests/test_launch128.py [STATE_HEX]    (default 71: Constrictor hunting)
 Sets &38D9 = 1 and &38FD = STATE, presses f1, stops at the bank copy routine (&9C83 jump table, mxBankFlight) and at its end, then reports the tail &9D9E and the flight id (&9DB9).
 """
 import asyncio

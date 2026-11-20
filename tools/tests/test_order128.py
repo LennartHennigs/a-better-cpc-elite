@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Draw order of filled hulls (128K plan, Phase 1): spawn a near ship first and a far ship second, so the slot order is wrong for painting, and screenshot with and without the sort.
 
-usage (from work/xray):  PATH=$HOME/.local/bin:$PATH ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_order128.py [NEAR_TYPE [FAR_TYPE [rev]]]
+usage (from work/xray):  PATH=$HOME/.local/bin:$PATH ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/tests/test_order128.py [NEAR_TYPE [FAR_TYPE [rev]]]
 Needs output/flight128.sna and disk/elite128.dsk. Run 1 patches `ld a,1` at hullBegin to `ld a,0` (no queue: slot order, the far ship covers the near one), run 2 leaves it (queue and sort).
 Screenshots output/order128_slot.png and output/order128_sorted.png.
 """
@@ -15,7 +15,7 @@ from pathlib import Path
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[2]
 NEAR = int(sys.argv[1]) if len(sys.argv) > 1 else 11
 FAR = int(sys.argv[2]) if len(sys.argv) > 2 else 12
 REV = len(sys.argv) > 3 and sys.argv[3] == "rev"      # spawn the far ship first (slot allocation order is not known to be ascending)

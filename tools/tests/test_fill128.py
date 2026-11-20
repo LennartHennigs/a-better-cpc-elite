@@ -2,7 +2,7 @@
 """Standalone test of src/elite128/fill.asm in cpcxray (128K plan, Phase 1): fill a hull into the game bitmap through bank 6, look at it.
 
 Build first:  python3 -I tools/ship128.py ; sjasmplus --raw=work/elite128/fill.bin src/elite128/fill.asm
-usage (from work/xray):  PATH=$HOME/.local/bin:$PATH ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_fill128.py [TYPE [FRAMES [VISPOS]]]
+usage (from work/xray):  PATH=$HOME/.local/bin:$PATH ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/tests/test_fill128.py [TYPE [FRAMES [VISPOS]]]
   TYPE    ship type 0..18 (index in shipGFXdataTable; 12 = Cobra Mk III, 8 = Viper, 13 = Asp, default 12)
   FRAMES  number of turning frames (default 6); VISPOS is baked into fill.bin: assemble with -DVISPOS=0 to test the other winding.
 Boots output/firebird_in_flight.sna to handleEntitys (&5066), maps bank 6 at &4000 with a snippet in the flight tail (&9F00), loads the module and the fill
@@ -20,7 +20,7 @@ from pathlib import Path
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "work/elite128"
 TYPE = int(sys.argv[1]) if len(sys.argv) > 1 else 12
 FRAMES = int(sys.argv[2]) if len(sys.argv) > 2 else 6

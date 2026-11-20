@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Cycle the title-screen ship (cursor keys, -DTITLESEL) on the 128K disk and take a screenshot of each hull: output/ts128_NN.png.
 
-usage (from work/xray):  PATH=$HOME/.local/bin:$PATH ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_titleships128.py [N]     (default 16 ships)
+usage (from work/xray):  PATH=$HOME/.local/bin:$PATH ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/tests/test_titleships128.py [N]     (default 16 ships)
 Prints the ship index (splash2Shipnr, &1DA8, bits 0-2) and the demo ship's blueprint pointer (&1B51 + 35) per shot, so each picture can be matched to a ship type.
 """
 import asyncio

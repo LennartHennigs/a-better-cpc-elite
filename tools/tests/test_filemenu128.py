@@ -2,7 +2,7 @@
 """128K disk menu test: catalogue, save a commander, change a byte, load it back (the game stack lives in bank 7, so the firmware calls run on discStack).
 
 usage (from work/xray, after `python3 -I tools/snap_docked128.py`):
-  PATH=$HOME/.local/bin:$PATH ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_filemenu128.py
+  PATH=$HOME/.local/bin:$PATH ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/tests/test_filemenu128.py
 Works on a copy of the disk (disk/elite128_w.dsk, inserted writable); the emulator only changes its in-memory image. Calls FileMenu (&0D28) from output/docked128.sna.
 The key presses after a menu choice leak one character into the name prompt, so the save is named "2" and the load types "1", DEL, "2".
 """

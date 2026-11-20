@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Boot work/xray/disk/elite128.dsk (tools/build_dsk128.py) in cpcxray and look at the title screen: screenshots and the state of bank 6.
 
-usage (from work/xray):  PATH=$HOME/.local/bin:$PATH ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_boot128.py [SECONDS]
+usage (from work/xray):  PATH=$HOME/.local/bin:$PATH ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/tests/test_boot128.py [SECONDS]
 Types RUN"ELITE, runs SECONDS (default 40) of emulated time in 5 s steps, saves output/boot128_NN.png each step, then saves output/boot128.sna and checks the
 snapshot: RAM config (byte 0x41), the first bytes of bank 6 (the fill module, flat 128K layout: bank n at 0x100 + n * 0x4000) and the fill table.
 """

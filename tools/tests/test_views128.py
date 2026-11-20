@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Load output/flight128.sna (tools/test_flight128.py) and look through the other views: screenshots output/views128_<key>.png.
+"""Load output/flight128.sna (tools/tests/test_flight128.py) and look through the other views: screenshots output/views128_<key>.png.
 
-usage (from work/xray):  PATH=$HOME/.local/bin:$PATH ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_views128.py [KEY ...]   (default: f2 f3 f4 f1)
+usage (from work/xray):  PATH=$HOME/.local/bin:$PATH ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/tests/test_views128.py [KEY ...]   (default: f2 f3 f4 f1)
 """
 import asyncio
 import os

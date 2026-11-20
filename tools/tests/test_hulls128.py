@@ -2,8 +2,8 @@
 """Spawn every ship type (0..19) straight ahead in the 128K build, one at a time, and screenshot it: output/hulls128_NN.png (128K plan, Phase 1).
 
 NOTE: spawn at most three or four types per run: after four consecutive spawns the session degrades (the engine counts the slots; emptying a slot by writing ix+34 does not undo that). Hostile ships have their AI switched off here (bit 7 of ix+32); type 19 needs CBLOB=file (the image C tail); type 1 (missile) is tiny at the default depth.
-usage (from work/xray):  PATH=$HOME/.local/bin:$PATH ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_hulls128.py [TYPE ...]
-Needs output/flight128.sna (tools/test_flight128.py) and disk/elite128.dsk. Method of tools/test_flight_hull.py: stop at handleEntitys (&5066), lookforFreeSlot (&816B) gives IX,
+usage (from work/xray):  PATH=$HOME/.local/bin:$PATH ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/tests/test_hulls128.py [TYPE ...]
+Needs output/flight128.sna (tools/tests/test_flight128.py) and disk/elite128.dsk. Method of tools/tests/test_flight_hull.py: stop at handleEntitys (&5066), lookforFreeSlot (&816B) gives IX,
 spawnShip (&80CD) builds the type, the position is set ahead (z = &180, big hulls farther), setDirectionofEntity (&82B8) builds the orientation (nose pointing away from us),
 run 1 s, screenshot, then the slot is emptied. With identity orientation every hull is seen from behind.
 """

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """128K build, missions from RAM banks: docked overlay and flight image without the disk (128K plan, Phase 2).
 
-Build first:  python3 -I tools/build_dsk128.py ; cp work/elite128.dsk work/xray/disk/
-usage (from work/xray):  DISK128=disk/elite128.dsk PATH=$HOME/.local/bin:$PATH ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_mission128.py
+Build first:  python3 -I tools/build_dsk128.py ; cp build/elite128.dsk work/xray/disk/
+usage (from work/xray):  DISK128=disk/elite128.dsk PATH=$HOME/.local/bin:$PATH ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/tests/test_mission128.py
 Boots, starts a new commander (N, space: docked at Lave), sets 256 kill points and the Constrictor state "hunting, all hints" (&71), calls the docking hook (&1714) and takes a
-screenshot (output/mission128_docked.png: the overlay was copied from bank 4); the launch check is tools/test_launch128.py. Prints bytes read back so a failure is visible. Long: start it detached.
+screenshot (output/mission128_docked.png: the overlay was copied from bank 4); the launch check is tools/tests/test_launch128.py. Prints bytes read back so a failure is visible. Long: start it detached.
 """
 import asyncio
 import json

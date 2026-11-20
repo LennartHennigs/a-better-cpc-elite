@@ -5,7 +5,7 @@
 #   make enhanced   star occlusion, Escape in the menus, title-screen ship choice  -> build/enhanced/
 #   make missions   enhanced plus the added missions (English only): bootable disk -> build/elite_missions.dsk (no trainers or viewer; `expanded` is the full build)
 #   make check      bash tools/check_src.sh for en, de and fr
-#   make disk6128     the 128K disk (6128 only) -> work/elite128.dsk; HULLS=stock (default) or HULLS=arcelite picks where the filled ships come from
+#   make disk6128     the 128K disk (6128 only) -> build/elite128.dsk; HULLS=stock (default) or HULLS=arcelite picks where the filled ships come from
 #   make listing6128  the readable listing of the 128K build (includes expanded, addresses and bytes) -> build/listing6128/elite6128.lst (same HULLS switch)
 #   make test       rebuild the disks, then the host tests: check_src (en, de, fr), saves, disk rules (about a minute; tools/tests/run_all.py)
 #   make test-quick the host tests alone, on the disks already in build/ (seconds)

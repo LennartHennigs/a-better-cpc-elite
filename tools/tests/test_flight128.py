@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Boot the 128K disk, start a new commander, launch and fly: screenshots of the filled hulls in flight (128K plan, Phase 1).
 
-usage (from work/xray):  PATH=$HOME/.local/bin:$PATH ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_flight128.py [FLIGHT_STEPS]
+usage (from work/xray):  PATH=$HOME/.local/bin:$PATH ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/tests/test_flight128.py [FLIGHT_STEPS]
 Long (minutes of real time): start it detached, e.g. python3 -c "import subprocess;subprocess.Popen([...], start_new_session=True, stdout=open('output/flight128.log','w'))".
 Writes output/flight128_NN.png and output/flight128.sna (the game in flight), prints PC/SP and the state after each step.
 """

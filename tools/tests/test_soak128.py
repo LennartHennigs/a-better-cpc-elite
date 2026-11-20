@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Soak test of the 128K build in flight: run MINUTES of emulated time from output/flight128.sna with a PC breakpoint at &0000 (a reset) and report.
 
-usage (from work/xray):  PATH=$HOME/.local/bin:$PATH ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/test_soak128.py [MINUTES]    (default 10; start it detached)
+usage (from work/xray):  PATH=$HOME/.local/bin:$PATH ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/tests/test_soak128.py [MINUTES]    (default 10; start it detached)
 Runs in 30 s steps, prints pc/sp per step and saves output/soak128_NN.png every 5th step; stops early if the reset breakpoint fires.
 """
 import asyncio
