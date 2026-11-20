@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""The ship viewer (RUN"SHOWSHPS) from the 128K disk: SHOWSHPS.BAS starts the game with a poke that skips the first title screen, so it opens on "Press Space, Commander" with the Cobra Mk III;
-the right cursor key steps through the ships. Screenshots output/viewer128_<n>.png.
+"""The ship viewer (RUN"SHOWSHPS) from the 128K disk: SHOWSHPS.BAS loads the ships into RAM banks 4-6 and the viewer (src/viewer128/viewer.asm) at &8000; filled ships turn on the screen,
+the cursor keys select, Q returns to BASIC. Screenshots output/viewer128_<n>.png: the first ship, two more after the right cursor key, and BASIC after Q.
 
-Needs disk/elite128.dsk (tools/build_dsk128.py; SHIPS.BIN comes from tools/mk_showship.py). usage (from work/xray): <cpcxray python> -I ../../tools/tests/test_viewer128.py
-No pass/fail: look at the pictures (the first one also shows whether the quote in RUN"SHOWSHPS was typed correctly).
+Needs disk/elite128.dsk (tools/build_dsk128.py). usage (from work/xray): <cpcxray python> -I ../../tools/tests/test_viewer128.py
+No pass/fail: look at the pictures.
 """
 import asyncio
 import json
@@ -29,7 +29,7 @@ async def main():
             await c("disk_insert", {"drive": "A", "path": os.environ.get("DISK128", "disk/elite128.dsk")})
             await c("run", {"max_us": 4_000_000, "timeout_s": 60})
             await c("type_text", {"text": 'run"showshps\n', "wait": False})
-            await c("run", {"max_us": 40_000_000, "timeout_s": 200})
+            await c("run", {"max_us": 45_000_000, "timeout_s": 300})
             await c("screen_image", {"path": "output/viewer128_0.png"})
             for n in (1, 2):
                 await c("key_press", {"key": "cursor_right"})
@@ -37,6 +37,11 @@ async def main():
                 await c("key_release", {"key": "cursor_right"})
                 await c("run", {"max_us": 4_000_000, "timeout_s": 60})
                 await c("screen_image", {"path": f"output/viewer128_{n}.png"})
+            await c("key_press", {"key": "q"})
+            await c("run", {"max_us": 400_000, "timeout_s": 60})
+            await c("key_release", {"key": "q"})
+            await c("run", {"max_us": 3_000_000, "timeout_s": 60})
+            await c("screen_image", {"path": "output/viewer128_3.png"})
             print("pc", (await c("registers_get"))["pc"])
 
 

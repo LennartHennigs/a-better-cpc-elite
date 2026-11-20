@@ -8014,18 +8014,10 @@ discExit:
 titleKeyIsr:
     and a
     ret nz
-    ld a,(loc_293F)                     ; SHOWSHPS.BAS (the ship viewer start, tools/build_show128.sh) pokes 1 into this dead byte (loc_293F, the music toggle the 128K build never runs):
-    dec a                               ; the first title screen then sees an N at once and goes straight to the press-space screen, where the cursor keys step through the ships
-    jr nz,tkNormal
-    ld (loc_293F),a                     ; A = 0: used up
-    ld a,0x4E
-    jr tkLatchKey
-tkNormal:
     ld a,(pressedKey)
     inc a
     ret z
     dec a
-tkLatchKey:
     ld (titleKeyLatch),a
     ret
 ; Kill count on the commander page (called from common2x.asm in place of `call anotherPrintwithTokeninA`, A = rank token): the rank name, " - 1234", then the new line.

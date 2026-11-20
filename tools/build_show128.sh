@@ -1,12 +1,11 @@
 #!/bin/bash
-# Build SHOWSHPS.BAS for the 128K disk: Firebird's ELITE.BAS loader plus `POKE &293F,1` before the CALL. The poke tells titleKeyIsr (src/elite128/commonxx.asm) to take an N
-# on the first title screen at once, so the game opens on the press-space screen, where the cursor keys step through all 29 ships, filled (docs/_128k_version.md).
-# src/elite128/SHOWSHPS.ASC (CRLF lines, Ctrl-Z at the end) is tokenised with the CPC's own BASIC (cpcxray headless, as tools/build_cheat.sh does):
-# output src/elite128/SHOWSHPS.BAS (AMSDOS header) and SHOWSHPS.BAS.txt (listing). tools/build_dsk128.py puts it on the disk.
+# Build SHOWSHPS.BAS for the 128K disk: the loader of the ship viewer (src/viewer128/SHOWSHPS.ASC: the ships into RAM banks 4-6, viewer.bin at &8000, CALL &8000, Q returns).
+# src/viewer128/SHOWSHPS.ASC (CRLF lines, Ctrl-Z at the end) is tokenised with the CPC's own BASIC (cpcxray headless, as tools/build_cheat.sh does):
+# output src/viewer128/SHOWSHPS.BAS (AMSDOS header) and SHOWSHPS.BAS.txt (listing). tools/build_dsk128.py puts it on the disk with the ship data (tools/mk_viewer128.py, src/viewer128/viewer.asm).
 set -e
 cd "$(dirname "$0")/.."
 export PATH="$HOME/.local/bin:$PATH"
-D=src/elite128
+D=src/viewer128
 P=SHOWSHPS
 rm -f work/tmp_asc.dsk work/xray/disk/tmp_asc.dsk work/xray/disk/tmp_tok.dsk
 iDSK work/tmp_asc.dsk -n >/dev/null 2>&1

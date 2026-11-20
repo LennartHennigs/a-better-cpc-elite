@@ -141,14 +141,22 @@ def main():
         txt = txt.replace(b"every ship in 3D", b"the ships, filled")
         recs = -(-len(txt) // 128)
         dskx.add_payload(d, secs, first, "README", "TXT", txt.ljust(recs * 128, b"\x1a"), recs)
-    # The ship viewer: SHOWSHPS.BAS (tools/build_show128.sh) is Firebird's loader with one POKE that makes the first title screen take an N at once, so the game opens on the press-space
-    # screen where the cursor keys step through every ship, filled (the stand-alone wireframe viewer of the 64K disks is not on this disk).
-    bas = ROOT / "src/elite128/SHOWSHPS.BAS"
+    # The ship viewer (RUN"SHOWSHPS): a stand-alone program like the 64K disk's, but with the filled hulls of the game. SHOWSHPS.BAS loads the ships into RAM banks 4-6 and the program
+    # (src/viewer128/viewer.asm, the page flip prototype) at &8000; the data come from tools/mk_viewer128.py. The binaries are hidden like every other non-BASIC file.
+    subprocess.run([sys.executable, "-I", str(ROOT / "tools/mk_viewer128.py")], check=True, capture_output=True)
+    r = subprocess.run([str(SJASM), "--nologo", "--msg=err", "viewer.asm"], cwd=ROOT / "src/viewer128", capture_output=True, text=True)
+    if r.returncode:
+        sys.exit("viewer.asm: assemble failed\n" + r.stdout[-400:])
+    vdir = ROOT / "work/viewer128"
+    bas = ROOT / "src/viewer128/SHOWSHPS.BAS"
     if bas.exists():
         dskx.add_padded(d, secs, first, "SHOWSHPS", "BAS", bas.read_bytes())
-        print(f"SHOWSHPS.BAS {bas.stat().st_size} bytes (RUN\"SHOWSHPS: the game on the ship viewer)")
+        for n in (4, 5, 6):
+            dskx.add_file(d, secs, first, f"SHIPS{n}", "BIN", (vdir / f"ships{n}.bin").read_bytes(), 0x4000)
+        dskx.add_file(d, secs, first, "VIEWER", "BIN", (vdir / "viewer.bin").read_bytes(), 0x8000)
+        print("ship viewer: SHOWSHPS.BAS, SHIPS4-6.BIN, VIEWER.BIN")
     else:
-        print("SHOWSHPS: not added (bash tools/build_show128.sh makes it)")
+        print("SHOWSHPS: not added (bash tools/build_show128.sh makes SHOWSHPS.BAS)")
     # The loader is ELITE128.BAS on this disk (RUN"ELITE128): Firebird's ELITE.BAS, same program, renamed with its AMSDOS header (name and checksum) so that nobody starts the 128K disk as the 64K game.
     old = dskx.read_files(dskx.load_sectors(BASE))[(0, "ELITE.BAS")]
     hdr = bytearray(old[:128])
