@@ -4,8 +4,23 @@
 ; bankInit itself (commonxx.asm). LaserSights in COMMON2X jumps to laserSightsHome.
 ; Drawing: every sight is three lines given for one quadrant (x1, y1, x2, y2 as offsets from the view centre, the form drawLaserLine takes in H, L, D, E) and drawn four times,
 ; mirrored through the quadrant bits of C (0, 0x05 = y flipped, 0x0A = x flipped, 0x0F = both). No laser in the view (laserTypes = 0): no sight, like the ST.
-; Externals, given with -D by the build: VIEWDIR (Viewdirection), LASERTYPES (laserTypes), DRAWLINE (drawLaserLine), HOME (laserSightsHome).
+; Externals, given with -D by the build: VIEWDIR (Viewdirection), LASERTYPES (laserTypes), DRAWLINE (drawLaserLine), CURCFG (curCfg), HOME (bankInit, where the overlay starts).
+; The overlay starts with bankCopy (20 bytes, the title ship viewer's bank 6 reader: no room for it in the glue), the sights follow at HOME + 20 (laserSightsHome in commonxx.asm).
     ORG HOME
+; A = count, HL = source (window address in bank 6), DE = destination (resident): maps RAM bank 6 for the copy only, no stack use while it is mapped
+bankCopy:
+    di
+    ld bc,0x7FC6
+    out (c),c
+    ld c,a
+    ld b,0
+    ldir
+    ld a,(CURCFG)                       ; back to the draw configuration (the mapMain macro of commonxx.asm)
+    ld b,0x7F
+    out (c),a
+    ei
+    ret
+    ASSERT $ - bankCopy == 20, "bankCopy must be 20 bytes (laserSightsHome = bankInit + 20 in commonxx.asm)"
 laserSightsNew:
     ld a,(VIEWDIR)
     ld e,a

@@ -75,8 +75,8 @@ N_TYPES = TYPE_PACK0 + len(PACK_HULLS)
 # The title screen's ship viewer (src/elite128/common2x.asm titleSpawn): per ship (name, base ship type, flight image slot, wanted hull type or 0xFF, distance = z high byte).
 # Slot 0 = the default image (no pack), 1-7 = ship pack k, 8 = the Constrictor's image. A pack hull is spawned from its base type until the image's mxHullType names the wanted type.
 # The first eight are the ships the title screen always had (index 2, the Cobra Mk III, is where the press-space screen starts).
-VIEW = [("VIPER", 8, 0, 0xFF, 2), ("ASP MK II", 13, 0, 0xFF, 2), ("COBRA MK III", 9, 0, 0xFF, 2), ("FER-DE-LANCE", 14, 0, 0xFF, 2), ("SIDEWINDER", 16, 0, 0xFF, 2),
-        ("KRAIT", 17, 0, 0xFF, 2), ("ROCK HERMIT", 7, 0, 0xFF, 2), ("THARGOID", 15, 0, 0xFF, 2),
+VIEW = [("VIPER", 8, 0, 0xFF, 2), ("ASP MK II", 13, 0, 0xFF, 2), ("COBRA MK III", 9, 0, 0xFF, 3), ("FER-DE-LANCE", 14, 0, 0xFF, 2), ("SIDEWINDER", 16, 0, 0xFF, 2),
+        ("KRAIT", 17, 0, 0xFF, 2), ("ROCK HERMIT", 7, 0, 0xFF, 2), ("THARGOID", 15, 0, 0xFF, 5),
         ("CORIOLIS", 0, 0, 0xFF, 7), ("MISSILE", 1, 0, 0xFF, 1), ("ESCAPE POD", 2, 0, 0xFF, 1), ("ALLOY PLATE", 3, 0, 0xFF, 1), ("CARGO CANISTER", 4, 0, 0xFF, 1),
         ("SPLINTER", 5, 0, 0xFF, 1), ("ASTEROID", 6, 0, 0xFF, 3), ("PYTHON", 10, 0, 0xFF, 4), ("PYTHON PIRATE", 11, 0, 0xFF, 4), ("COBRA PIRATE", 12, 0, 0xFF, 2),
         ("THARGON", 18, 0, 0xFF, 1), ("CONSTRICTOR", 19, 8, 0xFF, 2),

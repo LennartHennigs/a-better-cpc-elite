@@ -7522,8 +7522,9 @@ hullDraw:
     pop iy
     ret nc
     jp todo_parseEdges                  ; carry: no record, wireframe
-laserSightsHome equ bankInit            ; the laser sights live here after Init_ (see lasersights128.asm)
-laserSightsSize equ 0x70
+bankCopy equ bankInit                   ; the first 20 bytes of the overlay on bankInit (lasersights128.asm): A = count, HL = source (window address in bank 6), DE = destination (resident)
+laserSightsHome equ bankInit + 20       ; the laser sights follow it (see lasersights128.asm)
+laserSightsSize equ 0x80                ; bytes the last step of bankInit copies over bankInit
 bankInitStageFill  equ STAGE+0x800
 bankInitStageData  equ STAGE+0x1000
 ; Once, at the start of Init_: the loader put the fill module and its records into blank screen bytes of COMMON2X (tools/build_dsk128.py), which are still
@@ -8013,25 +8014,22 @@ discExit:
 titleKeyIsr:
     and a
     ret nz
+    ld a,(loc_293F)                     ; SHOWSHPS.BAS (the ship viewer start, tools/build_show128.sh) pokes 1 into this dead byte (loc_293F, the music toggle the 128K build never runs):
+    dec a                               ; the first title screen then sees an N at once and goes straight to the press-space screen, where the cursor keys step through the ships
+    jr nz,tkNormal
+    ld (loc_293F),a                     ; A = 0: used up
+    ld a,0x4E
+    jr tkLatchKey
+tkNormal:
     ld a,(pressedKey)
     inc a
     ret z
     dec a
+tkLatchKey:
     ld (titleKeyLatch),a
     ret
 ; Kill count on the commander page (called from common2x.asm in place of `call anotherPrintwithTokeninA`, A = rank token): the rank name, " - 1234", then the new line.
 ; The count is the word at killScore+1: the low byte of the 24-bit score is a fraction (getRank compares the middle byte).
-; A = count, HL = source (window address in bank 6), DE = destination (resident): maps RAM bank 6 for the copy only, no stack use while it is mapped
-bankCopy:
-    di
-    ld bc,0x7FC6
-    out (c),c
-    ld c,a
-    ld b,0
-    ldir
-    mapMain
-    ei
-    ret
 killHook:
     push af                             ; the rank token
     call printString                    ; no new line yet (CallprintString would add it)

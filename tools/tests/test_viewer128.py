@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""The ship viewer (RUN"SHOWSHPS) from the 128K disk: boot to BASIC, run it, screenshots output/viewer128_<n>.png (a ship rotating, then the next ones after the right cursor key).
+"""The ship viewer (RUN"SHOWSHPS) from the 128K disk: SHOWSHPS.BAS starts the game with a poke that skips the first title screen, so it opens on "Press Space, Commander" with the Cobra Mk III;
+the right cursor key steps through the ships. Screenshots output/viewer128_<n>.png.
 
 Needs disk/elite128.dsk (tools/build_dsk128.py; SHIPS.BIN comes from tools/mk_showship.py). usage (from work/xray): <cpcxray python> -I ../../tools/tests/test_viewer128.py
 No pass/fail: look at the pictures (the first one also shows whether the quote in RUN"SHOWSHPS was typed correctly).
@@ -28,7 +29,7 @@ async def main():
             await c("disk_insert", {"drive": "A", "path": os.environ.get("DISK128", "disk/elite128.dsk")})
             await c("run", {"max_us": 4_000_000, "timeout_s": 60})
             await c("type_text", {"text": 'run"showshps\n', "wait": False})
-            await c("run", {"max_us": 12_000_000, "timeout_s": 120})
+            await c("run", {"max_us": 40_000_000, "timeout_s": 200})
             await c("screen_image", {"path": "output/viewer128_0.png"})
             for n in (1, 2):
                 await c("key_press", {"key": "cursor_right"})
