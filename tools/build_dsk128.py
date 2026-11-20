@@ -47,6 +47,37 @@ def sliced(src, flags, lo_label, hi_label, base_addr):
         return labels[lo_label], out.read_bytes()[labels[lo_label] - base_addr:labels[hi_label] - base_addr]
 
 
+def symbols(src, flags=()):
+    """Assemble SRC (only for its symbol file) and return {label: address}."""
+    with tempfile.TemporaryDirectory() as tmp:
+        sym = Path(tmp) / "x.sym"
+        r = subprocess.run([str(SJASM), *flags, f"--raw={Path(tmp) / 'x.bin'}", f"--sym={sym}", str(SRC / src)], capture_output=True, text=True)
+        if r.returncode:
+            sys.exit(f"{src}: assemble failed\n{r.stdout[-400:]}")
+        out = {}
+        for line in sym.read_text().splitlines():
+            parts = line.split()
+            if len(parts) >= 3 and parts[0].endswith(":"):
+                out[parts[0][:-1]] = int(parts[2], 16)
+        return out
+
+
+def laser_sights():
+    """The laser sights overlay (lasersights128.asm): assembled at the address of bankInit, carried in the data stage and copied over bankInit by its last step."""
+    cx, c2 = symbols("commonxx.asm"), symbols("common2x.asm")
+    defs = [f"-DHOME={cx['laserSightsHome']}", f"-DVIEWDIR={cx['Viewdirection']}", f"-DLASERTYPES={cx['laserTypes']}", f"-DDRAWLINE={c2['drawLaserLine']}"]
+    with tempfile.TemporaryDirectory() as tmp:
+        out = Path(tmp) / "ls.bin"
+        r = subprocess.run([str(SJASM), *defs, f"--raw={out}", str(SRC / "lasersights128.asm")], capture_output=True, text=True)
+        if r.returncode:
+            sys.exit(f"lasersights128.asm: assemble failed\n{r.stdout[-400:]}")
+        blob = out.read_bytes()
+    size = cx["laserSightsSize"]
+    assert len(blob) <= size, f"the laser sights ({len(blob)} bytes) do not fit laserSightsSize ({size})"
+    print(f"laser sights: {len(blob)} of {size} bytes, at &{cx['laserSightsHome']:04X}")
+    return blob.ljust(size, b"\0")
+
+
 def main():
     work = ROOT / "work/elite128"
     for f in ("fill.bin", "fill128.bin", "fill128_late.bin", "tt.bin"):
@@ -59,7 +90,7 @@ def main():
     data = data.ljust(0x540, b"\0") + (work / "tt.bin").read_bytes()      # fill_tt.asm is assembled for 0x6540: its bytes follow the records
     assert len(data) <= 0x5C0, f"the title cache module ({len(data)} bytes in all) runs into the late records at 0x65C0"
     data = data.ljust(0x5C0, b"\0") + (work / "fill128_late.bin").read_bytes()      # alloy plate and Constrictor records (ship128.py LATE)
-    assert len(fill) <= 0x600 and len(data) <= 0x800, (len(fill), len(data))      # bankInit copies 0x800 bytes of the data stage; overlays start at +0x1800
+    assert len(fill) <= 0x600 and len(data) <= 0x700, (len(fill), len(data))      # the laser sights ride at +0x700 of the data stage      # bankInit copies 0x800 bytes of the data stage; overlays start at +0x1800
     d = bytearray(BASE.read_bytes())
     secs = sector_offsets(d)
     first = min(r for (t, r) in secs if t == 0)
@@ -73,7 +104,7 @@ def main():
             new = bytearray(out.read_bytes())
             if n == "COMMONXX":
                 PAGE = 0x4000 - 0x1A40                       # the window page inside COMMONXX.BIN: blank screen rows that bankInit finds at &C000+offset in RAM bank 3
-                stage = [(STAGE_FILL, fill), (STAGE_DATA, data)]
+                stage = [(STAGE_FILL, fill), (STAGE_DATA, data), (STAGE_DATA + 0x700, laser_sights())]
                 if MISSIONS:      # overlays (bank 4: slots of 0x240 at &D800, &DC80, &E000, &E480) and flight images (bank 5: 0x260 at &E800, &EC60, &F000, &F460, &F800, &FC60); bankInit copies them
                     for i, tag in enumerate("CPTR"):
                         base, blob = sliced("largeaxx.asm", [f"-DOVL_{tag}"], "mxOverlayBase", "mxOverlayEnd", 0x840)

@@ -1,6 +1,7 @@
     INCLUDE "config.inc"
 SCREEN equ 0x4000            ; the screen page (the 128K layout); the block below runs in RAM bank 7 at &C000
-killHook equ 0x9C56   ; generated: label of commonxx
+laserSightsHome equ 0x989C   ; generated: label of commonxx
+killHook equ 0x9C58   ; generated: label of commonxx
 irki2_8 equ 0x8EB2   ; generated: label of commonxx
 mxArrive equ 0x9DAD   ; generated: label of commonxx
 mxInvHook equ 0x9DB3   ; generated: label of commonxx
@@ -101,11 +102,11 @@ galacticHyperdrive equ 0x3904   ; generated: label of commonxx
 galaxySeed equ 0x3907   ; generated: label of commonxx
 getBounty equ 0x39B7   ; generated: label of commonxx
 government equ 0x3D5F   ; generated: label of commonxx
-hullBegin equ 0x99E4   ; generated: label of commonxx
-hullDeferEntry equ 0x99FE   ; generated: label of commonxx
+hullBegin equ 0x99E6   ; generated: label of commonxx
+hullDeferEntry equ 0x9A00   ; generated: label of commonxx
 hullDraw equ 0x985D   ; generated: label of commonxx
 hullDummy equ 0x9855   ; generated: label of commonxx
-hullFlush equ 0x9A4D   ; generated: label of commonxx
+hullFlush equ 0x9A4F   ; generated: label of commonxx
 inputPitch equ 0x1C04   ; generated: label of commonxx
 inputRoll equ 0x1C03   ; generated: label of commonxx
 irki2_dat1 equ 0x8F3E   ; generated: label of commonxx
@@ -8343,7 +8344,7 @@ aePlayECMSFX:
     ret
 ; Draws the four lines of the laser crosshair
 LaserSights:
-    ld hl,0x0800
+    jp laserSightsHome                  ; the sights of lasersights128.asm (an overlay on bankInit, no room here); the rest of this routine is dead
     ld de,0x1000
     ld c,0x0A
     call drawLaserLine

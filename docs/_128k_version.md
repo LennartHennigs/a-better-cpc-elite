@@ -21,7 +21,7 @@ Diary: `CHANGELOG_128K.md`. Open work, including what `main` did since the fork:
 | Disk use | loads `LARGEAXX`, music, progress bar, mission files from disk | everything is copied into RAM banks at start (`bankInit`); only saves and the catalogue read the disk |
 | Memory | 64 KB, about 610 free bytes in flight | 128 KB, about 27.5 KB free but only in banks 4-6 (data); resident code space is 172 + 16 + 15 bytes |
 | Build flags | `-DENHANCED -DMISSIONS -DTRAFFIC -DTITLESEL` per disk | one variant (`src/elite128/config.inc`): enhanced UI, missions, title ship selection, Firebird loader |
-| Machines | 464, 664, 6128 | 6128 only; a 464/664 shows "128K CPC (6128) REQUIRED" |
+| Machines | 464, 664, 6128 | 6128 only; a 464/664 shows "128K CPC REQUIRED" |
 | Languages | English, German, French | English only |
 
 ## How it is laid out

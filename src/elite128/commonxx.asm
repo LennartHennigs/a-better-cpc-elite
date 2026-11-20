@@ -7521,6 +7521,8 @@ hullDraw:
     pop iy
     ret nc
     jp todo_parseEdges                  ; carry: no record, wireframe
+laserSightsHome equ bankInit            ; the laser sights live here after Init_ (see lasersights128.asm)
+laserSightsSize equ 0x70
 bankInitStageFill  equ STAGE+0x800
 bankInitStageData  equ STAGE+0x1000
 ; Once, at the start of Init_: the loader put the fill module and its records into blank screen bytes of COMMON2X (tools/build_dsk128.py), which are still
@@ -7563,7 +7565,7 @@ bankMsgLoop:
 bankHalt:
     jr bankHalt
 bankNoRamMsg:
-    db "128K CPC (6128) REQUIRED",13,10,0
+    db "128K CPC REQUIRED",0
 bankInitGo:
     ld bc,0x7FC7                        ; the code block (COMMON2X.BIN, loaded at &C000 = RAM bank 3) into RAM bank 7: config C7 shows bank 7 at &4000 and leaves bank 3 at &C000
     out (c),c
@@ -7631,6 +7633,11 @@ bankInitGo:
     ld bc,0x04C0
     ldir
     ENDIF
+    ld hl,bankInitStageData+0x700       ; the laser sights (lasersights128.asm, built at the address of bankInit): over the boot code above, which has run by now. Everything from
+    ld de,bankInit                      ; bankInit to here is dead after this point; this copy and the code after it sit beyond laserSightsSize
+    ld bc,laserSightsSize
+    ldir
+    ASSERT $ >= bankInit + laserSightsSize, "the copy of the laser sights would overwrite code that has not run yet"
     ld bc,0x7FC1                        ; draw into screen A (bank 1 at &4000), bank 7 (the code block) at &C000
     out (c),c
     ld a,0xC1

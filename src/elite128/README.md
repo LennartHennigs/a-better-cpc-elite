@@ -61,7 +61,7 @@ stock wireframe, the Cobra seen from behind looks right. Axis maps (`tools/ship1
 
 `tools/tests/test_soak128.py`: 10 minutes of emulated flight, no reset. `tools/test_frametime.py`: one Cobra ahead, mean frame 232 ms for the stock wireframe against 254 ms for the filled hull
 (+9.5%, gate +25%). `bankInit` tests for the second 64 KB first (writes `&A5` at `&4000`, `&5A` with bank 4 mapped, reads back) and on a 464/664 clears the screen and prints
-"128K CPC (6128) REQUIRED". (checked on cpcxray's 664 config).
+"128K CPC REQUIRED". (checked on cpcxray's 664 config).
 
 ## Status after Phase 1 and 2 (2026-11-11)
 
