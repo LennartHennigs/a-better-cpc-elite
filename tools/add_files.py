@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Add files to a DSK image with dskx (not iDSK, which may fill the two odd-sector tracks that AMSDOS cannot read), replacing a file of the same name.
 
-usage: python3 -I tools/add_files.py IMAGE.dsk [-NAME.EXT] [NAME.EXT=]FILE ...
+usage: python3 -I tools/add_files.py IMAGE.dsk [-NAME.EXT] [OLD.EXT>NEW[.EXT]] [NAME.EXT=]FILE ...
+OLD.EXT>NEW renames a file in place (directory entries and the name inside its AMSDOS header, checksum included; the extension stays unless NEW has one); a name that
+is not there is an error (ELITE.BAS>ELITE64.BAS on the expanded disk).
 -NAME.EXT deletes that file from the image first (the Firebird disk's own CHEAT.BAS, when TRAINER.BAS takes its place); a name that is not there is not an error.
 FILE is written as it is (AMSDOS header included); the disk name is NAME.EXT, or FILE's own name when no NAME.EXT= is given. Run tools/hide_files.py afterwards to
 hide what CAT should not show. Never run it on the original disks in disks/.
@@ -24,6 +26,14 @@ def main(argv):
     secs = dskx.sector_offsets(d)
     first = min(r for (t, r) in secs if t == 0)
     for arg in argv[1:]:
+        if ">" in arg:
+            old, _, new = arg.upper().partition(">")
+            (name, _, ext), (nname, _, next_) = old.partition("."), new.partition(".")
+            n = dskx.rename_file(d, secs, first, name, ext, nname, next_ if "." in new else ext)
+            if not n:
+                sys.exit(f"{disk.name}: {name}.{ext} is not on the disk")
+            print(f"{disk.name}: {name}.{ext} renamed {new}")
+            continue
         if arg.startswith("-"):
             name, _, ext = arg[1:].upper().partition(".")
             n = dskx.remove_file(d, secs, first, name, ext)

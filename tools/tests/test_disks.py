@@ -76,11 +76,12 @@ def check(path):
         if ids != STD and any((t == (b * 2 + s) // 9) for f in files.values() for b in f["blocks"] for s in (0, 1)):
             fails.append(f"track {t} holds file data but its sector ids are {sorted(hex(i) for i in ids)}")
     lang = language(path)
-    loader = "ELITE128.BAS" if path.name.startswith("elite128") else "ELITE.BAS"      # the 128K disk's loader is renamed (RUN"ELITE128)
+    expanded = path.name.startswith("elite64")                                          # the expanded disk (make expanded)
+    loader = "ELITE128.BAS" if path.name.startswith("elite128") else "ELITE64.BAS" if expanded else "ELITE.BAS"      # renamed loaders: RUN"ELITE128, RUN"ELITE64
     need = ["LARGEAXX.BIN", "COMMONXX.BIN", "COMMON2X.BIN"] if lang == "fr" else CORE + [loader]
-    if "expanded" in path.name or "missions" in path.name:
+    if expanded or "missions" in path.name:
         need += MISSIONS
-    if "expanded" in path.name:
+    if expanded:
         need += EXPANDED
     for n in need:
         if n not in files:

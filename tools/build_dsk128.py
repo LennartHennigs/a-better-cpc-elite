@@ -158,12 +158,8 @@ def main():
     else:
         print("SHOWSHPS: not added (bash tools/build_show128.sh makes SHOWSHPS.BAS)")
     # The loader is ELITE128.BAS on this disk (RUN"ELITE128): Firebird's ELITE.BAS, same program, renamed with its AMSDOS header (name and checksum) so that nobody starts the 128K disk as the 64K game.
-    old = dskx.read_files(dskx.load_sectors(BASE))[(0, "ELITE.BAS")]
-    hdr = bytearray(old[:128])
-    hdr[1:9] = b"ELITE128"
-    hdr[67:69] = (sum(hdr[:67]) & 0xFFFF).to_bytes(2, "little")
-    dskx.remove_file(d, secs, first, "ELITE", "BAS")
-    dskx.add_padded(d, secs, first, "ELITE128", "BAS", bytes(hdr) + old[128:])
+    if not dskx.rename_file(d, secs, first, "ELITE", "BAS", "ELITE128"):
+        sys.exit("ELITE.BAS is not on the base disk")
     print("ELITE.BAS renamed ELITE128.BAS")
     # Firebird's own CHEAT.BAS pokes 64K addresses (docs/_cheats.md): on the relocated layout it would write into the wrong bytes, so the disk does not carry it.
     removed = dskx.remove_file(d, secs, first, "CHEAT", "BAS")

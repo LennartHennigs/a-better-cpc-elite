@@ -128,6 +128,31 @@ def remove_file(d, secs, first, name, ext):
     return n
 
 
+def rename_file(d, secs, first, name, ext, new_name, new_ext=None):
+    """Rename NAME.EXT in place: every directory entry (the attribute bits, e.g. System, stay) and, when the file starts with a valid AMSDOS header, the name inside it
+    with its checksum, so `RUN"NEWNAME` and the header agree. No block moves. new_ext defaults to the old extension. Returns the number of entries renamed (0 = no such file)."""
+    new_ext = ext if new_ext is None else new_ext
+    if not (1 <= len(new_name) <= 8 and len(new_ext) <= 3):
+        raise SystemExit(f"{new_name}.{new_ext}: not an AMSDOS 8.3 name")
+    nm, ex = new_name.upper().ljust(8).encode(), new_ext.upper().ljust(3).encode()
+    ext0 = find_extents(d, secs, first, f"{name}.{ext}")
+    if not ext0:
+        return 0
+    blk = ext0[0][2][0]                                 # the first block holds the header
+    pos = secs[(blk * 2 // 9, first + blk * 2 % 9)][0]
+    if amsdos_header(bytes(d[pos:pos + 128])) is not None:
+        d[pos + 1:pos + 9], d[pos + 9:pos + 12] = nm, ex
+        d[pos + 67:pos + 69] = (sum(d[pos:pos + 67]) & 0xFFFF).to_bytes(2, "little")
+    n = 0
+    for _, off, _blocks in ext0:
+        for k in range(8):
+            d[off + 1 + k] = (d[off + 1 + k] & 0x80) | nm[k]
+        for k in range(3):
+            d[off + 9 + k] = (d[off + 9 + k] & 0x80) | ex[k]
+        n += 1
+    return n
+
+
 def add_payload(d, secs, first, name, ext, payload, records):
     """Add a new file whose bytes (header included) are `payload` to the image `d`: free directory entries, free 1 KB blocks, one extent (16 KB = 128 records,
     16 blocks) per 16 KB of the file."""
