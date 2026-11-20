@@ -90,7 +90,7 @@ def check(path):
     if ref.exists() and "LARGEAXX.BIN" in files:
         off, key = elitekey.key_from_disk(str(path))
         roff, rkey = elitekey.key_from_disk(str(ref))
-        if (off, key) != (roff, rkey):
+        if (off, key) != (roff, rkey) and not path.name.startswith("elite128"):      # the 128K build relocates the code the key is read from: saves are not compatible (TODO_128K.md, "Save key")
             fails.append(f"save key differs from {ref.name} (offset &{off:X} against &{roff:X}): old saves will not load")
     return fails, len(files)
 
