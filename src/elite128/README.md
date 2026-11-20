@@ -44,7 +44,7 @@ Next: the bank loader (load `FILL.BIN` and `FILL128.BIN`, copy into bank 6 throu
 
 ## First run in the engine (2026-11-11)
 
-`bash tools/check_src128.sh && python3 -I tools/build_dsk128.py && cp build/elite128.dsk work/xray/disk/` builds `build/elite128.dsk`; `tools/tests/test_boot128.py` (cpcxray) boots it with `RUN"ELITE`.
+`bash tools/check_src128.sh && python3 -I tools/build_dsk128.py && cp build/elite128.dsk work/xray/disk/` builds `build/elite128.dsk`; `tools/tests/test_boot128.py` (cpcxray) boots it with `RUN"ELITE128` (the loader is Firebird's `ELITE.BAS` renamed); `python3 -I tools/tests/run_all.py --emu128` builds the disk and runs the tests with a pass/fail result (`tools/tests/README.md`).
 `bankInit` (called first in `Init_`) copies the module and records from blank screen bytes of COMMON2X (`&C800`, `&D000`) into bank 6 and runs `fillInit`: after 30 s of emulated time the game sits in
 its main loop (SP `&748B`), bank 6 holds the module, the record table, the edge block and the quarter squares, and **the title-screen Cobra is drawn as a filled, dithered hull through
 `hullDraw` and bank 6** (`work/xray/output/boot128_04.png`, `_05.png`). Open: flight and every other hull (axis maps), pen/pattern choice (the darkest tone is the background pen),
@@ -68,7 +68,7 @@ stock wireframe, the Cobra seen from behind looks right. Axis maps (`tools/ship1
 Working on this branch (`elite128`): filled hulls from bank 6 (all 19 ship types plus the Constrictor), `bankInit` (128K check, fill module, LARGEAXX copy into bank 4,
 mission overlays into bank 4 and flight images into bank 5 for `-DMISSIONS`), docking loads LARGEAXX and the mission overlay from RAM, launch copies the flight image from RAM (checked in cpcxray:
 Constrictor briefing shows, image C lands in the tail with `mxFlightId` = "C"). Disk builds: `bash tools/check_src128.sh && python3 -I tools/build_dsk128.py [--missions]`.
-Still read from disk: saves only. The title music and the `NOTMUSIC` swap are gone in the relocated layout (the player slot at `&6000` is the screen window now): `loadMusicnIndicator` only loads INDICATO, which `bankInit` reads once into bank 5 (`bankIndicator`/`bankChunk` copy it through a 64-byte buffer because the window shows either a bank or main RAM). See "Relocated layout" and "Page flip" below for the current state.
+Still read from disk: saves only. The title music and the `NOTMUSIC` swap are gone in the relocated layout (the player slot at `&6000` is the screen window now, and no other resident home exists: `TODO_128K.md` "Title music" has the findings and the options): `loadMusicnIndicator` only loads INDICATO, which `bankInit` reads once into bank 5 (`bankIndicator`/`bankChunk` copy it through a 64-byte buffer because the window shows either a bank or main RAM). See "Relocated layout" and "Page flip" below for the current state.
 Open in Phase 1: ship draw order across entities (deferred draw list), shading and pen choice, title Cobra overlapping the prompt.
 **Phase 3 (screens at `&4000`, page flip) is not started.** Finding from the audit: the block `&3F60-&7D5D` that has to move to `&C000` contains 38 `db` runs that hide `push ix`/`pop ix`
 routines (the disassembler cannot decode them) and 908 `db` lines in all; their absolute operands that point into the block would have to be turned into labels first (extend `tools/z80dis.py`
