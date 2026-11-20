@@ -17,6 +17,7 @@ JUMP_COUNTER, SYSTEM_SEED, MISSION, MISSION2, TRUMBLES = 0x38DA, 0x390D, 0x38FD,
 FLIGHT_ID = 0x9DBC
 RANDOM_SEED = 0xFA56      # storedRandomSeed (common2x.asm, bank 7 at &C000+)
 N = int(sys.argv[1]) if len(sys.argv) > 1 else 10      # launches
+SEED0 = int(os.environ.get("SEED0", "0"))      # shifts the poked seeds (another set of packs)
 
 
 async def main():
@@ -40,7 +41,7 @@ async def main():
                 await c("disk_insert", {"drive": "A", "path": os.environ.get("DISK128", "disk/elite128.dsk")})
                 await c("sna_load", {"path": "output/docked128.sna"})
                 await c("run", {"max_us": 1_000_000, "timeout_s": 60})
-                await c("memory_write", {"address": RANDOM_SEED, "data": "%02X %02X" % ((n * 37 + 11) & 255, (n * 91 + 5) & 255)})      # a different random state at the launch (the generator only moves when called)
+                await c("memory_write", {"address": RANDOM_SEED, "data": "%02X %02X" % ((n * 37 + 11 + SEED0) & 255, (n * 91 + 5) & 255)})      # a different random state at the launch (the generator only moves when called)
                 await c("memory_write", {"address": MISSION, "data": "00"})
                 await c("memory_write", {"address": MISSION2, "data": "00"})
                 await c("memory_write", {"address": TRUMBLES, "data": "00 00"})

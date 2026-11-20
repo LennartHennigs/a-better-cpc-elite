@@ -5745,9 +5745,11 @@ chkSpawnAsteroid:
     call getRandomNumber
     sub c
     jr c,cmd0ChkSendHostileAfterUs
-    cp 0x5A
+SPAWN_HOSTILE_LIMIT equ 0x5A       ; traffic like the C64 (src/elite -DTRAFFIC, docs/_ship_packs.md): a roll below this lets a hostile through, 90/256 = 35% (stock 0x50 = 31%)
+SPAWN_JUNK_WIDTH equ 35            ; the next 35 values make an asteroid, 13.7% (stock 10 = 3.9%)
+    cp SPAWN_HOSTILE_LIMIT + SPAWN_JUNK_WIDTH
     ret nc
-    cp 0x50
+    cp SPAWN_HOSTILE_LIMIT
     jr c,cmd0ChkSendHostileAfterUs
     call lookforFreeSlot
     ret nz
@@ -5852,8 +5854,9 @@ HermitOrViper:
 spawnEscortPack:
     call getRandomNumber
     and 0x03
-    rra
-    adc a,0x02
+    inc a                           ; 1 to 4 ships like the C64 ((rnd & 3) + 1); stock: rra / adc a,0x02 = 2 to 4, mean 3.0
+    nop
+    nop
     ld c,a
 spawnEscortLoop:
     call lookforFreeSlot
