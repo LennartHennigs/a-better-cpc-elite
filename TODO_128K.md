@@ -1,0 +1,50 @@
+# TODO: Elite 128K (branch `elite128`)
+
+Written 2026-11-20 by comparing the branch (`0cde05d`, 50 commits since the fork) with `main` (`0b257db`, 41 commits since the fork at `d6b6ed0`, 2026-11-11). Sources: the commit logs, `git diff --name-status` for both sides, `src/elite128/README.md`, the branch's `TODO.md` and `CLAUDE.md`, and the plan in `~/.claude/plans/delegated-seeking-aho.md` (outside the repo). Not re-run today: status words are "done", "open" and "check" (an item whose state I could not tell from the sources). Overview: `docs/_128k_version.md`; diary: `CHANGELOG_128K.md`.
+
+## 1. Bring `main` into the branch
+
+Merge `main` into `elite128` (the branch has 50 commits, so a rebase would rewrite them all). Git is slow in this repo (iCloud, full disk) and the index has emptied itself before: run it in the background, one command at a time, and check `git status` for `D ` plus `??` before any commit.
+
+- [x] **Dry run done (2026-11-20, `git merge-tree --write-tree main elite128`, no file touched): 8 real conflicts.** Source: only `src/elite/missions_flight_c.asm` (the branch's `HULL_128` hook against `main`'s image trim). Docs: `CHANGELOG.md`, `CLAUDE.md`, `README.md`, `TODO.md`, `magazines/README.md`. Modify/delete: `docs/_filled_ships.md` (moved out of `docs/` on `main`, edited here). Add/add: `tools/rvmstate.py`. These merged on their own: `src/elite/commonxx.asm` (still run `check_src.sh` afterwards: a clean text merge does not prove the 64K bytes), `docs/_memory_map.md`, `tools/build_dsk.py`, `tools/dskx.py`, and the moved `tools/tests/test_cloak_asp.py`.
+- [ ] **`main` moved the project around** (2026-11-16): originals in `disks/`, make results in `build/`, tests in `tools/tests/` with `run_all.py` and a README row per test, one disk guard (`dskx.is_original`), `make` targets, `LICENSE` and `NOTICE`, a shorter `CLAUDE.md` (24 KB to 18 KB). The 128K scripts (`build_dsk128.py`, `check_src128.sh`, `tools/test_*128.py`, `snap_docked128.py`) still use the old paths (`disk/`, `work/elite128.dsk`, originals in the project root) and need the new ones.
+- [x] **Worktree set up and baseline taken (2026-11-20).** The worktree had no `work/` and no base disk, so no 128K script could run: `work/elite128/` is now a real folder and `work/arcelite`, `work/xray`, `work/stock_mem_image.bin` and `Elite_UK_Firebird_cracked_trainer.dsk` are symlinks into the main checkout (all gitignored). Gotcha: `work/xray` is a symlink, so from `work/xray` a relative `../../tools/...` resolves to the main checkout; run the 128K tests with absolute script paths. Baseline before the merge: `check_src128.sh` passes (all four files assemble, fill module 1,434 bytes, title text module 117 bytes), `build_dsk128.py` builds `work/elite128.dsk`; boot test: see `CHANGELOG_128K.md` or rerun `test_boot128.py`.
+- [ ] **After the merge:** `bash tools/check_src.sh && bash tools/check_src.sh de && bash tools/check_src.sh fr` must pass (the 64K game stays byte-exact), then `bash tools/check_src128.sh`, `gen_equs.py`, `sync_equs.py`, `check_moved_labels.py`, the 128K disk, and the 128K tests; then `make test-quick`.
+- [ ] **One `CLAUDE.md`:** take `main`'s new one and add the 128K section from the branch's (build steps, relocation gotchas, test notes); the branch's still says the original disks are in the project root.
+- [ ] **One `rvmstate.py`:** `main`'s reads registers, RAM, ship slots and `--sna` but writes RAM configuration 0; the branch's converts to a v2 snapshot and takes the RAM configuration from the game variable `curCfg` (default `&9864`, needed for 128K states). Merge into one tool and update the "RVM state files" section of `docs/_build.md`.
+- [x] **Firebird's `CHEAT.BAS` taken off the 128K disk (2026-11-20).** `build_dsk128.py` started from the Firebird disk and kept its visible 565-byte `CHEAT.BAS`, whose pokes are 64K addresses; the build now frees its directory entry (the disk shows only `ELITE.BAS` and `README.TXT`; boot test unchanged). After the merge, use `dskx.remove_file` from `main` instead of the local loop.
+- [ ] **`docs/_filled_ships.md`:** the 128K work depends on it; keep it tracked on this branch and decide whether `main` should get it back.
+
+## 2. Features `main` got since the fork
+
+| Item (commit on `main`) | What it touches | 128K state |
+|---|---|---|
+| Trumbles aboard block the other added missions (`a046b81`) | docked stub gate in `src/elite/missions_docked.asm` | open; the old TODO item "port the Trumbles gate" is this. The branch includes the mission sources from `src/elite`, so the merge brings it: check the 576-byte overlay slots in bank 4 |
+| A sells the whole hold (`b3a2dad`) | `sell_all.asm` (48 bytes) plus `largeaxx.asm` hooks, Constrictor overlay and flight image trimmed | open; check the `LARGEAXX` copy in bank 4 still fits |
+| Ship packs, C64-like traffic (`-DTRAFFIC`), ship viewer (`a6c54e8`) | `missions_ships.asm` (10 Fessor hulls), `missions_flight_k.asm`, `mxShipTable`, flight images `MFLIGHT1-7`, spawn constants in `commonxx.asm` | open and the biggest item. Each new hull needs a fill record (`ship128.py`); ArcElite has most of them (Mamba, Anaconda, Boa, Adder, Gecko, Moray, Shuttle, Worm, Cobra Mk I), the Boulder is not in ArcElite's list and would probably fall back to the wireframe; `hullFindType` must find types outside the stock table (as it does for the Constrictor); images must still fit the tail copied at launch. The viewer reads the 64K blueprint layout, so it will not work on 128K as is |
+| Laser sights (`a6e7c2c`) | `lasersights.asm` (108 bytes) plus hooks, English only | open; needs resident or tail space (resident glue has 172 bytes) and a check that sights draw over filled hulls and flip correctly |
+| Kill count on the status page (`c8e5b7a`) | `killcount.asm` plus flight image cuts | the branch has its own (`7d517ec`, in the resident glue); keep one, and keep the other's text identical |
+| Esc at the second digit of a quantity (`ad72b30`) | small `-DENHANCED` slots in `commonxx`/`largeaxx` | check that the slots exist in the 128K copies; `config.inc` already defines `ENHANCED` |
+| Trainer: `TRAINER.BAS`, string fix (`ca65ba5`) | `src/cheats/` | the trainer pokes 64K addresses, so it cannot work on the relocated layout; either leave it off the 128K disk or add a 128K address table (check what `build_dsk128.py` puts on the disk) |
+| Parked-RAM rule and test (`c23761d`) | no code in the zero runs of the parked block `&0040-&1A3F` | check: re-verify with the relocated layout (the block and the flip stubs moved) |
+| `LICENSE`, `NOTICE` (`2c09c1b`, `70ad165`, `12a9f76`) | what is and isn't covered | open: the filled hulls and the Constrictor are derived from ArcElite's ship table (third party; the generated data stays in `work/`), so the 128K disk can't be distributed like `main`'s; add the generator and its output to `NOTICE` and decide what may be published |
+| German and French trees changed (`lasersights`, Esc digit, kill count hooks) | `src/elite_de`, `src/elite_fr` | nothing to do for 128K (English only); they should merge cleanly because the branch did not touch them |
+
+## 3. The branch's own open items
+
+- [ ] **Save key:** decide and check. The README and the plan say compatibility is not required; the branch's `CLAUDE.md` still has the 64K rule (104 bytes at `EquipShip` stay stock), and `check_src128.sh` is a smoke test with no byte comparison, so nothing checks the key today.
+- [ ] **Hulls:** confirm each hull's axis map (`AXIS_OVERRIDE` in `tools/ship128.py`: the maps are plausible, not proven); convexity flags are guesses; per-face depth sort for concave hulls; shading and pen choice (the darkest tone is the background pen).
+- [ ] **Clipping v2:** hulls with a vertex behind the viewer are skipped; replace with proper clipping (Sutherland-Hodgman) and LOD twins by distance (plan, phase 5).
+- [ ] **Page flip:** docking from flight is not done; a finer scanner rectangle (a ship-position bounding box would cut the scanner-busy cost, 21 ms with a ship in range against 3 ms without); `tools/cockpit_rects.py` was planned, not written; flight is about 4.5 frames per second with a planet filling the view (6 before the flip); direct drawing into the back screen (plan, phase 4) only if the copy dominates.
+- [ ] **Title:** the Cobra over the prompt text was addressed (the text is now printed after the ship, and the title is double buffered with a text cache); check once more after the merge.
+- [ ] **Free space:** resident glue 172 + 16 + 15 bytes, bank 7 has 1 byte; code can only live in bank 2, bank 7 or a far-call module like the fill (`docs/_memory_map.md`, "128K layout"); about 27.5 KB are free in banks 4-6, data only.
+- [ ] **464/664:** only a "128K CPC (6128) REQUIRED" message today (checked on cpcxray's 664 config); no fallback.
+- [ ] **Coverage:** `tools/exec_in_data.py` has not been run from the title screen and the chart views as start states (old TODO item).
+- [ ] **Verification pass** (plan, last step): 10-minute soak with key events, `test_flip128.py`, one hull per run, launch and mission tests, before/after screenshots; `test_order128.py` and `test_frametime.py` on the final layout.
+- [ ] **Played by hand:** the branch was tested with cpcxray scripts and soaks only; play it in an emulator that shows real timing (Virtual Retro) before calling it done.
+
+## 4. Later, from the plan (outside the repo)
+
+- [ ] **One codebase for all languages** (`lang/<xx>/strings.txt`, a build-time tokenizer, byte-exact gates for English, German and French; 128K per language from banks 4-6). Large; German and French are not ported to 128K.
+- [ ] **Particle explosions** (`-DPARTICLE_EXPLOSION`, from the 6502 versions) and **the 11 original BBC ships** as optional flags.
+- [ ] **Bigger view and newer cockpit UI** (320 px, 25 rows): deferred, because it needs 9-bit x everywhere and direct drawing.
