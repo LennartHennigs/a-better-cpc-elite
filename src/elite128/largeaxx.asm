@@ -1,4 +1,7 @@
     INCLUDE "config.inc"
+    IFDEF ENHANCED
+    DEFINE SELL_ALL                 ; the A key of the sell menu (sell_all.asm, resident in the stub like main's)
+    ENDIF
 SCREEN equ 0x4000            ; the screen page: &C000 in the 64K layout, &4000 in the 128K one (docs: src/elite128/README.md)
 tblLaserNumbers equ 0x8DA7   ; generated: label of commonxx
 ActionsAtEndOfMessage equ 0xC8A0   ; generated: label of common2x
@@ -451,7 +454,11 @@ reAskifNotAllSold:
     dec a
     jr z,LAB_ram_0a9f
 csGotoInventoryScreen:
+    IFDEF SELL_ALL
+    jp sellAllEntry                 ; A sells the whole hold first (sell_all.asm), every other key just leaves
+    ELSE
     jp Inventory
+    ENDIF
 ; ZX Spectrum: sell_commodity_row (&E935)
 sellQuantityofGood:
     call snapshot_trade_state
