@@ -2,7 +2,7 @@
 ; There is no free resident code space in this build (docs/_memory_map_128k.md), so the routine is an overlay: it is assembled by tools/build_dsk128.py at the address of
 ; bankInit (laserSightsHome, the boot code that is dead after Init_), carried in the data stage of COMMON2X (STAGE+0x1700), and copied over bankInit by the last step of
 ; bankInit itself (commonxx.asm). LaserSights in COMMON2X jumps to laserSightsHome.
-; Drawing: every sight is three lines given for one quadrant (x1, y1, x2, y2 as offsets from the view centre, the form drawLaserLine takes in H, L, D, E) and drawn four times,
+; Drawing: every sight is two or three lines given for one quadrant (x1, y1, x2, y2 as offsets from the view centre, the form drawLaserLine takes in H, L, D, E) and drawn four times,
 ; mirrored through the quadrant bits of C (0, 0x05 = y flipped, 0x0A = x flipped, 0x0F = both). No laser in the view (laserTypes = 0): no sight, like the ST.
 ; Externals, given with -D by the build: VIEWDIR (Viewdirection), LASERTYPES (laserTypes), DRAWLINE (drawLaserLine), CURCFG (curCfg), HOME (bankInit, where the overlay starts).
 ; The overlay starts with bankCopy (20 bytes, the title ship viewer's bank 6 reader: no room for it in the glue), the sights follow at HOME + 20 (laserSightsHome in commonxx.asm).
@@ -32,16 +32,23 @@ laserSightsNew:
     and a
     ret z
     dec a
-    ld c,a
-    add a,a
+    ld c,a                          ; sight index: 0 pulse, 1 beam, 2 military, 3 mining
+    and 0x01
+    add a,0x02
+    ld b,a                          ; lines to draw: 2 (pulse, military) or 3 (beam, mining); lsLine keeps B
+    ld a,c
+    srl a
+    add a,c
     add a,c
     add a,a
-    add a,a                         ; 12 bytes per sight (three lines of four bytes)
+    add a,a                         ; 4 * (2 * index + index / 2) = 0, 8, 20, 28: the two-line sights take 8 bytes, the three-line ones 12
     ld e,a
     ld hl,lsData                    ; D is still 0
     add hl,de
+lsLoop:
     call lsLine
-    call lsLine                     ; the third line follows by falling through
+    djnz lsLoop
+    ret
 ; One line at (HL): load H, L, D, E from its four bytes, draw it with C = 0x0F, 0x0A, 0x05, 0x00; HL = the next line on return
 lsLine:
     ld a,(hl)
@@ -70,11 +77,11 @@ lsMirror:
     jr nc,lsMirror
     pop hl
     ret
-; x1, y1, x2, y2 for one quadrant, three lines per sight
+; x1, y1, x2, y2 for one quadrant: two lines for the pulse and military sights, three for the beam and mining sights (the order and the 8 / 12 byte sizes are what the offset code above computes)
 lsData:
-    db 8,0,16,0,   0,8,0,16,   0,8,0,16        ; pulse: the stock cross (the third line repeats the second)
+    db 8,0,16,0,   0,8,0,16                    ; pulse: the stock cross
     db 0,7,15,7,   0,7,0,11,   15,7,15,4       ; beam: two bars with a tick at the centre and short ends
-    db 5,5,13,13,  7,5,15,13,  7,5,15,13       ; military: four double diagonals pointing at the centre (the third line repeats the second)
+    db 5,5,13,13,  7,5,15,13                   ; military: four double diagonals pointing at the centre
     db 0,7,15,7,   0,7,0,11,   0,0,0,0         ; mining: the same bars and ticks without the ends, plus a dot in the centre
 laserSightsEnd:
     ASSERT laserSightsEnd <= HOME + 0x80, "the laser sights must end before the title music block (musicState = bankInit + 0x80 in commonxx.asm)"

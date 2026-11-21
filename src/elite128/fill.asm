@@ -12,6 +12,7 @@
 ; Bank layout (page numbers are the high bytes of the addresses): code &4000-&4EFF, variables &4F00, XL &5000, XR &5100, column &5200, left mask &5300,
 ; right mask &5400, quarter squares &5500-&5800 (low bytes &5500, &5600; high bytes &5700, &5800), reciprocals &5900 (low) &5A00 (high), bitmap row table &5B00 (low)
 ; &5C00 (high), unrolled edge block &5D00-&5F00, fill records &6000 (tools/ship128.py: fill128.bin).
+    INCLUDE "config.inc"                ; FLIP_NOWAIT
     DEVICE AMSTRADCPC464
     IFNDEF VBUF
 VBUF        equ 0x9D9E          ; resident copy of the projected vertices (3 bytes each); the build sets the real address
@@ -786,6 +787,7 @@ dbfAll:
     ld (DB_CNT),a
     jr nz,dbfAll
 dbfFlip:
+    IFNDEF FLIP_NOWAIT
     ld bc,0xF500
 dbfw1:
     in a,(c)
@@ -795,7 +797,8 @@ dbfw2:
     in a,(c)
     rra
     jr nc,dbfw2                         ; and until the next one starts
-    di
+    ENDIF
+    di                                  ; with FLIP_NOWAIT (config.inc) the vsync wait above is gone: the CRTC takes the new start address at the next frame start by itself
     ld a,(DB_CURCFG)
     ld (DB_SHOWN),a
     and 2
