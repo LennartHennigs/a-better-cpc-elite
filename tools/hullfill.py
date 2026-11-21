@@ -338,6 +338,11 @@ def design(label, verts, faces, tris):
             if tr[3] == MAIN and tr[4] in seen:
                 tris[i] = (tr[0], tr[1], tr[2], MIX, tr[4])
             seen.add(tr[4])
+    elif label == "shipdatCoriolis":                  # the station is symmetric, the light is not: tones by face class (as ArcElite's), so the head-on view is four-fold symmetric
+        cls = {0: MAIN, 13: MAIN, 5: DIM, 6: DIM, 7: DIM, 8: DIM}        # the two end faces solid, the four sides dim, the eight corner triangles (1-4, 9-12) mixed
+        for i, t in enumerate(tris):
+            if t[3] != ACC:
+                tris[i] = (t[0], t[1], t[2], cls.get(t[4], MIX), t[4])
     elif label == "shipdatViper":                     # Viper: a canopy triangle on the ridge behind the nose
         ids = []
         for p in ((0, 4, 60), (-9, 13, 15), (9, 13, 15)):       # on the two front slopes (planes z = 72 -+ 2x - 3y), meeting on the ridge
