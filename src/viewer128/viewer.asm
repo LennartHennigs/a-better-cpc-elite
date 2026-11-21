@@ -77,6 +77,9 @@ V_KPREV   equ 0x9741            ; keys down at the last frame: bit 0 left, bit 1
 V_NAMEFL  equ 0x9742            ; frames still to draw the name and the hint into (one per page)
 V_HOLD    equ 0x9746            ; byte: counts the flips, the frame advances on every second one
 V_TXT     equ 0x9744            ; word: screen address of the next character
+V_TPEN    equ 0x9743            ; byte: pen mask of the text: 0xFF pen 3 (yellow), 0x0F pen 2 (sky blue)
+V_REC     equ 0x9748            ; word: the selected ship's record in infoTable
+V_VALP    equ 0x974A            ; word: the next number of that record
 tickLog   equ 0x9800            ; per frame: word ticks for the erase, word ticks for the draw
 
     ORG 0x8000
@@ -430,49 +433,146 @@ readKeys:
     ld a,d
     ret
 
-; the name of the ship and the hint, into the page that is the draw page now
+; the frame, the name, the facts and the hint, into the page that is the draw page now (the layout of the 64K viewer: yellow name and numbers, sky blue labels and frame)
 showName:
     dec a
     ld (V_NAMEFL),a
-    ld hl,0x4000 + 248          ; 8 lines of 48 bytes: text row 3, bytes 8..55
-    call clearText
-    ld hl,0x4000 + 22 * 80 + 8
-    call clearText
-    ld a,(V_SHIP)               ; HL = nameTable + 17 * ship
+    call drawFrame
+    ld hl,0x4000 + 2 * 80       ; text rows 2, 22 and 24 are ours
+    call clearRow
+    ld hl,0x4000 + 22 * 80
+    call clearRow
+    ld hl,0x4000 + 24 * 80
+    call clearRow
+    ld a,(V_SHIP)               ; HL = infoTable + INFOSZ (52) * ship
     ld l,a
     ld h,0
     ld e,l
     ld d,h
     add hl,hl
     add hl,hl
+    ld b,h
+    ld c,l                      ; BC = 4 * ship
+    add hl,hl
+    add hl,bc
+    add hl,de                   ; 13 * ship
     add hl,hl
     add hl,hl
+    ld de,infoTable
     add hl,de
-    ld de,nameTable
-    add hl,de
-    ld de,0x4000 + 248
+    ld (V_REC),hl
+    ld e,(hl)                   ; DE = screen address of the name line
+    inc hl
+    ld d,(hl)
+    ld hl,(V_REC)
+    ld bc,4
+    add hl,bc                   ; the name with its counter
+    ld a,0xFF
+    ld (V_TPEN),a
     call drawText
+    ld hl,(V_REC)               ; the facts line: labels in sky blue, numbers in yellow
+    inc hl
+    inc hl
+    ld e,(hl)
+    inc hl
+    ld d,(hl)
+    ld (V_TXT),de
+    ld hl,(V_REC)
+    ld bc,4 + NAMESZ
+    add hl,bc
+    ld (V_VALP),hl
+    ld hl,lblKills
+    call printLbl
+    call printVal
+    ld hl,lblBounty
+    call printLbl
+    call printVal
+    ld hl,lblSpeed
+    call printLbl
+    call printVal
+    ld hl,lblEnergy
+    call printLbl
+    call printVal
+    ld a,0x0F
+    ld (V_TPEN),a
     ld hl,hint
-    ld de,0x4000 + 22 * 80 + 8
+    ld de,0x4000 + 24 * 80 + 2 * 7
     jp drawText
 
-clearText:                      ; zero 8 lines (0x800 apart) of 48 bytes from HL
+printLbl:                       ; HL = label text, in sky blue after the last character
+    ld a,0x0F
+    ld (V_TPEN),a
+    jp dtChar
+printVal:                       ; the next number of the record, in yellow
+    ld a,0xFF
+    ld (V_TPEN),a
+    ld hl,(V_VALP)
+    call dtChar
+    inc hl                      ; past the NUL
+    ld (V_VALP),hl
+    ret
+
+clearRow:                       ; zero 8 lines (0x800 apart) of 80 bytes from HL
     ld b,8
-ctRow:
+crRow:
     push hl
     push bc
     ld d,h
     ld e,l
     inc de
     ld (hl),0
-    ld bc,47
+    ld bc,79
     ldir
     pop bc
     pop hl
     ld a,h
     add a,8
     ld h,a
-    djnz ctRow
+    djnz crRow
+    ret
+
+; the frame round the viewport (bytes 8..71, lines 40..167): sky blue (pen 2), a vertical in the right pixel of byte 7 and the left pixel of byte 72 and a horizontal above and below, at lines 37 and 170
+FRAMETOP  equ 0x4000 + 4 * 80 + 5 * 0x800 + 7      ; line 37, byte 7
+drawFrame:
+    ld hl,FRAMETOP
+    ld b,134                    ; lines 37..170
+dfV:
+    push bc
+    ld a,b
+    cp 134
+    jr z,dfH
+    cp 1
+    jr nz,dfN
+dfH:
+    push hl                     ; the first and the last line: 64 bytes of pen 2 in between (bytes 8..71)
+    inc hl
+    ld d,h
+    ld e,l
+    inc de
+    ld (hl),0x0F
+    ld bc,63
+    ldir
+    pop hl
+dfN:
+    ld (hl),0x01                ; the right pixel of byte 7
+    ld de,65
+    add hl,de
+    ld (hl),0x08                ; the left pixel of byte 72
+    or a
+    sbc hl,de
+    call nextLine
+    pop bc
+    djnz dfV
+    ret
+
+nextLine:                       ; HL = the same byte one screen line down (+0x800; after the eighth line back to the next character row: -0x4000 + 80)
+    ld a,h
+    add a,8
+    ld h,a
+    bit 7,h
+    ret z
+    ld de,80 - 0x4000
+    add hl,de
     ret
 
 drawText:                       ; HL = zero-terminated text, DE = screen address of the first character cell (mode 1, 2 bytes wide, pen 3)
@@ -509,6 +609,9 @@ dtRow:
     rlca
     rlca
     or l
+    ld l,a
+    ld a,(V_TPEN)
+    and l
     ld (de),a
     inc de
     ld a,c
@@ -519,6 +622,9 @@ dtRow:
     rlca
     rlca
     or l
+    ld l,a
+    ld a,(V_TPEN)
+    and l
     ld (de),a
     dec de
     ld a,d                      ; next line of the cell: +0x800
@@ -534,8 +640,12 @@ dtRow:
     jr dtChar
 
 hint:   db "<  >  SELECT SHIP   Q QUIT",0
+lblKills: db "KILLS ",0
+lblBounty: db " BOUNTY ",0
+lblSpeed: db " SPD ",0
+lblEnergy: db " EN ",0
 savedSP: dw 0
-    INCLUDE "../../work/viewer128/names.inc"
+NAMESZ    equ 28                ; tools/mk_viewer128.py: the name line of a record
 
 ; A = 1 when the RAM banking port answers: write 0xA5 at &4000, write 0x5A at &4000 with bank 4 mapped, read &4000 with the normal
 ; map again. A 464 or 664 ignores the port and reads 0x5A back.
@@ -733,10 +843,13 @@ isr:
     reti
 
 palette:
-    db 0x54, 0x44, 0x57, 0x4B   ; pens 0-3: black, blue, bright blue-cyan, bright white
+    db 0x54, 0x44, 0x57, 0x43   ; pens 0-3: black, blue, sky blue (the 64K viewer's lines), pastel yellow (its text); the ships use pens 1-3 as dark, middle and bright tone
     db 0x54                     ; border
 
     ASSERT $ <= SHIPBUF
+    ORG 0x8E00                  ; the ships' text records (29 x INFOSZ), behind the selected ship's buffer (SHIPBUF .. SHIPBUF + 160 + NFRAMES * FRAMESZ = &8D80)
+    INCLUDE "../../work/viewer128/info.inc"
+    ASSERT $ <= 0x9500
     ORG 0x9500
     INCBIN "../../work/viewer128/rowtab_flip.bin"
 

@@ -1927,7 +1927,7 @@ SUB_ram_4bd2:
     ret z
     ld a,0x02
     ld (tunnelFlag1),a
-    ld bc,buf_7406
+    ld bc,0x7406                    ; B = message token 0x74 (galactic hyperspace), C = column 6: a number, not the address of buf_7406 (the disassembly labelled it, so the relocation changed it to 0xF30A)
     jr doSpaceJumpafterCountDown
 tryHyperSpace:
     call SUB_ram_3dc6

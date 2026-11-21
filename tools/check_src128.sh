@@ -44,4 +44,6 @@ if [ -n "$VB" ] && sjasmplus -DVBUF=$((VB)) $DBDEF ${LST[@]+"${LST[@]}"} --raw="
 else echo "fill: assemble FAILED"; tail -3 "$OUT/fill.log"; rc=1; fi
 # cross-file equ lines (common2x.asm, largeaxx.asm) go stale when commonxx.asm changes size: everything assembles, the game crashes at runtime
 if python3 -I "$ROOT/tools/sync_equs.py" "$ROOT/src/elite128" --check >"$OUT/equs.log" 2>&1; then echo "equs: in sync"; else echo "equs: STALE or sync_equs.py failed (fix: python3 -I tools/sync_equs.py src/elite128 --write)"; tail -8 "$OUT/equs.log"; rc=1; fi
+# the trainer's poke addresses and the save key in src/cheats must match this source (tools/cheat128.py derives them; fix: tools/mk_editsave.py, mk_listsave.py, mk_convsave.py, the 830 line of CHEATB.ASC, then bash tools/build_cheat.sh)
+if python3 -I "$ROOT/tools/cheat128.py" --check >"$OUT/cheat.log" 2>&1; then echo "trainer and save tools: match the source"; else echo "trainer and save tools: STALE"; cat "$OUT/cheat.log"; rc=1; fi
 exit $rc

@@ -33,6 +33,7 @@ RUN"SHOWSHPS  every ship in 3D
 RUN"TRAINER   cheats
 RUN"EDITSAVE  edit a saved CMDR
 RUN"LISTSAVE  list saved CMDRs
+RUN"CONVSAVE  convert CMDR saves
 
 Elite by David Braben and Ian
 Bell. CPC version by Firebird.

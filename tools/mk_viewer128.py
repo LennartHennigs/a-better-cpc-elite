@@ -5,11 +5,15 @@ usage: python3 -I tools/mk_viewer128.py
 The hulls and their fill triangles come from tools/ship128.py (the stock blueprints through tools/hullfill.py, the Constrictor and the nine ship pack hulls from Fessor's data): the same
 triangles the game fills. Each ship turns about its y axis with a fixed tilt; per ship the file holds 160 bytes of triangles (v0 v1 v2 pattern) and NFRAMES frames of 104 bytes
 (x[32], y[32], draw order[36], bounding box), the logic of tools/proto_fill/gen.py. Writes into work/viewer128/: ships4.bin, ships5.bin, ships6.bin (RAM banks 4-6, SHIPS_PER_BANK ships each),
-names.inc, winding.inc, tables.bin, rowtab_flip.bin.
+info.inc, winding.inc, tables.bin, rowtab_flip.bin.
+info.inc holds one record per ship for the Z80 viewer: the screen address of its name line and of its facts line (centred), the name with the "(n/29)" counter and the four numbers of the
+blueprint header (kill score, bounty, speed, energy) as text, like the 64K viewer's (tools/mk_showship.py): "KILLS 1.23 BOUNTY 40.0 SPD 28 EN 20".
 """
 import importlib.util
 import math
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -30,29 +34,54 @@ def load(name, path):
 
 s128 = load("ship128", "tools/ship128.py")
 gen = s128.gen
-STOCK = [("COBRA MK III", "shipdatCobraMk3Pirate"), ("VIPER", "shipdatViper"), ("SIDEWINDER", "SHIPDATPIRATE1"), ("PYTHON", "shipdatPythonPirate"), ("ASP MK II", "shipdatAspMk2"),
-         ("FER-DE-LANCE", "shipdatFerDeLance"), ("KRAIT", "SHIPDATPIRATE2"), ("THARGOID", "shipdatThargoid"), ("THARGON", "shipdatThargon"), ("CORIOLIS", "shipdatCoriolis"),
-         ("ESCAPE POD", "shipdatCapsule"), ("CARGO CANISTER", "shipdatCargo"), ("MISSILE", "shipdatMissile"), ("ASTEROID", "shipdatAsteroid"), ("SPLINTER", "shipdatSplinter"),
-         ("ALLOY PLATE", "shipdatAlloy")]
+# (shown name, label of the blueprint whose geometry is drawn, label of the blueprint whose header gives the numbers): the order of the 64K viewer (tools/mk_showship.py). The traders and the
+# Rock Hermit share the geometry of the blueprint after them (tools/ship128.py STUB_OF) but have their own header.
+STOCK = [("CORIOLIS STATION", "shipdatCoriolis", "shipdatCoriolis"), ("MISSILE", "shipdatMissile", "shipdatMissile"), ("ESCAPE POD", "shipdatCapsule", "shipdatCapsule"),
+         ("ALLOY PLATE", "shipdatAlloy", "shipdatAlloy"), ("CARGO CANISTER", "shipdatCargo", "shipdatCargo"), ("SPLINTER", "shipdatSplinter", "shipdatSplinter"),
+         ("ASTEROID", "shipdatAsteroid", "shipdatAsteroid"), ("ROCK HERMIT", "shipdatAsteroid", "shipdatRockHermit"), ("VIPER", "shipdatViper", "shipdatViper"),
+         ("COBRA MK III", "shipdatCobraMk3Pirate", "SHIPDATSINGLETRADER"), ("PYTHON", "shipdatPythonPirate", "SHIPDATBIGTRADER"), ("PYTHON PIRATE", "shipdatPythonPirate", "shipdatPythonPirate"),
+         ("COBRA MK III PIRATE", "shipdatCobraMk3Pirate", "shipdatCobraMk3Pirate"), ("ASP MK II", "shipdatAspMk2", "shipdatAspMk2"), ("FER-DE-LANCE", "shipdatFerDeLance", "shipdatFerDeLance"),
+         ("THARGOID", "shipdatThargoid", "shipdatThargoid"), ("SIDEWINDER", "SHIPDATPIRATE1", "SHIPDATPIRATE1"), ("KRAIT", "SHIPDATPIRATE2", "SHIPDATPIRATE2"), ("THARGON", "shipdatThargon", "shipdatThargon")]
 PACK_NAMES = {"Gecko": "GECKO", "CobraMk1": "COBRA MK I", "Worm": "WORM", "Moray": "MORAY", "Mamba": "MAMBA", "Adder": "ADDER", "Boa": "BOA", "Anaconda": "ANACONDA", "Shuttle": "SHUTTLE"}
 
 
+def extra_headers():
+    """{label: 23-byte blueprint header} of the Constrictor and the ship pack hulls: src/elite/missions_hull.asm and missions_ships.asm assembled as tools/mk_showship.py does"""
+    with tempfile.TemporaryDirectory() as tmp:
+        wrap = Path(tmp) / "extra.asm"
+        hulls = "".join(f"    DEFINE HULL_{h.upper()}\n" for h in PACK_NAMES)
+        wrap.write_text(hulls + f'    ORG 0x8000\n    INCLUDE "{ROOT}/src/elite/missions_ships.asm"\n    INCLUDE "{ROOT}/src/elite/missions_hull.asm"\n')
+        raw, sym = Path(tmp) / "o.bin", Path(tmp) / "o.sym"
+        r = subprocess.run([str(Path.home() / ".local/bin/sjasmplus"), f"--raw={raw}", f"--sym={sym}", str(wrap)], capture_output=True, text=True)
+        if r.returncode:
+            sys.exit("extra hulls: assemble failed\n" + r.stdout[-400:])
+        img = raw.read_bytes()
+        out = {}
+        for line in sym.read_text().splitlines():
+            p = line.split()
+            if len(p) >= 3 and p[0].endswith(":") and p[0][:-1].startswith("shipdat"):
+                a = int(p[2], 16) - 0x8000
+                out[p[0][:-1]] = img[a:a + 23]
+    return out
+
+
 def ships():
-    """-> [(shown name, vertices, triangles (v0, v1, v2, pattern, group))]"""
+    """-> [(shown name, vertices, triangles (v0, v1, v2, pattern, group), blueprint header)]"""
     m, sym = s128.stock_image(), s128.symbols()
+    extra = extra_headers()
     out = []
-    for shown, label in STOCK:
+    for shown, label, hlabel in STOCK:
         if label == "shipdatAlloy":
             q, tris, _ = s128.alloy(m, sym[label])
             tris = [(a, b, c, {118: 2, 42: 3}[col], g) for a, b, c, col, g in tris]      # brightest first, as record() ranks them
         else:
             q, tris, _, _, _, _ = s128.stock_fit(m, sym[label], label)
-        out.append((shown, q, tris))
+        out.append((shown, q, tris, bytes(m[sym[hlabel]:sym[hlabel] + 23])))
     _, q, tris, _ = s128.constrictor()
-    out.append(("CONSTRICTOR", q, tris))
     _, packs, _ = s128.pack_hulls()
     for name, shown in PACK_NAMES.items():
-        out.append((shown, packs[name][0], packs[name][1]))
+        out.append((shown, packs[name][0], packs[name][1], extra[f"shipdat{name}"]))
+    out.append(("CONSTRICTOR", q, tris, extra["shipdatConstrictor"]))
     return out
 
 
@@ -129,15 +158,41 @@ def build_ship(name, pts, tris):
     return fac, bytes(frames), clockwise, len(pts), len(facets)
 
 
+NAME_ROW, FACT_ROW = 2, 22      # text rows of the name line and the facts line (the hint is on row 24, the frame round the viewport at lines 37 and 170)
+NAMESZ, VALSZ = 28, 20
+
+
+def write_info(infos):
+    """info.inc: NSHIPS, INFOSZ and infoTable, one record per ship: dw name address, dw facts address, the name line (NAMESZ bytes, NUL padded), four NUL-terminated numbers (VALSZ bytes)"""
+    n = len(infos)
+    recs = []
+    for i, (name, h) in enumerate(infos):
+        kills = (h[21] + 256 * h[22]) / 512
+        vals = [f"{kills:.2f}", f"{(h[8] + 256 * h[9]) / 10:.1f}", f"{h[6]}", f"{h[7]}"]
+        title = f"{name} ({i + 1}/{n})"
+        facts = f"KILLS {vals[0]} BOUNTY {vals[1]} SPD {vals[2]} EN {vals[3]}"
+        assert len(title) < NAMESZ and len(facts) <= 40, (title, facts)
+        cell = lambda row, length: 0x4000 + 80 * row + 2 * ((40 - length) // 2)
+        blob = cell(NAME_ROW, len(title)).to_bytes(2, "little") + cell(FACT_ROW, len(facts)).to_bytes(2, "little")
+        blob += title.encode().ljust(NAMESZ, b"\0") + b"".join(v.encode() + b"\0" for v in vals).ljust(VALSZ, b"\0")
+        assert len(blob) == 4 + NAMESZ + VALSZ
+        recs.append((blob, facts))
+    with open(OUT / "info.inc", "w") as fh:
+        fh.write(f"NSHIPS equ {n}\nINFOSZ equ {4 + NAMESZ + VALSZ}\ninfoTable:\n")
+        for (blob, facts), (name, _) in zip(recs, infos):
+            fh.write(f"    db {','.join(str(b) for b in blob)}    ; {name}: {facts}\n")
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     gen.OUT = OUT
-    blocks, names, clock = [], [], set()
-    for shown, pts, tris in ships():
+    blocks, infos, clock = [], [], set()
+    lst = ships()
+    for shown, pts, tris, head in lst:
         fac, frames, clockwise, nv, nt = build_ship(shown, pts, tris)
         clock.add(clockwise)
         blocks.append(fac.ljust(160, b"\0") + frames)
-        names.append(shown)
+        infos.append((shown, head))
         print(f"{shown:16s} {nv:2d} vertices {nt:2d} triangles")
     assert len(clock) == 1, "ships with different screen winding"
     gen.write_common(clock.pop())
@@ -146,10 +201,7 @@ def main():
     for bank in range(3):
         chunk = blocks[bank * SHIPS_PER_BANK:(bank + 1) * SHIPS_PER_BANK]
         (OUT / f"ships{4 + bank}.bin").write_bytes(b"".join(chunk).ljust(SHIPSZ * SHIPS_PER_BANK, b"\0")[:0x4000])
-    with open(OUT / "names.inc", "w") as fh:
-        fh.write(f"NSHIPS equ {n}\nnameTable:\n")
-        for nm in names:
-            fh.write(f'    db "{nm}",0\n    ds {17 - len(nm) - 1}\n')
+    write_info(infos)
     print(n, "ships,", NFRAMES, "frames,", SHIPSZ, "bytes each")
 
 

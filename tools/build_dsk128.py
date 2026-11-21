@@ -15,6 +15,7 @@ import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import cheat128  # noqa: E402
 import dskx  # noqa: E402
 from dskx import sector_offsets  # noqa: E402
 from hide_files import hide_entries  # noqa: E402
@@ -140,8 +141,6 @@ def main():
     if MISSIONS:
         txt = (ROOT / "src/disk/README.TXT").read_bytes().replace(b'RUN"ELITE\r\n', b'RUN"ELITE128\r\n').replace(b'RUN"ELITE\n', b'RUN"ELITE128\n')
         txt = txt.replace(b"Amstrad CPC 464 / 6128", b"Amstrad CPC 6128 only")
-        for gone in (b'RUN"TRAINER   cheats', b'RUN"EDITSAVE  edit a saved CMDR', b'RUN"LISTSAVE  list saved CMDRs'):      # tools of the 64K disk, not on this one
-            txt = txt.replace(gone + b"\r\n", b"").replace(gone + b"\n", b"")
         txt = txt.replace(b"every ship in 3D", b"the ships, filled")
         recs = -(-len(txt) // 128)
         dskx.add_payload(d, secs, first, "README", "TXT", txt.ljust(recs * 128, b"\x1a"), recs)
@@ -161,6 +160,15 @@ def main():
         print("ship viewer: SHOWSHPS.BAS, SHIPS4-6.BIN, VIEWER.BIN")
     else:
         print("SHOWSHPS: not added (bash tools/build_show128.sh makes SHOWSHPS.BAS)")
+    # The trainer and the save tools (src/cheats, tokenised by tools/build_cheat.sh): the same programs as on the 64K disk, with the 128K addresses and key (tools/cheat128.py derives both
+    # from src/elite128; a stale table or key stops the build). CHEATB.BIN is the trainer's second stage (hidden); CONVSAVE converts saves between the 64K builds and this one.
+    problems = cheat128.check()
+    if problems:
+        sys.exit("the trainer and save tools are stale: " + "; ".join(problems))
+    for n in ("TRAINER", "EDITSAVE", "LISTSAVE", "CONVSAVE"):
+        dskx.add_padded(d, secs, first, n, "BAS", (ROOT / "src/cheats" / f"{n}.BAS").read_bytes(), replace=True)
+    dskx.add_padded(d, secs, first, "CHEATB", "BIN", (ROOT / "src/cheats/CHEATB.BAS").read_bytes(), replace=True)
+    print("trainer and save tools: TRAINER.BAS, CHEATB.BIN, EDITSAVE.BAS, LISTSAVE.BAS, CONVSAVE.BAS")
     # The loader is ELITE128.BAS on this disk (RUN"ELITE128): Firebird's ELITE.BAS, same program, renamed with its AMSDOS header (name and checksum) so that nobody starts the 128K disk as the 64K game.
     if not dskx.rename_file(d, secs, first, "ELITE", "BAS", "ELITE128"):
         sys.exit("ELITE.BAS is not on the base disk")
@@ -173,6 +181,10 @@ def main():
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_bytes(d)
     print("wrote", OUT)
+    # A ready commander like the 64K expanded disk's: LEN from the German saves disk, encrypted with this build's key; visible (added after the hiding), like every save.
+    subprocess.run([sys.executable, "-I", str(ROOT / "tools/saveedit.py"), "edit", str(ROOT / "disks/Elite_DE_savegames.dsk") + ":LEN.BIN", "--key-disk", str(ROOT / "disks/Elite_DE_cracked.dsk"),
+                    "--to-key-disk", str(OUT), "-o", f"{OUT}:LEN.BIN"], check=True, capture_output=True)
+    print("LEN.BIN: a commander save for this build, visible")
 
 
 if __name__ == "__main__":

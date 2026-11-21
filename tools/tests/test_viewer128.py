@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """The ship viewer (RUN"SHOWSHPS) from the 128K disk: SHOWSHPS.BAS loads the ships into RAM banks 4-6 and the viewer (src/viewer128/viewer.asm) at &8000; filled ships turn on the screen,
-the cursor keys select, Q returns to BASIC. Screenshots output/viewer128_<n>.png: the first ship, two more after the right cursor key, and BASIC after Q.
+the cursor keys select, Q returns to BASIC. Screenshots output/viewer128_<n>.png: the first ship, two more after the right cursor key, the last ship after the left cursor key, and BASIC after Q.
 
 Needs disk/elite128.dsk (tools/build_dsk128.py). usage (from work/xray): <cpcxray python> -I ../../tools/tests/test_viewer128.py
 No pass/fail: look at the pictures.
@@ -37,6 +37,12 @@ async def main():
                 await c("key_release", {"key": "cursor_right"})
                 await c("run", {"max_us": 4_000_000, "timeout_s": 60})
                 await c("screen_image", {"path": f"output/viewer128_{n}.png"})
+            for n in (3, 4, 5):      # back round the list: ship 2, ship 1, then the last one (the Constrictor, 29/29)
+                await c("key_press", {"key": "cursor_left"})
+                await c("run", {"max_us": 600_000, "timeout_s": 60})
+                await c("key_release", {"key": "cursor_left"})
+                await c("run", {"max_us": 4_000_000, "timeout_s": 60})
+            await c("screen_image", {"path": "output/viewer128_last.png"})
             await c("key_press", {"key": "q"})
             await c("run", {"max_us": 400_000, "timeout_s": 60})
             await c("key_release", {"key": "q"})
