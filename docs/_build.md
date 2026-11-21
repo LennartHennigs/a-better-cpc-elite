@@ -79,7 +79,7 @@ All disk builders start from a **copy** of a base disk and refuse to modify the 
 | `... --missions` | same | `work/elite_missions.dsk` | adds the mission overlays and flight images (assembled per tag), `README.TXT` |
 | `... --de` | `Elite_DE_cracked.dsk` | `work/elite_de_rebuilt.dsk` | `--de --missions` is refused |
 | `... --fr` | `Elite (1985)(Firebird Software)(fr).dsk` | `work/elite_fr_rebuilt.dsk` | `--fr --missions` is refused; boot with `RUN"EL` |
-| `bash tools/build_cheat.sh` | Firebird disk, mission disk | `work/firebird_cheat.dsk`, `work/missions_cheat.dsk` | tokenises `src/cheats/*.ASC` with the CPC's own BASIC (headless cpcxray), adds `TRAINER` (and deletes Firebird's `CHEAT.BAS`), `EDITSAVE` (and `LISTSAVE` on `work/de_savegames.dsk`); `TRUMBLE.BAS` is built but not put on the disks |
+| `bash tools/build_cheat.sh` | Firebird disk, mission disk | `work/firebird_cheat.dsk`, `work/missions_cheat.dsk` | tokenises `src/cheats/*.ASC` with the CPC's own BASIC (headless cpcxray), adds `TRAINER` (and deletes Firebird's `CHEAT.BAS`), `EDITSAVE` (and `LISTSAVE` on `work/de_savegames.dsk`), `CONVSAVE` (Firebird and mission disks; the French disk has no room); the 128K disk gets the same programs from `tools/build_dsk128.py` (`docs/_cheats.md` "The 128K build"); `TRUMBLE.BAS` is built but not put on the disks |
 | `python3 -I tools/hide_files.py DISK` | | in place | refuses a disk in the project root or `disks/` |
 
 Every built disk shows only `.BAS` and `.TXT` files in `CAT`; all other files get the System attribute (`hide_entries` in `tools/hide_files.py`, called by `build_dsk.py`). iDSK adds files unhidden, so hide again after any

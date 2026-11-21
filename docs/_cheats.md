@@ -77,7 +77,7 @@ Tested in cpcxray on all three disks with every cheat on, cash 5000, mission 2, 
 up. The added-mission pokes (`+50`, `+51`) only mean something in the English `-DMISSIONS` build.
  Edit `src/cheats/TRAINER.ASC` (ASCII, CRLF lines and a Ctrl-Z at the end: LF-only lines tokenise to an empty program); `TRAINER.BAS` is the tokenised file with AMSDOS header, `TRAINER.BAS.txt` its listing.
 `bash tools/build_cheat.sh` rebuilds them and the disks (the CPC's own BASIC tokenises, via headless cpcxray), and also writes
-`work/missions_cheat.dsk` (the mission build plus `TRAINER.BAS`, `EDITSAVE.BAS` and `LISTSAVE.BAS`; `make expanded` copies it to `build/elite64.dsk`).
+`work/missions_cheat.dsk` (the mission build plus `TRAINER.BAS`, `EDITSAVE.BAS`, `LISTSAVE.BAS` and `CONVSAVE.BAS`; `make expanded` copies it to `build/elite64.dsk`; the French disk has no room for `CONVSAVE`).
 
 Prompts (Y or ENTER = yes, N = no):
 
@@ -117,6 +117,17 @@ BASIC pitfalls (Locomotive BASIC 1.1):
   (use `x-256*INT(x/256)`); `IF ... THEN a:NEXT` skips the `NEXT` when false.
 - Reading results in cpcxray: below `&4000` use `memory_view` with `view="ram:0"`, above use `view="cpu"` (`ram:N` is a 16 KB block with offset
   `address & &3FFF`). `run_until` an address below `&4000` can stop early inside the OS ROM; use a STOP in the BASIC program instead.
+
+## The 128K build: trainer, save tools and converter
+
+The 128K disk (`build/elite128.dsk`, `docs/_128k_version.md`) carries `TRAINER`, `EDITSAVE`, `LISTSAVE` and `CONVSAVE`, the same programs as `elite64.dsk` (one `CHEATB.BIN` with a fourth address row, one set of `.BAS` files), plus a ready commander `LEN.BIN`. The loader is the same BASIC sequence (`ELITE128.BAS` is Firebird's `ELITE.BAS` renamed), so the trainer loads `largeaxx`, `commonxx`, `common2x`, pokes and calls `&1C82` exactly as on the 64K disks.
+
+- **Addresses.** `tools/cheat128.py` finds the 13 poke targets of the UK row (label plus offset in `src/elite`, the same instruction in `src/elite128`, byte compared) and prints the DATA row (line 830 of `src/cheats/CHEATB.ASC`). The relocated code now sits in `COMMON2X` (the block of bank 7, loaded at `&C000`, copied by `bankInit`): `&CE04 &35CB &382D &CB0A &CB14 &8A7D &F953 &CAFC &F9AC &2F6A &207D &CD5F &39C7` in the order of the UK row (`&4F02 &35CB ...`). A load address is the run address, because bank 7 shows the image at `&C000`; the commander block (`&39C7`), `&35CB`, `&382D`, `&2F6A` and `&207D` did not move. The build is detected as before (byte pattern at the first and sixth address); the detection picks the right row on the UK, German and French disks, `elite64.dsk` and the 128K disk (checked on the disk images with the same PEEK test as the BASIC).
+- **Staleness.** The row and the key depend on the layout. `check_src128.sh` and `build_dsk128.py` run `tools/cheat128.py --check` and stop when the row in `CHEATB.ASC` or the 128K key in `EDITSAVE.ASC`, `LISTSAVE.ASC` or `CONVSAVE.ASC` no longer matches the source; fix: `python3 -I tools/cheat128.py --write` (line 830 of `CHEATB.ASC`), run `tools/mk_editsave.py`, `mk_listsave.py` and `mk_convsave.py`, then `bash tools/build_cheat.sh` (it also rebuilds the 64K tool disks).
+- **Save key.** The 128K build has its own key (decided 2026-11-21): the 104 bytes of code at `EquipShip` in its `LARGEAXX` (offset `&2BE` as in the UK build, but the calls into the relocated code differ, so the bytes do). A save of a 64K disk does not load in the 128K game and the other way round; `tools/elitekey.py` finds the key on `build/elite128.dsk` with the same signature scan.
+- **`CONVSAVE.BAS`** (`tools/mk_convsave.py`, 2.3 KB): `RUN"CONVSAVE`, put the disk with the save in drive A, type the name; it tries the four keys until both checksums verify, shows the build and the name, asks for the target (1 UK, 2 French, 3 German, 4 128K), a new file name (Enter = same) and the disk to write to (the same or another one), encrypts again (the data and both checksums stay as they are) and `SAVE`s. Both directions are tested byte for byte against the host in `tools/tests/test_tools128.py`; `tools/saveedit.py edit SAVE --to-key-disk DISK.dsk -o OUT` does the same on the host. `EDITSAVE` and `LISTSAVE` know the fourth key too (`LISTSAVE` prints `128K`).
+- **Found on the way:** the 128K source had `ld bc,buf_7406` in the galactic hyperdrive start; the disassembly had labelled the constant `0x7406` (B = message token 0x74, C = column 6) as an address, so the relocation turned it into `0xF30A` and the message of the galactic jump was wrong. Now `ld bc,0x7406` in `src/elite128/common2x.asm` (the same bytes as the stock game; `src/elite` is untouched). A scan of the other `ld bc/de/a,LABEL` immediates whose label moved found only real pointers.
+- **Tested** (`tools/tests/test_tools128.py`, cpcxray): with every cheat on and "unlimited hold" off, at `CALL &1C82` the nine poke groups, `&998`, the commander block (cash, jumps, kills, cloak bit) and the gate byte hold the poked values, and after the title is up the bytes in bank 7 and main RAM are still poked. Not tested: the cheats' effects in play (shields, hyperjump, one-hit kills), as on the 64K disks.
 
 ## Save editor and viewer
 

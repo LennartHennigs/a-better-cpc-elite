@@ -26,8 +26,9 @@ Helpers for building, checking and analysing the project. Each script has a head
 ## Saves and text
 | File | Does |
 |---|---|
-| `saveedit.py`, `savedec.py`, `elitekey.py`, `savekeys.py` | edit and decode commander saves, read the save key from a disk |
-| `mk_editsave.py`, `mk_listsave.py`, `mk_showship.py` | generate `EDITSAVE.ASC`, `LISTSAVE.ASC`, `SHOWSHPS.ASC` and the viewer data |
+| `saveedit.py`, `savedec.py`, `elitekey.py`, `savekeys.py` | edit and decode commander saves, read the save key from a disk (`saveedit.py --to-key-disk` converts a save between UK, French, German and 128K disks) |
+| `cheat128.py` | the 128K build's trainer poke addresses and save key, derived from `src/elite128`; `--check` fails when `src/cheats` is stale (run by `check_src128.sh` and `build_dsk128.py`) |
+| `mk_editsave.py`, `mk_listsave.py`, `mk_convsave.py`, `mk_showship.py` | generate `EDITSAVE.ASC`, `LISTSAVE.ASC`, `CONVSAVE.ASC` (UK, French, German and 128K keys), `SHOWSHPS.ASC` and the viewer data |
 | `elitetext.py`, `textenc.py`, `textcomp.py`, `sprite_enc.py` | Elite text tokens (decode, encode, measure) and sprite art to bytes |
 
 ## Source trees (disassembly)

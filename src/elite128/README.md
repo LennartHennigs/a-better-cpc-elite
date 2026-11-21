@@ -3,7 +3,7 @@
 Licence: this tree follows NOTICE item 1 (study, and building for your own use from your own copy; no licence beyond that). The ArcElite-derived hull data is generated into `work/` and is not in the repository: see `NOTICE_128K.md`.
 
 Work in progress; plan: filled ships (ArcElite shapes via `tools/proto_fill/gen.py`), screens in banks 1/3 with a page flip and partial cockpit sync,
-fill module and mission code in RAM banks 4-7. 128K only. This tree is allowed to diverge from the stock bytes and from the save key; `src/elite` stays byte-exact.
+fill module and mission code in RAM banks 4-7. 128K only. This tree is allowed to diverge from the stock bytes and from the save key (it has its own; `RUN"CONVSAVE` converts saves to and from the 64K builds, `docs/_cheats.md` "The 128K build"); `src/elite` stays byte-exact.
 
 Started as a verbatim copy of `src/elite` (see its README for the file list). Check with `bash tools/check_src128.sh` (smoke test: every file assembles).
 Phase 0 results so far: `tools/gap_map.py` (stock screen page holds 3,163 bytes of COMMON2X content; the block that moves to bank 7 is 15,870 bytes, 514 spare),
