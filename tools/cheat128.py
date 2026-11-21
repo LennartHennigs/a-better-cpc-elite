@@ -26,9 +26,10 @@ SAVE_TOOLS = [ROOT / "src/cheats" / f"{n}.ASC" for n in ("EDITSAVE", "LISTSAVE",
 ROW_LINE = 830
 
 
-def assemble(src, tmp, name):
+def assemble(src, tmp, name, flags=()):
+    """sjasmplus SRC (extra flags such as -DFL_1) into TMP -> (labels, raw image)"""
     out, sym = Path(tmp) / f"{name}.bin", Path(tmp) / f"{name}.sym"
-    r = subprocess.run([str(SJASM), "--nologo", f"--raw={out}", f"--sym={sym}", str(src)], capture_output=True, text=True)
+    r = subprocess.run([str(SJASM), "--nologo", *flags, f"--raw={out}", f"--sym={sym}", str(src)], capture_output=True, text=True)
     if r.returncode:
         sys.exit(f"{src}: assemble failed\n{r.stdout[-400:]}")
     labels = {}

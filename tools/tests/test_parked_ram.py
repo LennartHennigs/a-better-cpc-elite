@@ -8,35 +8,16 @@ usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../too
   BUILD=128 for the 128K build (absolute script path in the worktree; needs output/flight128.sna and disk/elite128.dsk).
 """
 import asyncio
-import os
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from parked_common import DISK_BASE, DOCK_CONT, HANDLE, SNA_FLIGHT, marker, zero_runs  # noqa: E402
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
 MARK = int(sys.argv[1], 16) if len(sys.argv) > 1 else 0xAA
-B128 = os.environ.get("BUILD") == "128"      # BUILD=128: the 128K build (disk/elite128.dsk, output/flight128.sna from test_flight128.py 3); the addresses are the labels handleEntitys and DockingSequence + 120 (the `xor a` after the loop) in src/elite128
-HANDLE = 0xCF68 if B128 else 0x5066             # handleEntitys
-DOCK_CONT = 0xF1A1 if B128 else 0x728D + 16     # xor a after the djnz of todoDockingProcedure
-SNA_FLIGHT = "output/flight128.sna" if B128 else "output/firebird_in_flight.sna"
-DISK_BASE = "disk/elite128.dsk" if B128 else "disk/Elite_UK_Firebird_cracked_trainer.dsk"
 OUT = Path("output")
-
-
-def low_runs(ram, base=0x40, end=0x1A40):
-    runs, i = [], base
-    while i < end:
-        if ram[i] == 0:
-            j = i
-            while j < end and ram[j] == 0:
-                j += 1
-            if j - i >= 16:
-                runs.append((i, j - i))
-            i = j
-        else:
-            i += 1
-    return runs
 
 
 async def main():
@@ -59,7 +40,6 @@ async def main():
                 await c("run", {"max_us": 300000, "timeout_s": 60})
 
             async def report(tag, ram, base):
-                chg = [a for a, l in runs for a in range(a, a + l) if ram[base + a - 0x40 if False else (base + a - 0x40)] != MARK] if False else None
                 bad = []
                 for a, l in runs:
                     for k in range(a, a + l):
@@ -79,10 +59,10 @@ async def main():
             await c("disk_insert", {"drive": "A", "path": DISK_BASE})
             await c("sna_load", {"path": SNA_FLIGHT})
             ram = await snap("_parked0")
-            runs = low_runs(ram)
+            runs = zero_runs(ram)
             print("zero runs >= 16 bytes:", len(runs), "total", sum(l for _, l in runs), flush=True)
             for a, l in runs:
-                await c("memory_write", {"address": a, "data": " ".join(f"{MARK:02X}" for _ in range(l))})
+                await c("memory_write", {"address": a, "data": marker(MARK, l)})
 
             # phase 1: flight with keys
             await c("run", {"max_us": 3000000, "timeout_s": 120})

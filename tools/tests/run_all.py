@@ -24,6 +24,7 @@ XRAY = ROOT / "work" / "xray"
 CPCX = Path.home() / ".local/share/uv/tools/cpcxray/bin/python"
 HOST = [("check_src en", ["bash", "tools/check_src.sh"]), ("check_src de", ["bash", "tools/check_src.sh", "de"]), ("check_src fr", ["bash", "tools/check_src.sh", "fr"]),
         ("test_saves", [sys.executable, "-I", "tools/tests/test_saves.py"]), ("test_disks", [sys.executable, "-I", "tools/tests/test_disks.py"])]
+NEEDS_FLIGHT = {"ship_packs128"}      # the 128K tests that start from output/flight128.sna (the others from output/docked128.sna)
 EMU128 = ["packs128", "ship_packs128", "sellall128", "escdigit128", "filemenu128", "music128", "tools128"]
 EMU = ["mission_hook", "mission_flight", "plans", "stolen_ship", "rocks", "trumbles", "trumble_sprites", "launch", "ship_packs", "sellall", "title_ships"]
 TIMEOUT = 420
@@ -59,13 +60,14 @@ def emu128(only):
             return [False]
     shutil.copy(ROOT / "build/elite128.dsk", XRAY / "disk" / "elite128.dsk")
     # absolute script paths: in a worktree work/xray is a symlink to the main checkout, so a relative ../../tools would resolve there
-    if subprocess.run([str(CPCX), "-I", str(T / "snap_docked128.py")], cwd=XRAY, env=env, capture_output=True, timeout=TIMEOUT).returncode:
-        print("FAIL snap_docked128 (output/docked128.sna)")
-        return [False]
-    if subprocess.run([str(CPCX), "-I", str(T / "test_flight128.py"), "3"], cwd=XRAY, env=env, capture_output=True, timeout=TIMEOUT).returncode:      # output/flight128.sna, for ship_packs128 (a stale one runs the old code)
-        print("FAIL test_flight128 (output/flight128.sna)")
-        return [False]
-    return [run(f"test_{n}", [str(CPCX), "-I", str(T / f"test_{n}.py")], XRAY, env, need_ok_text=True) for n in EMU128 if not only or n in only]
+    wanted = [n for n in EMU128 if not only or n in only]
+    gens = [("snap_docked128.py", [], "output/docked128.sna", any(n not in NEEDS_FLIGHT for n in wanted)),      # snapshots the tests start from: a stale one silently runs the OLD code
+            ("test_flight128.py", ["3"], "output/flight128.sna", any(n in NEEDS_FLIGHT for n in wanted))]
+    for script, args, out, needed in gens:
+        if needed and subprocess.run([str(CPCX), "-I", str(T / script), *args], cwd=XRAY, env=env, capture_output=True, timeout=TIMEOUT).returncode:
+            print(f"FAIL {script} ({out})")
+            return [False]
+    return [run(f"test_{n}", [str(CPCX), "-I", str(T / f"test_{n}.py")], XRAY, env, need_ok_text=True) for n in wanted]
 
 
 def main():

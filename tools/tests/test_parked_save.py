@@ -11,41 +11,22 @@ usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../too
   BUILD=128 for the 128K build (absolute script path in the worktree; needs output/flight128.sna and disk/elite128.dsk; LARGEAXX is at the same addresses there).
 """
 import asyncio
-import os
 import shutil
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from parked_common import DISK_BASE, DOCK_CONT, HANDLE, SNA_FLIGHT, marker, zero_runs  # noqa: E402
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
 MARK = int(sys.argv[1], 16) if len(sys.argv) > 1 else 0xAA
-B128 = os.environ.get("BUILD") == "128"      # BUILD=128: the 128K build (disk/elite128.dsk, output/flight128.sna from test_flight128.py 3); the addresses are the labels handleEntitys and DockingSequence + 120 (the `xor a` after the loop) in src/elite128
-HANDLE = 0xCF68 if B128 else 0x5066             # handleEntitys
-DOCK_CONT = 0xF1A1 if B128 else 0x728D + 16     # xor a after the djnz of todoDockingProcedure
-SNA_FLIGHT = "output/flight128.sna" if B128 else "output/firebird_in_flight.sna"
-DISK_BASE = "disk/elite128.dsk" if B128 else "disk/Elite_UK_Firebird_cracked_trainer.dsk"
 SAVE_CALL, SAVE_RET = 0x0E63, 0x0E6C   # `call SaveSavegame` in saveGame; where it returns (6 inline parameter bytes)
 LOAD_CALL, LOAD_RET = 0x0DA8, 0x0DAF   # `call loadFile` in loadGame; 4 inline parameter bytes
 MENU = 0x0D40               # Filemenuloop: where the DISK ERROR path ends
 NAME = 0x0E6E               # SaveGameName, 8 characters
 OUT = Path("output")
 DISK = Path("disk/parked_probe.dsk")
-
-
-def low_runs(ram, base=0x40, end=0x1A40):
-    runs, i = [], base
-    while i < end:
-        if ram[i] == 0:
-            j = i
-            while j < end and ram[j] == 0:
-                j += 1
-            if j - i >= 16:
-                runs.append((i, j - i))
-            i = j
-        else:
-            i += 1
-    return runs
 
 
 async def main():
@@ -91,10 +72,10 @@ async def main():
 
             await c("disk_insert", {"drive": "A", "path": str(DISK), "writable": True})
             await c("sna_load", {"path": SNA_FLIGHT})
-            runs = low_runs(await snap("_psave0"))
+            runs = zero_runs(await snap("_psave0"))
             print("zero runs >= 16 bytes:", len(runs), "total", sum(l for _, l in runs), flush=True)
             for a, l in runs:
-                await c("memory_write", {"address": a, "data": " ".join(f"{MARK:02X}" for _ in range(l))})
+                await c("memory_write", {"address": a, "data": marker(MARK, l)})
             await c("run", {"max_us": 5000000, "timeout_s": 120})
             await c("breakpoint_add", {"address": HANDLE, "kind": "pc"})
             await c("run", {"max_us": 10000000, "timeout_s": 120})

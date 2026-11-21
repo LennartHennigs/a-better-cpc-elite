@@ -11,12 +11,15 @@ usage (from work/xray, absolute script path):  PATH=$HOME/.local/bin:$PATH <cpcx
 Prints, per run, how many bytes any step touched and the longest untouched span: a probe, no pass/fail (the rule it backs is "no code in the zero runs of the parked block").
 """
 import asyncio
+import itertools
 import json
 import os
 import shutil
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from parked_common import marker, zero_runs  # noqa: E402
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
@@ -24,21 +27,6 @@ MARK = int(sys.argv[1], 16) if len(sys.argv) > 1 else 0xAA
 LO, HI = 0xA600, 0xC000
 OUT = Path("output")
 DISK = "disk/parked_probe128.dsk"
-
-
-def zero_runs(ram, lo=LO, hi=HI, minimum=16):
-    runs, i = [], lo
-    while i < hi:
-        if ram[i] == 0:
-            j = i
-            while j < hi and ram[j] == 0:
-                j += 1
-            if j - i >= minimum:
-                runs.append((i, j - i))
-            i = j
-        else:
-            i += 1
-    return runs
 
 
 async def main():
@@ -70,6 +58,16 @@ async def main():
                 await c("run", {"max_us": 6_000_000, "timeout_s": 120})
                 await c("run", {"max_us": 15_000_000, "timeout_s": 120})
 
+            await c("disk_insert", {"drive": "A", "path": DISK, "writable": True})
+            await c("sna_load", {"path": "output/docked128.sna"})
+            await c("run", {"max_us": 500_000, "timeout_s": 60})
+            runs = sorted(zero_runs(await snap("_psave128_0"), LO, HI), key=lambda x: -x[1])      # largest first
+            print("zero runs >= 16 bytes in &A600-&BFFF:", len(runs), "total", sum(l for _, l in runs), flush=True)
+            lo_sel, hi_sel = (int(v) for v in os.environ.get("RUNSEL", f"0:{len(runs)}").split(":"))
+            marked = runs[lo_sel:hi_sel]
+            print("marked runs:", [f"{a:04X}+{l}" for a, l in marked], flush=True)
+            for a, l in marked:
+                await c("memory_write", {"address": a, "data": marker(MARK, l)})
             dirty = set()
 
             def collect(tag, ram):
@@ -77,16 +75,6 @@ async def main():
                 dirty.update(bad)
                 print(f"{tag}: {len(bad)} of {sum(l for _, l in marked)} marker bytes changed", flush=True)
 
-            await c("disk_insert", {"drive": "A", "path": DISK, "writable": True})
-            await c("sna_load", {"path": "output/docked128.sna"})
-            await c("run", {"max_us": 500_000, "timeout_s": 60})
-            runs = zero_runs(await snap("_psave128_0"))
-            print("zero runs >= 16 bytes in &A600-&BFFF:", len(runs), "total", sum(l for _, l in runs), flush=True)
-            lo_sel, hi_sel = (int(v) for v in os.environ.get("RUNSEL", f"0:{len(runs)}").split(":"))
-            marked = sorted(runs, key=lambda x: -x[1])[lo_sel:hi_sel]
-            print("marked runs:", [f"{a:04X}+{l}" for a, l in marked], flush=True)
-            for a, l in marked:
-                await c("memory_write", {"address": a, "data": " ".join(f"{MARK:02X}" for _ in range(l))})
             sp = (await c("registers_get"))["sp"] - 2
             await c("memory_write", {"address": sp, "data": "00 9F"})
             await c("registers_set", {"values": {"sp": sp, "pc": 0x0D28}})      # FileMenu
@@ -108,15 +96,8 @@ async def main():
 
             print("\nper run (address, length): bytes touched by any step, longest untouched span", flush=True)
             for a, l in marked:
-                best = cur = 0
-                start = a
-                for k in range(a, a + l):
-                    if k in dirty:
-                        cur = 0
-                    else:
-                        cur += 1
-                        if cur > best:
-                            best, start = cur, k - cur + 1
+                spans = [(len(g := list(grp)), g[0]) for clean, grp in itertools.groupby(range(a, a + l), key=lambda k: k not in dirty) if clean]
+                best, start = max(spans, default=(0, a))
                 print(f"  {a:04X} {l:4d}  touched {sum(1 for k in range(a, a + l) if k in dirty):4d}  longest clean {best:4d} at {start:04X}", flush=True)
 
 

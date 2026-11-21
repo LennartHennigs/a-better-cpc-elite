@@ -4,11 +4,12 @@ stock types about half the time, the stock hull the rest, and never touch types 
 
 usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/tests/test_ship_packs.py [PACK ...]      (default: packs 1 to 7)
 Needs output/firebird_in_flight.sna and any disk in drive A (the tail is written straight into RAM, no disk load). Method as in tools/tests/test_flight_hull.py.
+BUILD=128 (or tools/tests/test_ship_packs128.py): the 128K build: src/elite128, output/flight128.sna (test_flight128.py 3, regenerate it after every build) and disk/elite128.dsk; the pack's flight
+image (mxFlightBase..mxFlightEnd of an assembly with -DFL_<pack>) is written into the tail at &9D9E at a stop in handleEntitys. Prints ALL OK at the end.
 """
 import asyncio
 import json
-import re
-import subprocess
+import os
 import sys
 import tempfile
 from pathlib import Path
@@ -17,7 +18,12 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
 ROOT = Path(__file__).resolve().parent.parent.parent
-TRAP = 0x9F00 + 0x00
+sys.path.insert(0, str(ROOT / "tools"))
+import cheat128  # noqa: E402
+
+B128 = os.environ.get("BUILD") == "128"
+SNA = "output/flight128.sna" if B128 else "output/firebird_in_flight.sna"
+TRAP = 0x9F00
 N = 60
 # pack: {stock type: (stock label, extra label)}
 PACKS = {
@@ -33,12 +39,15 @@ UNTOUCHED = {8: "shipdatViper", 15: "shipdatThargoid", 18: "shipdatThargon"}
 
 
 def build(pack):
+    """-> ([(address, bytes) to write into the flight snapshot], {label: address}) with pack N's flight image: the changed bytes of the 64K build against the stock file, or the 128K image slice"""
     with tempfile.TemporaryDirectory() as d:
-        out, sym = Path(d) / "c.bin", Path(d) / "c.sym"
-        subprocess.run([str(Path.home() / ".local/bin/sjasmplus"), "-DMISSIONS", f"-DFL_{pack}", f"--raw={out}", f"--sym={sym}", str(ROOT / "src/elite/commonxx.asm")],
-                       check=True, capture_output=True)
-        syms = {m.group(1): int(m.group(2), 16) for m in re.finditer(r"^(\w+):\s+EQU\s+0x([0-9A-Fa-f]+)", sym.read_text(), re.M)}
-        return out.read_bytes(), syms
+        if B128:
+            syms, raw = cheat128.assemble(ROOT / "src/elite128/commonxx.asm", d, "c", [f"-DFL_{pack}"])
+            lo, hi = syms["mxFlightBase"], syms["mxFlightEnd"]
+            assert hi - lo <= 0x260, (pack, hi - lo)
+            return [(lo, raw[lo - 0x1A40:hi - 0x1A40])], syms
+        syms, raw = cheat128.assemble(ROOT / "src/elite/commonxx.asm", d, "c", ["-DMISSIONS", f"-DFL_{pack}"])
+        return [(lo, raw[lo - 0x1A40:hi - 0x1A40]) for lo, hi in patch_ranges(raw)], syms
 
 
 def patch_ranges(new, gap=8):
@@ -76,15 +85,17 @@ async def main():
                 return await c("run", {"max_us": 2_000_000, "timeout_s": 60})
 
             for pack in packs:
-                new, syms = build(pack)
-                await c("sna_load", {"path": "output/firebird_in_flight.sna"})
-                for lo, hi in patch_ranges(new):
-                    await c("memory_write", {"address": lo, "data": new[lo - 0x1A40:hi - 0x1A40].hex()})
+                writes, syms = build(pack)
+                if B128:
+                    await c("disk_insert", {"drive": "A", "path": os.environ.get("DISK128", "disk/elite128.dsk")})
+                await c("sna_load", {"path": SNA})
                 await c("run", {"max_us": 4_000_000, "timeout_s": 60})
-                bp = (await c("breakpoint_add", {"address": 0x5066, "kind": "pc"}))["id"]
+                bp = (await c("breakpoint_add", {"address": syms["handleEntitys"], "kind": "pc"}))["id"]
                 rep = await c("run", {"max_us": 10_000_000, "timeout_s": 60})
                 assert rep.get("reason") == "breakpoint", rep
                 await c("breakpoint_remove", {"breakpoint_id": bp})
+                for addr, data in writes:      # the pack's code in the flight tail (stopped in handleEntitys: bank 7 is visible for getRandomNumber, the tail is bank 2)
+                    await c("memory_write", {"address": addr, "data": data.hex()})
                 saved = await c("registers_get")
                 await c("breakpoint_add", {"address": TRAP, "kind": "pc"})
                 hook = syms["mxShipTable"]
