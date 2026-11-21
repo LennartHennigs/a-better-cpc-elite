@@ -53,3 +53,29 @@ Hull dedup behind `-DENHANCED`/`-DMISSIONS` (default keeps the original bytes): 
 5. Docs: `_ship_spawning.md` (64K section, fix line 29), `_ship_packs.md` (table, hull count, limits), `_missions_built.md` (image sizes), `_my_changes.md` (new switch and slot), `README.md` (counts only, no mission names), `src/disk/README.TXT` (one short line), `CHANGELOG.md`, `NOTICE`/credits unchanged. Note the port in `TODO_128K.md` ("the same switch in the 64K build").
 
 **Not in this item:** asteroids and traders, packs staying together (`spawnEscortPack`): they wait for the 128K work (`TODO_128K.md`).
+
+## Remaining dat labels
+
+The remaining 7 `dat_` labels in `src/elite/` (counted with `grep -c "^dat_"`), checked 2026-11-09 (23 before this pass). Done: 16 address/message-id immediates
+  (`&2000 &4000 &3FC0 &7F00 &7F01 &7F03 &7F10 &7F89 &640A &7B05 &6170 &7EFD &80FF &C03F &C040 &CE00`) are numeric operands in
+  `src/elite`, `elite_de` and `elite_fr`; `dat_6161`/`dat_6163` are `smcIndicatorPatch1/2`; 2026-11-09: `&2710 &5B4E &5C4C &58C1 &FFFF` also numeric, and renamed
+  `saveChk0..3` (`&0F5B-&0F5E`), `edgeVecX/Y/Z` (`&5921-&5925`), `catalogBuf`, `tempString1End`, `casOutAddr`, `keybFlags0` (`&8E23`, a flag byte decoded as `adc a,h`).
+  `dat_2F36` is now `fuelPriceByte`, `dat_38DE` is byte 2 of the credits high word. Left: `dat_0F01` (code label whose address is loaded), `dat_38DE`, `dat_38E1`
+  (cargo/market bytes, see `docs/_savegame.md`), `dat_3D2D` (planet-type byte after the target seed), `dat_8427` (return-address stub), `dat_90A2` (inside ship data).
+  - **Variables with an unknown role**: `&1B2A-&1B73` (entity slot workspace), `&38DE`/`&38E1` (block pointers; `&38E1` is the
+    market byte, see `docs/_missions.md` section 3), `&3B3F-&3B69` (galactic chart buffers), `&3D2D` (7 bytes after the target
+    seed), `&5921-&5925` (three words in the ship-edge drawing code), `&1BE3`, `&2F36`, `&864B`, `&C083`, `&FFFF`, and `largeaxx`
+    `&0F01-&0F5E` (save menu; `&0F01` is a code label whose address is loaded).
+  - **Labels inside or between instructions** (dead code or operand bytes, name or fold into the neighbour): `&2710`, `&3A6C`,
+    `&5860`, `&58C1`, `&5B4E`, `&5C4C`, `&7406`, `&8427`, `&8E23`, `&90A2` (label inside ship data; the end sequence clears 5 bytes from it).
+  Method that worked: align the declaration order of Fessor's variable blocks (`extended/source/EliteMasterSource.asm`) with
+  the stock block by count of bytes, check one anchor (`work/fessor_to_stock.sym`) and the initial data value, then read the uses.
+
+## Particle explosions
+
+Particle explosions (`-DPARTICLE_EXPLOSION`, compile switch, off = today's behaviour; plan only) and **the 11 original BBC ships** as optional flags. Today (`todoDrawExplosions`, `common2x.asm`): a sound and 15 expanding rings (`drawradius` + 2 per ring, `SUB_ram_e74c`) at the screen position cached for the exploding slot (`cache_explosion_screen_pos`, flag bits 4 and 5), `sfxFlags2Bitmap` bit 6 for the sound. The C64 and BBC (`DOEXP`/`PTCLS` in `work/ext_c64`, `ext_bbc`): at each of the first n projected vertices (n from the blueprint's explosion-count byte) a cloud of 1 to 8 particles, offsets = random x cloud size, size = 8 x counter / distance, the counter starting at 18 and rising by 4 per frame; the random numbers come from four seed bytes kept per ship, XORed with the vertex index, so the cloud is the same every frame; points are clipped and plotted with a size from the distance; the C64 adds a sprite flash on the first frame. How it fits here:
+  - Keep the sound and the ring flash as the first frame; the particles take over after it. No erase pass (the off-screen bitmap is wiped every frame; the per-ship seed keeps the cloud coherent).
+  - Code in a bank 6 module, not in the glue: replace the ring code in bank 7 by a far-call stub (the `hullDraw` pattern: resident stack, config C6, call, `mapMain`, stack back), the particle code (150-250 bytes) in bank 6 with its own pixel plot (bank 7 is hidden in C6), a new stage chunk in the blank bytes of `COMMON2X` (check blankness in `build_dsk128.py`) and a vector next to `fillHullEntry`; per-slot state (cloud counter, 4 seed bytes, 8 slots) in a bank 6 table, reset when a slot starts to explode.
+  - Phase 1: one cloud at the cached screen centre, radius from the counter and the distance. Phase 2: clouds at the vertices (`hullVertexBuf` already holds the projected ones for the fill), n capped at about 12; check that the explosion-count byte of the CPC blueprint is where the 6502 header has it.
+  - The counter step must be larger than the 6502's 4 (the CPC draws 5 to 6 frames per second), or an explosion would last 10 seconds. Cost: up to about 28 x 8 = 220 dots a frame, roughly 10 ms; clip to the 256 x 128 viewport and skip vertices behind the viewer.
+  - Checks: screenshots at several distances and counter values, frame time with several exploding ships, the special explosions (Constrictor, station, escape pod), the pens used by the flight view.

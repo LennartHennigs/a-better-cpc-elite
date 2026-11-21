@@ -70,7 +70,7 @@ Run from `work/xray` with absolute script paths (in this worktree `work/xray` is
 | `test_launch128`, `test_mission128`, `test_packs128` | flight image copied from bank 5, mission overlays from RAM, the random ship pack per launch |
 | `test_titleships128`, `test_viewer128` | the title ship selector, `RUN"SHOWSHPS` |
 | `test_spawnvar128` | spawn variance (`spawnmod.asm`): 60 spawns per case of the hostile types (ranges, none in the rear cone, some behind), traders and the Viper unchanged, 120 asteroids (heading towards the player, orthonormal frame), packs stay together; `ALL OK` line, not in `run_all` yet |
-| `test_sellall128`, `test_escdigit128`, `test_killcount128`, `test_sights128`, `test_filemenu128` | A key of the sell menu, Esc at the second digit, kill count on the commander page, laser sights, catalogue/save/load |
+| `test_sellall128`, `test_escdigit128`, `test_killcount128`, `test_sights128`, `test_filemenu128` | A key of the sell menu, Esc at the second digit, kill count on the commander page, laser sights, catalogue (the `Commanders:` heading must be on the screen: it proves the firmware text hook `myTEXTOUTACTION`)/save/load |
 | `test_tools128` | the 128K disk's tools: `CONVSAVE` UK to 128K and 128K to UK compared byte for byte with the host, `LISTSAVE` names the builds, `EDITSAVE` edits a 128K save, `TRAINER` with every cheat on (the 13 poke targets, the commander block, still there after the title is up) |
 | `test_viewer128` | screenshots of the ship viewer (`RUN"SHOWSHPS`): first ships, the last one, Q back to BASIC; look at `output/viewer128_*.png` (no pass/fail) |
 | `test_music128` | the title music: PSG registers change on the title, stop after it, the bank 7 slot is `NOTMUSIC.BIN` again |
