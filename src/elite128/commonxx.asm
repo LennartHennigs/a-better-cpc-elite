@@ -8198,10 +8198,12 @@ dbIsrFollow:
     ld b,0xBD
     out (c),a
     ret
-; Copies BC bytes from HL to DE through the C0 configuration (bank 1 at &4000, bank 3 at &C000), interrupts off meanwhile; the count in BC waits on the resident stack while BC carries the port.
-; Only called from the flip code in bank 6: returns in config C6, with HL, DE advanced.
+; Copies BC bytes from HL to DE through the C0 configuration (bank 1 at &4000, bank 3 at &C000); the count in BC waits on the resident stack while BC carries the port.
+; Interrupts stay on while it runs: LDIR is interruptible, the handlers (myVBL, IRSound, IRKeyboardInput, dbIsr, the music hook) sit below &A000 in banks 0 and 2, which every
+; configuration of the flip maps, and use nothing in &4000-&7FFF or &C000+, so the raster-timed colour split stays on time (docs/_128k_speedup.md). The two nops are a former
+; di and ei, kept so that no address after them moves.
 dbCopy:
-    di
+    nop
     push bc                             ; the stack is resident (hullStack), visible in C0 and C6
     ld bc,0x7FC0
     out (c),c
@@ -8209,7 +8211,7 @@ dbCopy:
     ldir
     ld bc,0x7FC6                        ; back to the flip code in bank 6
     out (c),c
-    ei
+    nop
     ret
 hullFindType:
     push iy

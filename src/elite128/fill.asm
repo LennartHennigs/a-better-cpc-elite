@@ -773,13 +773,14 @@ dbFlip6:
     jr nz,dbfFlip
     inc a
     ld (DB_ON),a
+    ei                                  ; the copies run with interrupts on (see dbCopy in commonxx.asm)
     ld a,(DB_CURCFG)                    ; entering: the draw bank is the one on screen; the other one gets a full copy
     call dbBases
     ld a,64
     ld (DB_CNT),a
 dbfAll:
     ld bc,256
-    call dbCopyB
+    call DB_COPY
     ld a,(DB_CNT)
     dec a
     ld (DB_CNT),a
@@ -810,8 +811,6 @@ dbfw2:
     ld a,(DB_SHOWN)
     xor 2                               ; C1 <-> C3
     ld (DB_CURCFG),a
-    ld hl,0
-    ld (dbBudget),hl                    ; the first copy waits for an interrupt: every copy then starts right after one
     ei
     ; what changed in the cockpit since the last flip, found without hooks in the drawing routines:
     ;  gauges (bars, missiles, speed digit, text): the player variables the bars are drawn from (DB_VARS, with their "last drawn" copies) and the missile count, compared with a
@@ -874,9 +873,9 @@ dbfNoTick:
     ld (DB_CNT),a
 dbfRows:
     ld bc,256
-    call dbCopyB
+    call DB_COPY
     ld bc,256
-    call dbCopyB
+    call DB_COPY
     ld bc,0x0600
     add hl,bc
     ex de,hl
@@ -904,7 +903,7 @@ dbfGaps:
     add hl,bc
     ex de,hl
     ld bc,16
-    call dbCopyB
+    call DB_COPY
     ld a,(DB_SHOWN)
     call dbBases
     ld bc,0x2FF0
@@ -913,7 +912,7 @@ dbfGaps:
     add hl,bc
     ex de,hl
     ld bc,16
-    call dbCopyB
+    call DB_COPY
     ld a,(DB_SHOWN)                     ; smc_dfcPatchpos (&27B0): the opcode that drawFilledCircle's size test is patched to. It is patched in the draw bank only but runs from either one,
     call dbBases                        ; so a stale copy made planets and suns blink on alternate frames
     ld bc,0x27B0
@@ -922,7 +921,7 @@ dbfGaps:
     add hl,bc
     ex de,hl
     ld bc,1
-    jp dbCopyB
+    jp DB_COPY
 ; HL = zone descriptor: offset in the page of the first strip (word), width (byte), rows (byte), step to the next row = 64 - width (word), step to the next scan line block (word).
 ; Copies rows x width bytes in each of the 8 scan line blocks from the shown bank to the draw bank.
 dbZone:
@@ -961,7 +960,7 @@ dbzRow:
     ld a,(zWR)
     ld c,a
     ld b,0
-    call dbCopyB
+    call DB_COPY
     ld bc,(zRowStep)
     add hl,bc
     ex de,hl
@@ -1001,28 +1000,6 @@ dbSnapM:    ds 3
 dbWatch:    dw DB_MISS, DB_STAT, DB_LOCK
 dbSnap      equ 0x4F40                  ; DB_VLEN bytes in the variable page (it would not fit in the 0x600 staged bytes of code)
     ASSERT 0x4F40 + DB_VLEN <= 0x5000
-; The copy keeps interrupts off while it runs, which would delay the raster-timed interrupts (colour split of the view and the dashboard). So the copies are paced by the interrupts:
-; each one starts right after an interrupt handler returned (HALT) and at most DBWIN bytes are copied before the next HALT (DBWIN x 5.25 us stays below the 3.3 ms between interrupts
-; minus the handler). HL, DE, BC as for dbCopy.
-DBWIN       equ 160
-dbCopyB:
-    push hl
-    ld hl,(dbBudget)
-    and a
-    sbc hl,bc
-    jr nc,dbcbOk
-    ei
-    halt
-    ld hl,DBWIN
-    and a
-    sbc hl,bc
-    jr nc,dbcbOk
-    ld hl,0                             ; a chunk larger than the window: it runs alone
-dbcbOk:
-    ld (dbBudget),hl
-    pop hl
-    jp DB_COPY
-dbBudget:   dw 0
 ; A = config of the bank to copy from; returns HL = its address and DE = the other bank's address in the C0 configuration
 dbBases:
     bit 1,a

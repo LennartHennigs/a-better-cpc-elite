@@ -63,6 +63,7 @@ Run from `work/xray` with absolute script paths (in this worktree `work/xray` is
 |---|---|
 | `test_boot128`, `snap_docked128`, `test_flight128` | boot to the title, a docked snapshot for the quick tests, launch and fly (the snapshots the others start from) |
 | `test_fill128`, `test_hulls128`, `test_order128`, `test_views128` | the polygon fill in bank 6, every hull type, draw order, the other views |
+| `test_frametime` | frame time of the flight loop in one scene, any build (symbols from a sym file, `--phases`/`--marks` stop at routines and print the time between them, `--clean` empties the ship slots, `--poke ADDR=HEX` moves things, `--ship TYPE`); 64K: `Elite_UK_Firebird_cracked_trainer.dsk` + `output/firebird_in_flight.sna` + `work/elite128/c.sym`, 128K: `elite128.dsk` + `output/flight128.sna` + `c128.sym`; `elite64.dsk` needs its own flight snapshot |
 | `test_flip128`, `test_isrjitter128`, `test_soak128` | page flip (banks equal after each flip), raster split jitter, soak with a reset breakpoint |
 | `test_ship_packs128` | `test_ship_packs.py` with `BUILD=128` (a two-line wrapper): the pack hook on the 128K build: each pack's flight image at `&9D9E`, the extra hull about half the time, types 8, 15 and 18 untouched (needs `output/flight128.sna`) |
 | `test_launch128`, `test_mission128`, `test_packs128` | flight image copied from bank 5, mission overlays from RAM, the random ship pack per launch |
