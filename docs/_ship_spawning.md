@@ -40,7 +40,17 @@ The pick itself (`spawnCommand0`): a roll below `SPAWN_HOSTILE_LIMIT` (`&50`, `&
 
 ## The 128K build: spawn variance (2026-11-21)
 
-With `SPAWN_VARIANCE` (on in `src/elite128/config.inc`) the hostile types (blueprint byte `+33` bit 2: Sidewinder, Krait, the pirates, the Asp, the Thargoid) no longer start in one of four fixed corners: x_hi and y_hi are random 0 to 63, z_hi 32 to 63 (8,000 to 16,000 units), the z sign is random, and a ship that would land behind the player inside the rear cone (x_hi and y_hi both below z_hi) is put in front instead. That leaves the front 180 degrees plus the two side wedges behind the lateral axis, 270 degrees; the ship turns towards the player through its tactics. Asteroids, traders and the rest keep the stock start for now (they need a heading, `TODO_128K.md`). The code is `spawnVariance` in the overlay on `bankInit`, called at the end of `spawnShip`.
+With `SPAWN_VARIANCE` (on in `src/elite128/config.inc`) the hostile types (blueprint byte `+33` bit 2: Sidewinder, Krait, the pirates, the Asp, the Thargoid) no longer start in one of four fixed corners: x_hi and y_hi are random 0 to 63, z_hi 32 to 63 (8,000 to 16,000 units), the z sign is random, and a ship that would land behind the player inside the rear cone (x_hi and y_hi both below z_hi) is put in front instead. That leaves the front 180 degrees plus the two side wedges behind the lateral axis, 270 degrees; the ship turns towards the player through its tactics. Asteroids, traders and the rest keep the stock start for now (they need a heading, see "Open: asteroids, traders and packs" below). The code is `spawnVariance` in the overlay on `bankInit`, called at the end of `spawnShip`.
+
+### Open: asteroids, traders and packs (design notes, 2026-11-21)
+
+Wanted: a random distance and direction for asteroids too, with the 128K rules switchable (`SPAWN_VARIANCE`; `src/elite` stays byte-exact, decide whether `main` gets the switch).
+
+- **Position without trigonometry:** random high bytes (x_hi, y_hi 0 to `&3F`, z_hi `&20`-`&3F`) and random signs; the rear cone is spared with one comparison (z negative and both x_hi and y_hi below z_hi: flip the z sign). Asteroids may start anywhere around the player, so they skip the test.
+- **Heading:** asteroids have no AI (`spawnCommand0` clears it) and keep the identity orientation, so they all fly along +z. For a random heading `setDirectionofEntity` (`&82B8`) builds the matrix from a direction vector (no normalising needed if the routine copes). Fully random headings would send most rocks away for good, so aim at the player plus a random offset of a few thousand units per axis (decided 2026-11-21): most pass through or near the player's area, some hit, as the ST's asteroids do.
+- **Packs:** `spawnEscortPack` calls `spawnShip` per ship, so with variance the wingmen scatter over the sky: spawn the leader with the variance and put the others at its position plus a small random offset.
+- **Where the code goes:** the glue has no byte left; the hostile rules live in the overlay on `bankInit` (6 bytes left of 248). An asteroid heading routine needs a far-call module (bank 6 has about 2.3 KB of code space) or a second overlay region.
+- **Checks:** the spawn-sampling script (call `spawnShip` 80 times per type, histogram of signs and distance), a test that no spawn lands in the back cone, screenshots in the front, side and rear views; the missions (Constrictor, Thargoid, the marked Asp, Trumbles) and the safe zone behave as before; frame time with ships at the sides.
 
 ## What this means for the 128K build
 

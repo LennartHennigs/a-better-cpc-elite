@@ -15,7 +15,7 @@ The 128K layout (RAM banks, the `&4000` screen window, the resident glue and wha
 
 ## Layout (branch `elite128`; first measured 2026-11-12, glue and music rows updated 2026-11-21)
 
-CPU view in flight (config C1 or C3; the flip alternates them). Free = bytes not used by anything built today.
+CPU view in flight (config C1 or C3; the flip alternates them). Free = bytes not used by anything built today. The zero runs of the parked block (`&0040-&1A3F` in flight, `&A600-&BFFF` docked) are not free: no run is written by flight, docking or launch (34 runs, 3100 bytes, 2026-11-21), but the firmware's disk code reads at least one docked run (`&B819`, 22 bytes) as state, so a marker there breaks the save (`tools/tests/test_parked_save128.py`).
 
 | CPU address | RAM bank | What | Used | Free |
 |---|---|---|---|---|
