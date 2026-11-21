@@ -231,7 +231,15 @@ FRONT_BINS = (0.3, 0.35)
 SHIMMER = True                 # the second triangle of each bright rim facet gets the mixed pattern, so the trapezoid is not one flat slab
 
 
+# Ships that are mostly seen small (traffic and pirates leaving the station): only two tones, solid on all but the darkest faces (brightness below LIFT_DARK, the underside) which get the dithered mix, so the
+# dither (half the brightness) does not make them vanish on black at a few pixels across (the DIM tone is not used).
+LIFT_DARK = -0.33
+LIFT = {"shipdatViper", "SHIPDATSINGLETRADER", "SHIPDATBIGTRADER", "shipdatCobraMk3Pirate", "shipdatPythonPirate", "SHIPDATPIRATE1", "SHIPDATPIRATE2", "shipdatFerDeLance", "shipdatAspMk2"}
+
+
 def pattern_of(n, label=None):
+    if label in LIFT:
+        return MIX if brightness(n) < LIFT_DARK else MAIN
     if label in FRONT_LIT:
         b = dot(norm(n), (0, 0, 1))
         return DIM if b < FRONT_BINS[0] else (MIX if b < FRONT_BINS[1] else MAIN)
