@@ -41,9 +41,30 @@ Diary: `CHANGELOG_128K.md`. Open work, including what `main` did since the fork:
 
 ## Cost
 
-- Frame time with one Cobra ahead: 232 ms (wireframe) against 254 ms (filled), +9.5%.
-- The page flip costs about 21 ms of copying per frame plus the wait for the vertical sync: about 4.5 flight frames per second with a planet filling the view (6 before the flip).
-- The interrupt-timed colour split stays on time: the copy is paced by `halt` in chunks of at most 160 bytes (`tools/tests/test_isrjitter128.py`).
+Measured 2026-11-21 with `tools/tests/test_frametime.py` (milliseconds between two stops at `handleEntitys`, once per frame; `--phases` adds marks): the launch scene of a new commander (planet filling the view and inside scanner range, ship slots cleared), the same scene on all builds. The older figures ("232 ms wireframe against 254 ms filled", "6 frames per second before the flip") came from a script whose fixed addresses had gone stale and from different scenes: do not quote them.
+
+| Scene | 64K stock | 64K `elite64.dsk` | 128K before the copy change | 128K now |
+|---|---|---|---|---|
+| planet in scanner range (after a launch) | 201 ms (5.0 fps) | 202 ms | 276 ms (3.6 fps) | 240 ms (4.2 fps) |
+| planet out of scanner range | | 178 ms | 215 ms | 200 ms |
+| Cobra straight ahead (fastest of 16 frames; the first frames with a close ship are much slower) | 201 ms | | 279 ms | 252 ms |
+
+Where the 128K frame goes in the first row (before the change, against `elite64.dsk`; the buffer-to-screen transfer is the same 55 ms in both):
+
+| Phase | 64K | 128K before | 128K now |
+|---|---|---|---|
+| `handleEntitys` (entity loop, planet only) | 7.6 | 14.7 | same |
+| `handleLaser` (crosshair) | 3.4 | 10.5 | same |
+| `transferBuffertoScreen` | 54.4 | 55.1 | same |
+| page flip: wait for the vertical sync | | 6 to 13 (depends on the phase) | 6 to 8 |
+| page flip: cockpit copy (scanner zone, 1,792 bytes) | | 47.1 | 17.9 |
+| `UpdateIndicatorBars` | 24.5 | 27.1 | same |
+| everything else (dust, planet, dashboard, scanner draw) | | | within 1 ms of 64K, per routine |
+
+- The page flip was 79% of the 128K overhead. The scanner copy runs every frame while any slot is inside scanner range, and slot 0 (the planet) counts: after a launch it is in range for as long as the ship stays near it (`UpdateScanner` draws it as a blip, as in the stock game). Moving the planet out of range (`--poke 1A47=50`) drops the copy from 47 to 7 ms.
+- The copy used to keep interrupts off per chunk, so it was paced (160 bytes per interrupt, then `halt`), and a chunk that outlasted the 3.3 ms gap cost a whole further period. Since 2026-11-21 `dbCopy` has no `di`/`ei` and the pacing is deleted: the interrupt handlers are in banks 0 and 2 and touch nothing in `&4000-&7FFF` or `&C000+`, so `ldir` may be interrupted anywhere. Interrupt entry jitter (`tools/tests/test_isrjitter128.py`): worst 5 us (was 221 us; the stock game 5 us).
+- Method, pitfalls and the list of next steps: `docs/_128k_speedup.md`.
+- Not yet cut: the vertical-sync wait before the CRTC switch (6 to 12 ms; R12 only takes effect at the next frame start, so the wait may be unnecessary, untested on hardware), the remaining 18 ms of the scanner copy (per-strip overhead: a dirty rectangle or fewer, longer strips), the entity loop (+7 ms against 64K with only the planet in it, not yet traced) and the laser sights (10.5 ms against the stock crosshair's 3.4). Direct drawing into the back screen (no transfer copy) is not needed for the copy: the transfer costs the same as in the 64K game.
 
 ## Things to know before touching it
 
@@ -52,4 +73,4 @@ Diary: `CHANGELOG_128K.md`. Open work, including what `main` did since the fork:
 - `&0040-&1A3F` is not free memory at any time: in flight and on the title it holds the firmware's parked RAM (`loadIndicator` swaps it with `&A600-&BFFF`; the first docking puts it back), docked it holds `LARGEAXX`. The interrupt can only call code in banks 0 and 2: bank 7 at `&C000` is hidden while a far call (config C6) is active.
 - The fill module file (`fill.bin`) must stay within `&600` bytes; it rides in blank screen pixels of the window page.
 - ArcElite source only: hull axis maps and convexity flags in `tools/ship128.py` are plausible, not proven for every hull (`AXIS_OVERRIDE`). The stock source has no axis map (the blueprints are already in the engine's axes); its convexity is measured.
-- **Hull source switch:** `make disk6128` (or `HULLS=stock|arcelite bash tools/check_src128.sh`, then `python3 -I tools/build_dsk128.py`) builds with the stock-based hulls by default; `HULLS=arcelite` needs the ArcElite files in `work/arcelite/`. Both fill the same fixed slot of the resident area (`HULL_REGION_SIZE` = 1,781 bytes in `commonxx.asm`, padded with zeros), so every address stays the same and switching needs no `sync_equs`; the stock-based set uses 1,763 bytes of it (each new vertex of a design costs 6). `work/elite128/hulls_source.txt` records which source made the generated files. ArcElite data is third party: it stays in `work/` and never goes into git. Licence terms: `NOTICE` items 6 to 10.
+- **Hull source switch:** `make disk6128` (`HULLS=arcelite DSK128=build/elite128_arcelite.dsk make disk6128` leaves the stock-hull disk alone; or `HULLS=stock|arcelite bash tools/check_src128.sh`, then `python3 -I tools/build_dsk128.py [OUT.dsk]`) builds with the stock-based hulls by default; `HULLS=arcelite` needs the ArcElite files in `work/arcelite/`. Both fill the same fixed slot of the resident area (`HULL_REGION_SIZE` = 1,781 bytes in `commonxx.asm`, padded with zeros), so every address stays the same and switching needs no `sync_equs`; the stock-based set uses 1,763 bytes of it (each new vertex of a design costs 6). `work/elite128/hulls_source.txt` records which source made the generated files. ArcElite data is third party: it stays in `work/` and never goes into git. Licence terms: `NOTICE` items 6 to 10.
