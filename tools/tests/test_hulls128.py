@@ -10,12 +10,15 @@ run 1 s, screenshot, then the slot is emptied. With identity orientation every h
 import asyncio
 import os
 import json
+import re
 import sys
+from pathlib import Path
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
 TRAP = 0x9F00
+SYM = {m.group(1): int(m.group(2), 16) for m in (re.match(r"(\w+):\s+EQU\s+0x([0-9A-Fa-f]+)", l) for l in open(os.environ.get("SYM128", Path(__file__).resolve().parents[2] / "work/elite128/c128.sym"))) if m}      # the build's own symbols: fixed addresses went stale
 TYPES = [int(a) for a in sys.argv[1:]] or list(range(19))
 POS = [int(v, 0) for v in os.environ.get("POS", "0,0,0").split(",")]      # position (x, y, z, 16 bit each) of the spawned ship; z 0 = the default for the type
 FAR = {0: 0x0700, 15: 0x0300, 11: 0x0300, 10: 0x0300, 6: 0x0200, 7: 0x0200}      # z high byte word: stations and big hulls farther away
@@ -43,7 +46,7 @@ async def main():
             await c("disk_insert", {"drive": "A", "path": os.environ.get("DISK128", "disk/elite128.dsk")})
             await c("sna_load", {"path": os.environ.get("SNA", "output/flight128.sna")})
             await c("run", {"max_us": 4_000_000, "timeout_s": 60})
-            safe = (await c("breakpoint_add", {"address": 0xCF68, "kind": "pc"}))["id"]
+            safe = (await c("breakpoint_add", {"address": SYM["handleEntitys"], "kind": "pc"}))["id"]
             rep = await c("run", {"max_us": 10_000_000, "timeout_s": 60})
             assert rep.get("reason") == "breakpoint", rep
             await c("breakpoint_remove", {"breakpoint_id": safe})
@@ -53,16 +56,16 @@ async def main():
             if os.environ.get("CBLOB"):      # type 19 (Constrictor) lives in flight image C: put that image's tail (&9D9E-&9FFF, assembled with -DFL_C) in place
                 await c("memory_write", {"address": 0x9D9E, "data": open(os.environ["CBLOB"], "rb").read().hex()})
             for n, t in enumerate(TYPES):
-                await call(0x816B)
+                await call(SYM["lookforFreeSlot"])
                 ix = (await c("registers_get"))["ix"]
-                await call(0x80CD, a=t, ix=ix)
+                await call(SYM["spawnShip"], a=t, ix=ix)
                 ix = (await c("registers_get"))["ix"]
                 z = FAR.get(t, 0x0180)
                 for off, val in ((0, POS[0] & 255), (1, POS[0] >> 8), (2, 0), (3, POS[1] & 255), (4, POS[1] >> 8), (5, 0), (6, (POS[2] or z) & 255), (7, (POS[2] or z) >> 8), (8, 0), (27, 0), (37, 0x7F)):
                     await c("memory_write", {"address": ix + off, "data": "%02X" % val})
                 flag = (await c("memory_read", {"address": ix + 32, "length": 1}))["hex"]
                 await c("memory_write", {"address": ix + 32, "data": "%02X" % (int(flag, 16) & ~0xC0)})
-                await call(0x82B8, ix=ix)
+                await call(SYM["setDirectionofEntity"], ix=ix)
                 await c("registers_set", {"values": {k: saved[k] for k in ("af", "bc", "de", "hl", "ix", "iy", "sp", "pc", "af_", "bc_", "de_", "hl_") if k in saved}})
                 await c("run", {"max_us": 1_000_000, "timeout_s": 60})
                 await c("screen_image", {"path": f"output/hulls128_{t:02d}" + (f"_{n}" if os.environ.get("SEQ") else "") + ".png"})      # SEQ=1: one file per spawn (the same type twice: a ship pack hull comes up on half of the spawns)
@@ -72,7 +75,7 @@ async def main():
                 print(f"type {t:2d}: pc=&{reg['pc']:04X} sp=&{reg['sp']:04X}", flush=True)
                 await c("memory_write", {"address": ix + 34, "data": "00"})                              # empty the slot
                 await c("run", {"max_us": 300_000, "timeout_s": 60})
-                rep = await c("run_until", {"address": 0xCF68, "max_us": 3_000_000})
+                rep = await c("run_until", {"address": SYM["handleEntitys"], "max_us": 3_000_000})
                 saved = await c("registers_get")
 
 
