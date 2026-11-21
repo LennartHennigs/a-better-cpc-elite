@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Data for the 128K ship viewer (RUN"SHOWSHPS): every ship of the 128K build, filled, as pre-projected rotation frames, in the format of the page flip prototype (tools/proto_fill/flip.asm).
 
-usage: python3 -I tools/mk_viewer128.py
-The hulls and their fill triangles come from tools/ship128.py (the stock blueprints through tools/hullfill.py, the Constrictor and the nine ship pack hulls from Fessor's data): the same
-triangles the game fills. Each ship turns about its y axis with a fixed tilt; per ship the file holds 160 bytes of triangles (v0 v1 v2 pattern) and NFRAMES frames of 104 bytes
+usage: python3 -I tools/mk_viewer128.py [--source stock|arcelite]      (or the HULLS environment variable, like tools/ship128.py; default stock)
+The hulls and their fill triangles come from tools/ship128.py: the same triangles the game fills, from the same source (stock: the stock blueprints through tools/hullfill.py; arcelite: ArcElite's
+hulls fitted to the stock axes, third party, so the files in work/viewer128/ stay out of git; the Constrictor and the nine ship pack hulls come from Fessor's data in both). Each ship turns about its y axis with a fixed tilt; per ship the file holds 160 bytes of triangles (v0 v1 v2 pattern) and NFRAMES frames of 104 bytes
 (x[32], y[32], draw order[36], bounding box), the logic of tools/proto_fill/gen.py. Writes into work/viewer128/: ships4.bin, ships5.bin, ships6.bin (RAM banks 4-6, SHIPS_PER_BANK ships each),
 info.inc, winding.inc, tables.bin, rowtab_flip.bin.
 info.inc holds one record per ship for the Z80 viewer: the screen address of its name line and of its facts line (centred), the name with the "(n/29)" counter and the four numbers of the
@@ -22,7 +22,7 @@ NFRAMES = 12
 FRAMESZ = 104
 SHIPSZ = 160 + NFRAMES * FRAMESZ
 SHIPS_PER_BANK = 11
-sys.argv = [sys.argv[0]]      # ship128.py reads sys.argv for its hull source option: the default (stock)
+sys.argv = [sys.argv[0]] + [a for i, a in enumerate(sys.argv) if a == "--source" or (i and sys.argv[i - 1] == "--source")]      # ship128.py reads --source from sys.argv, nothing else
 
 
 def load(name, path):
@@ -73,7 +73,11 @@ def ships():
     for shown, label, hlabel in STOCK:
         if label == "shipdatAlloy":
             q, tris, _ = s128.alloy(m, sym[label])
-            tris = [(a, b, c, {118: 2, 42: 3}[col], g) for a, b, c, col, g in tris]      # brightest first, as record() ranks them
+            tris = [(a, b, c, {118: s128.PATTERNS[0], 42: s128.PATTERNS[1]}[col], g) for a, b, c, col, g in tris]      # brightest first, as record() ranks them
+        elif s128.SOURCE == "arcelite":      # as ship128.py main() does: the ArcElite hull on the stock axes, its colours ranked into the patterns like record()
+            q, tris, _, _, _, _ = s128.fit(s128.stock_points(m, sym[label]), *s128.gen.parse(s128.HULL[label]), label)
+            pat = {c: s128.PATTERNS[i % len(s128.PATTERNS)] for i, c in enumerate(sorted({t[3] for t in tris}, reverse=True))}
+            tris = [(a, b, c, pat[col], g) for a, b, c, col, g in tris]
         else:
             q, tris, _, _, _, _ = s128.stock_fit(m, sym[label], label)
         out.append((shown, q, tris, bytes(m[sym[hlabel]:sym[hlabel] + 23])))
@@ -202,7 +206,8 @@ def main():
         chunk = blocks[bank * SHIPS_PER_BANK:(bank + 1) * SHIPS_PER_BANK]
         (OUT / f"ships{4 + bank}.bin").write_bytes(b"".join(chunk).ljust(SHIPSZ * SHIPS_PER_BANK, b"\0")[:0x4000])
     write_info(infos)
-    print(n, "ships,", NFRAMES, "frames,", SHIPSZ, "bytes each")
+    (OUT / "hulls_source.txt").write_text(s128.SOURCE + "\n")
+    print(f"{n} ships ({s128.SOURCE} hulls),", NFRAMES, "frames,", SHIPSZ, "bytes each")
 
 
 if __name__ == "__main__":

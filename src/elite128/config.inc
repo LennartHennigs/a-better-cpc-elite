@@ -12,7 +12,7 @@
     IFNDEF FIREBIRD
     DEFINE FIREBIRD
     ENDIF
-; Hostile ships start at a random distance and direction from the front 270 degrees instead of one of four fixed diagonal corners (spawnVariance in lasersights128.asm, called by
+; Hostile ships start at a random distance and direction from the front 270 degrees instead of one of four fixed diagonal corners (spawnVariance in lasersights128.asm and spawnmod.asm, called by
 ; spawnShip). Remove the define for the original spawn rules. docs/_ship_spawning.md, TODO_128K.md.
     IFNDEF SPAWN_VARIANCE
     DEFINE SPAWN_VARIANCE

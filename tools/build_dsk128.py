@@ -9,6 +9,8 @@ Needs the generated inputs of tools/check_src128.sh (it makes them): work/elite1
 In the relocated layout COMMON2X.BIN is the code block for RAM bank 7 (loaded at &C000, copied by bankInit) and the window page (&4000-&7FFF of COMMONXX.BIN) carries the stage areas: the fill module and its records ride in its blank screen rows: fill.bin at +&800, fill128.bin at +&1000; bankInit
 (commonxx.asm) copies them into RAM bank 6 at the start of Init_. Each file keeps its size and AMSDOS header. Hides everything but .BAS and .TXT (CLAUDE.md rule).
 """
+import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -64,10 +66,27 @@ def symbols(src, flags=()):
         return out
 
 
+def spawn_module():
+    """The spawn variance module (spawnmod.asm, RAM bank 6 at &4600, code and table): 0x240 bytes at most, staged in a blank block of the window page (STAGE+0x3000) and copied to &4600
+    by bankInit. None when SPAWN_VARIANCE is off in config.inc."""
+    if not re.search(r"^\s*DEFINE SPAWN_VARIANCE\b", (SRC / "config.inc").read_text(), re.M):
+        return None
+    with tempfile.TemporaryDirectory() as tmp:
+        out = Path(tmp) / "sm.bin"
+        r = subprocess.run([str(SJASM), f"--raw={out}", str(SRC / "spawnmod.asm")], capture_output=True, text=True, cwd=SRC)
+        if r.returncode:
+            sys.exit("spawnmod.asm: assemble failed\n" + r.stdout[-400:])
+        blob = out.read_bytes()
+    assert len(blob) <= 0x240, len(blob)
+    print(f"spawn module: {len(blob)} of 576 bytes")
+    return blob
+
+
 def laser_sights():
     """The laser sights overlay (lasersights128.asm): assembled at the address of bankInit, carried in the data stage and copied over bankInit by its last step."""
     cx, c2, mq = symbols("commonxx.asm"), symbols("common2x.asm"), symbols("musiquex.asm")
-    defs = [f"-DMUSICRUN={mq['MusicRun']}", f"-DGETRND={c2['getRandomNumber']}", f"-DSTACK5={cx['stack5']}", f"-DHOME={cx['bankInit']}", f"-DVIEWDIR={cx['Viewdirection']}", f"-DLASERTYPES={cx['laserTypes']}", f"-DCURCFG={cx['curCfg']}", f"-DDRAWLINE={c2['drawLaserLine']}"]
+    defs = [f"-DMUSICRUN={mq['MusicRun']}", f"-DGETRND={c2['getRandomNumber']}", f"-DSTACK5={cx['stack5']}", f"-DHOME={cx['bankInit']}", f"-DVIEWDIR={cx['Viewdirection']}", f"-DLASERTYPES={cx['laserTypes']}", f"-DCURCFG={cx['curCfg']}", f"-DDRAWLINE={c2['drawLaserLine']}",
+            f"-DHULLSAVESP={cx['hullSaveSP']}", f"-DHULLSTACKTOP={cx['hullStackTop']}", f"-DSPAWNSHIP={cx['spawnShip']}"]
     with tempfile.TemporaryDirectory() as tmp:
         out = Path(tmp) / "ls.bin"
         r = subprocess.run([str(SJASM), *defs, f"--raw={out}", str(SRC / "lasersights128.asm")], capture_output=True, text=True)
@@ -110,6 +129,9 @@ def main():
             if n == "COMMONXX":
                 PAGE = 0x4000 - 0x1A40                       # the window page inside COMMONXX.BIN: blank screen rows that bankInit finds at &C000+offset in RAM bank 3
                 stage = [(STAGE_FILL, fill), (STAGE_DATA, data), (STAGE_DATA + 0x700, laser_sights()), (0x2800, packs_records)]
+                sm = spawn_module()
+                if sm:      # the module and its table: a blank block (bankInit copies 0x240 bytes of it to bank 6 &4600)
+                    stage.append((0x3000, sm))
                 if MISSIONS:      # overlays (bank 4: slots of 0x240 at &D800, &DC80, &E000, &E480) and flight images (bank 5: 0x260 at &E800, &EC60, &F000, &F460, &F800, &FC60); bankInit copies them
                     for i, tag in enumerate("CPTR"):
                         base, blob = sliced("largeaxx.asm", [f"-DOVL_{tag}"], "mxOverlayBase", "mxOverlayEnd", 0x840)
@@ -146,7 +168,8 @@ def main():
         dskx.add_payload(d, secs, first, "README", "TXT", txt.ljust(recs * 128, b"\x1a"), recs)
     # The ship viewer (RUN"SHOWSHPS): a stand-alone program like the 64K disk's, but with the filled hulls of the game. SHOWSHPS.BAS loads the ships into RAM banks 4-6 and the program
     # (src/viewer128/viewer.asm, the page flip prototype) at &8000; the data come from tools/mk_viewer128.py. The binaries are hidden like every other non-BASIC file.
-    subprocess.run([sys.executable, "-I", str(ROOT / "tools/mk_viewer128.py")], check=True, capture_output=True)
+    venv = {**os.environ, "HULLS": hulls} if hulls in ("stock", "arcelite") else None      # the viewer shows the hulls the game was built with (work/elite128/hulls_source.txt)
+    subprocess.run([sys.executable, "-I", str(ROOT / "tools/mk_viewer128.py")], check=True, capture_output=True, env=venv)
     r = subprocess.run([str(SJASM), "--nologo", "--msg=err", "viewer.asm"], cwd=ROOT / "src/viewer128", capture_output=True, text=True)
     if r.returncode:
         sys.exit("viewer.asm: assemble failed\n" + r.stdout[-400:])

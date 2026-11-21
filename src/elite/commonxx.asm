@@ -14337,6 +14337,11 @@ spawnCommandParser:
     ret
 ; Builds a ship in the slot at IX from blueprint A: copies its data and initial values
 spawnShip:
+    IFDEF SPAWN_VARIANCE
+    IFNDEF MISSIONS
+    ASSERT 0, "-DSPAWN_VARIANCE needs -DMISSIONS: the routine is in the flight tail (missions_flight.asm)"
+    ENDIF
+    ENDIF
     IFDEF MISSIONS
     call mxShipTable                ; missions_flight.asm: also serves ship type 19 (Constrictor)
     ELSE
@@ -14372,8 +14377,12 @@ loc_80DA:
     ld a,(iy+6)
     srl a
     ld (ix+27),a
+    IFDEF SPAWN_VARIANCE
+    ld (ix+37),0x7E                 ; one byte shorter than ld a,0x7E / ld (ix+37),a: pays for the jp at the end
+    ELSE
     ld a,0x7E
     ld (ix+37),a
+    ENDIF
     xor a
     ld (ix+38),a
     set 6,(ix+32)
@@ -14395,8 +14404,12 @@ spwnIsNoPirate:
     rr (ix+2)
     rra
     rr (ix+5)
+    IFDEF SPAWN_VARIANCE
+    jp mxSpawnVar                   ; missions_flight.asm: the hostile types start at a random distance and direction (docs/_ship_spawning.md); ends with xor a / ret
+    ELSE
     xor a
     ret
+    ENDIF
 ; Looks for a free slot and spawns the ship there if one exists (mostly in a db run)
 TrySpawntoFreeSlot:
     ld c,a

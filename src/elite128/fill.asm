@@ -895,6 +895,8 @@ dbfPart:
 dbfZ:
     call dbZone
 dbfGaps:
+    ld hl,dbZIndic                      ; the S indicator, every frame: it is drawn and erased on events, and a flag that is set and cleared again between two flips (near the planet) never shows up in
+    call dbZone                         ; the watched variables, so the letter ended up in one buffer only and flickered with the flip; the partial syncs (compass, busy scanner) did not cover it
     ld a,(DB_SHOWN)
     call dbBases
     ld bc,0x0E00
@@ -989,6 +991,11 @@ dbZScanner:
     dw 17*64+16
     db 32, 7
     dw 64-32, 0x0800-7*64
+; the station indicator ("S", SCREEN+0x5AC): columns 44-47 of rows 22-23
+dbZIndic:
+    dw 22*64+44
+    db 4, 2
+    dw 64-4, 0x0800-2*64
 zWR:        dw 0
 zRowStep:   dw 0
 zBlkStep:   dw 0

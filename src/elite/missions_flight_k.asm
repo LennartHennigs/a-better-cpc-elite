@@ -1,12 +1,17 @@
 ; Ship pack image (-DFL_1 .. -DFL_7): the default image plus one or two extra hulls (Fessor's ships, missions_ships.asm, made by tools/fessor_ships.py)
 ; and a ship table hook that swaps them in for a stock type. The stock 19 types stay: each redirected type uses the extra hull on half the spawns (bit 0 of getRandomNumber).
 ; Never redirected: 8 police Viper, 15 Thargoid, 18 Thargon (the Thargoid and plans missions need them). Hook: spawnShip, A = type (kept), HL = table base.
+; The 64K packs 1 and 2 carry one hull each (the Gecko, the Moray): the room goes to the spawn variance routine (SPAWN_VARIANCE, docs/_ship_spawning.md). The 128K build (HULL_128) keeps both.
     IFDEF FL_1
     DEFINE HULL_GECKO
+    IFDEF HULL_128
     DEFINE HULL_COBRAMK1
     ENDIF
+    ENDIF
     IFDEF FL_2
+    IFDEF HULL_128
     DEFINE HULL_WORM
+    ENDIF
     DEFINE HULL_MORAY
     ENDIF
     IFDEF FL_3
@@ -33,18 +38,29 @@ mxShipTableImpl:
     ld a,c
     ret nc
     IFDEF FL_1
+    IFDEF HULL_128
     cp 16                             ; Sidewinder -> Gecko, Krait -> Cobra Mk I: the two records are adjacent, so one base serves both types
     ret c
     cp 18
     ret nc
+    ELSE
+    cp 16                             ; Sidewinder -> Gecko
+    ret nz
+    ENDIF
     ld hl,mxEntryGecko-16*4
     ENDIF
     IFDEF FL_2
+    IFDEF HULL_128
     cp 16                             ; Sidewinder -> Worm, Krait -> Moray (adjacent records, as above)
     ret c
     cp 18
     ret nc
     ld hl,mxEntryWorm-16*4
+    ELSE
+    cp 17                             ; Krait -> Moray
+    ret nz
+    ld hl,mxEntryMoray-17*4
+    ENDIF
     ENDIF
     IFDEF FL_3
     cp 16                             ; Sidewinder -> Mamba
@@ -95,7 +111,9 @@ mxEntryWorm:
 mxEntryMoray:
     jp shipdatMoray
     db 4
+    IFDEF HULL_WORM
     ASSERT mxEntryMoray == mxEntryWorm + 4, "the Worm and Moray records must be adjacent (one range test serves both types)"
+    ENDIF
     ENDIF
     IFDEF HULL_MAMBA
 mxEntryMamba:

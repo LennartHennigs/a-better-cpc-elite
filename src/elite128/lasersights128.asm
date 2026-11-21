@@ -128,35 +128,36 @@ musicHookEnd:
     IFDEF SPAWN_VARIANCE
     ASSERT musicHookEnd == HOME + 0xB7, "spawnVariance = bankInit + 0xB7 in commonxx.asm"
 ; ---- Spawn variance (src/elite128/config.inc SPAWN_VARIANCE; docs/_ship_spawning.md) ------------------------------------------------------------------------------------------
-; Called at the end of spawnShip with IX = the new ship (x_lo, y_lo and the x and y signs are random already). Only the hostile types (bit 2 of byte +33: Sidewinder, Krait, the
-; pirates, the Asp, the Thargoid) are changed, the others keep the stock start (asteroids and traders need a heading first, see TODO_128K.md): x_hi and y_hi random 0 to 63 (up to
-; about 16,000 units sideways), z_hi 32 to 63 (8,000 to 16,000 units), the z sign random. A ship behind the player (z negative) must not be inside the rear cone, i.e. with both x_hi
-; and y_hi below z_hi: then it is put in front. That leaves the front 180 degrees plus the two side wedges behind the lateral axis: 270 degrees. The ship turns towards the player by itself.
-; Externals: GETRND (getRandomNumber, bank 7: visible, spawnShip runs in a draw configuration).
+; The rules are in the module in RAM bank 6 (spawnmod.asm, &4600), which these stubs call on the resident stack like the fill module (the game stack is in bank 7, hidden by config C6).
+; spawnVariance: the end of spawnShip, IX = the new ship (a hostile type or a pack member is placed, the other types keep the stock start).
+; spawnRock: the end of the asteroid branch of spawnCommand0: a random place and a heading towards the player.
+; spawnPackShip: spawnEscortPack's call of spawnShip, with the number of ships still to come for the module (spawnPackC, 0 outside a pack).
+; Externals: HULLSAVESP, HULLSTACKTOP (the resident stack of the far calls), CURCFG, SPAWNSHIP.
 spawnVariance:
-    bit 2,(ix+33)
-    ret z
-    call GETRND
-    and 0x3F
-    ld (ix+1),a
-    call GETRND
-    and 0x3F
-    ld (ix+4),a
-    call GETRND
-    and 0x1F
-    or 0x20
-    ld (ix+7),a
-    call GETRND
-    and 0x80
-    ld (ix+8),a
-    ret z                               ; in front
-    ld a,(ix+1)
-    cp (ix+7)
-    ret nc                              ; x_hi >= z_hi: outside the rear cone
-    ld a,(ix+4)
-    cp (ix+7)
-    ret nc
-    res 7,(ix+8)                        ; inside the rear cone: in front instead
+    ld a,(spawnPackC)
+    jr spawnFar
+    ASSERT $ == HOME + 0xBC, "spawnRock = bankInit + 0xBC in commonxx.asm"
+spawnRock:
+    ld a,0xFF
+spawnFar:
+    ld (HULLSAVESP),sp
+    ld sp,HULLSTACKTOP
+    ld bc,0x7FC6                        ; RAM bank 6 at &4000
+    out (c),c
+    call 0x4600                         ; spawnMod (src/elite128/spawnmod.asm)
+    ld a,(CURCFG)                       ; back to the draw configuration (the mapMain macro of commonxx.asm)
+    ld b,0x7F
+    out (c),a
+    ld sp,(HULLSAVESP)
+    xor a                               ; spawnShip returns A = 0
     ret
+    ASSERT $ == HOME + 0xDA, "spawnPackShip = bankInit + 0xDA in commonxx.asm"
+spawnPackShip:
+    ld (spawnPackC),bc                  ; C (B is ignored); A, the ship type, stays
+    call SPAWNSHIP
+    ld (spawnPackC),a                   ; A = 0
+    ret
+spawnPackC:
+    dw 0
 spawnVarianceEnd:
     ENDIF

@@ -27,8 +27,8 @@ TRAP = 0x9F00
 N = 60
 # pack: {stock type: (stock label, extra label)}
 PACKS = {
-    1: {16: ("SHIPDATPIRATE1", "shipdatGecko"), 17: ("SHIPDATPIRATE2", "shipdatCobraMk1")},
-    2: {16: ("SHIPDATPIRATE1", "shipdatWorm"), 17: ("SHIPDATPIRATE2", "shipdatMoray")},
+    1: {16: ("SHIPDATPIRATE1", "shipdatGecko")} if not B128 else {16: ("SHIPDATPIRATE1", "shipdatGecko"), 17: ("SHIPDATPIRATE2", "shipdatCobraMk1")},      # the 64K packs 1 and 2 have one hull each (room for the spawn variance routine)
+    2: {17: ("SHIPDATPIRATE2", "shipdatMoray")} if not B128 else {16: ("SHIPDATPIRATE1", "shipdatWorm"), 17: ("SHIPDATPIRATE2", "shipdatMoray")},
     3: {16: ("SHIPDATPIRATE1", "shipdatMamba")},
     4: {17: ("SHIPDATPIRATE2", "shipdatAdder")},
     5: {10: ("SHIPDATBIGTRADER", "shipdatBoa")},

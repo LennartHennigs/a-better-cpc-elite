@@ -72,7 +72,7 @@ done
 if [ "$SRC" = "$ROOT/src/elite" ]; then
   for p in "largeaxx LARGEAXX" "commonxx COMMONXX"; do
     read -r n f <<<"$p"
-    for fl in "-DMISSIONS" "-DENHANCED -DMISSIONS"; do   # the second is the build that goes on the disks (tools/build_dsk.py)
+    for fl in "-DMISSIONS" "-DENHANCED -DMISSIONS" "-DENHANCED -DTITLESEL -DTRAFFIC -DMISSIONS -DSPAWN_VARIANCE"; do   # the second and third are the builds that go on the disks (tools/build_dsk.py; SPAWN_VARIANCE needs MISSIONS)
       if sjasmplus $fl --raw="$OUT/$n.m.bin" "$SRC/$n.asm" >"$OUT/$n.m.log" 2>&1 && [ "$(wc -c <"$OUT/$n.m.bin")" -eq "$(wc -c <"$BIN/$f.BIN")" ]; then echo "$n $fl: ok (same length)"; else echo "$n $fl: FAILED"; tail -3 "$OUT/$n.m.log"; rc=1; fi
     done
   done

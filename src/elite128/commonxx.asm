@@ -5739,8 +5739,10 @@ spawnCommand0:
     ret nz
     ld a,0x0D
     jr jrEntrytoSpawnShip
-dat_8427:
-    db 0xDD,0xCB,"&",0xF6,0xDD,0xCB," ",0xD6,0xC3,0xE0,0x84
+dat_8427:                               ; the return address of the marked Asp: was a db blob with the raw target jp &84E0 (right in the stock layout, stale here since the spawn variance call moved
+    set 6,(ix+38)                       ; everything after spawnShip: it jumped into the middle of the code in front of spawnEscortPack)
+    set 2,(ix+32)
+    jp spawnEscortPack
 ; ZX Spectrum: finish_ship_and_escort (&BBF2)
 ; Two entries: &8432 (this one) rolls a random byte against C: a low roll goes to the hostile pick, a middling one makes an asteroid, a high one
 ; spawns nothing. The marked Asp's return address (dat_8427) enters at its own tail and spawns the 2-3 escort pack.
@@ -5762,7 +5764,11 @@ SPAWN_JUNK_WIDTH equ 35            ; the next 35 values make an asteroid, 13.7% 
     res 6,(ix+32)
     ld a,0xC0
     ld (ix+29),a
+    IFDEF SPAWN_VARIANCE
+    jp spawnRock                        ; a random place around the player and a heading towards it (spawnmod.asm)
+    ELSE
     ret
+    ENDIF
 ; ZX Spectrum: pick_hostile_encounter (&BC21)
 ; Picks a hostile encounter from the roll left in A: a fresh jump into a new system (ThargonMissionVar-style state 4) always picks a Thargoid,
 ; a pending mission offer always picks a Python trader.
@@ -5858,8 +5864,10 @@ spawnEscortPack:
     call getRandomNumber
     and 0x03
     inc a                           ; 1 to 4 ships like the C64 ((rnd & 3) + 1); stock: rra / adc a,0x02 = 2 to 4, mean 3.0
+    IFNDEF SPAWN_VARIANCE
+    nop                             ; (the two bytes the asteroid branch of spawnCommand0 needs for its jp spawnRock)
     nop
-    nop
+    ENDIF
     ld c,a
 spawnEscortLoop:
     call lookforFreeSlot
@@ -5868,7 +5876,11 @@ spawnEscortLoop:
     call getRandomNumber
     and 0x01
     add a,0x10
+    IFDEF SPAWN_VARIANCE
+    call spawnPackShip              ; the same, with C (the ships still to come) for the module: the pack stays together (spawnmod.asm)
+    ELSE
     call spawnShip
+    ENDIF
     pop bc
     dec c
     jr nz,spawnEscortLoop
@@ -7539,6 +7551,8 @@ laserSightsSize equ 0xC0
 musicState equ bankInit + 0x80          ; the title music (lasersights128.asm, the hook rides in the same overlay): 0 = off, 1 = on, n > 1 = n - 1 ticks owed
 musicHook equ bankInit + 0x81
 spawnVariance equ bankInit + 0xB7       ; after the music hook in the same overlay (lasersights128.asm), only with SPAWN_VARIANCE
+spawnRock equ bankInit + 0xBC
+spawnPackShip equ bankInit + 0xDA
 musicSlot equ loc_604A - 0x4A           ; the 4 KB of the code block in RAM bank 7 (stock &6000-&6FFF, flight-only code) that the player overlays while the title runs (musiquex.asm)
 bankInitStageFill  equ STAGE+0x800
 bankInitStageData  equ STAGE+0x1000
@@ -7606,10 +7620,15 @@ bankInitGo:
     ld de,0x6000
     ld bc,0x0800
     ldir
-    ld hl,STAGE+0x2800                  ; the records of the ship pack hulls (fill128_packs.bin, types 20-28) at &6800
-    ld de,0x6800
+    ld hl,STAGE+0x2800                  ; the records of the ship pack hulls (fill128_packs.bin, types 20-28) at &6800 (DE is there already: the data copy ended at &6800)
     ld bc,0x0600
     ldir
+    IFDEF SPAWN_VARIANCE
+    ld hl,STAGE+0x3000                  ; the spawn module (spawnmod.asm: code and table, 0x240 bytes at most) from a blank block to &4600
+    ld de,0x4600
+    ld bc,0x0240
+    ldir
+    ENDIF
     call fillInitEntry                              ; fillInit
     call installVBL                     ; loadFile's setFilemenuColors puts back the firmware interrupt vector from oldIRHandler, which holds garbage until installVBL has saved it
     ld bc,0x7FC5                        ; INDICATO (bank 5 window &5000) is read from the disk once, with the bank mapped: the firmware loads into it
@@ -7634,14 +7653,11 @@ bankInitGo:
     ld bc,0x1200
     ldir
     IFDEF MISSIONS
-    ld bc,0x7FC4                        ; the overlays into bank 4 (slots 0 and 1 from stage &D800, 2 and 3 from &E000); the flight images come with INDICATO (bank 5 &6000, see mxBankFlightImpl)
-    out (c),c
-    ld hl,STAGE+0x1800
+    ld hl,STAGE+0x1800                  ; the overlays into bank 4 (still mapped by the copy of LARGEAXX above; slots 0 and 1 from stage &D800, 2 and 3 from &E000); the flight images come with INDICATO (bank 5 &6000, see mxBankFlightImpl)
     ld de,0x4000
     ld bc,0x0480
     ldir
-    ld hl,STAGE+0x2000
-    ld de,0x4480
+    ld hl,STAGE+0x2000                  ; (DE is at &4480 already)
     ld bc,0x0480
     ldir
     ENDIF

@@ -39,6 +39,8 @@ if OUT.resolve() == BASE.resolve() or dskx.is_original(OUT):   # CLAUDE.md: neve
     sys.exit(f"{OUT}: refusing to write a disk into the project root or disks/ (the originals live there); use work/")
 SJASM = Path.home() / ".local/bin/sjasmplus"
 FILES = {"LARGEAXX": [] if DE or FR else ["-DFIREBIRD"], "COMMONXX": ["-DTITLESEL", "-DTRAFFIC"], "COMMON2X": [], "MUSIQUEX": ["-DTITLESEL"]}   # TITLESEL: cursor keys change the title ship; TRAFFIC: C64-like spawn odds (docs/_ship_packs.md)
+if MISSIONS:      # the hostile ships start at a random distance and direction (the routine is in the flight tail, src/elite/missions_flight.asm; docs/_ship_spawning.md)
+    FILES["COMMONXX"].append("-DSPAWN_VARIANCE")
 if STOCK:
     FILES = {"LARGEAXX": [], "COMMONXX": [], "COMMON2X": [], "MUSIQUEX": []}   # no -DFIREBIRD either: it drops the cargo-capacity test (LARGEAXX &0998)
 

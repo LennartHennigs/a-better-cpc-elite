@@ -21,6 +21,7 @@ A sells your whole hold.
 Cash shows while you buy.
 Kills show on the status page.
 Planets and suns hide stars.
+Pirates come from more sides.
 New ships fly the lanes, and
 space is busier.
 
