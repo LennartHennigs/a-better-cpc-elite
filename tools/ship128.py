@@ -246,10 +246,32 @@ def gun_vertex(q):
     return max(range(len(q)), key=lambda i: (q[i][2], -abs(q[i][0])))    # gun vertex (lookup_vertex_coords): the nose, the vertex furthest along +z
 
 
+ALLOY_T = 4                  # the plate's thickness: the two ends of one diagonal move this many units along the plate's normal, in opposite directions
+
+
 def alloy(m, a):
-    """The plate: its 4 stock vertices, two triangles per side (the fill culls by winding, so each side shows its own pair); the sides get different colours."""
-    q = stock_points(m, a)
-    return q, [(0, 1, 2, 118, 0), (0, 2, 3, 118, 1), (0, 2, 1, 42, 2), (0, 3, 2, 42, 3)], 4
+    """The plate: its 4 stock vertices, with the ends of one diagonal (vertices 0 and 2) moved +-ALLOY_T along the plate's normal, so the four vertices span a thin
+    tetrahedron: seen edge-on it keeps a sliver of area instead of vanishing (same 4 vertices, same 4 triangles, wound outward by the centroid). The faces that look up
+    along the normal get one colour, the others the second."""
+    q = [list(p) for p in stock_points(m, a)]
+    sub = lambda u, v: [u[i] - v[i] for i in range(3)]
+    cross = lambda u, v: [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]]
+    dot = lambda u, v: sum(u[i] * v[i] for i in range(3))
+    n = [x + y for x, y in zip(cross(sub(q[1], q[0]), sub(q[2], q[0])), cross(sub(q[2], q[0]), sub(q[3], q[0])))]
+    ln = dot(n, n) ** 0.5
+    n = [x / ln for x in n]
+    for i, sg in ((0, 1), (2, -1)):
+        q[i] = [int(round(q[i][k] + sg * ALLOY_T * n[k])) for k in range(3)]
+    c = [sum(p[k] for p in q) / 4 for k in range(3)]
+    tris = []
+    for g, (a0, b0, c0) in enumerate(((0, 1, 2), (0, 2, 3), (0, 1, 3), (1, 2, 3))):
+        nn = cross(sub(q[b0], q[a0]), sub(q[c0], q[a0]))
+        mid = [sum(q[v][k] for v in (a0, b0, c0)) / 3 - c[k] for k in range(3)]
+        if dot(nn, mid) < 0:
+            b0, c0 = c0, b0
+            nn = [-x for x in nn]
+        tris.append((a0, b0, c0, 118 if dot(nn, n) > 0 else 42, g))
+    return [tuple(p) for p in q], tris, 4
 
 
 def fessor_constrictor():
