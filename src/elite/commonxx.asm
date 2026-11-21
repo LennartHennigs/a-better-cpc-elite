@@ -14471,6 +14471,19 @@ sc1loop:
     ld a,0x0F
     push bc
     call spawnShip
+    IFDEF SPAWN_VARIANCE
+    inc (ix+37)                     ; spawnShip returns A = 0 and (ix+37) = &7E: this is `set 0,(ix+37)` in 3 bytes
+    ld (ix+4),a                     ; y_hi 0 and z sign 0 (the spawn variance made both random: the group would start behind the player)
+    ld (ix+8),a
+    call getRandomNumber
+    and 0x0F
+    or 0x04
+    ld (ix+7),a
+    cp 0x08                         ; x_hi = bit 3 of z_hi (z_hi is 4 to 15): 4 bytes instead of rra x3 / and 1
+    sbc a,a
+    inc a
+    ld (ix+1),a
+    ELSE
     set 0,(ix+37)
     call getRandomNumber
     and 0x0F
@@ -14483,6 +14496,7 @@ sc1loop:
     ld (ix+1),a
     xor a
     ld (ix+4),a
+    ENDIF
     call setDirectionofEntity
     pop bc
     dec c

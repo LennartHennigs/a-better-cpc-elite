@@ -64,6 +64,9 @@ mxSpawnNext:
     ld (ix+1),a
     xor a
     ld (ix+4),a
+    IFDEF HULL_128
+    ld (ix+8),a                       ; z sign 0: the 128K spawn variance makes it random, and the hull is hostile
+    ENDIF
     call setDirectionofEntity
 mxSpawnDone:
     pop iy

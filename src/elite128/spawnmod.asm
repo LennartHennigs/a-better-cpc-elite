@@ -65,6 +65,11 @@ smFront:
     ld (hl),a
     jr c,smLeader
     ld iy,(smLeaderIX)                    ; a follower: the leader's spot, shaken a little
+    ld a,(iy+34)                        ; but only while the leader's slot still holds a live hostile ship (a pack cut short by a full slot table leaves stale state: the slot may be a trader or the station by now)
+    and a
+    jr z,smLeader
+    bit 2,(iy+33)
+    jr z,smLeader
     ld b,3
 smFollow:
     call smRand

@@ -20,7 +20,7 @@ NEAR = int(sys.argv[1]) if len(sys.argv) > 1 else 11
 FAR = int(sys.argv[2]) if len(sys.argv) > 2 else 12
 REV = len(sys.argv) > 3 and sys.argv[3] == "rev"      # spawn the far ship first (slot allocation order is not known to be ascending)
 TRAP = 0x9F00
-sym = {m.group(1): int(m.group(2), 16) for l in (ROOT / "work/elite128/relo/c.sym").read_text().splitlines() for m in [re.match(r"(\S+): EQU 0x([0-9A-Fa-f]+)", l)] if m}
+sym = {m.group(1): int(m.group(2), 16) for l in (Path(os.environ.get("SYM128", ROOT / "work/elite128/c128.sym"))).read_text().splitlines() for m in [re.match(r"(\w+):\s+EQU\s+0x([0-9A-Fa-f]+)", l)] if m}
 
 
 async def run(sort):
@@ -47,7 +47,7 @@ async def run(sort):
             await c("run", {"max_us": 4_000_000, "timeout_s": 60})
             if not sort:
                 await c("memory_write", {"address": sym["hullBegin"] + 1, "data": "00"})
-            safe = (await c("breakpoint_add", {"address": 0xCF68, "kind": "pc"}))["id"]
+            safe = (await c("breakpoint_add", {"address": sym["handleEntitys"], "kind": "pc"}))["id"]
             rep = await c("run", {"max_us": 10_000_000, "timeout_s": 60})
             assert rep.get("reason") == "breakpoint", rep
             await c("breakpoint_remove", {"breakpoint_id": safe})
@@ -57,15 +57,15 @@ async def run(sort):
             ZS = [int(v, 0) for v in os.environ.get("ZS", "0x120,0x1C0").split(",")]      # depth of the near and the far ship (16 bit; try 0x210,0x2F0 for the same high byte)
             ships = [(NEAR, ZS[0], 0x00), (FAR, ZS[1], 0x00)]
             for typ, z, x in (ships[::-1] if REV else ships):
-                await call(0x816B)
+                await call(sym["lookforFreeSlot"])
                 ix = (await c("registers_get"))["ix"]
-                await call(0x80CD, a=typ, ix=ix)
+                await call(sym["spawnShip"], a=typ, ix=ix)
                 ix = (await c("registers_get"))["ix"]
                 for off, val in ((0, x), (1, 0), (2, 0), (3, 0), (4, 0), (5, 0), (6, z & 255), (7, z >> 8), (8, 0), (27, 0), (37, 0x7F)):
                     await c("memory_write", {"address": ix + off, "data": "%02X" % val})
                 flag = (await c("memory_read", {"address": ix + 32, "length": 1}))["hex"]
                 await c("memory_write", {"address": ix + 32, "data": "%02X" % (int(flag, 16) & ~0x40)})
-                await call(0x82B8, ix=ix)
+                await call(sym["setDirectionofEntity"], ix=ix)
             await c("breakpoint_remove", {"breakpoint_id": trap})
             await c("registers_set", {"values": {k: saved[k] for k in ("af", "bc", "de", "hl", "ix", "iy", "sp", "pc", "af_", "bc_", "de_", "hl_") if k in saved}})
             await c("run", {"max_us": 1_500_000, "timeout_s": 60})

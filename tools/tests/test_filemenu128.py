@@ -56,6 +56,12 @@ async def main():
 
             await key("3")                                   # catalogue
             await c("screen_image", {"path": "output/fm_cat.png"})
+            # the firmware prints the catalogue through TXT_OUT_ACTION (myTEXTOUTACTION, a far call): if that hook is wrong every character is dropped and the frame stays empty.
+            # The game's menu lists the commander saves only, under its own heading.
+            st = await c("screen_text")
+            text = " ".join(st["lines"])
+            print("catalogue screen:", repr(text.strip()))
+            ok &= "COMMANDERS" in text.upper()
             await key("space", after=1_000_000)
             await key("2")                                   # save
             await typ("TEST\n")

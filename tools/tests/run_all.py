@@ -64,8 +64,8 @@ def emu128(only):
     gens = [("snap_docked128.py", [], "output/docked128.sna", any(n not in NEEDS_FLIGHT for n in wanted)),      # snapshots the tests start from: a stale one silently runs the OLD code
             ("test_flight128.py", ["3"], "output/flight128.sna", any(n in NEEDS_FLIGHT for n in wanted))]
     for script, args, out, needed in gens:
-        if needed and subprocess.run([str(CPCX), "-I", str(T / script), *args], cwd=XRAY, env=env, capture_output=True, timeout=TIMEOUT).returncode:
-            print(f"FAIL {script} ({out})")
+        if needed and not run(script, [str(CPCX), "-I", str(T / script), *args], XRAY, env):      # run() reports a timeout as a FAIL line too
+            print(f"generator {script} failed ({out} not made)")
             return [False]
     return [run(f"test_{n}", [str(CPCX), "-I", str(T / f"test_{n}.py")], XRAY, env, need_ok_text=True) for n in wanted]
 
