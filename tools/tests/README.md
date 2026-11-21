@@ -58,7 +58,7 @@ cd work/xray                      # the scripts use relative paths (output/, dis
 
 ## 128K tests (branch `elite128`)
 
-Run from `work/xray` with absolute script paths (in this worktree `work/xray` is a symlink to the main checkout). They need `build/elite128.dsk` copied to `work/xray/disk/elite128.dsk` (or `DISK128=...`); `python3 -I tools/tests/run_all.py --emu128` builds the disk and runs `packs`, `ship_packs`, `sellall`, `escdigit`, `filemenu`, `music` and `tools` (the ones with an `ALL OK` line); the rest are screenshots and probes, run by hand. Flight tests start from `output/flight128.sna` (`test_flight128.py 3`), launch and docking tests from `output/docked128.sna` (`snap_docked128.py`; regenerate it after any code change).
+Run from `work/xray` with absolute script paths (in this worktree `work/xray` is a symlink to the main checkout). They need `build/elite128.dsk` copied to `work/xray/disk/elite128.dsk` (or `DISK128=...`); `python3 -I tools/tests/run_all.py --emu128` builds the disk and runs `packs`, `ship_packs`, `sellall`, `escdigit`, `filemenu`, `music`, `tools` and `spawnvar` (the ones with an `ALL OK` line); the rest are screenshots and probes, run by hand. Flight tests start from `output/flight128.sna` (`test_flight128.py 3`), launch and docking tests from `output/docked128.sna` (`snap_docked128.py`; regenerate it after any code change).
 
 | Test | Checks |
 |---|---|
