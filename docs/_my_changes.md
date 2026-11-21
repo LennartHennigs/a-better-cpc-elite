@@ -1,5 +1,7 @@
 # What we changed in the game
 
+This file covers the 64K builds. The differences of the 128K build (`src/elite128`, branch `elite128`) are in `_128k_version.md` and `src/elite128/README.md`.
+
 Every difference between our builds and the original game, with why it exists, where it lives, what it costs and how it is proven. Without any switch only the CPC+ byte differs from the original
 (`_build.md`); everything else is behind a `-D` flag. Source-only work (names, comments, `smc_`/`buf_` prefixes, `dw` tables) changes no byte and is not listed. The dated history is in `CHANGELOG.md` (up to 2026-11-11: `changelog_archive.md`).
 

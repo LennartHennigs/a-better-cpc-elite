@@ -1,6 +1,6 @@
 # 128K build (branch `elite128`)
 
-Rules for `src/elite128/`, `src/viewer128/`, `tools/*128*` and `tools/tests/*128*`; the root `CLAUDE.md` rules still apply (originals in `disks/`, git, docs). Read `README.md` here first; memory map and free bytes: `docs/_memory_map.md` "128K layout"; overview `docs/_128k_version.md`, open work `TODO_128K.md`, diary `CHANGELOG_128K.md`.
+Rules for `src/elite128/`, `src/viewer128/`, `tools/*128*` and `tools/tests/*128*`; the root `CLAUDE.md` rules still apply (originals in `disks/`, git, docs). Read `README.md` here first; memory map and free bytes: `docs/_memory_map_128k.md`; overview `docs/_128k_version.md`, open work `TODO_128K.md`, diary `CHANGELOG_128K.md`.
 
 - `src/elite128/` is a fork of `src/elite` for a 6128 (filled ships from RAM bank 6, missions and `LARGEAXX` copied from banks 4/5). ONE variant: flags are in `config.inc`, no `-D` flags on the command line except `-DFL_x`/`-DOVL_x` for the mission images. Generated inputs live in `work/elite128/` and are never committed.
 - Build: `bash tools/check_src128.sh` (runs `tools/ship128.py`, assembles all, builds `work/elite128/fill.bin` with `-DDB_*` addresses, writes `c128.sym`), then `python3 -I tools/build_dsk128.py` (or `make disk6128`) -> `build/elite128.dsk`, then `cp build/elite128.dsk work/xray/disk/elite128.dsk`. Tests use `DISK128=disk/elite128.dsk` (cpcxray's own `disk/`).

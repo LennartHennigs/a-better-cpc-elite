@@ -101,43 +101,6 @@ may move, because saves are XORed with the code at `EquipShip`.
 
 Details, sizes and tests: `_missions_built.md`.
 
-## Gate Array and banking (128K)
+## The 128K build
 
-- The 128K fork (`src/elite128`, branch `elite128`) uses these banks: 6 = fill module and records at `&4000` (config `&C6`), 4 = `LARGEAXX` copy and mission overlays, 5 = mission flight images (copied back by `bankLargeaxx`, `mxBankOverlay`, `mxBankFlight` at `&9C80`); its `README.md` has the map and the findings (ISR stays in banks 0/2, the game stack at `&7497` lives inside the `&4000` window).
-
-- The CRTC/Gate Array fetch video only from the base 64K (banks 0-3). The RAM banking register (`&7Fxx`, `11xxxyyy`) changes what the CPU sees, never what is displayed, so the extra banks 4-7 cannot be shown.
-  Source: [CPCWiki Gate Array](https://www.cpcwiki.eu/index.php/Gate_Array) ("The Video RAM is always located in the first 64K").
-- Configs used by the double-buffer experiment: C0 = banks 0,1,2,3; C1 = 0,1,2,7; C3 = 0,3,2,7. C1/C3 show bank 7 at `&C000`, so code kept there stays visible while the CPU draws at `&4000` (bank 1 or 3);
-  R12 `&1C` displays `&4000` (bank 1), `&3C` displays `&C000` (bank 3). C0 hides bank 7: code running there must be elsewhere, and interrupts are off.
-- The port is write-only: keep the current config in a variable (`dbCfg`, `dbBank`). Needs 128K; a 464 needs a fallback.
-- The CPCWiki pages return 403 to `curl` and WebFetch; read them with Claude in Chrome (`get_page_text`).
-
-## 128K layout (branch `elite128`, 2026-11-12; measured from the build, missions disk)
-
-CPU view in flight (config C1 or C3; the flip alternates them). Free = bytes not used by anything built today.
-
-| CPU address | RAM bank | What | Used | Free |
-|---|---|---|---|---|
-| `&0000-&003F` | 0 | vectors (`&0038` IM 1 -> `&2815`) | all | 0 |
-| `&0040-&1A3F` | 0 | flight: the firmware's parked upper RAM (6.5 KB, mostly zero, restored at docking); docked: `LARGEAXX` `&0840-&1A3F` (4608 B incl. the mission stub) | all | 0 (the parked zeros are not safe to reuse) |
-| `&1A40-&3F5F` | 0 | `COMMONXX` core: variables, ISR (`&2815`), disc fill, indicators, trade code, player state `&38CB-&3A..` | all | about 60 B of pinned dead bytes (`loc_293F` 8, music names and flags about 40, `unusedGet*` 10) |
-| `&3F60-&7FFF` (window) | 1 or 3 (C1/C3), 4/5/6 (far calls) | screen page A or B (8 scan line blocks of 2 KB: 1536 B pixels + 512 B gap); the gap holds the font and the old COMMON2X tables and code | all | 0 (the only free gap runs are the font, filled at run time) |
-| `&8000-&805F` | 2 | `hullQ` (8 entries x 8) and `hullStack` (32) | all | 0 |
-| `&8060-&9C6B` | 2 | stock `COMMONXX` code from the old `&7D5E-&9FFF` plus the filled-hull glue (`hullDraw`, queue, `bankInit` boot code `&98AC`, title selection) and the disc trampolines (`CAS_*` run the firmware on `discStack`, `&A400-&A4FF` in the unused first bitmap lines, because the game stack is in bank 7 and the upper ROM hides it) | all | **42** (glue ends `&9C56`; mission bank table is fixed at `&9C80`; the flight image stage copies in `bankInit` are gone). `bankInit` (`&989C-&99C7`) is dead after `Init_`: its first 112 bytes are overwritten by the laser sights (`lasersights128.asm`) |
-| `&9C80-&9D8D` | 2 | mission bank routines (`mxBankTable` `&9C80/&9C83`), flip stubs (`dbFlipTail`, `dbIsr`, `dbCopy`), `hullFindType` | all | **16** (pad before `&9D9E`) |
-| `&9D9E-&9FFF` | 2 | flight tail: the mission image in use (default 143 B, C 593, T 585, S 337, R 261, P 245), slot 608 B, must end at `&9FFE` | 608 for the largest | **15** with the largest image, 465 with the default one |
-| `&A000-&BFFF` | 2 | off-screen bitmap (128 lines x 64 B), wiped every frame; `&9FFE-&9FFF` and the bytes below `&A000` take the interrupt's push | all | 0 |
-| `&C000-&FFFF` | 7 | code block (15,870 B of the stock `&3F60-&7D5D` plus title tables), `MainStackNStrings` `&F39B` (game stack grows down into the block's tail) | 16,383 | **1** |
-
-Banks not visible at once (mapped over the window by `out (c),c`, never while the stack is in them):
-
-| Bank | Content | Used | Free |
-|---|---|---|---|
-| 4 (`&4000-&7FFF`) | `&4000-&48FF` four docked mission overlays (4 x `&240`, largest C 561 B), `&4900-&5AFF` copy of `LARGEAXX` (4608 B, copied to `&0840` at every docking) | 6,912 B | **9,472 B** (`&5B00-&7FFF`; the music slots are gone) |
-| 5 | `&5000-&5FFF` `INDICATO` (dashboard graphics, 4096 B), `&6000-&7EDF` 13 flight images (default, packs 1-7, C P T S R: 13 x `&260`), loaded from the one file `INDICATO.BIN` | 11,744 B | **4,640 B** (`&4000-&4FFF` 4,096, `&7EE0-&7FFF` 288) |
-| 6 | `&4000-&45DB` fill module + flip code (1,489 B built, copy length `&600`), variables `&4F00`, tables `&5000-&5F00` (built by `fillInit`), `&6000-&6534` hull records (1,333 B) | about 5,100 B | **about 9,200 B** (`&45DC-&4EFF` 2,340 incl. up to 47 B to the copy limit, `&6535-&7FFF` 6,859) |
-| 1 / 3 | the two screens (the CRTC shows one, the CPU draws the other) | 32 KB | 0 |
-
-Totals: 128 KB; **about 27.5 KB free**, all of it in banks 4-6 (data only: code that runs must sit in bank 7, the resident part of bank 2, or be a far-call module like the fill). Code space is the scarce kind: **172 + 16 + 15 resident bytes and 1 byte in bank 7**, plus about 2.3 KB of module code space in bank 6 (reachable only through `fillHullEntry`-style far calls with the resident stack).
-
-Why it matters: (1) the resident glue has only 172 B left before the fixed mission table, a new language needs its text tables (data) in banks 4-6 and a small copy or pointer switch in the resident part; (2) a mission overlay slot is 576 B with the largest at 561 (15 spare), so longer German or French mission texts need bigger slots (the slots can grow: bank 4 has 9.4 KB free, but the docked stub area in `LARGEAXX` `&17FD-&1A3F` is the real limit: it is 0 B spare); (3) the flip's per-frame copy costs time, not space.
+The 128K build (branch `elite128`) has its own map: `_memory_map_128k.md` (RAM banks, the `&4000` window, the glue budget).

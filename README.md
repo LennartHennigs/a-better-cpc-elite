@@ -149,7 +149,7 @@ The missions are tested in an emulator driven from Python (`tools/tests/test_*.p
 
 The notes live in `docs/`, one file per topic (`docs/_*.md`); the main ones:
 
-- `docs/_build.md` building, switches and what the checker proves, `docs/_my_changes.md` every change we made to the game, `docs/_memory_map.md` memory map, swapping and free space
+- `docs/_build.md` building, switches and what the checker proves, `docs/_my_changes.md` every change we made to the game, `docs/_memory_map.md` memory map, swapping and free space (the 128K build: `docs/_memory_map_128k.md`)
 - `docs/_architecture.md` design, dead code and the dynamic labels
 - `docs/_ship_packs.md` the extra ships, the ship packs, the traffic constants and how they are tested
 - `docs/_missions_built.md` the implemented missions (spoilers), `docs/_missions.md` the research on the other versions (spoilers)
