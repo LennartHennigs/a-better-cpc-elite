@@ -1,6 +1,6 @@
 # How ships are spawned: pirates and asteroids on the CPC, BBC, C64 and Atari ST
 
-Why this note exists: pirates seem to appear in the top right of the view in the 128K build (`TODO_128K.md`). It compares the CPC code (`src/elite/commonxx.asm`, the same in `src/elite128/`) with the 6502 versions (BBC and C64, the commented sources in `work/ext_bbc` and `work/ext_c64`) and the Atari ST original (`work/ext_st/repo/src_orig/asm/combat.m68`). The third-party sources are read-only references: nothing here is copied from them. Findings on the CPC marked "measured" come from calling `spawnShip` in cpcxray on the 128K build (2026-11-21).
+Why this note exists: pirates seemed to appear in the top right of the view in the 128K build (disproved as a spawn bias and closed, see `TODO_128K.md` *Done*). It compares the CPC code (`src/elite/commonxx.asm`, the same in `src/elite128/`) with the 6502 versions (BBC and C64, the commented sources in `work/ext_bbc` and `work/ext_c64`) and the Atari ST original (`work/ext_st/repo/src_orig/asm/combat.m68`). The third-party sources are read-only references: nothing here is copied from them. Findings on the CPC marked "measured" come from calling `spawnShip` in cpcxray on the 128K build (2026-11-21).
 
 ## The short version
 
@@ -54,4 +54,4 @@ Wanted: a random distance and direction for asteroids too, with the 128K rules s
 
 ## What this means for the 128K build
 
-The spawn and the projection are not the cause of a top-right bias (the spawn is uniform, a hull at each quadrant draws in that quadrant). If a bias is real, look at later movement (ships turn towards the player), the other callers of `spawnShip` and the same situation on `elite64.dsk`; the plan is in `TODO_128K.md` (pirates). To make ships come from all around (a random sign for z as well, or the ST model), the ST's random direction on a sphere (including behind the player) is the model, but it needs trigonometry that the CPC code does not have.
+The spawn and the projection are not the cause of a top-right bias (the spawn is uniform, a hull at each quadrant draws in that quadrant); the report was closed. If it comes back, look at later movement (ships turn towards the player), the other callers of `spawnShip` and the same situation on `elite64.dsk` (`TODO_128K.md` *Done*). To make ships come from all around (a random sign for z as well, or the ST model), the ST's random direction on a sphere (including behind the player) is the model, but it needs trigonometry that the CPC code does not have.
