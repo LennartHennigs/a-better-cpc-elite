@@ -14,7 +14,6 @@ Open work for the 128K build, cleaned up 2026-11-21 (first written 2026-11-20 by
 
 - [ ] **Spawn variance, phase 2:** hostiles are done (`SPAWN_VARIANCE`, see *Done*). Open: asteroids and traders (they need a heading first), packs staying together (`spawnEscortPack`), a play test (does a ship from the side or behind feel right?), the default for the 128K disk and whether `main` gets the switch. Design notes: `docs/_ship_spawning.md` "Open: asteroids, traders and packs".
 - [ ] **Ship viewer (`RUN"SHOWSHPS`) ignores the hull source:** `tools/mk_viewer128.py` clears `sys.argv` and always takes the stock-based hulls (`s128.stock_fit`, line 78), so a disk built with `HULLS=arcelite` still shows the stock-fit ships in the viewer while the game flies the ArcElite ones (checked 2026-11-21 in the source; not run). It should follow the build: when `SOURCE == "arcelite"` (the `HULLS` environment variable, which `build_dsk128.py` passes on) use the same fitted ArcElite points and triangles as `ship128.py` writes for the game (`fit()` at line 211 and the `arcelite` branch near line 272), keep the names and the header numbers from the stock blueprints as now, and check that the 29 ships still fit the viewer's banks 4-6. Also lets the Coriolis (the title selector's first ship) be compared in both sets without booting the game.
-- [ ] **Title name band:** a tall filled hull under the ship name (text row 1) spoils the text: the name is printed into the same off-screen bitmap after the ship and the recolouring pass in `titleName` assumes a plain background (seen with the Thargoid in Virtual Retro, 2026-11-20). Worked around by distance (Thargoid 5, Cobra Mk III 3 in `tools/ship128.py` `VIEW`). Proper fix: clear text row 1, columns 1-30 of the bitmap to the background before printing the name (about 15 bytes: the glue has about 9 free, the `bankInit` overlay can grow a little); then the distances need no tuning.
 - [x] **Title music:** listen to it (Virtual Retro). While a far call hides bank 7 (the ship fill, most of each title frame) the ticks are owed and run in bursts afterwards (at most 24 at once), so the tempo holds but the notes come in clumps; if that sounds bad, shorten the fill windows or make the player independent of bank 7. Not checked: the docked screens after docking back from flight. The title exit reads `NOTMUSIC.BIN` from disk (about a second, as in the 64K game); a bank copy needs resident bytes that do not exist.
 
 ### Speed
@@ -51,6 +50,12 @@ Open work for the 128K build, cleaned up 2026-11-21 (first written 2026-11-20 by
   - The counter step must be larger than the 6502's 4 (the CPC draws 5 to 6 frames per second), or an explosion would last 10 seconds. Cost: up to about 28 x 8 = 220 dots a frame, roughly 10 ms; clip to the 256 x 128 viewport and skip vertices behind the viewer.
   - Checks: screenshots at several distances and counter values, frame time with several exploding ships, the special explosions (Constrictor, station, escape pod), the pens used by the flight view.
 - [ ] **Bigger view and newer cockpit UI** (320 px, 25 rows): deferred, because it needs 9-bit x everywhere and direct drawing.
+
+## Deferred
+
+Wanted, but not now (the work-around holds).
+
+- **Title name band:** a tall filled hull under the ship name (text row 1) spoils the text: the name is printed into the same off-screen bitmap after the ship and the recolouring pass in `titleName` assumes a plain background (seen with the Thargoid in Virtual Retro, 2026-11-20). Worked around by distance (Thargoid 5, Cobra Mk III 3 in `tools/ship128.py` `VIEW`). Proper fix: clear text row 1, columns 1-30 of the bitmap to the background before printing the name (about 15 bytes: the glue has about 9 free, the `bankInit` overlay can grow a little); then the distances need no tuning.
 
 ## Not doing
 
