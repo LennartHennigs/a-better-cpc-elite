@@ -3,7 +3,7 @@
 # address and bytes next to each source line (sjasmplus --lst, with the label table at the end).
 # usage: bash tools/listing6128.sh [OUTDIR]     (default build/listing6128; `make listing6128` calls it)
 # Result: OUTDIR/<module>.lst for largeaxx, commonxx, common2x, musiquex, fill and tt, and OUTDIR/elite6128.lst with all of them in one file (a banner line per module).
-# The generated hull data (work/elite128/, made from ArcElite's table by tools/ship128.py) is part of the listing, so keep OUTDIR out of git (build/ and work/ are ignored; NOTICE_128K.md).
+# The generated hull data (work/elite128/, made from ArcElite's table by tools/ship128.py) is part of the listing, so keep OUTDIR out of git (build/ and work/ are ignored; NOTICE item 10).
 set -u
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUT="${1:-$ROOT/build/listing6128}"

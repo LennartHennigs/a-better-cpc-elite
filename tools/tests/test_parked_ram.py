@@ -5,8 +5,10 @@ Method: load firebird_in_flight.sna, fill every zero run of 16+ bytes in &0040-&
 sequence (after todoDockingProcedure: InitVariables, loadLARGEAXX, docked screens), wait, launch (F1 + launchSequence swap), fly again. After each phase save a
 snapshot and count the marker bytes that changed; in the docked phase the parked copy lives at &A600 (low memory holds LARGEAXX), so the marker run is read there.
 usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/tests/test_parked_ram.py [MARK]
+  BUILD=128 for the 128K build (absolute script path in the worktree; needs output/flight128.sna and disk/elite128.dsk).
 """
 import asyncio
+import os
 import sys
 from pathlib import Path
 
@@ -14,7 +16,11 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
 MARK = int(sys.argv[1], 16) if len(sys.argv) > 1 else 0xAA
-DOCK_CONT = 0x728D + 16     # xor a after the djnz of todoDockingProcedure
+B128 = os.environ.get("BUILD") == "128"      # BUILD=128: the 128K build (disk/elite128.dsk, output/flight128.sna from test_flight128.py 3); the addresses are the labels handleEntitys and DockingSequence + 120 (the `xor a` after the loop) in src/elite128
+HANDLE = 0xCF68 if B128 else 0x5066             # handleEntitys
+DOCK_CONT = 0xF1A1 if B128 else 0x728D + 16     # xor a after the djnz of todoDockingProcedure
+SNA_FLIGHT = "output/flight128.sna" if B128 else "output/firebird_in_flight.sna"
+DISK_BASE = "disk/elite128.dsk" if B128 else "disk/Elite_UK_Firebird_cracked_trainer.dsk"
 OUT = Path("output")
 
 
@@ -70,8 +76,8 @@ async def main():
                     i = j + 1
                 print("   changed:", " ".join(out[:60]), flush=True)
 
-            await c("disk_insert", {"drive": "A", "path": "disk/Elite_UK_Firebird_cracked_trainer.dsk"})
-            await c("sna_load", {"path": "output/firebird_in_flight.sna"})
+            await c("disk_insert", {"drive": "A", "path": DISK_BASE})
+            await c("sna_load", {"path": SNA_FLIGHT})
             ram = await snap("_parked0")
             runs = low_runs(ram)
             print("zero runs >= 16 bytes:", len(runs), "total", sum(l for _, l in runs), flush=True)
@@ -86,7 +92,7 @@ async def main():
             await report("flight", await snap("_parked1"), 0x40)
 
             # phase 2: docking tail, docked screens
-            await c("breakpoint_add", {"address": 0x5066, "kind": "pc"})
+            await c("breakpoint_add", {"address": HANDLE, "kind": "pc"})
             res = await c("run", {"max_us": 10000000, "timeout_s": 120})
             await c("registers_set", {"values": {"pc": DOCK_CONT}})
             await c("breakpoint_remove", {"breakpoint_id": 1})
@@ -110,7 +116,7 @@ async def main():
                 await hold(k)
             await c("run", {"max_us": 10000000, "timeout_s": 120})
             await report("after hyperspace", await snap("_parked5"), 0x40)
-            await c("breakpoint_add", {"address": 0x5066, "kind": "pc"})
+            await c("breakpoint_add", {"address": HANDLE, "kind": "pc"})
             await c("run", {"max_us": 10000000, "timeout_s": 120})
             await c("registers_set", {"values": {"pc": DOCK_CONT}})
             bps = await c("breakpoint_list")

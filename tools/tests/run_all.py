@@ -24,7 +24,7 @@ XRAY = ROOT / "work" / "xray"
 CPCX = Path.home() / ".local/share/uv/tools/cpcxray/bin/python"
 HOST = [("check_src en", ["bash", "tools/check_src.sh"]), ("check_src de", ["bash", "tools/check_src.sh", "de"]), ("check_src fr", ["bash", "tools/check_src.sh", "fr"]),
         ("test_saves", [sys.executable, "-I", "tools/tests/test_saves.py"]), ("test_disks", [sys.executable, "-I", "tools/tests/test_disks.py"])]
-EMU128 = ["packs128", "sellall128", "escdigit128", "filemenu128", "music128", "tools128"]
+EMU128 = ["packs128", "ship_packs128", "sellall128", "escdigit128", "filemenu128", "music128", "tools128"]
 EMU = ["mission_hook", "mission_flight", "plans", "stolen_ship", "rocks", "trumbles", "trumble_sprites", "launch", "ship_packs", "sellall", "title_ships"]
 TIMEOUT = 420
 
@@ -61,6 +61,9 @@ def emu128(only):
     # absolute script paths: in a worktree work/xray is a symlink to the main checkout, so a relative ../../tools would resolve there
     if subprocess.run([str(CPCX), "-I", str(T / "snap_docked128.py")], cwd=XRAY, env=env, capture_output=True, timeout=TIMEOUT).returncode:
         print("FAIL snap_docked128 (output/docked128.sna)")
+        return [False]
+    if subprocess.run([str(CPCX), "-I", str(T / "test_flight128.py"), "3"], cwd=XRAY, env=env, capture_output=True, timeout=TIMEOUT).returncode:      # output/flight128.sna, for ship_packs128 (a stale one runs the old code)
+        print("FAIL test_flight128 (output/flight128.sna)")
         return [False]
     return [run(f"test_{n}", [str(CPCX), "-I", str(T / f"test_{n}.py")], XRAY, env, need_ok_text=True) for n in EMU128 if not only or n in only]
 
