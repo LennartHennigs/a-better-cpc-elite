@@ -35,6 +35,7 @@ Open work for the 128K build, cleaned up 2026-11-21 (first written 2026-11-20 by
 - [ ] One shared `tools/sjasm.py` (assemble to a temp dir, return labels and bytes) instead of the six copies of the assemble-and-parse-`.sym` code (`cheat128.py`, `mk_viewer128.py`, `build_dsk128.py`, `check_moved_labels.py`, `relo_numbers.py`, `mk_showship.py`, `hullfill.py`).
 - [ ] Guard `main()` in `tools/mk_showship.py` with `__main__` so `mk_viewer128.py` can reuse its ship lists and `blueprint()`.
 - [ ] `tools/cheat128.py --check` assembles four files per run, once from `check_src128.sh` and once from `build_dsk128.py` (a few seconds): take the stock symbols from `ship128.stock_image()` if it gets annoying.
+- [ ] Test speed (from the second /simplify pass): `test_ship_packs.py` makes about six MCP calls per hook call (a Z80 loop that appends the record addresses to a buffer would need 3 calls per type), reloads the snapshot and reassembles for every pack (load once, assemble the seven images in parallel), and `test_parked_save128.py` saves a 128K snapshot per step to look at 3 KB (`memory_read` of `&A600-&BFFF` is enough). The shared cpcxray harness item above covers the copied `c()`, `call()`, `snap()`, `key()` and `typ()` helpers.
 - [ ] Generate the 128K address row and the keys into the tokenised programs at build time instead of pasting and checking (`cheat128.py --write` already makes the paste one command).
 
 ### Constraints (facts, not tasks)

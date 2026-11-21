@@ -53,7 +53,7 @@ cd work/xray                      # the scripts use relative paths (output/, dis
 | `test_star_occlusion` | stars are not drawn over the planet or sun (`off`, `far`, `sun` as arguments) | in-flight snapshot |
 | `test_keydelay` | key pre-delay, stock against `-DENHANCED` | Firebird disk copy |
 | `test_cloak_asp` | is the cloaking-mission Asp visible (view and scanner) | Firebird disk copy |
-| `test_parked_ram`, `test_parked_save` (`BUILD=128` for the 128K build; `test_parked_save128` drives the 128K file menu instead, `RUNSEL=a:b` marks only some zero runs) | probes: is the zero space in parked firmware RAM really unused, and what survives a disk save. The result is "do not put code there" (`docs/_memory_map.md`); kept as evidence. | Firebird disk copy |
+| `test_parked_ram`, `test_parked_save` (`BUILD=128` for the 128K build, config and zero-run helpers in `parked_common.py`; `test_parked_save128` drives the 128K file menu instead, `RUNSEL=a:b` marks only some zero runs) | probes: is the zero space in parked firmware RAM really unused, and what survives a disk save. The result is "do not put code there" (`docs/_memory_map.md`); kept as evidence. | Firebird disk copy |
 
 ## 128K tests (branch `elite128`)
 
@@ -64,7 +64,7 @@ Run from `work/xray` with absolute script paths (in this worktree `work/xray` is
 | `test_boot128`, `snap_docked128`, `test_flight128` | boot to the title, a docked snapshot for the quick tests, launch and fly (the snapshots the others start from) |
 | `test_fill128`, `test_hulls128`, `test_order128`, `test_views128` | the polygon fill in bank 6, every hull type, draw order, the other views |
 | `test_flip128`, `test_isrjitter128`, `test_soak128` | page flip (banks equal after each flip), raster split jitter, soak with a reset breakpoint |
-| `test_ship_packs128` | the pack hook on the 128K build: each pack's flight image at `&9D9E`, the extra hull about half the time, types 8, 15 and 18 untouched (needs `output/flight128.sna`) |
+| `test_ship_packs128` | `test_ship_packs.py` with `BUILD=128` (a two-line wrapper): the pack hook on the 128K build: each pack's flight image at `&9D9E`, the extra hull about half the time, types 8, 15 and 18 untouched (needs `output/flight128.sna`) |
 | `test_launch128`, `test_mission128`, `test_packs128` | flight image copied from bank 5, mission overlays from RAM, the random ship pack per launch |
 | `test_titleships128`, `test_viewer128` | the title ship selector, `RUN"SHOWSHPS` |
 | `test_sellall128`, `test_escdigit128`, `test_killcount128`, `test_sights128`, `test_filemenu128` | A key of the sell menu, Esc at the second digit, kill count on the commander page, laser sights, catalogue/save/load |
