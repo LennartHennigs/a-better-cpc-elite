@@ -14950,6 +14950,9 @@ spawnEscortLoop:
     and 0x01
     add a,0x10
     call spawnShip
+    IFDEF SPAWN_VARIANCE
+spawnEscortRet:                         ; the return address mxSpawnVar looks for (missions_flight.asm: pack members start on the leader's point)
+    ENDIF
     pop bc
     dec c
     jr nz,spawnEscortLoop

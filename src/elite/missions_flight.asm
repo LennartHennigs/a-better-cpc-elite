@@ -50,10 +50,12 @@ mxTypeConstrictor equ 19            ; ship type after the 19 stock ships (0-18)
     IFDEF FL_3
     DEFINE FLID "3"
     DEFINE FL_PACK
+    DEFINE NO_PACKCOH                 ; 36 to 40 bytes of room only: the pack members keep their own random places
     ENDIF
     IFDEF FL_4
     DEFINE FLID "4"
     DEFINE FL_PACK
+    DEFINE NO_PACKCOH                 ; 36 to 40 bytes of room only: the pack members keep their own random places
     ENDIF
     IFDEF FL_5
     DEFINE FLID "5"
@@ -66,6 +68,7 @@ mxTypeConstrictor equ 19            ; ship type after the 19 stock ships (0-18)
     IFDEF FL_7
     DEFINE FLID "7"
     DEFINE FL_PACK
+    DEFINE NO_PACKCOH                 ; 36 to 40 bytes of room only: the pack members keep their own random places
     ENDIF
     IFDEF FL_PACK
     DEFINE HAS_SHIP
@@ -194,14 +197,55 @@ mxSpawnVar:
     call getRandomNumber
     and 0x80
     ld (ix+8),a
-    jr z,mxSpawnVarEnd                  ; in front
+    jr z,mxSpawnVarPlaced               ; in front
     ld a,(ix+1)
     cp (ix+7)
-    jr nc,mxSpawnVarEnd                 ; x_hi >= z_hi: outside the rear cone
+    jr nc,mxSpawnVarPlaced              ; x_hi >= z_hi: outside the rear cone
     ld a,(ix+4)
     cp (ix+7)
-    jr nc,mxSpawnVarEnd
+    jr nc,mxSpawnVarPlaced
     res 7,(ix+8)                        ; inside the rear cone: in front instead
+mxSpawnVarPlaced:
+    IFNDEF NO_PACKCOH
+; A pack (spawnEscortLoop in commonxx.asm calls spawnShip for each member with BC pushed: C = the ships still to come, this one included) starts on one point like the stock game:
+; the first member keeps the place above, the others copy the leader's x, y and z (9 bytes). The caller is told by the return address at the top of the stack; the leader is
+; the ship before it while the count goes down by one (mxPackLeft = what the last member left, 0 after a complete pack) and still a live hostile ship (a pack cut short by a
+; full slot table leaves a stale leader: its slot may hold anything by now).
+    pop hl
+    push hl                             ; the return address of spawnShip
+    ld de,spawnEscortRet
+    or a
+    sbc hl,de
+    jr nz,mxSpawnVarEnd                 ; not a pack member
+    ld hl,2
+    add hl,sp
+    ld c,(hl)                           ; C of the BC pushed by spawnEscortLoop
+    ld hl,mxPackLeft
+    ld a,(hl)
+    cp c
+    ld a,c
+    dec a                               ; (carry stays)
+    ld (hl),a
+    jr c,mxPackLeader                   ; more to come than the last member left: a new pack
+    ld iy,(mxPackLead)
+    ld a,(iy+34)
+    and a
+    jr z,mxPackLeader                   ; the leader is gone
+    bit 2,(iy+33)
+    jr z,mxPackLeader                   ; and its slot holds something else
+    push iy
+    pop hl
+    push ix
+    pop de
+    ld bc,0x0009
+    ldir                                ; x, y, z and their signs
+    jr mxSpawnVarEnd
+mxPackLeader:
+    ld (mxPackLead),ix
+    jr mxSpawnVarEnd
+mxPackLead: dw 0
+mxPackLeft: db 0
+    ENDIF
     ENDIF
 mxSpawnVarEnd:
     xor a

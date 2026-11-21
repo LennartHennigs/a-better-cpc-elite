@@ -26,7 +26,7 @@ HOST = [("check_src en", ["bash", "tools/check_src.sh"]), ("check_src de", ["bas
         ("test_saves", [sys.executable, "-I", "tools/tests/test_saves.py"]), ("test_disks", [sys.executable, "-I", "tools/tests/test_disks.py"])]
 NEEDS_FLIGHT = {"ship_packs128", "spawnvar128"}      # the 128K tests that start from output/flight128.sna (the others from output/docked128.sna)
 EMU128 = ["packs128", "ship_packs128", "sellall128", "escdigit128", "filemenu128", "music128", "tools128", "spawnvar128"]
-EMU = ["mission_hook", "mission_flight", "plans", "stolen_ship", "rocks", "trumbles", "trumble_sprites", "launch", "ship_packs", "sellall", "title_ships"]
+EMU = ["mission_hook", "mission_flight", "plans", "stolen_ship", "rocks", "trumbles", "trumble_sprites", "launch", "ship_packs", "sellall", "title_ships", "spawnvar"]
 TIMEOUT = 420
 
 
@@ -95,7 +95,7 @@ def main():
         for n in EMU:
             if only and n not in only:
                 continue
-            results.append(run(f"test_{n}", [str(CPCX), "-I", f"../../tools/tests/test_{n}.py"], XRAY, env, need_ok_text=True))
+            results.append(run(f"test_{n}", [str(CPCX), "-I", str(T / f"test_{n}.py")], XRAY, env, need_ok_text=True))      # absolute: in a worktree work/xray is a symlink into the main checkout, so ../../tools would run main's scripts
     print(f"\n{sum(results)} of {len(results)} passed")
     return 0 if results and all(results) else 1
 

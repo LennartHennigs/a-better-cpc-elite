@@ -7,6 +7,7 @@ pack image (3: Mamba stands in for the Sidewinder) and the Constrictor image (C:
   hostile types (Sidewinder 16, Krait 17, Python pirate 11, Thargoid 15): x_hi, y_hi 0..63, z_hi 32..63, none in the rear cone, some behind and some in front, the places differ
   a trader (9) and a Viper (8): the stock start (x_hi, y_hi 0..7, z_hi &32, in front)
   every spawn: A = 0 on return, ix+37 = &7E, ix+38 = 0 (the stock values the code in front of the jp sets)
+  packs (spawnEscortPack, images 0 and 1): every member of a pack starts on the leader's point (x, y, z and signs equal); image 3 (NO_PACKCOH): scattered
   image C: the hostile types keep the stock corner (x_hi = y_hi = z_hi = &32)
 Prints ALL OK at the end; exit code 1 on a failure.
 """
@@ -67,7 +68,7 @@ async def main():
                 await c("run", {"max_us": 2_000_000, "timeout_s": 60})
                 assert (await c("registers_get"))["pc"] == TRAP
 
-            for image in ("0", "3", "C"):
+            for image in ("0", "1", "3", "C"):
                 with tempfile.TemporaryDirectory() as d:
                     syms, raw = cheat128.assemble(ROOT / "src/elite/commonxx.asm", d, "c", FLAGS + ([f"-DFL_{image}"] if image != "0" else []))
                 print(f"-- image {image}: {syms['mxFlightEnd'] - syms['mxFlightBase']} bytes", flush=True)
@@ -107,6 +108,25 @@ async def main():
                 for t, name in ((9, "Cobra Mk III (trader)"), (8, "Viper")):
                     ps, okx = await spawn(t)
                     check(all(b[1] < 8 and b[4] < 8 and b[7] == 0x32 and not b[8] & 0x80 for b in ps) and okx, f"image {image} {name}: the stock start, A = 0")
+                if image != "C":      # packs (spawnEscortPack): the members start on one point where mxSpawnVar has the pack code (NO_PACKCOH images 3, 4, 7 keep their own random places)
+                    slots = [syms["sEntityxlo"] + 0x27 * k for k in range(1, 7)]
+                    multi = same = 0
+                    for _ in range(N // 2):
+                        for a in slots:
+                            await c("memory_write", {"address": a + 34, "data": "00"})
+                        await call(syms["spawnEscortPack"])
+                        members = []
+                        for a in slots:
+                            b = bytes.fromhex((await c("memory_read", {"address": a, "length": 40}))["hex"])
+                            if b[34]:
+                                members.append(b)
+                        if len(members) >= 2:
+                            multi += 1
+                            same += all(m[:9] == members[0][:9] for m in members)
+                    if image in ("0", "1"):
+                        check(multi > 0 and same == multi, f"image {image} packs: all members on the leader's point ({same} of {multi} packs of 2 or more)")
+                    else:
+                        check(multi > 0 and same * 4 < multi, f"image {image} packs: no pack code, the members are scattered ({same} of {multi} on one point)")
     print("ALL OK" if not fails else f"{len(fails)} FAILED")
     sys.exit(1 if fails else 0)
 
