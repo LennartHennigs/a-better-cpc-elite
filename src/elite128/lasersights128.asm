@@ -6,6 +6,7 @@
 ; mirrored through the quadrant bits of C (0, 0x05 = y flipped, 0x0A = x flipped, 0x0F = both). No laser in the view (laserTypes = 0): no sight, like the ST.
 ; Externals, given with -D by the build: VIEWDIR (Viewdirection), LASERTYPES (laserTypes), DRAWLINE (drawLaserLine), CURCFG (curCfg), HOME (bankInit, where the overlay starts).
 ; The overlay starts with bankCopy (20 bytes, the title ship viewer's bank 6 reader: no room for it in the glue), the sights follow at HOME + 20 (laserSightsHome in commonxx.asm).
+    INCLUDE "config.inc"
     ORG HOME
 ; A = count, HL = source (window address in bank 6), DE = destination (resident): maps RAM bank 6 for the copy only, no stack use while it is mapped
 bankCopy:
@@ -124,3 +125,38 @@ musicOwe:
     dec (hl)                            ; not past 255: 0 would switch the music off
     ret
 musicHookEnd:
+    IFDEF SPAWN_VARIANCE
+    ASSERT musicHookEnd == HOME + 0xB7, "spawnVariance = bankInit + 0xB7 in commonxx.asm"
+; ---- Spawn variance (src/elite128/config.inc SPAWN_VARIANCE; docs/_ship_spawning.md) ------------------------------------------------------------------------------------------
+; Called at the end of spawnShip with IX = the new ship (x_lo, y_lo and the x and y signs are random already). Only the hostile types (bit 2 of byte +33: Sidewinder, Krait, the
+; pirates, the Asp, the Thargoid) are changed, the others keep the stock start (asteroids and traders need a heading first, see TODO_128K.md): x_hi and y_hi random 0 to 63 (up to
+; about 16,000 units sideways), z_hi 32 to 63 (8,000 to 16,000 units), the z sign random. A ship behind the player (z negative) must not be inside the rear cone, i.e. with both x_hi
+; and y_hi below z_hi: then it is put in front. That leaves the front 180 degrees plus the two side wedges behind the lateral axis: 270 degrees. The ship turns towards the player by itself.
+; Externals: GETRND (getRandomNumber, bank 7: visible, spawnShip runs in a draw configuration).
+spawnVariance:
+    bit 2,(ix+33)
+    ret z
+    call GETRND
+    and 0x3F
+    ld (ix+1),a
+    call GETRND
+    and 0x3F
+    ld (ix+4),a
+    call GETRND
+    and 0x1F
+    or 0x20
+    ld (ix+7),a
+    call GETRND
+    and 0x80
+    ld (ix+8),a
+    ret z                               ; in front
+    ld a,(ix+1)
+    cp (ix+7)
+    ret nc                              ; x_hi >= z_hi: outside the rear cone
+    ld a,(ix+4)
+    cp (ix+7)
+    ret nc
+    res 7,(ix+8)                        ; inside the rear cone: in front instead
+    ret
+spawnVarianceEnd:
+    ENDIF

@@ -66,7 +66,7 @@ def symbols(src, flags=()):
 def laser_sights():
     """The laser sights overlay (lasersights128.asm): assembled at the address of bankInit, carried in the data stage and copied over bankInit by its last step."""
     cx, c2, mq = symbols("commonxx.asm"), symbols("common2x.asm"), symbols("musiquex.asm")
-    defs = [f"-DMUSICRUN={mq['MusicRun']}", f"-DSTACK5={cx['stack5']}", f"-DHOME={cx['bankInit']}", f"-DVIEWDIR={cx['Viewdirection']}", f"-DLASERTYPES={cx['laserTypes']}", f"-DCURCFG={cx['curCfg']}", f"-DDRAWLINE={c2['drawLaserLine']}"]
+    defs = [f"-DMUSICRUN={mq['MusicRun']}", f"-DGETRND={c2['getRandomNumber']}", f"-DSTACK5={cx['stack5']}", f"-DHOME={cx['bankInit']}", f"-DVIEWDIR={cx['Viewdirection']}", f"-DLASERTYPES={cx['laserTypes']}", f"-DCURCFG={cx['curCfg']}", f"-DDRAWLINE={c2['drawLaserLine']}"]
     with tempfile.TemporaryDirectory() as tmp:
         out = Path(tmp) / "ls.bin"
         r = subprocess.run([str(SJASM), *defs, f"--raw={out}", str(SRC / "lasersights128.asm")], capture_output=True, text=True)
