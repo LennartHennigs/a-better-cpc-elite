@@ -7,7 +7,6 @@ Open work for the 128K build, cleaned up 2026-11-21 (first written 2026-11-20 by
 ### Parity with `main`
 
 - [ ] **German and French:** the 128K build is English only (the biggest gap). Tied to "one codebase for all languages" under *Later*.
-- [ ] **464/664:** only a "128K CPC REQUIRED" message today (checked on cpcxray's 664 config); no fallback.
 - [ ] **Cheats in play:** the trainer's effects (shields, hyperjump, one-hit kills, ...) are untested on the 128K build, as on the 64K disks; French and German saves converted by `CONVSAVE` load in the game's menu but have not been played.
 
 ### Gameplay and content
@@ -16,7 +15,7 @@ Open work for the 128K build, cleaned up 2026-11-21 (first written 2026-11-20 by
 
 ### Speed
 
-- [ ] **Speedup, what is left:** flip copy done (47 -> 18 ms, frame 276 -> 240 ms against 201 ms in the 64K game); next: the vsync wait (6 to 13 ms), a dirty rectangle for the scanner zone, the scanner busy flag, the entity loop (+7 ms) and the laser sights (+7 ms), in that order: `docs/_128k_speedup.md`. Also open in the page flip: docking from flight.
+- [ ] **Speedup, what is left:** flip copy done (47 -> 18 ms, frame 276 -> 240 ms against 201 ms in the 64K game), laser sights done (3.6 ms). Open: **`FLIP_NOWAIT`** (`config.inc`) is ON since 2026-11-21 (frame 239.6 -> 226.5 ms in cpcxray, no glitch seen in RVM): try it on a real CPC 6128 and a 6128 Plus; if it glitches, comment the switch out, if not, delete the dead wait code in `dbfFlip`. The scanner copy (18 ms) has no dirty-rectangle fix without about 30 resident bytes; smaller options (unrolled `ldi`, less per-strip overhead, about 2 ms) are in `docs/_128k_speedup.md`. Also open in the page flip: docking from flight. The scanner busy flag was tried and gives nothing (the planet's blip is drawn); the entity loop has no gap (6.9 ms against 7.6 ms).
 
 ### Verification
 
@@ -25,7 +24,6 @@ Open work for the 128K build, cleaned up 2026-11-21 (first written 2026-11-20 by
 - [ ] **Coverage:** `tools/exec_in_data.py` has not been run from the title screen and the chart views as start states (old TODO item).
 - [ ] **Unexplained crash (2026-11-21):** an RVM state (`Untitled.rvmstate`, first one) showed bank 0 overwritten with repeating byte pairs, with interrupts off in a key-delay loop on the short range chart. The second state (S flicker) was not a crash. The first one is not reproduced; the S flicker fix does not obviously explain it.
 - [ ] **Run after the 2026-11-21 review fixes:** `test_order128.py` (now reads `c128.sym`) and `test_spawnvar128.py` were not run on the new build, and `test_filemenu128.py`'s new catalogue check was not seen failing with the old broken text hook (build with the raw descriptor once and confirm it fails).
-- [ ] **Raw addresses in `db` blobs:** `check_moved_labels.py` does not see them; grep the 128K `commonxx.asm` once for `0xC3/0xCD, lo, hi` with a target in `&8060-&9FFF` (two stale ones found so far: `dat_8427`, `myTEXTOUTACTION`'s descriptor).
 
 ### Tooling cleanups (from the /simplify pass, 2026-11-21)
 
@@ -44,7 +42,6 @@ Open work for the 128K build, cleaned up 2026-11-21 (first written 2026-11-20 by
 
 - [ ] **One codebase for all languages** (`lang/<xx>/strings.txt`, a build-time tokenizer, byte-exact gates for English, German and French; 128K per language from banks 4-6). Large.
 - [ ] **Particle explosions** (`-DPARTICLE_EXPLOSION`, compile switch, off = today's behaviour; plan only) and **the 11 original BBC ships** as optional flags: the C64/BBC particle clouds in a bank 6 module behind a far-call stub, replacing the 15 rings. [full text](docs/_todo_notes.md#particle-explosions)
-- [ ] **Bigger view and newer cockpit UI** (320 px, 25 rows): deferred, because it needs 9-bit x everywhere and direct drawing.
 
 ## Deferred
 
@@ -54,6 +51,7 @@ Wanted, but not now (the work-around holds).
 
 ## Not doing
 
+- **464/664 fallback** (2026-11-21, decided it is fine as is): the 128K disk shows a "128K CPC REQUIRED" message on a 464 or 664 (checked on cpcxray's 664 config) and does not start; there is no 64K fallback in that disk, the 64K disks are the build for those machines.
 - **Clipping v2 and LOD twins** (2026-11-21, decided against): hulls with a vertex behind the viewer lose the triangles at that vertex; it only shows with a big hull right around the camera (the station at launch or docking, a ship passing very close), nothing seen so far looks wrong, and a Sutherland-Hodgman clip costs about 250 bytes in bank 6, a third stage slot and about 12 bytes in `bankInit`, with the depth not passed to the fill. LOD twins: the fill is not what limits the frame (`docs/_128k_speedup.md`: flip copy and scanner), the hulls have 4 to 28 triangles, and a second hull per ship does not fit (`HULL_REGION_SIZE` has 18 bytes free). Reopen the clip if missing triangles are seen in play.
 - **Hull polish** (2026-11-21, decided against): (ArcElite source only) confirm each hull's axis map (`AXIS_OVERRIDE` in `tools/ship128.py`: plausible, not proven). Stock source: the lighting and tones were tuned by eye on two palettes; look at the ships from other angles than the rear view, per-hull tone tweaks (the Thargoid needed one), more hand-made details for the most-seen ships (each vertex costs 6 of the 18 spare bytes of the hull slot; the Cobra is at the 28-vertex limit).
 - **Boulder in the 128K packs and the viewer** (2026-11-21, decided against): the 64K game leaves Fessor's Boulder out of every pack (165 bytes; with the Boa the flight image is 9 bytes over, `docs/_ship_packs.md`); the 128K build has the nine pack hulls (types 20-28), so it never spawns a Boulder and `RUN"SHOWSHPS` shows 29 ships against the 64K viewer's 30. Adding it would mean: `Boulder` in `PACK_HULLS` in `tools/ship128.py` (type 29), a pack slot (a flight image in bank 5 or a place in an existing pack) and a `mxHullType` entry, then `PACK_NAMES`/`STOCK` in `tools/mk_viewer128.py` (3 banks hold 33 ships); `spawnVariance` is no problem (slot flag byte `+33` = blueprint byte `+18` AND `&6F`, the Boulder's `&00` has bit 2 clear). Not checked: a hard limit of 29 types in the glue and the type chain, the pick odds of the packs, `test_packs128.py`. Reopen if the viewer count or the Boulder matters; the wording "not a 128K hull" in `docs/_128k_version.md` and `README.md` stays.
@@ -63,6 +61,7 @@ Wanted, but not now (the work-around holds).
 - [x] **Title music:** listen to it (Virtual Retro). While a far call hides bank 7 (the ship fill, most of each title frame) the ticks are owed and run in bursts afterwards (at most 24 at once), so the tempo holds but the notes come in clumps; if that sounds bad, shorten the fill windows or make the player independent of bank 7. Not checked: the docked screens after docking back from flight. The title exit reads `NOTMUSIC.BIN` from disk (about a second, as in the 64K game); a bank copy needs resident bytes that do not exist.
 - [x] **Sound sometimes goes out of tune (accepted 2026-11-21).** Heard on the build with the interrupt-enabled flip copy, rare. The user decided to keep it as is: the filled 3D ships are worth a slightly buggy title sound. Not known whether the change causes it; if it is ever worth chasing, play `work/xray/disk/elite128_base.dsk` (interrupts off during the copy) to compare. The sound runs from the interrupt (`IRdrivenSound`), and the copy can now be interrupted anywhere, so a tick landing inside a `dbCopy` is the first suspect.
 - [x] **S indicator flickered or stayed on after a jump (2026-11-21):** the flip did not sync the S strip when the scanner was idle (see `CHANGELOG_128K.md`); fixed with `dbZIndic` in `fill.asm`. The ECM "E" letter and the alert light sit in the same zone family: the E letter is inside the scanner zone and is therefore synced only while the scanner is busy; check it the same way if it ever sticks.
+- [x] **Raw addresses in `db` blobs (checked 2026-11-21):** scanned every `db` run of `src/elite128/commonxx.asm` for a jump, call or `rst 0x18` far-call opcode followed by a target in `&8060-&9FFF` (18 opcodes). Two hits, both false: the stale interrupt stack bytes at `stack5` (`.`, `0xC3,0x1E,0x9D` is `ld l,&C3 / ld e,&9D` data) and a pixel pattern near `allinks_0`. So `dat_8427` and the `myTEXTOUTACTION` descriptor were the only stale ones. `common2x.asm` and `largeaxx.asm` were not scanned (they are code, not blobs).
 - [x] **Review fixes (2026-11-21):** the firmware text hook's far-call descriptor held raw stock addresses (empty catalogue, no disc error text), now labels; Thargoid group, plans pair and Constrictor no longer start behind the player (random z sign cleared); stale pack leader checked in `spawnmod.asm`; `test_order128.py` reads `c128.sym`; `test_filemenu128.py` checks the catalogue text; `run_all.py --emu128` reports a generator timeout. See `CHANGELOG_128K.md`.
 - [x] **Marked Asp's escort never appeared (2026-11-21):** stale raw `jp &84E0` in `dat_8427`, now by label.
 - [x] **Spawn variance, phase 2 (2026-11-21):** escort packs stay together and asteroids start anywhere around the player with a heading towards it. The rules are in a bank 6 module (`src/elite128/spawnmod.asm`, `&4600`, 564 bytes); the overlay on `bankInit` keeps three stubs (`spawnVariance`, `spawnRock`, `spawnPackShip`, 231 of 248 bytes). `tools/tests/test_spawnvar128.py` passes (hostiles, traders unchanged, 120 rocks, 60 packs); the five emulator tests are in `CHANGELOG_128K.md`. Details: `docs/_ship_spawning.md` "Phase 2".
