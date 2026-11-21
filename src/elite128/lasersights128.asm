@@ -1,5 +1,5 @@
 ; Laser sights for the 128K build (ENHANCED): a sight for each laser type instead of the one cross for all of them. Same drawing as src/elite/lasersights.asm (main).
-; There is no free resident code space in this build (docs/_memory_map.md), so the routine is an overlay: it is assembled by tools/build_dsk128.py at the address of
+; There is no free resident code space in this build (docs/_memory_map_128k.md), so the routine is an overlay: it is assembled by tools/build_dsk128.py at the address of
 ; bankInit (laserSightsHome, the boot code that is dead after Init_), carried in the data stage of COMMON2X (STAGE+0x1700), and copied over bankInit by the last step of
 ; bankInit itself (commonxx.asm). LaserSights in COMMON2X jumps to laserSightsHome.
 ; Drawing: every sight is three lines given for one quadrant (x1, y1, x2, y2 as offsets from the view centre, the form drawLaserLine takes in H, L, D, E) and drawn four times,
