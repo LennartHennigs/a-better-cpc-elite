@@ -12,7 +12,7 @@ Open work for the 128K build, cleaned up 2026-11-21 (first written 2026-11-20 by
 
 ### Gameplay and content
 
-- [ ] **Spawn variance, what is left:** hostiles, asteroids and packs are done (`SPAWN_VARIANCE`, see *Done*). Open: traders (they have AI and need a destination first), a play test (does a ship, rock or pack from the side or behind feel right? the rocks' direction is cut to 26 headings, up to about 45 degrees off), `test_spawnvar128.py` into `run_all.py --emu128`, and whether `main` gets the switch (the 128K disk has it on). Notes: `docs/_ship_spawning.md` "Phase 2".
+- [ ] **Spawn variance, what is left:** hostiles, asteroids and packs are done (`SPAWN_VARIANCE`, see *Done*). Open: traders (they have AI and need a destination first), a play test (does a ship, rock or pack from the side or behind feel right? the rocks' direction is cut to 26 headings, up to about 45 degrees off), `test_spawnvar128.py` into `run_all.py --emu128`. Notes: `docs/_ship_spawning.md` "Phase 2".
 
 ### Speed
 
