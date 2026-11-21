@@ -38,6 +38,10 @@ The pick itself (`spawnCommand0`): a roll below `SPAWN_HOSTILE_LIMIT` (`&50`, `&
 
 **Asteroids.** `create_asteroid`: deep space only, only if no asteroid exists, a counter of 512 passes; the asteroid is put on the same random sphere, pointed at the player, cruising at full speed, and with about a 10% chance (random below 26 of 256) it carries 1 to 4 platelets that it releases when shot.
 
+## The 128K build: spawn variance (2026-11-21)
+
+With `SPAWN_VARIANCE` (on in `src/elite128/config.inc`) the hostile types (blueprint byte `+33` bit 2: Sidewinder, Krait, the pirates, the Asp, the Thargoid) no longer start in one of four fixed corners: x_hi and y_hi are random 0 to 63, z_hi 32 to 63 (8,000 to 16,000 units), the z sign is random, and a ship that would land behind the player inside the rear cone (x_hi and y_hi both below z_hi) is put in front instead. That leaves the front 180 degrees plus the two side wedges behind the lateral axis, 270 degrees; the ship turns towards the player through its tactics. Asteroids, traders and the rest keep the stock start for now (they need a heading, `TODO_128K.md`). The code is `spawnVariance` in the overlay on `bankInit`, called at the end of `spawnShip`.
+
 ## What this means for the 128K build
 
 The spawn and the projection are not the cause of a top-right bias (the spawn is uniform, a hull at each quadrant draws in that quadrant). If a bias is real, look at later movement (ships turn towards the player), the other callers of `spawnShip` and the same situation on `elite64.dsk`; the plan is in `TODO_128K.md` (pirates). To make ships come from all around (a random sign for z as well, or the ST model), the ST's random direction on a sphere (including behind the player) is the model, but it needs trigonometry that the CPC code does not have.
