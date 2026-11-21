@@ -52,7 +52,7 @@ Hull dedup behind `-DENHANCED`/`-DMISSIONS` (default keeps the original bytes): 
 4. Tests: sample `spawnShip` 80 times per hostile type (Sidewinder, Krait, a pack hull, a Python pirate) as in the 128K check (ranges, none in the rear cone, 12 to 25 of 80 behind); types 8, 15, 18, traders, asteroids unchanged; the Constrictor and Trumbles images spawn as stock; `test_ship_packs.py`, `test_launch.py`, `make test`, `make test-emu`. Play test: does a ship from the side or behind feel right?
 5. Docs: `_ship_spawning.md` (64K section, fix line 29), `_ship_packs.md` (table, hull count, limits), `_missions_built.md` (image sizes), `_my_changes.md` (new switch and slot), `README.md` (counts only, no mission names), `src/disk/README.TXT` (one short line), `CHANGELOG.md`, `NOTICE`/credits unchanged. Note the port in `TODO_128K.md` ("the same switch in the 64K build").
 
-**Not in this item:** asteroids and traders, packs staying together (`spawnEscortPack`): they wait for the 128K work (`TODO_128K.md`).
+**Not in this item:** asteroids and traders. Packs staying together (`spawnEscortPack`) was added on 2026-11-22 inside `mxSpawnVar` (the stack-peek design, 63 bytes; not the bank 6 module of the 128K build): `docs/_ship_spawning.md` "The 64K build". Image sizes with it: default 309, packs 1 and 2 525 and 545, pack 5 575, pack 6 587 (room 21), P 414, S 506, R 430; packs 3, 4 and 7 (568 to 572) skip it (`NO_PACKCOH`).
 
 ## Remaining dat labels
 

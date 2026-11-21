@@ -58,7 +58,7 @@ Open work first, finished items at the bottom (section *Done*). `CLAUDE.md` keep
 
 ## Done
 
-- [x] Spawn variance in the 64K build (2026-11-21): `-DSPAWN_VARIANCE` with `-DMISSIONS`, hostiles only; packs 1 and 2 dropped the Cobra Mk I and the Worm, the Constrictor and Trumbles images keep the stock start. `tools/tests/test_spawnvar.py`, `docs/_ship_spawning.md`. The Thargoid group (`spawnCommand1`) and the plans pair clear the random z sign again, so they never start behind the player (review fix, same day). Left: German and French (no flight images, would need the routine in the `COMMONXX` tail), asteroids, packs and traders (128K only so far).
+- [x] Spawn variance in the 64K build (2026-11-21): `-DSPAWN_VARIANCE` with `-DMISSIONS`, hostiles only; packs 1 and 2 dropped the Cobra Mk I and the Worm, the Constrictor and Trumbles images keep the stock start. `tools/tests/test_spawnvar.py`, `docs/_ship_spawning.md`. The Thargoid group (`spawnCommand1`) and the plans pair clear the random z sign again, so they never start behind the player (review fix, same day). Pack members start on the leader's point (2026-11-22, `spawnEscortRet`, 63 bytes per image; packs 3, 4 and 7 have no room: `NO_PACKCOH`). Left: German and French (no flight images, would need the routine in the `COMMONXX` tail), asteroid headings and traders (128K only so far), packs together in the packs 3, 4 and 7 images (36 to 40 bytes of room, needs about 63).
 
 ### General
 

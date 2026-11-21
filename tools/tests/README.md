@@ -47,7 +47,7 @@ cd work/xray                      # the scripts use relative paths (output/, dis
 | `test_trumbles_screens` | a watch, not a test: one Trumble, then jumps (the game's own arrival code) up to a swarm, screenshots at four stages (`output/trumbles_*.png`) | mission disk |
 | `test_launch` | the launch hook puts the right flight image in the `COMMONXX` tail | mission disk, same flags as the disk (`-DENHANCED -DTITLESEL -DTRAFFIC -DMISSIONS`) |
 | `test_ship_packs` | the ship pack hook hands out the extra hulls about half the time | in-flight snapshot, any disk |
-| `test_spawnvar` | spawn variance on the 64K build (`-DSPAWN_VARIANCE`): hostile start ranges, none in the rear cone, traders and the Viper stock, image C keeps the stock corner; `ALL OK` line | in-flight snapshot, any disk |
+| `test_spawnvar` | spawn variance on the 64K build (`-DSPAWN_VARIANCE`): hostile start ranges, none in the rear cone, traders and the Viper stock, packs start on the leader's point (images 0 and 1; scattered in image 3), image C keeps the stock corner; `ALL OK` line; in `run_all.py --emu` | in-flight snapshot, any disk |
 | `test_sellall` | the A key of the sell menu | mission disk (or a disk as argument) |
 | `test_title_ships` | title-screen ship selection | `build_dsk.py` disk (`elite_rebuilt.dsk`) |
 | `test_station_screens` | screenshots of the docked screens with the `-DENHANCED` changes | rebuilt disks (`en`, `de`, `fr`) |
