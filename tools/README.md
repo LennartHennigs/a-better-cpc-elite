@@ -20,7 +20,8 @@ Helpers for building, checking and analysing the project. Each script has a head
 |---|---|
 | `check_src128.sh` | assembles the four 128K files, builds the fill and title-text modules, fails on a stale cross-file `equ` (`make disk6128`) |
 | `build_dsk128.py`, `build_show128.sh`, `listing6128.sh` | the 128K disk (`build/elite128.dsk`), the `SHOWSHPS` viewer programs, the readable listing (`make listing6128`) |
-| `ship128.py`, `hullfill.py`, `mk_viewer128.py` | filled hulls (stock blueprints or ArcElite), their fill records, the viewer's ship data; generated files go to `work/elite128/` |
+| `ship128.py`, `hullfill.py`, `mk_viewer128.py` | filled hulls (stock blueprints or ArcElite), their fill records, the viewer's ship data (it follows the build's hull source: `--source` or `HULLS`); generated files go to `work/elite128/` and `work/viewer128/` |
+| `mk_spawntable.py` | `src/elite128/spawn_table.inc`: the 27 orientations of the asteroid spawn (`spawnmod.asm`) |
 | `gen_equs.py`, `sync_equs.py`, `check_moved_labels.py` | cross-file `equ` lines after any size change (`sync_equs.py --check` exits 1 when stale, no option only reports), raw numbers that still point at a stock address whose label moved |
 
 ## Saves and text

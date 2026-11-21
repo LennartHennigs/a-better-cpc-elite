@@ -100,6 +100,10 @@ What they change in the stock game:
 
 Ten more hulls (Fessor's; `src/elite/missions_ships.asm`) in seven flight images `MFLIGHT1-7`, picked per system visit by `(jumpCounter + presentSystemSeed) & 7`; the pack hook redirects some Sidewinder, Krait and trader spawns to them. The spawn roll constants are named (`SPAWN_HOSTILE_LIMIT` 0x5A, `SPAWN_JUNK_WIDTH` 35, escort packs of one to four) with the stock values in comments. Design, sizes, load times, tests and what was left out: `_ship_packs.md`.
 
+## Spawn variance (`SPAWN_VARIANCE`, with `MISSIONS`; 2026-11-21)
+
+Hostile ships (blueprint flag byte `+33` bit 2) start at x_hi and y_hi 0 to 63, z_hi 32 to 63 and a random z sign, and a ship that would land inside the rear cone is put in front (front 270 degrees), instead of one of the four fixed corners. `spawnShip` ends with `jp mxSpawnVar` instead of `xor a / ret` (1 byte more); the byte comes back from `ld (ix+37),0x7E` replacing `ld a,0x7E / ld (ix+37),a` just before, so nothing after it moves. The routine (`mxSpawnVar`, `missions_flight.asm`, 64 bytes) sits at `&9E34` in every flight image after the shared kill count head; the Constrictor and Trumbles images (`NO_SPAWNVAR`) have only `xor a / ret` there and keep the stock start. To fit, packs 1 and 2 carry one hull each (Gecko, Moray; `HULL_128` keeps both Fessor hulls in the 128K build) and the Trumbles image's `mxNewVelocity` lost two bytes. `check_src.sh`: the flag set `-DENHANCED -DTITLESEL -DTRAFFIC -DMISSIONS -DSPAWN_VARIANCE` keeps both file lengths; default and `-DMISSIONS` builds are untouched. Test: `tools/tests/test_spawnvar.py`. English only (the German and French builds have no flight images). Details: `docs/_ship_spawning.md`.
+
 ## Trainer, save tools and disks
 
 - `TRAINER.BAS` (ours, replaces the Firebird disk's `CHEAT.BAS`, which is deleted on our disks; renamed from `CHEAT.BAS` on 2026-11-15): interactive trainer with prompts for each of the original pokes plus no pirate boarding, unlimited hold, own cloak, cash, stock mission stage, kills, jumps and added-mission presets;

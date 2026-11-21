@@ -71,6 +71,8 @@ Open work first, finished items at the bottom (section *Done*). `CLAUDE.md` keep
 
 ## Done
 
+- [x] Spawn variance in the 64K build (2026-11-21): `-DSPAWN_VARIANCE` with `-DMISSIONS`, hostiles only; packs 1 and 2 dropped the Cobra Mk I and the Worm, the Constrictor and Trumbles images keep the stock start. `tools/tests/test_spawnvar.py`, `docs/_ship_spawning.md`. Left: German and French (no flight images, would need the routine in the `COMMONXX` tail), asteroids, packs and traders (128K only so far).
+
 ### General
 
 - [x] allow Escape to exit the buy menu (goods): done (one byte, `docs/changelog_archive.md`)

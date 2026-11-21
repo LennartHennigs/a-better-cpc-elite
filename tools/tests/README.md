@@ -47,6 +47,7 @@ cd work/xray                      # the scripts use relative paths (output/, dis
 | `test_trumbles_screens` | a watch, not a test: one Trumble, then jumps (the game's own arrival code) up to a swarm, screenshots at four stages (`output/trumbles_*.png`) | mission disk |
 | `test_launch` | the launch hook puts the right flight image in the `COMMONXX` tail | mission disk, same flags as the disk (`-DENHANCED -DTITLESEL -DTRAFFIC -DMISSIONS`) |
 | `test_ship_packs` | the ship pack hook hands out the extra hulls about half the time | in-flight snapshot, any disk |
+| `test_spawnvar` | spawn variance on the 64K build (`-DSPAWN_VARIANCE`): hostile start ranges, none in the rear cone, traders and the Viper stock, image C keeps the stock corner; `ALL OK` line | in-flight snapshot, any disk |
 | `test_sellall` | the A key of the sell menu | mission disk (or a disk as argument) |
 | `test_title_ships` | title-screen ship selection | `build_dsk.py` disk (`elite_rebuilt.dsk`) |
 | `test_station_screens` | screenshots of the docked screens with the `-DENHANCED` changes | rebuilt disks (`en`, `de`, `fr`) |
@@ -68,6 +69,7 @@ Run from `work/xray` with absolute script paths (in this worktree `work/xray` is
 | `test_ship_packs128` | `test_ship_packs.py` with `BUILD=128` (a two-line wrapper): the pack hook on the 128K build: each pack's flight image at `&9D9E`, the extra hull about half the time, types 8, 15 and 18 untouched (needs `output/flight128.sna`) |
 | `test_launch128`, `test_mission128`, `test_packs128` | flight image copied from bank 5, mission overlays from RAM, the random ship pack per launch |
 | `test_titleships128`, `test_viewer128` | the title ship selector, `RUN"SHOWSHPS` |
+| `test_spawnvar128` | spawn variance (`spawnmod.asm`): 60 spawns per case of the hostile types (ranges, none in the rear cone, some behind), traders and the Viper unchanged, 120 asteroids (heading towards the player, orthonormal frame), packs stay together; `ALL OK` line, not in `run_all` yet |
 | `test_sellall128`, `test_escdigit128`, `test_killcount128`, `test_sights128`, `test_filemenu128` | A key of the sell menu, Esc at the second digit, kill count on the commander page, laser sights, catalogue/save/load |
 | `test_tools128` | the 128K disk's tools: `CONVSAVE` UK to 128K and 128K to UK compared byte for byte with the host, `LISTSAVE` names the builds, `EDITSAVE` edits a 128K save, `TRAINER` with every cheat on (the 13 poke targets, the commander block, still there after the title is up) |
 | `test_viewer128` | screenshots of the ship viewer (`RUN"SHOWSHPS`): first ships, the last one, Q back to BASIC; look at `output/viewer128_*.png` (no pass/fail) |
