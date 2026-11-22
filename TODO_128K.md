@@ -12,6 +12,7 @@ Open work for the 128K build, cleaned up 2026-11-21 (first written 2026-11-20 by
 ### Gameplay and content
 
 - [ ] **Spawn variance, what is left:** hostiles, asteroids and packs are done (`SPAWN_VARIANCE`, see *Done*). Open: traders (they have AI and need a destination first), a play test (does a ship, rock or pack from the side or behind feel right? the rocks' direction is cut to 26 headings, up to about 45 degrees off), `test_spawnvar128.py` into `run_all.py --emu128`. Notes: `docs/_ship_spawning.md` "Phase 2".
+- [ ] **Ship scanner (buy item, deferred):** a new equipment item; a key in flight shows the type name and `(H)` of the ship in the crosshair after 2 s. About 300 to 350 bytes (module in bank 6, hook in the `bankInit` overlay), 1.5 to 2 days, 128K only. Plan: `docs/_todo_notes.md` "Ship scanner (buy item)".
 
 ### Speed
 

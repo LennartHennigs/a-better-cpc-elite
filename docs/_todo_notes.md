@@ -104,3 +104,21 @@ Plan and estimate, 2026-11-21. Trigger: a thin stray triangle when flying close 
 **Effort.** About 3 to 4 hours of work in four steps: (1) move `getVertex` and `cull` into the new block, the staging and the `bankInit` immediate, byte-identical output on the fast path (45 min); (2) `getVertexWide`, trivial reject, `cullWide` (60 min); (3) the clip passes, fan and fill, first against the saved state (75 to 90 min); (4) tests, timing, docs (45 min). Risks: 16-bit arithmetic slips (the reference rasteriser in test (c) is the safety net), the unverified blankness of `STAGE+0x3240`, and the remaining holes for engine-flagged vertices (documented limit).
 
 **Not covered.** Vertices flagged off view by the engine (magnitude over 255 or behind the viewer) still drop their triangle. Fixing that needs the engine to keep 16-bit projected coordinates (the 6502 original does; this port stores 8-bit magnitudes in `buf_5860`) or a clip against the near plane in 3D before projection: a separate, much larger change in code that has no free bytes.
+
+## Ship scanner (buy item)
+
+Plan and estimate, 2026-11-22; deferred. A new item in the equipment menu: in flight a key (`I`, unchecked: see step 2) starts a scan, and 2 s later the name and stance of the ship in the crosshair appear, e.g. `Cobra MK I (H)`. **128K build only.** Estimated from reading the source only: nothing was built or measured.
+
+**Why not 64K.** The cap `ld a,0x0E` of `EquipShip` lies inside the 104 bytes that decode every commander save, so a 15th item changes the save key (ask the user first); the `LARGEAXX` docked stub area has 0 spare bytes; with `-DMISSIONS` every flight image is full (C and T 0 bytes, the others 21 to 40), so about 300 bytes of names and code would cost another feature. Cheapest 64K variant if ever wanted: stock 19 types, short names, no Cobra MK I.
+
+**Pieces (about 300 to 350 bytes, most of it names).**
+1. Menu item 15 in the bank 4 `LARGEAXX` copy (the 128K tree has its own save key): price entry (3), name text, cap `0x0E` to `0x0F`, own branch in `eqShoppingloop` (items from 13 up go to the laser path; the generic slot lookup would hit `galaxySeed`). Flag byte: `equipSlotMiningLaser` or another unused slot, already inside the save block. About 30 bytes. Also show it in the status screen's equipment list.
+2. Key: a free flag bit in `tblKeyboardMatrix2` (check that `I` is unused, else pick another key), a countdown byte.
+3. Target: `shipInCrosshair` (set in `handleEntitys`, used by the missile lock). Copy the slot at the key press; when the countdown ends, check the slot is still alive and the same type.
+4. Text: type to name (table of about 10 bytes per name: 19 stock types plus the pack types 20 to 28 that exist only while their flight image is loaded, so the table must follow the image), `(H)` from bit 2 of `ix+33` (hostile). Print like `titleName` (own string routine, not the token table).
+5. Where: logic and name table in a bank 6 far-call module (about 2.3 KB code space; the `hullDraw` pattern); the resident hook is 8 to 12 bytes, put in the overlay on `bankInit` (`lasersights128.asm`: 6 bytes free, the stage slot allows 14). Show the line with the in-flight message path (`prinFlightMessage`) or a fixed text row.
+6. Page flip: a line drawn into one screen bank flickers. Draw it into both banks or add a zone to `dbCopy` (`fill.asm`, `dbZ*`).
+
+**Checks.** cpcxray: buy the item (cash drops, flag set, saved and reloaded), press the key at a spawned hostile and at a trader, `screen_text` after 2 s and before; ship leaves or dies during the scan; no item bought = no effect; `test_flip128.py` (banks equal), `run_all.py --emu128`, frame time unchanged without the key.
+
+**Effort.** About 1.5 to 2 days: half a day for menu, flag and save round trip; one to one and a half for the flight part, the flip-safe print and the tests. Risks: the flip, the resident hook bytes, pack-dependent names.
