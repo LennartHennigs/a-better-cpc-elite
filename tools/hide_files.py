@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from dskx import is_original, sector_offsets  # noqa: E402
+from dskx import is_original, sector_offsets, write_atomic  # noqa: E402
 
 
 def hide_entries(d, secs, first):
@@ -32,7 +32,7 @@ def hide(path):
     d = bytearray(Path(path).read_bytes())
     secs = sector_offsets(d)
     hidden, shown = hide_entries(d, secs, min(r for (t, r) in secs if t == 0))
-    Path(path).write_bytes(d)
+    write_atomic(path, d)
     print(f"{path}: {len(hidden)} entries hidden, visible: {', '.join(sorted(shown))}")
 
 

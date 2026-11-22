@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate src/cheats/EDITSAVE.ASC: a CPC BASIC save editor (the on-CPC counterpart of tools/saveedit.py).
 
-It loads a commander save, finds the build (UK, French or German) whose key makes both checksums verify, shows kills, jumps, cash, legal status and the added-mission state, asks for new values (Enter keeps the old one),
+It loads a commander save, finds the build (UK, French, German or the 128K build) whose key makes both checksums verify, shows kills, jumps, cash, legal status and the added-mission state, asks for new values (Enter keeps the old one),
 recomputes both checksums, encrypts again and writes the file back with SAVE (AMSDOS keeps the old file as .BAK). Use a copy of the disk. Keys come from the game disks as in tools/savekeys.py.
 usage: python3 -I tools/mk_editsave.py        (then bash tools/build_cheat.sh)
 """
@@ -16,11 +16,11 @@ lines = [
     '20 INPUT"Save file (e.g. PETER.BIN)";f$:f$=UPPER$(f$)',
     '30 MEMORY &5FFF:DIM p(103),k(103):ON ERROR GOTO 900',
     '40 LOAD f$,&6000:ON ERROR GOTO 0',
-    '50 RESTORE:FOR b=1 TO 3:READ n$,k$',
+    '50 RESTORE:FOR b=1 TO 4:READ n$,k$',
     '60 FOR i=0 TO 103:k(i)=VAL("&"+MID$(k$,2*i+1,2)):p(i)=PEEK(&6000+i) XOR k(i):NEXT',
     '70 x=0:s=0:FOR i=0 TO 101:x=x XOR p(i):s=s+p(i):NEXT',
     '80 IF x=p(102) AND ((s+p(102)) AND 255)=p(103) THEN 110',
-    '90 NEXT:PRINT"No UK, French or German key fits this file":END',
+    '90 NEXT:PRINT"No UK, French, German or 128K key fits this file":END',
     '110 PRINT"Build:  ";n$:i=0:PRINT"Name:   ";:WHILE p(i)>0 AND i<10:PRINT CHR$(p(i));:i=i+1:WEND:PRINT',
     '120 PRINT"Kills:  ";p(13)+256*p(14):PRINT"Jumps:  ";p(15)+256*p(16)',
     '130 PRINT"Cash:   ";(p(18)+256*p(19))*1000+(p(20)+256*p(21))/10;"Cr":PRINT"Legal:  ";p(11):PRINT"Mission bytes: ";p(50);p(51):PRINT',

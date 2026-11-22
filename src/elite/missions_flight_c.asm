@@ -64,6 +64,9 @@ mxSpawnNext:
     ld (ix+1),a
     xor a
     ld (ix+4),a
+    IFDEF HULL_128
+    ld (ix+8),a                       ; z sign 0: the 128K spawn variance makes it random, and the hull is hostile
+    ENDIF
     call setDirectionofEntity
 mxSpawnDone:
     pop iy
@@ -113,5 +116,9 @@ mxLaserNormal:
     ld (ix+34),a
     ret
 
+    IFDEF HULL_128
+    INCLUDE "../elite128/missions_hull.asm"     ; the 128K tree has its own hull (filled like every other: ArcElite vertices, see that file)
+    ELSE
     INCLUDE "missions_hull.asm"
     ASSERT shipdatConstrictor >= 0x9E00         ; the three tests above compare only the blueprint pointer's high byte: no other hull may start at or above &9E00 (stock hulls end below &9D9E, the other flight images carry none)
+    ENDIF

@@ -101,11 +101,6 @@ may move, because saves are XORed with the code at `EquipShip`.
 
 Details, sizes and tests: `_missions_built.md`.
 
-## Gate Array and banking (128K)
+## The 128K build
 
-- The CRTC/Gate Array fetch video only from the base 64K (banks 0-3). The RAM banking register (`&7Fxx`, `11xxxyyy`) changes what the CPU sees, never what is displayed, so the extra banks 4-7 cannot be shown.
-  Source: [CPCWiki Gate Array](https://www.cpcwiki.eu/index.php/Gate_Array) ("The Video RAM is always located in the first 64K").
-- Configs used by the double-buffer experiment: C0 = banks 0,1,2,3; C1 = 0,1,2,7; C3 = 0,3,2,7. C1/C3 show bank 7 at `&C000`, so code kept there stays visible while the CPU draws at `&4000` (bank 1 or 3);
-  R12 `&1C` displays `&4000` (bank 1), `&3C` displays `&C000` (bank 3). C0 hides bank 7: code running there must be elsewhere, and interrupts are off.
-- The port is write-only: keep the current config in a variable (`dbCfg`, `dbBank`). Needs 128K; a 464 needs a fallback.
-- The CPCWiki pages return 403 to `curl` and WebFetch; read them with Claude in Chrome (`get_page_text`).
+The 128K build (branch `elite128`) has its own map: `_memory_map_128k.md` (RAM banks, the `&4000` window, the glue budget).

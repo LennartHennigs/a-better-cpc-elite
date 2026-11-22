@@ -8,17 +8,19 @@ saveGame, &0E63), a second save under another name, a load of the saved file (`c
 a launch followed by flight. After each, the marker bytes that changed are collected; the end of the run lists, per run, how many bytes any operation touched and the longest span
 nothing touched.
 usage (from work/xray):  ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/tests/test_parked_save.py [MARK]
+  BUILD=128 for the 128K build (absolute script path in the worktree; needs output/flight128.sna and disk/elite128.dsk; LARGEAXX is at the same addresses there).
 """
 import asyncio
 import shutil
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from parked_common import DISK_BASE, DOCK_CONT, HANDLE, SNA_FLIGHT, marker, zero_runs  # noqa: E402
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
 MARK = int(sys.argv[1], 16) if len(sys.argv) > 1 else 0xAA
-DOCK_CONT = 0x728D + 16     # xor a after the djnz of todoDockingProcedure
 SAVE_CALL, SAVE_RET = 0x0E63, 0x0E6C   # `call SaveSavegame` in saveGame; where it returns (6 inline parameter bytes)
 LOAD_CALL, LOAD_RET = 0x0DA8, 0x0DAF   # `call loadFile` in loadGame; 4 inline parameter bytes
 MENU = 0x0D40               # Filemenuloop: where the DISK ERROR path ends
@@ -27,23 +29,8 @@ OUT = Path("output")
 DISK = Path("disk/parked_probe.dsk")
 
 
-def low_runs(ram, base=0x40, end=0x1A40):
-    runs, i = [], base
-    while i < end:
-        if ram[i] == 0:
-            j = i
-            while j < end and ram[j] == 0:
-                j += 1
-            if j - i >= 16:
-                runs.append((i, j - i))
-            i = j
-        else:
-            i += 1
-    return runs
-
-
 async def main():
-    shutil.copy("disk/Elite_UK_Firebird_cracked_trainer.dsk", DISK)
+    shutil.copy(DISK_BASE, DISK)
     async with stdio_client(StdioServerParameters(command="cpcxray", args=["mcp", "--config", "config/cpc6128.toml"])) as (r, w):
         async with ClientSession(r, w) as s:
             await s.initialize()
@@ -84,13 +71,13 @@ async def main():
                 collect(tag, await snap("_psave_op"), 0xA600)
 
             await c("disk_insert", {"drive": "A", "path": str(DISK), "writable": True})
-            await c("sna_load", {"path": "output/firebird_in_flight.sna"})
-            runs = low_runs(await snap("_psave0"))
+            await c("sna_load", {"path": SNA_FLIGHT})
+            runs = zero_runs(await snap("_psave0"))
             print("zero runs >= 16 bytes:", len(runs), "total", sum(l for _, l in runs), flush=True)
             for a, l in runs:
-                await c("memory_write", {"address": a, "data": " ".join(f"{MARK:02X}" for _ in range(l))})
+                await c("memory_write", {"address": a, "data": marker(MARK, l)})
             await c("run", {"max_us": 5000000, "timeout_s": 120})
-            await c("breakpoint_add", {"address": 0x5066, "kind": "pc"})
+            await c("breakpoint_add", {"address": HANDLE, "kind": "pc"})
             await c("run", {"max_us": 10000000, "timeout_s": 120})
             await c("registers_set", {"values": {"pc": DOCK_CONT}})
             await c("breakpoint_remove", {"breakpoint_id": 1})

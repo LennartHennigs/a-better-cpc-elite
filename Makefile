@@ -1,10 +1,12 @@
 # Assemble the four code files. Needs sjasmplus (scripts/install-tools.sh puts it in ~/.local/bin).
 #   make original   the original game on a disk (stock bytes)                     -> build/elite_original.dsk
-#   make expanded   everything: enhancements, missions, ship packs, trainers, viewer -> build/elite_expanded.dsk (English only for now)
+#   make expanded   everything: enhancements, missions, ship packs, trainers, viewer -> build/elite64.dsk (English only for now)
 #   make stock      original bytes (CPC+ keyboard fix included in en/fr)           -> build/stock/
 #   make enhanced   star occlusion, Escape in the menus, title-screen ship choice  -> build/enhanced/
 #   make missions   enhanced plus the added missions (English only): bootable disk -> build/elite_missions.dsk (no trainers or viewer; `expanded` is the full build)
 #   make check      bash tools/check_src.sh for en, de and fr
+#   make disk6128     the 128K disk (6128 only) -> build/elite128.dsk (DSK128=FILE.dsk for another name); HULLS=stock (default) or HULLS=arcelite picks where the filled ships come from
+#   make listing6128  the readable listing of the 128K build (includes expanded, addresses and bytes) -> build/listing6128/elite6128.lst (same HULLS switch)
 #   make test       rebuild the disks, then the host tests: check_src (en, de, fr), saves, disk rules (about a minute; tools/tests/run_all.py)
 #   make test-quick the host tests alone, on the disks already in build/ (seconds)
 #   make test-emu   the cpcxray tests with a pass/fail result (several minutes; needs cpcxray and work/xray/output/firebird_in_flight.sna)
@@ -20,7 +22,10 @@ TREE    = $(TREE_$(LOC))
 TITLE   = -DTITLESEL
 OUT     = build
 
-.PHONY: original expanded stock enhanced missions check test test-quick test-emu clean
+.PHONY: original expanded stock enhanced missions check test test-quick test-emu clean disk6128 listing6128
+HULLS ?= stock
+export HULLS
+DSK128 ?= build/elite128.dsk
 
 $(OUT)/README.md: tools/build_readme.md
 	@mkdir -p $(OUT)
@@ -47,6 +52,12 @@ missions: $(OUT)/README.md
 
 check:
 	bash tools/check_src.sh && bash tools/check_src.sh de && bash tools/check_src.sh fr
+
+disk6128:
+	bash tools/check_src128.sh && python3 -I tools/build_dsk128.py $(DSK128)
+
+listing6128:
+	bash tools/listing6128.sh build/listing6128
 
 test:
 	$(MAKE) original

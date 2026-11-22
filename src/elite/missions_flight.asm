@@ -9,6 +9,7 @@ mxTypeConstrictor equ 19            ; ship type after the 19 stock ships (0-18)
 
     IFDEF FL_C
     DEFINE FLID "C"
+    DEFINE NO_SPAWNVAR                ; the image is full: no spawn variance routine (mxSpawnVar below)
     DEFINE HAS_SHIP
     DEFINE HAS_SPAWN
     DEFINE HAS_KILL
@@ -20,6 +21,7 @@ mxTypeConstrictor equ 19            ; ship type after the 19 stock ships (0-18)
     ENDIF
     IFDEF FL_T
     DEFINE FLID "T"
+    DEFINE NO_SPAWNVAR
     DEFINE HAS_SPAWN
     DEFINE HAS_ARRIVE
     DEFINE HAS_SUN
@@ -48,10 +50,12 @@ mxTypeConstrictor equ 19            ; ship type after the 19 stock ships (0-18)
     IFDEF FL_3
     DEFINE FLID "3"
     DEFINE FL_PACK
+    DEFINE NO_PACKCOH                 ; 36 to 40 bytes of room only: the pack members keep their own random places
     ENDIF
     IFDEF FL_4
     DEFINE FLID "4"
     DEFINE FL_PACK
+    DEFINE NO_PACKCOH                 ; 36 to 40 bytes of room only: the pack members keep their own random places
     ENDIF
     IFDEF FL_5
     DEFINE FLID "5"
@@ -64,6 +68,7 @@ mxTypeConstrictor equ 19            ; ship type after the 19 stock ships (0-18)
     IFDEF FL_7
     DEFINE FLID "7"
     DEFINE FL_PACK
+    DEFINE NO_PACKCOH                 ; 36 to 40 bytes of room only: the pack members keep their own random places
     ENDIF
     IFDEF FL_PACK
     DEFINE HAS_SHIP
@@ -167,6 +172,84 @@ mxLaunchTable:
     IF KILL_COUNT
     INCLUDE "killcount.asm"           ; shared head: the same address in every image (the hook in commonxx.asm calls it)
     ASSERT killCountHook == 0x9E1A, "the kill count hook must sit at the same address in every flight image (the status code calls it): the shared head changed size"
+    ENDIF
+
+; Spawn variance (-DSPAWN_VARIANCE; the 128K build has the same rules in the overlay on bankInit, docs/_ship_spawning.md): spawnShip ends with `jp mxSpawnVar`, after the stock start
+; position and the random low bytes. A hostile type (bit 2 of byte +33: Sidewinder, Krait, the pirates, the Asp, the Thargoid and the pack hulls that stand in for them) no longer starts in
+; one of the four fixed corners: x_hi and y_hi random 0 to 63, z_hi 32 to 63 (8,000 to 16,000 units), the z sign random, and a ship that would land behind the player inside the rear cone
+; (x_hi and y_hi both below z_hi) is put in front: the front 270 degrees remain. Same address in every image (it follows the shared kill count head); the Constrictor and Trumbles images
+; are full and keep the stock start (an immediate return). A is 0 on return, like the stock `xor a / ret` this replaces.
+    IFDEF SPAWN_VARIANCE
+mxSpawnVar:
+    IFNDEF NO_SPAWNVAR
+    bit 2,(ix+33)
+    jr z,mxSpawnVarEnd
+    call getRandomNumber                ; preserves BC and HL
+    and 0x3F
+    ld (ix+1),a
+    call getRandomNumber
+    and 0x3F
+    ld (ix+4),a
+    call getRandomNumber
+    and 0x1F
+    or 0x20
+    ld (ix+7),a
+    call getRandomNumber
+    and 0x80
+    ld (ix+8),a
+    jr z,mxSpawnVarPlaced               ; in front
+    ld a,(ix+1)
+    cp (ix+7)
+    jr nc,mxSpawnVarPlaced              ; x_hi >= z_hi: outside the rear cone
+    ld a,(ix+4)
+    cp (ix+7)
+    jr nc,mxSpawnVarPlaced
+    res 7,(ix+8)                        ; inside the rear cone: in front instead
+mxSpawnVarPlaced:
+    IFNDEF NO_PACKCOH
+; A pack (spawnEscortLoop in commonxx.asm calls spawnShip for each member with BC pushed: C = the ships still to come, this one included) starts on one point like the stock game:
+; the first member keeps the place above, the others copy the leader's x, y and z (9 bytes). The caller is told by the return address at the top of the stack; the leader is
+; the ship before it while the count goes down by one (mxPackLeft = what the last member left, 0 after a complete pack) and still a live hostile ship (a pack cut short by a
+; full slot table leaves a stale leader: its slot may hold anything by now).
+    pop hl
+    push hl                             ; the return address of spawnShip
+    ld de,spawnEscortRet
+    or a
+    sbc hl,de
+    jr nz,mxSpawnVarEnd                 ; not a pack member
+    ld hl,2
+    add hl,sp
+    ld c,(hl)                           ; C of the BC pushed by spawnEscortLoop
+    ld hl,mxPackLeft
+    ld a,(hl)
+    cp c
+    ld a,c
+    dec a                               ; (carry stays)
+    ld (hl),a
+    jr c,mxPackLeader                   ; more to come than the last member left: a new pack
+    ld iy,(mxPackLead)
+    ld a,(iy+34)
+    and a
+    jr z,mxPackLeader                   ; the leader is gone
+    bit 2,(iy+33)
+    jr z,mxPackLeader                   ; and its slot holds something else
+    push iy
+    pop hl
+    push ix
+    pop de
+    ld bc,0x0009
+    ldir                                ; x, y, z and their signs
+    jr mxSpawnVarEnd
+mxPackLeader:
+    ld (mxPackLead),ix
+    jr mxSpawnVarEnd
+mxPackLead: dw 0
+mxPackLeft: db 0
+    ENDIF
+    ENDIF
+mxSpawnVarEnd:
+    xor a
+    ret
     ENDIF
 
 ; Defaults for the vectors the image does not use.

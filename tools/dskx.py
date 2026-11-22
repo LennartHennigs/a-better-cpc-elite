@@ -5,6 +5,8 @@ usage: dskx.py IMAGE.dsk [OUTDIR]
 Prints one line per file with the AMSDOS header (load, exec, length); with OUTDIR also
 writes each file (header stripped) as NAME and the raw bytes as NAME.raw.
 """
+import os
+import shutil
 import struct
 import sys
 from pathlib import Path
@@ -13,9 +15,21 @@ ROOT = Path(__file__).resolve().parent.parent
 
 
 def is_original(path):
-    """True for a file in the project root or anywhere under disks/: the original disks, which no tool may write (CLAUDE.md)."""
+    """True for a file in the project root or anywhere under disks/: the original disks, which no tool may write (CLAUDE.md).
+    In a worktree `disks` is a symlink into the main checkout, so the guarded places are the resolved ones: the main checkout's root and its disks/ as well."""
     p = Path(path).resolve()
-    return p.parent == ROOT or (ROOT / "disks") in p.parents
+    disks = (ROOT / "disks").resolve()
+    return p.parent in (ROOT, disks.parent) or disks in p.parents
+
+
+def write_atomic(path, data):
+    """Write `data` to `path` through a temporary file and os.replace, so a kill or a sync in the middle leaves the old image, not a short one. Keeps the file mode."""
+    path = Path(path).resolve()
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.write_bytes(data)
+    if path.exists():
+        shutil.copymode(path, tmp)
+    os.replace(tmp, path)
 
 
 def load_sectors(path):
@@ -128,6 +142,36 @@ def remove_file(d, secs, first, name, ext):
     return n
 
 
+def _half_pos(secs, first, ls):
+    """Image offset of logical 512-byte half block `ls` (a 1 KB directory block b is halves 2b and 2b+1)."""
+    return secs[(ls // 9, first + ls % 9)][0]
+
+
+def rename_file(d, secs, first, name, ext, new_name, new_ext=None):
+    """Rename NAME.EXT in place: every directory entry (the attribute bits, e.g. System, stay) and, when the file starts with a valid AMSDOS header, the name inside it
+    with its checksum, so `RUN"NEWNAME` and the header agree. No block moves. new_ext defaults to the old extension. Returns the number of entries renamed (0 = no such file)."""
+    new_ext = ext if new_ext is None else new_ext
+    if not (1 <= len(new_name) <= 8 and len(new_ext) <= 3):
+        raise SystemExit(f"{new_name}.{new_ext}: not an AMSDOS 8.3 name")
+    nm, ex = new_name.upper().ljust(8).encode(), new_ext.upper().ljust(3).encode()
+    ext0 = find_extents(d, secs, first, f"{name}.{ext}")
+    if not ext0:
+        return 0
+    blk = ext0[0][2][0]                                 # the first block holds the header
+    pos = _half_pos(secs, first, blk * 2)
+    if amsdos_header(bytes(d[pos:pos + 128])) is not None:
+        d[pos + 1:pos + 9], d[pos + 9:pos + 12] = nm, ex
+        d[pos + 67:pos + 69] = (sum(d[pos:pos + 67]) & 0xFFFF).to_bytes(2, "little")
+    n = 0
+    for _, off, _blocks in ext0:
+        for k in range(8):
+            d[off + 1 + k] = (d[off + 1 + k] & 0x80) | nm[k]
+        for k in range(3):
+            d[off + 9 + k] = (d[off + 9 + k] & 0x80) | ex[k]
+        n += 1
+    return n
+
+
 def add_payload(d, secs, first, name, ext, payload, records):
     """Add a new file whose bytes (header included) are `payload` to the image `d`: free directory entries, free 1 KB blocks, one extent (16 KB = 128 records,
     16 blocks) per 16 KB of the file."""
@@ -185,6 +229,35 @@ def amsdos_header(b):
                 exec=struct.unpack("<H", b[26:28])[0])
 
 
+def add_file(d, secs, first, name, ext, data, load):
+    """Add a new AMSDOS file (header + data); files up to 16 KB (one extent)."""
+    payload = make_header(name, ext, load, len(data)) + data
+    return add_payload(d, secs, first, name, ext, payload, -(-len(payload) // 128))
+
+
+def overwrite_file(d, secs, first, name, new):
+    """Replace the contents of the existing file `name` (NAME.EXT) in the image bytes `d` with `new`, keeping its AMSDOS header and record padding.
+    Exits when the header length differs from len(new). Returns the parsed header."""
+    slots, total = [], 0
+    for _, off, blocks in find_extents(d, secs, first, name):
+        total += d[off + 15] * 128
+        for b in blocks:
+            for s in (0, 1):
+                slots.append(_half_pos(secs, first, b * 2 + s))
+    hdr = bytes(d[slots[0]:slots[0] + 128])
+    h = amsdos_header(hdr)
+    if h is None or h["length"] != len(new):
+        raise SystemExit(f"{name}: header length {h and h['length']} != built length {len(new)}")
+    data = hdr + bytes(new)
+    data += b"\0" * (total - len(data))
+    for k, off in enumerate(slots):
+        chunk = data[k * 512:(k + 1) * 512]
+        if not chunk:
+            break
+        d[off:off + len(chunk)] = chunk
+    return h
+
+
 if __name__ == "__main__":
     files = read_files(load_sectors(sys.argv[1]))
     out = Path(sys.argv[2]) if len(sys.argv) > 2 else None
@@ -199,3 +272,4 @@ if __name__ == "__main__":
             safe = "".join(c if c.isalnum() or c in "._-" else "_" for c in name)
             (out / (safe + ".raw")).write_bytes(data)
             (out / safe).write_bytes(data[128:128 + h["length"]] if h else data)
+

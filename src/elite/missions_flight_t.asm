@@ -260,10 +260,10 @@ mxNewVelocity:
     push hl
     call getRandomNumber
     and 0x03
-    ld e,a
-    ld d,0x00
-    ld hl,mxTrDir
-    add hl,de
+    ld hl,mxTrDir                     ; (2 bytes shorter than a 16-bit add: room for the spawn variance stub, missions_flight.asm)
+    add a,l
+    ld l,a
+    ASSERT (mxTrDir & 0xFF) <= 0xFC, "mxTrDir + 3 must not cross a page"
     ld a,(hl)
     pop hl
     ld (hl),a

@@ -44,20 +44,7 @@ Open work first, finished items at the bottom (section *Done*). `CLAUDE.md` keep
 - [ ] `tools/relabel.py` for `src/elite_de` and `src/elite_fr`, if wanted (needs `disasm_german.py`/`disasm_french.py` into a scratch dir; `src/elite` is done).
 - [ ] Coverage of the data ranges so far: flight only (`firebird_in_flight.sna`); run `exec_in_data.py` from the entry snapshot, the docked state and the chart views too (`--sna`).
 - [ ] Name the last `dat_` variables by tracing (`tools/trace_unknowns.py`; `dat_2F36` and `dat_38E1` were not hit, need a run with a real galactic jump and the inventory screen); the seed byte `dat_3D2D` is rewritten by `waggle_galaxy`.
-- [ ] The remaining 7 `dat_` labels in `src/elite/` (counted with `grep -c "^dat_"`), checked 2026-11-09 (23 before this pass). Done: 16 address/message-id immediates
-  (`&2000 &4000 &3FC0 &7F00 &7F01 &7F03 &7F10 &7F89 &640A &7B05 &6170 &7EFD &80FF &C03F &C040 &CE00`) are numeric operands in
-  `src/elite`, `elite_de` and `elite_fr`; `dat_6161`/`dat_6163` are `smcIndicatorPatch1/2`; 2026-11-09: `&2710 &5B4E &5C4C &58C1 &FFFF` also numeric, and renamed
-  `saveChk0..3` (`&0F5B-&0F5E`), `edgeVecX/Y/Z` (`&5921-&5925`), `catalogBuf`, `tempString1End`, `casOutAddr`, `keybFlags0` (`&8E23`, a flag byte decoded as `adc a,h`).
-  `dat_2F36` is now `fuelPriceByte`, `dat_38DE` is byte 2 of the credits high word. Left: `dat_0F01` (code label whose address is loaded), `dat_38DE`, `dat_38E1`
-  (cargo/market bytes, see `docs/_savegame.md`), `dat_3D2D` (planet-type byte after the target seed), `dat_8427` (return-address stub), `dat_90A2` (inside ship data).
-  - **Variables with an unknown role**: `&1B2A-&1B73` (entity slot workspace), `&38DE`/`&38E1` (block pointers; `&38E1` is the
-    market byte, see `docs/_missions.md` section 3), `&3B3F-&3B69` (galactic chart buffers), `&3D2D` (7 bytes after the target
-    seed), `&5921-&5925` (three words in the ship-edge drawing code), `&1BE3`, `&2F36`, `&864B`, `&C083`, `&FFFF`, and `largeaxx`
-    `&0F01-&0F5E` (save menu; `&0F01` is a code label whose address is loaded).
-  - **Labels inside or between instructions** (dead code or operand bytes, name or fold into the neighbour): `&2710`, `&3A6C`,
-    `&5860`, `&58C1`, `&5B4E`, `&5C4C`, `&7406`, `&8427`, `&8E23`, `&90A2` (label inside ship data; the end sequence clears 5 bytes from it).
-  Method that worked: align the declaration order of Fessor's variable blocks (`extended/source/EliteMasterSource.asm`) with
-  the stock block by count of bytes, check one anchor (`work/fessor_to_stock.sym`) and the initial data value, then read the uses.
+- [ ] The remaining 7 `dat_` labels in `src/elite/` (`grep -c "^dat_"`): name them by tracing or fold them into their neighbours; variables of unknown role and labels inside instructions are listed. [full text](docs/_todo_notes.md#remaining-dat-labels)
 - [ ] Optional: comments for `chardefs1-7` (`common2x`, never referenced by label) and `sEntityunknown` as a named field of the ship record (byte `+0x26`).
 - [ ] Optional: strip the screen-address remarks from the German and French copies of the scanner and alert icon comments (not checked there).
 - [ ] CPC+: check the other PSG/PPI port users for the same ordering problem (`MUSIQUEX`, joystick reads; grep `0xF4`/`0xF6` writes in `src/elite/`).
@@ -70,6 +57,8 @@ Open work first, finished items at the bottom (section *Done*). `CLAUDE.md` keep
 - [ ] `.claude/` (holds only `scheduled_tasks.lock`): add it to `.gitignore` or leave it untracked.
 
 ## Done
+
+- [x] Spawn variance in the 64K build (2026-11-21): `-DSPAWN_VARIANCE` with `-DMISSIONS`, hostiles only; packs 1 and 2 dropped the Cobra Mk I and the Worm, the Constrictor and Trumbles images keep the stock start. `tools/tests/test_spawnvar.py`, `docs/_ship_spawning.md`. The Thargoid group (`spawnCommand1`) and the plans pair clear the random z sign again, so they never start behind the player (review fix, same day). Pack members start on the leader's point (2026-11-22, `spawnEscortRet`, 63 bytes per image; packs 3, 4 and 7 have no room: `NO_PACKCOH`). Left: German and French (no flight images, would need the routine in the `COMMONXX` tail), asteroid headings and traders (128K only so far), packs together in the packs 3, 4 and 7 images (36 to 40 bytes of room, needs about 63).
 
 ### General
 

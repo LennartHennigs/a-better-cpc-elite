@@ -1,5 +1,7 @@
 # What we changed in the game
 
+This file covers the 64K builds. The differences of the 128K build (`src/elite128`, branch `elite128`) are in `_128k_version.md` and `src/elite128/README.md`.
+
 Every difference between our builds and the original game, with why it exists, where it lives, what it costs and how it is proven. Without any switch only the CPC+ byte differs from the original
 (`_build.md`); everything else is behind a `-D` flag. Source-only work (names, comments, `smc_`/`buf_` prefixes, `dw` tables) changes no byte and is not listed. The dated history is in `CHANGELOG.md` (up to 2026-11-11: `changelog_archive.md`).
 
@@ -18,6 +20,7 @@ Every difference between our builds and the original game, with why it exists, w
 | A sight per laser type (pulse cross, beam, military, mining), none without a laser | `ENHANCED` (not with `MISSIONS`) | all three; English only without `-DMISSIONS` | the first instruction of `LaserSights` (3 bytes, `jp`) | 108 of the 128 first bytes of the zero tail of `COMMONXX` (`laserSightsBlock`) |
 | Title screen ship choice, ship name on the press-space screen | `TITLESEL` | English, German, French (ship names are English in all three) | three call operands (two in German and French) plus one `call printELITE` in `COMMONXX` (same length) | about 280 bytes in the tail of `MUSIQUEX` |
 | A sells the whole hold in the sell menu | `ENHANCED` | English | the 3-byte operand of the `jp Inventory` at the end of the sell menu (`sellAllOperand`) | 48 bytes in the `LARGEAXX` tail (`sell_all.asm`; in the missions build inside the resident stub) |
+| Laser position by letter in the equipment menu (F, B, L, R; the rear view is called "Back") | `ENHANCED` | English (and the 128K build, which has no switches) | the key prompt block of the position screen (`eqLaserSlot`..`eqLaserSlotEnd`, same length) and the string of token `&61` ("RE" "AR" -> "BACK"), paid by two digrams in the MAYDAY message | 0 |
 | Ten more ships in flight (ship packs) | `MISSIONS` (`FL_1`-`FL_7`) | English | none beyond the missions' hooks (`mxShipTable`, `mxLaunchEntry`) | seven flight images on disk; 9 bytes more in every image for the picker |
 | C64-like traffic | `TRAFFIC` | all three | 5 bytes (two roll operands, the 3-byte escort pack size) | 0 |
 | Added missions | `MISSIONS` (+ `FL_*`, `OVL_*`) | English | about a dozen 3-byte call replacements (hook sites) | both zero tails, plus overlay and image files on disk |
@@ -79,6 +82,15 @@ In the sell menu, A at a quantity prompt sells every good in the hold (the same 
 `reAskifNotAllSold` counts the key down twice on its way there, so the routine compares with `"A"-2`; the other way in, the end of the menu loop, arrives with A = `0x11`. `check_src.sh` allows exactly the operand and the routine (`sellAllOperand`, `sellAllEntry..sellAllEnd`) as differences of `-DENHANCED`.
 Test: `tools/tests/test_sellall.py` (boot, fill the hold, key 3, key A). English only so far; German and French need the hook and a localised key.
 
+## Laser position by letter (`ENHANCED`, English and 128K)
+
+Buying a laser asks for the view. The stock screen lists "0 Front", "1 Rear", "2 Left", "3 Right" and takes the digit; now it lists "F Front", "B Back", "L Left", "R Right" and takes the letter (any other key leaves the menu and refunds the price, as the digits did). Same for the 128K build, where the code is unconditional.
+
+- **Code** (`largeaxx.asm`, `eqLaserSlot`..`eqLaserSlotEnd`): the display loop keeps its counter on the stack instead of in `varEquipmentNumber` (saves 6 bytes), takes the letter from a four-byte table stored backwards (`eqLaserKeys` = "RLBF", entry `3-n` for view `n`) and the key check is one `cpir` over the same table whose leftover count in `C` is the view number. The old `LAB_ram_0cbf` (`call restore_trade_state` / `jr`) is folded into `eqLaserLeave`, a label in front of the same call in `leaveEQScreen`. The block and the table end exactly at the stock address of `eqErrornotEnoughCash` (`&0CC4`), so every routine after it stays where it was; `check_src.sh` allows the slot (`eqLaserSlot`..`eqLaserSlotEnd`) and nothing else. The save key (`EquipShip`, 104 bytes) is not touched. 0 spare bytes are left in the block.
+- **First letter:** the capital of "Front" came from the digit in front of it (a non-letter starts a word); the first line now gets `call placeCursor` before the loop (same row as before), otherwise it printed "f Front".
+- **"Back":** token `&61` (shared with the view title in flight, so "REAR" there reads "BACK" too) was the two digrams "RE" "AR"; "BACK" is four bytes. The two extra bytes are paid in the same string table by writing "MA" and "AN" as digrams in the MAYDAY message (`strBackSlot`..`strBackSlotEnd`, `commonxx.asm`): strings are found by counting zero bytes, so the entries between only move.
+- **Tests:** `tools/tests/test_laserkeys.py 64|128` (boot, new commander, equipment menu, item 5, Return): the screen text (exact case), each letter fills its own `laserTypes` slot, the price stays taken, digits and other letters leave and refund. In `run_all.py --emu128` (128K only). English only: German and French keep the digits (their trees are unchanged).
+
 ## The added missions (`MISSIONS`)
 
 Five missions on top of the three stock ones: Constrictor, Thargoid plans, Trumbles, and the two Elite Plus missions (stolen police ship, asteroid bombardment). How they work, their order and triggers: `_missions_built.md`; the research: `_missions.md`.
@@ -97,6 +109,10 @@ What they change in the stock game:
 ## Ship packs and traffic (`MISSIONS`, `TRAFFIC`)
 
 Ten more hulls (Fessor's; `src/elite/missions_ships.asm`) in seven flight images `MFLIGHT1-7`, picked per system visit by `(jumpCounter + presentSystemSeed) & 7`; the pack hook redirects some Sidewinder, Krait and trader spawns to them. The spawn roll constants are named (`SPAWN_HOSTILE_LIMIT` 0x5A, `SPAWN_JUNK_WIDTH` 35, escort packs of one to four) with the stock values in comments. Design, sizes, load times, tests and what was left out: `_ship_packs.md`.
+
+## Spawn variance (`SPAWN_VARIANCE`, with `MISSIONS`; 2026-11-21)
+
+Hostile ships (blueprint flag byte `+33` bit 2) start at x_hi and y_hi 0 to 63, z_hi 32 to 63 and a random z sign, and a ship that would land inside the rear cone is put in front (front 270 degrees), instead of one of the four fixed corners. `spawnShip` ends with `jp mxSpawnVar` instead of `xor a / ret` (1 byte more); the byte comes back from `ld (ix+37),0x7E` replacing `ld a,0x7E / ld (ix+37),a` just before, so nothing after it moves. The routine (`mxSpawnVar`, `missions_flight.asm`, 64 bytes) sits at `&9E34` in every flight image after the shared kill count head; the Constrictor and Trumbles images (`NO_SPAWNVAR`) have only `xor a / ret` there and keep the stock start. To fit, packs 1 and 2 carry one hull each (Gecko, Moray; `HULL_128` keeps both Fessor hulls in the 128K build) and the Trumbles image's `mxNewVelocity` lost two bytes. `check_src.sh`: the flag set `-DENHANCED -DTITLESEL -DTRAFFIC -DMISSIONS -DSPAWN_VARIANCE` keeps both file lengths; default and `-DMISSIONS` builds are untouched. Test: `tools/tests/test_spawnvar.py`. English only (the German and French builds have no flight images). Details: `docs/_ship_spawning.md`.
 
 ## Trainer, save tools and disks
 

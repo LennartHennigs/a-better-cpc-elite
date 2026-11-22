@@ -1,14 +1,14 @@
 This repository mixes my own work with material that is not mine. Which licence applies depends on the path; the exceptions are listed in NOTICE.
 
 1. Code and tools written by me: MIT (text below)
-   tools/, scripts/, Makefile, src/cheats/ (the BASIC trainers, save editors and the ship viewer)
+   tools/, scripts/, Makefile, src/cheats/ (the BASIC trainers, save editors and the ship viewer), src/viewer128/ (the 128K ship viewer; its ship data are generated from the game's blueprints and are not in the repository, see NOTICE)
    Exception: `tools/proto_fill/` needs Ian Bell's ship table from ArcElite to run. The table is not in the repository and not covered (see NOTICE).
 
 2. Documentation written by me: Creative Commons Attribution 4.0 International (CC BY 4.0), https://creativecommons.org/licenses/by/4.0/legalcode
-   README.md, CHANGELOG.md, TODO.md, CLAUDE.md, docs/ (text and the screenshots in docs/img/)
+   README.md, CHANGELOG.md, TODO.md, CLAUDE.md, CHANGELOG_128K.md, TODO_128K.md, src/elite128/README.md, src/elite128/CLAUDE.md, docs/ (text and the screenshots in docs/img/)
 
-3. Everything else (the disassembled game source in src/elite/, src/elite_de/ and src/elite_fr/, the mission code in src/elite/missions_*.asm and src/disk/):
-   no licence is granted. See NOTICE.
+3. Everything else (the disassembled game source in src/elite/, src/elite_de/ and src/elite_fr/, the 128K source in src/elite128/, the mission code in src/elite/missions_*.asm and src/disk/):
+   you may read it and build it for your own use from your own copy of the game, and no licence is granted beyond that. See NOTICE.
 
 ---------------------------------------------------------------------------
 

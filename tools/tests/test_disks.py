@@ -76,10 +76,12 @@ def check(path):
         if ids != STD and any((t == (b * 2 + s) // 9) for f in files.values() for b in f["blocks"] for s in (0, 1)):
             fails.append(f"track {t} holds file data but its sector ids are {sorted(hex(i) for i in ids)}")
     lang = language(path)
-    need = ["LARGEAXX.BIN", "COMMONXX.BIN", "COMMON2X.BIN"] if lang == "fr" else CORE + ["ELITE.BAS"]
-    if "expanded" in path.name or "missions" in path.name:
+    expanded = path.name.startswith("elite64")                                          # the expanded disk (make expanded)
+    loader = "ELITE128.BAS" if path.name.startswith("elite128") else "ELITE64.BAS" if expanded else "ELITE.BAS"      # renamed loaders: RUN"ELITE128, RUN"ELITE64
+    need = ["LARGEAXX.BIN", "COMMONXX.BIN", "COMMON2X.BIN"] if lang == "fr" else CORE + [loader]
+    if expanded or "missions" in path.name:
         need += MISSIONS
-    if "expanded" in path.name:
+    if expanded:
         need += EXPANDED
     for n in need:
         if n not in files:
@@ -90,7 +92,7 @@ def check(path):
     if ref.exists() and "LARGEAXX.BIN" in files:
         off, key = elitekey.key_from_disk(str(path))
         roff, rkey = elitekey.key_from_disk(str(ref))
-        if (off, key) != (roff, rkey):
+        if (off, key) != (roff, rkey) and not path.name.startswith("elite128"):      # the 128K build relocates the code the key is read from: saves are not compatible, `CONVSAVE` converts them (docs/_cheats.md, "The 128K build")
             fails.append(f"save key differs from {ref.name} (offset &{off:X} against &{roff:X}): old saves will not load")
     return fails, len(files)
 

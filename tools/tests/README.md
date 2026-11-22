@@ -17,7 +17,7 @@ python3 -I tools/tests/run_all.py [--host] [--emu] [--only NAME ...]
 | Test | Checks |
 |---|---|
 | `test_disks` | every disk in `build/`: only `.BAS`, `.TXT` and saves visible in `CAT`, valid AMSDOS headers, no block on an odd-sector track, the needed files present, the save key unchanged against the original game of that language |
-| `test_saves` | the three build keys, the saves of the original disks decode with their own key and not with another, decode and encode round trip, German to UK to German conversion |
+| `test_saves` | the four build keys (UK, French, German and the 128K build's from `src/elite128`), the saves of the original disks decode with their own key and not with another, decode and encode round trip, German to UK to German conversion, every save to the 128K key and back |
 
 ## Running one emulator test
 
@@ -47,12 +47,33 @@ cd work/xray                      # the scripts use relative paths (output/, dis
 | `test_trumbles_screens` | a watch, not a test: one Trumble, then jumps (the game's own arrival code) up to a swarm, screenshots at four stages (`output/trumbles_*.png`) | mission disk |
 | `test_launch` | the launch hook puts the right flight image in the `COMMONXX` tail | mission disk, same flags as the disk (`-DENHANCED -DTITLESEL -DTRAFFIC -DMISSIONS`) |
 | `test_ship_packs` | the ship pack hook hands out the extra hulls about half the time | in-flight snapshot, any disk |
+| `test_spawnvar` | spawn variance on the 64K build (`-DSPAWN_VARIANCE`): hostile start ranges, none in the rear cone, traders and the Viper stock, packs start on the leader's point (images 0 and 1; scattered in image 3), image C keeps the stock corner; `ALL OK` line; in `run_all.py --emu` | in-flight snapshot, any disk |
 | `test_sellall` | the A key of the sell menu | mission disk (or a disk as argument) |
 | `test_title_ships` | title-screen ship selection | `build_dsk.py` disk (`elite_rebuilt.dsk`) |
 | `test_station_screens` | screenshots of the docked screens with the `-DENHANCED` changes | rebuilt disks (`en`, `de`, `fr`) |
 | `test_star_occlusion` | stars are not drawn over the planet or sun (`off`, `far`, `sun` as arguments) | in-flight snapshot |
 | `test_keydelay` | key pre-delay, stock against `-DENHANCED` | Firebird disk copy |
 | `test_cloak_asp` | is the cloaking-mission Asp visible (view and scanner) | Firebird disk copy |
-| `test_parked_ram`, `test_parked_save` | probes: is the zero space in parked firmware RAM really unused, and what survives a disk save. The result is "do not put code there" (`docs/_memory_map.md`); kept as evidence. | Firebird disk copy |
+| `test_parked_ram`, `test_parked_save` (`BUILD=128` for the 128K build, config and zero-run helpers in `parked_common.py`; `test_parked_save128` drives the 128K file menu instead, `RUNSEL=a:b` marks only some zero runs) | probes: is the zero space in parked firmware RAM really unused, and what survives a disk save. The result is "do not put code there" (`docs/_memory_map.md`); kept as evidence. | Firebird disk copy |
+
+## 128K tests (branch `elite128`)
+
+Run from `work/xray` with absolute script paths (in this worktree `work/xray` is a symlink to the main checkout). They need `build/elite128.dsk` copied to `work/xray/disk/elite128.dsk` (or `DISK128=...`); `python3 -I tools/tests/run_all.py --emu128` builds the disk and runs `packs`, `ship_packs`, `sellall`, `escdigit`, `filemenu`, `music`, `tools`, `spawnvar` and `laserkeys` (the ones with an `ALL OK` line); the rest are screenshots and probes, run by hand. Flight tests start from `output/flight128.sna` (`test_flight128.py 3`), launch and docking tests from `output/docked128.sna` (`snap_docked128.py`; regenerate it after any code change).
+
+| Test | Checks |
+|---|---|
+| `test_boot128`, `snap_docked128`, `test_flight128` | boot to the title, a docked snapshot for the quick tests, launch and fly (the snapshots the others start from) |
+| `test_fill128`, `test_hulls128`, `test_order128`, `test_views128` | the polygon fill in bank 6, every hull type, draw order, the other views |
+| `test_frametime` | frame time of the flight loop in one scene, any build (symbols from a sym file, `--phases`/`--marks` stop at routines and print the time between them, `--clean` empties the ship slots, `--poke ADDR=HEX` moves things, `--ship TYPE`); 64K: `Elite_UK_Firebird_cracked_trainer.dsk` + `output/firebird_in_flight.sna` + `work/elite128/c.sym`, 128K: `elite128.dsk` + `output/flight128.sna` + `c128.sym`; `elite64.dsk` needs its own flight snapshot |
+| `test_flip128`, `test_isrjitter128`, `test_soak128` | page flip (banks equal after each flip), raster split jitter, soak with a reset breakpoint |
+| `test_ship_packs128` | `test_ship_packs.py` with `BUILD=128` (a two-line wrapper): the pack hook on the 128K build: each pack's flight image at `&9D9E`, the extra hull about half the time, types 8, 15 and 18 untouched (needs `output/flight128.sna`) |
+| `test_launch128`, `test_mission128`, `test_packs128` | flight image copied from bank 5, mission overlays from RAM, the random ship pack per launch |
+| `test_titleships128`, `test_viewer128` | the title ship selector, `RUN"SHOWSHPS` |
+| `test_spawnvar128` | spawn variance (`spawnmod.asm`): 60 spawns per case of the hostile types (ranges, none in the rear cone, some behind), traders and the Viper unchanged, 120 asteroids (heading towards the player, orthonormal frame), packs stay together; `ALL OK` line, not in `run_all` yet |
+| `test_laserkeys` | laser position keys F, B, L, R (screen text, slot filled, refund on other keys); `64` (mission disk) or `128` (default) as argument; `test_laserkeys64` is the 64K run for `run_all.py --emu` |
+| `test_sellall128`, `test_escdigit128`, `test_killcount128`, `test_sights128`, `test_filemenu128` | A key of the sell menu, Esc at the second digit, kill count on the commander page, laser sights, catalogue (the `Commanders:` heading must be on the screen: it proves the firmware text hook `myTEXTOUTACTION`)/save/load |
+| `test_tools128` | the 128K disk's tools: `CONVSAVE` UK to 128K and 128K to UK compared byte for byte with the host, `LISTSAVE` names the builds, `EDITSAVE` edits a 128K save, `TRAINER` with every cheat on (the 13 poke targets, the commander block, still there after the title is up) |
+| `test_viewer128` | screenshots of the ship viewer (`RUN"SHOWSHPS`): first ships, the last one, Q back to BASIC; look at `output/viewer128_*.png` (no pass/fail) |
+| `test_music128` | the title music: PSG registers change on the title, stop after it, the bank 7 slot is `NOTMUSIC.BIN` again |
 
 Tips: stop at `handleEntitys` (`&5066`) and restore the registers when injecting calls; `run` reports `time_limit`, not a breakpoint stop, so count hits with `breakpoint_list`; hold keys 1.2 to 1.5 s. More in `docs/_build.md` ("Tests and the emulator").

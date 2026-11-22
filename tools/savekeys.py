@@ -1,21 +1,23 @@
 #!/usr/bin/env python3
-"""Shared by tools/mk_editsave.py and tools/mk_listsave.py: the three build keys (UK, French, German; read from the game disks by tools/elitekey.py) as BASIC
-DATA lines, and the writer for src/cheats/<NAME>.ASC (CRLF lines, ends with Ctrl-Z)."""
+"""Shared by tools/mk_editsave.py, tools/mk_listsave.py and tools/mk_convsave.py: the four build keys (UK, French, German; read from the game disks by tools/elitekey.py; 128K: from
+src/elite128, tools/cheat128.py) as BASIC DATA lines, and the writer for src/cheats/<NAME>.ASC (CRLF lines, ends with Ctrl-Z)."""
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import elitekey  # noqa: E402
+import cheat128  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 DISKS = [("UK", "Elite_UK_Firebird_cracked_trainer.dsk"), ("FRENCH", "Elite (1985)(Firebird Software)(fr).dsk"), ("GERMAN", "Elite_DE_cracked.dsk")]
 
 def key_data_lines(first=300):
-    """DATA lines with the three build keys (UK, French, German) as hex strings, numbered from `first`."""
+    """DATA lines with the four build keys (UK, French, German, 128K) as hex strings, numbered from `first`."""
     out = []
     for i, (name, disk) in enumerate(DISKS):
         off, key = elitekey.key_from_disk(ROOT / "disks" / disk)
         out.append(f"{first + 10 * i} DATA {name},{key.hex().upper()}")
+    out.append(f"{first + 10 * len(DISKS)} DATA 128K,{cheat128.save_key().hex().upper()}")
     return out
 
 

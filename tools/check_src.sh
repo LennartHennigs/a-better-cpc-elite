@@ -11,6 +11,7 @@ if [ "${1:-}" = "fr" ]; then SRC="$ROOT/src/elite_fr"; BIN="$ROOT/work/bin_fr"; 
 OUT="$(mktemp -d)"
 export PATH="$HOME/.local/bin:$PATH"
 rc=0
+samelen() { [ "$(wc -c <"$1")" -eq "$(wc -c <"$2")" ]; }   # cmp -l ignores a length difference (it reports it on stderr only), so the slot checks need this first
 for p in "largeaxx LARGEAXX" "commonxx COMMONXX" "common2x COMMON2X" "musiquex MUSIQUEX"; do
   read -r n f <<<"$p"
   if ! sjasmplus --raw="$OUT/$n.bin" --sym="$OUT/$n.sym" "$SRC/$n.asm" >"$OUT/$n.log" 2>&1; then echo "$n: assemble FAILED"; tail -5 "$OUT/$n.log"; rc=1; continue; fi
@@ -26,15 +27,17 @@ for p in "largeaxx LARGEAXX" "commonxx COMMONXX" "common2x COMMON2X" "musiquex M
         if [ -n "$(esym sellAllEntry)" ]; then SA=$(( $(esym sellAllEntry) - 0x840 )); SAE=$(( $(esym sellAllEnd) - 0x840 )); SO=$(( $(esym sellAllOperand) - 0x840 )); fi
         # the 104 bytes at EquipShip are the save key: any change breaks every existing save 
         KW=$(( $(esym EquipShip) - 0x840 ))
+        LS=-99999; LSE=-99999   # laser position by letter (eqLaserSlot..eqLaserSlotEnd: the key prompt block, the folded LAB_ram_0cbf and the table)
+        if [ -n "$(esym eqLaserSlot)" ]; then LS=$(( $(esym eqLaserSlot) - 0x840 )); LSE=$(( $(esym eqLaserSlotEnd) - 0x840 )); fi
         if ! cmp -s <(dd if="$OUT/$n.enh.bin" bs=1 skip=$KW count=104 2>/dev/null) <(dd if="$REF" bs=1 skip=$KW count=104 2>/dev/null); then echo "$n -DENHANCED: save key window (EquipShip, 104 bytes) CHANGED: old saves will not load"; rc=1; fi
-        if cmp -l "$OUT/$n.enh.bin" "$REF" | awk -v cl=$CL -v st=$ST -v ste=$STE -v pq=$PQ -v eq=$EQ -v qe=$QE -v sa=$SA -v sae=$SAE -v so=$SO '{o=$1-1; if (!((o>=cl && o<cl+16) || (o>=sa && o<sae) || o==so || o==so+1 || (o>=st && o<ste) || o==pq+1 || o==pq+2 || o==eq+1 || o==eq+2 || o==qe)) bad=1} END{exit bad}'; then echo "$n -DENHANCED: ok (differs only in the clrLineCash slot, its two call sites, the status label, the Esc jump of the quantity input and the sell-all key)"; else echo "$n -DENHANCED: differs outside the clrLineCash slot and its call sites"; rc=1; fi
+        if samelen "$OUT/$n.enh.bin" "$REF" && cmp -l "$OUT/$n.enh.bin" "$REF" | awk -v cl=$CL -v st=$ST -v ste=$STE -v pq=$PQ -v eq=$EQ -v qe=$QE -v sa=$SA -v sae=$SAE -v so=$SO -v ls=$LS -v lse=$LSE '{o=$1-1; if (!((o>=cl && o<cl+16) || (o>=ls && o<lse) || (o>=sa && o<sae) || o==so || o==so+1 || (o>=st && o<ste) || o==pq+1 || o==pq+2 || o==eq+1 || o==eq+2 || o==qe)) bad=1} END{exit bad}'; then echo "$n -DENHANCED: ok (differs only in the clrLineCash slot, its two call sites, the status label, the Esc jump of the quantity input, the sell-all key and the laser position keys)"; else echo "$n -DENHANCED: differs outside the clrLineCash slot and its call sites, or in length"; rc=1; fi
       else echo "$n -DENHANCED: assemble FAILED"; rc=1; fi
     fi
     # COMMON2X -DENHANCED (English): only the fuel-line tab (call operand and inline byte)
     if [ "$n" = common2x ] && grep -q '^ *IFDEF ENHANCED' "$SRC/common2x.asm"; then
       if sjasmplus -DENHANCED --raw="$OUT/$n.enh.bin" --sym="$OUT/$n.enh.sym" "$SRC/$n.asm" >/dev/null 2>&1; then
         FT=$(( $(awk '$2 == "fuelTab:" || $1 == "fuelTab:" { print $NF }' "$OUT/$n.enh.sym") - 0xC000 )); TT=$(( $(awk '$2 == "titleTab:" || $1 == "titleTab:" { print $NF }' "$OUT/$n.enh.sym") - 0xC000 ))
-        if cmp -l "$OUT/$n.enh.bin" "$REF" | awk -v ft=$FT -v tt=$TT '{o=$1-1; if (!((o>=ft && o<ft+4) || o==tt)) bad=1} END{exit bad}'; then echo "$n -DENHANCED: ok (differs only in the fuel-line tab and the headline tab)"; else echo "$n -DENHANCED: differs outside the fuel-line tab"; rc=1; fi
+        if samelen "$OUT/$n.enh.bin" "$REF" && cmp -l "$OUT/$n.enh.bin" "$REF" | awk -v ft=$FT -v tt=$TT '{o=$1-1; if (!((o>=ft && o<ft+4) || o==tt)) bad=1} END{exit bad}'; then echo "$n -DENHANCED: ok (differs only in the fuel-line tab and the headline tab)"; else echo "$n -DENHANCED: differs outside the fuel-line tab, or in length"; rc=1; fi
       else echo "$n -DENHANCED: assemble FAILED"; rc=1; fi
     fi
     continue
@@ -59,20 +62,23 @@ for p in "largeaxx LARGEAXX" "commonxx COMMONXX" "common2x COMMON2X" "musiquex M
   FU=$(off fuelToken); FUN=0; [ "$(off fuelTokenEnd)" -gt 0 ] && FUN=$(( $(off fuelTokenEnd) - FU ))
   CH=$(off cashHome); PC=$(off podCleanOperand); PD=$(off predelayOperand); HP=$(off hyperCountPos)
   KS=$(off killHookSite); KB=$(off killCountHook); KN=$(( $(off killCountHookEnd) - KB )); KP=$(off killSpace)   # kill count (English): the call at the status screen (operand bytes +1, +2) and, without -DMISSIONS, the routine in the zero tail
+  BS=$(off strBackSlot); BE=$(off strBackSlotEnd); BM=$(off strBackMid); BW=$(off strBackWord)   # English: "BACK" for "REAR" (token &61) paid by two digrams in the MAYDAY message: the entries between only move
   LJ=$(off laserSightsJp); LB=$(off laserSightsBlock); LK=128   # laser sights: the 3-byte jp at LaserSights and the 128-byte block in the zero tail (English only without -DMISSIONS)   # English: cashHome (&1FEA, 7 bytes); all trees: the pod cargo clear start (low operand byte)
-  if cmp -l "$OUT/$n.enh.bin" "$REF" | awk -v lo=$LO -v hi=$HI -v dl=$DL -v sl=$SL -v sln=$SLN -v sbn=$SBN -v fu=$FU -v fun=$FUN -v cc=$CC -v tc=$TC -v hc=$HC -v sb=$SB -v cp=$CP -v ch=$CH -v pc=$PC -v pd=$PD -v hp=$HP -v lj=$LJ -v lb=$LB -v lk=$LK -v ks=$KS -v kb=$KB -v kn=$KN -v kp=$KP -v esc=$((ESCP+1)) '{o=$1-1; if ($1==esc) { if ($2!="177" || $3!="377") bad=1; seen=1 } else if (!((o>=lo && o<hi) || (o>=dl && o<dl+16) || (o>=sl && o<sl+sln) || (o>=fu && o<fu+fun) || o==cc || o==tc || o==hc || (o>=sb && o<sb+sbn) || (o>=cp && o<cp+4) || (o>=ch && o<ch+7) || o==pc || o==pd || o==hp || o==ks+1 || o==ks+2 || (o>=kb && o<kb+kn) || (o>=kp && o<kp+10) || (o>=lj && o<lj+3) || (o>=lb && o<lb+lk))) bad=1} END{exit (bad || !seen)}'; then echo "$n: ok (default = original; -DENHANCED differs only in the ESC byte, the star-occlusion slots, the status/title tabs and labels, cashHome, the pod cargo clear, the key pre-delay, the hyperspace count position, the laser sights jp and block and, in English, the kill count call, routine and its 10-byte helper in the dead bytes at &204E)"; else echo "$n -DENHANCED: differs outside the documented slots"; rc=1; fi
+  # the entries between the new MAYDAY text and "BACK" only move by two bytes: they must equal the original bytes shifted
+  if [ "$BM" -gt 0 ] && ! cmp -s <(dd if="$OUT/$n.enh.bin" bs=1 skip=$BM count=$((BW-BM)) 2>/dev/null) <(dd if="$REF" bs=1 skip=$((BM+2)) count=$((BW-BM)) 2>/dev/null); then echo "$n -DENHANCED: the string entries between MAYDAY and BACK are not the original ones shifted by 2"; rc=1; fi
+  if samelen "$OUT/$n.enh.bin" "$REF" && cmp -l "$OUT/$n.enh.bin" "$REF" | awk -v lo=$LO -v hi=$HI -v dl=$DL -v sl=$SL -v sln=$SLN -v sbn=$SBN -v fu=$FU -v fun=$FUN -v cc=$CC -v tc=$TC -v hc=$HC -v sb=$SB -v cp=$CP -v ch=$CH -v pc=$PC -v pd=$PD -v hp=$HP -v lj=$LJ -v lb=$LB -v lk=$LK -v bs=$BS -v be=$BE -v ks=$KS -v kb=$KB -v kn=$KN -v kp=$KP -v esc=$((ESCP+1)) '{o=$1-1; if ($1==esc) { if ($2!="177" || $3!="377") bad=1; seen=1 } else if (!((o>=lo && o<hi) || (o>=dl && o<dl+16) || (o>=sl && o<sl+sln) || (o>=fu && o<fu+fun) || o==cc || o==tc || o==hc || (o>=sb && o<sb+sbn) || (o>=cp && o<cp+4) || (o>=ch && o<ch+7) || o==pc || o==pd || o==hp || o==ks+1 || o==ks+2 || (o>=kb && o<kb+kn) || (o>=kp && o<kp+10) || (o>=lj && o<lj+3) || (o>=lb && o<lb+lk) || (o>=bs && o<be))) bad=1} END{exit (bad || !seen)}'; then echo "$n: ok (default = original; -DENHANCED differs only in the ESC byte, the star-occlusion slots, the status/title tabs and labels, cashHome, the pod cargo clear, the key pre-delay, the hyperspace count position, the laser sights jp and block and, in English, the kill count call, routine and its 10-byte helper in the dead bytes at &204E)"; else echo "$n -DENHANCED: differs outside the documented slots, or in length"; rc=1; fi
   # -DTRAFFIC (C64-like spawn odds, docs/_ship_packs.md): differs from the original only in the two roll operands and the 3-byte escort pack size slot
   if sjasmplus -DTRAFFIC --raw="$OUT/$n.tr.bin" --sym="$OUT/$n.tr.sym" "$SRC/$n.asm" >/dev/null 2>&1; then
     tsym() { awk -v k="$1:" '$2 == k || $1 == k { print $NF }' "$OUT/$n.tr.sym"; }
     TJ=$(( $(tsym spawnJunkEndOperand) - 0x1A40 )); TH=$(( $(tsym spawnHostileOperand) - 0x1A40 )); TP=$(( $(tsym spawnPackSlot) - 0x1A40 ))
-    if cmp -l "$OUT/$n.tr.bin" "$REF" | awk -v tj=$TJ -v th=$TH -v tp=$TP '{o=$1-1; seen++; if (!(o==tj || o==th || (o>=tp && o<tp+3))) bad=1} END{exit (bad || seen != 5)}'; then echo "$n -DTRAFFIC: ok (differs only in the junk end, hostile limit and escort pack size slot)"; else echo "$n -DTRAFFIC: differs outside the traffic slots"; rc=1; fi
+    if samelen "$OUT/$n.tr.bin" "$REF" && cmp -l "$OUT/$n.tr.bin" "$REF" | awk -v tj=$TJ -v th=$TH -v tp=$TP '{o=$1-1; seen++; if (!(o==tj || o==th || (o>=tp && o<tp+3))) bad=1} END{exit (bad || seen != 5)}'; then echo "$n -DTRAFFIC: ok (differs only in the junk end, hostile limit and escort pack size slot)"; else echo "$n -DTRAFFIC: differs outside the traffic slots, or in length"; rc=1; fi
   else echo "$n -DTRAFFIC: assemble FAILED"; rc=1; fi
 done
 # English only: the -DMISSIONS variant (src/elite/missions_*.asm in the free tails) must keep both files the same length
 if [ "$SRC" = "$ROOT/src/elite" ]; then
   for p in "largeaxx LARGEAXX" "commonxx COMMONXX"; do
     read -r n f <<<"$p"
-    for fl in "-DMISSIONS" "-DENHANCED -DMISSIONS"; do   # the second is the build that goes on the disks (tools/build_dsk.py)
+    for fl in "-DMISSIONS" "-DENHANCED -DMISSIONS" "-DENHANCED -DTITLESEL -DTRAFFIC -DMISSIONS -DSPAWN_VARIANCE"; do   # the second and third are the builds that go on the disks (tools/build_dsk.py; SPAWN_VARIANCE needs MISSIONS)
       if sjasmplus $fl --raw="$OUT/$n.m.bin" "$SRC/$n.asm" >"$OUT/$n.m.log" 2>&1 && [ "$(wc -c <"$OUT/$n.m.bin")" -eq "$(wc -c <"$BIN/$f.BIN")" ]; then echo "$n $fl: ok (same length)"; else echo "$n $fl: FAILED"; tail -3 "$OUT/$n.m.log"; rc=1; fi
     done
   done

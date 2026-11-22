@@ -1,0 +1,8293 @@
+    INCLUDE "config.inc"
+SCREEN equ 0x4000            ; the screen page: &C000 in the 64K layout, &4000 in the 128K one (docs: src/elite128/README.md)
+titleSpawn equ 0xFF77   ; generated: label of common2x
+LAB_ram_43a0 equ 0xC2A0   ; generated: label of common2x
+LAB_ram_475e equ 0xC660   ; generated: label of common2x
+drawHorLineAt0xd880 equ 0xC58C   ; generated: label of common2x
+locateLine10 equ 0xC1C3   ; generated: label of common2x
+locateLine6 equ 0xC1BF   ; generated: label of common2x
+begin_justified_text equ 0xC644   ; generated: label of common2x
+todo_stringend equ 0xC59B   ; generated: label of common2x
+STAGE equ 0xC000                ; the window page as a copy in RAM bank 3: visible at &C000 whenever a bank is mapped over the window (&4000-&7FFF is the screen page)
+    macro mapMain
+    ld a,(curCfg)                       ; back to the draw configuration (C1: bank 1 at &4000, C3: bank 3 at &4000; bank 7 at &C000 in both). Clobbers A and B. Never use push, pop,
+    ld b,0x7F                           ; call or ret while a bank is mapped over the window: the game stack is in bank 7, which a window configuration hides.
+    out (c),a
+    endm
+AskMissionThargonInvasion equ 0xC8AF   ; generated: label of common2x
+BYTE_ram_43d7 equ 0xC2D7   ; generated: label of common2x
+ClearSaveGameRam equ 0xC9A0   ; generated: label of common2x
+ColorsGalChart equ 0xC477   ; generated: label of common2x
+ColorsLocalChart equ 0xC47C   ; generated: label of common2x
+CommanderStatus equ 0xC749   ; generated: label of common2x
+CountDownNumberForHyperspace equ 0xCAD3   ; generated: label of common2x
+DataonPlanet equ 0xC1CF   ; generated: label of common2x
+DistanceToPlanet equ 0xC03A   ; generated: label of common2x
+DockingSequence equ 0xF129   ; generated: label of common2x
+DrawSpaceDust equ 0xEB3E   ; generated: label of common2x
+DrawTargetReticule equ 0xC133   ; generated: label of common2x
+InitVariables equ 0xF26D   ; generated: label of common2x
+Inventory equ 0xC942   ; generated: label of common2x
+LAB_ram_57d0 equ 0xD6D2   ; generated: label of common2x
+LAB_ram_6718 equ 0xE61C   ; generated: label of common2x
+MainStackNStrings equ 0xF39B   ; generated: label of common2x
+MapCrossHairDown equ 0xC060   ; generated: label of common2x
+MapCrossHairLeft equ 0xC073   ; generated: label of common2x
+MapCrossHairRight equ 0xC083   ; generated: label of common2x
+MapCrossHairUp equ 0xC04E   ; generated: label of common2x
+MarketPrices equ 0xC70D   ; generated: label of common2x
+RecenteronDockedPlanet equ 0xC094   ; generated: label of common2x
+SUB_ram_4bd2 equ 0xCAD4   ; generated: label of common2x
+SetTableBegintoAofHL equ 0xC0AA   ; generated: label of common2x
+SpawnMyRemains equ 0xF8C5   ; generated: label of common2x
+ThargonMissionFinished equ 0xC8DD   ; generated: label of common2x
+UpdateIndicatorBars equ 0xDFA3   ; generated: label of common2x
+UpdateScanner equ 0xE43D   ; generated: label of common2x
+Witchspace equ 0xEFC5   ; generated: label of common2x
+add_sign_mag_bytes equ 0xD964   ; generated: label of common2x
+adrOfCoordinatesTable equ 0xEAF3   ; generated: label of common2x
+approx_sqrt_16bit equ 0xD192   ; generated: label of common2x
+aspMissionState equ 0xCF4F   ; generated: label of common2x
+bountyforShip equ 0xC9B1   ; generated: label of common2x
+buf_5860 equ 0xD762   ; generated: label of common2x
+chkAltitude equ 0xE0B2   ; generated: label of common2x
+chkLocalJump equ 0xEA5E   ; generated: label of common2x
+chkManualDocking equ 0xE5DD   ; generated: label of common2x
+chkPlotOnChart equ 0xCF1D   ; generated: label of common2x
+cirGetBMAdress equ 0xE583   ; generated: label of common2x
+cirGetScrAddr equ 0xE5A2   ; generated: label of common2x
+cleanShipSlots equ 0xF282   ; generated: label of common2x
+copyCharset equ 0xCE24   ; generated: label of common2x
+countShipsLaunchedByStation equ 0xCF5E   ; generated: label of common2x
+damageToFrontShield equ 0xCF5B   ; generated: label of common2x
+damageToRearShield equ 0xCF5C   ; generated: label of common2x
+destroyedEquipmentNumber equ 0xC9B3   ; generated: label of common2x
+dh3nextPixelline equ 0xFF6A   ; generated: label of common2x
+doDrawChar0xc000 equ 0xC3D1   ; generated: label of common2x
+drawFrame equ 0xC548   ; generated: label of common2x
+drawHorLineofFrame equ 0xC590   ; generated: label of common2x
+drawIntroShip equ 0xD526   ; generated: label of common2x
+drawPlanetnSun equ 0xE68D   ; generated: label of common2x
+drawReticule equ 0xCEE8   ; generated: label of common2x
+drawTitleBoxframe equ 0xC554   ; generated: label of common2x
+dust54 equ 0xEE5D   ; generated: label of common2x
+dustByte6BFD equ 0xEB01   ; generated: label of common2x
+dustPitch equ 0xEAF0   ; generated: label of common2x
+dustPixelMask equ 0xEAFF   ; generated: label of common2x
+dustVar10 equ 0xEAF9   ; generated: label of common2x
+dustVar5 equ 0xEAFC   ; generated: label of common2x
+dustVar9 equ 0xEAF7   ; generated: label of common2x
+ecmActiveFlag equ 0xCF59   ; generated: label of common2x
+flagEnergyBombActivated equ 0xCF53   ; generated: label of common2x
+flagWhichScreenToPrint equ 0xC44E   ; generated: label of common2x
+force_loading_busy_state equ 0xE5C9   ; generated: label of common2x
+gcMaxY equ 0xCEE7   ; generated: label of common2x
+gcMinY equ 0xCEE6   ; generated: label of common2x
+getByteAddressinBitmap equ 0xE589   ; generated: label of common2x
+getMoneyinHLDE equ 0xC109   ; generated: label of common2x
+getRandomNumber equ 0xFA45   ; generated: label of common2x
+gfxdataScanner equ 0xDD33   ; generated: label of common2x
+handleEntitys equ 0xCF68   ; generated: label of common2x
+handleLaser equ 0xFA60   ; generated: label of common2x
+handle_chart_cursor_keys equ 0xE655   ; generated: label of common2x
+heResume equ 0xCF6B   ; generated: label of common2x
+hullDrawResume equ 0xD6D5   ; generated: label of common2x
+loc_604A equ 0xDF4C   ; generated: label of common2x
+minus_de_plus_hl_div_2 equ 0xF61B   ; generated: label of common2x
+moveSpaceStation equ 0xE751   ; generated: label of common2x
+moveSunNPlanet equ 0xE743   ; generated: label of common2x
+mult_b_c_msb equ 0xD974   ; generated: label of common2x
+normalize_position_vector equ 0xD114   ; generated: label of common2x
+placeCrossHairPrintDistance equ 0xC03D   ; generated: label of common2x
+printBoardedByMessage equ 0xC880   ; generated: label of common2x
+printCharAtLocationXY equ 0xC3A9   ; generated: label of common2x
+printCharofDigram equ 0xC1C8   ; generated: label of common2x
+printCount equ 0xC0BA   ; generated: label of common2x
+printFlightToken equ 0xC0AF   ; generated: label of common2x
+printNumber equ 0xC0BD   ; generated: label of common2x
+printString equ 0xC2DC   ; generated: label of common2x
+printStringA equ 0xC316   ; generated: label of common2x
+printStringFollowingByte equ 0xC2D8   ; generated: label of common2x
+printViewPortLabel equ 0xC9B4   ; generated: label of common2x
+removeFuel equ 0xCDF6   ; generated: label of common2x
+resetInflightMessagesFlags equ 0xCAC3   ; generated: label of common2x
+setColors equ 0xC44F   ; generated: label of common2x
+setCommandsCPL equ 0xC431   ; generated: label of common2x
+setCommandsNOP equ 0xC435   ; generated: label of common2x
+setFuel equ 0xCE01   ; generated: label of common2x
+setViewColors equ 0xCC2D   ; generated: label of common2x
+shipInCrosshair equ 0xCF55   ; generated: label of common2x
+storePresPlanetX equ 0xCF4B   ; generated: label of common2x
+storePresPlanetY equ 0xCF4C   ; generated: label of common2x
+sub_4622 equ 0xC522   ; generated: label of common2x
+text_rng equ 0xC4E6   ; generated: label of common2x
+todoActiveSlots equ 0xCF57   ; generated: label of common2x
+todoDrawExplosions equ 0xE788   ; generated: label of common2x
+todoLaserVar3 equ 0xCF5A   ; generated: label of common2x
+todoOverheating equ 0xE716   ; generated: label of common2x
+todoSunRadius equ 0xE68C   ; generated: label of common2x
+todo_CleanScanCounter equ 0xE428   ; generated: label of common2x
+todo_SomethingwithDigits equ 0xC0C1   ; generated: label of common2x
+todo_parseEdges equ 0xDC69   ; generated: label of common2x
+todo_stringpointer equ 0xC598   ; generated: label of common2x
+todoclearCounter equ 0xF277   ; generated: label of common2x
+tokenToPrint equ 0xC9B0   ; generated: label of common2x
+txt_hpos equ 0xCF4D   ; generated: label of common2x
+; Elite (Amstrad CPC) COMMONXX.BIN, stock build: generated by tools/disasm_stock.py
+; load address 0x1A40, 34240 bytes. Names come from Fessor's reconstruction where known,
+; otherwise sub_ (call target), loc_ (jump target), dat_ (data/variable reference).
+
+; names of addresses in the other binaries
+; Unrolled push run of the filled-circle scanline fill: the preceding self-patched jr jumps into it, so A is
+; pushed as many times as needed; then the stack pointer is saved in ce2stack4 and ld hl,(ce2stack4) / dec hl
+; leaves HL on the last byte written.
+    macro circlePushRun
+    dup 31
+    push af
+    edup
+    ld (ce2stack4),sp
+    ld sp,SCREEN+0x372E
+    push hl
+    ld hl,(ce2stack4)
+    dec hl
+    endm
+BuyGoods equ 0x0840
+FileMenu equ 0x0D28
+LAB_ram_0d38 equ 0x0D38
+Filemenuloop equ 0x0D40
+SCR_SETINK equ 0xBC32
+CAS_STOP_MOTOR_FW equ 0xBC71
+CAS_IN_OPEN_FW equ 0xBC77
+CAS_IN_CLOSE_FW equ 0xBC7A
+CAS_IN_ABANDON_FW equ 0xBC7D
+CAS_IN_DIRECT_FW equ 0xBC83
+CAS_OUT_OPEN_FW equ 0xBC8C
+CAS_OUT_CLOSE_FW equ 0xBC8F
+CAS_OUT_ABANDON_FW equ 0xBC92
+CAS_OUT_DIRECT_FW equ 0xBC98
+CAS_CATALOG_FW equ 0xBC9B
+TXT_DRAW_CURSOR equ 0xBDCD
+TXT_UNDRAW_CURSOR equ 0xBDD0
+TXT_OUT_ACTION equ 0xBDD9
+myTEXTOUTACTIONadr equ 0xBDDA
+
+ org 0x1A40
+
+sEntityxlo:
+    db 0x00
+sEntityxhi:
+    db 0x00
+sEntityxsign:
+    db 0x00
+sEntityylo:
+    db 0x00
+sEntityyhi:
+    db 0x00
+sEntityYSign:
+    db 0x00
+sEntityZlo:
+    db 0x00
+sEntityZhi:
+    db 0x06
+sEntityZSign:
+    db 0x00
+sEntitynosevXlo:
+    db 0x00
+sEntitynosevXhi:
+    db 0x00
+sEntitynosevYlo:
+    db 0x00
+sEntitynosevYhi:
+    db 0x00
+sEntitynosevZlo:
+    db 0xFF
+sEntitynosevZhi:
+    db 0x7F
+sEntityroofvXlo:
+    db 0x00
+sEntityroofvXhi:
+    db 0x00
+sEntityroofvYlo:
+    db 0xFF
+sEntityroofvYhi:
+    db 0x7F
+sEntityroofvZlo:
+    db 0x00
+sEntityroofvZhi:
+    db 0x00
+sEntitysidevXlo:
+    db 0xFF
+sEntitysidevXhi:
+    db 0x7F
+sEntitysidevYlo:
+    db 0x00
+sEntitysidevYHi:
+    db 0x00
+sEntitysidevZlo:
+    db 0x00
+sEntitysidevzhi:
+    db 0x00
+sEntitySpeed:
+    db 0x00
+sEntityAcceleration:
+    db 0x00
+sEntityRoll:
+    db 0xC0,0x00,0x00,"@"
+sEntityRole:
+    db 0x00
+sEntityEnergy:
+    db 0xF0
+    dw shipdatCoriolis                  ; blueprint pointer of slot 0 (the station); a label, because the 128K build moves the blueprints
+sEntityTarget:
+    db 0x7F
+; Slot 0's byte +0x26 (38). The entity code tests single bits of this byte on every ship slot through (ix+38); at arrival bit 7 of slot 0 is tested and cleared (see LAB_ram_4e4c).
+sEntityunknown:
+    db 0x0C,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+    db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+    db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+    db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+    db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+    db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+    db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+    db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+    db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+    db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+    db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+    db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+    db 0x00,0x00,0x00,0x00
+buf_1B2A:
+    db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+    db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+    db 0x00,0x00,0x00,0x00,0x00,0x00,0x00
+buf_1B51:
+    db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+buf_1B5A:
+    db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+    db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+buf_1B73:
+    db 0x00,0x00,0x00,0x00,0x00
+; 19 four-byte records indexed by ship type (spawnShip reads bytes +1,+2 as a word): the first byte is an unused
+; `jp` opcode (&C3), then the address of the ship's blueprint data (shipdat...), then a ship class byte. Written as jp + db so the bytes stay identical.
+shipGFXdataTable:
+    jp shipdatCoriolis
+    db 0x00
+    jp shipdatMissile
+    db 0x00
+    jp shipdatCapsule
+    db 0x01
+    jp shipdatAlloy
+    db 0x01
+    jp shipdatCargo
+    db 0x01
+    jp shipdatSplinter
+    db 0x01
+    jp shipdatAsteroid
+    db 0x01
+    jp shipdatRockHermit
+    db 0x02
+    jp shipdatViper
+    db 0x02
+    jp SHIPDATSINGLETRADER
+    db 0x02
+    jp SHIPDATBIGTRADER
+    db 0x02
+    jp shipdatPythonPirate
+    db 0x03
+    jp shipdatCobraMk3Pirate
+    db 0x03
+    jp shipdatAspMk2
+    db 0x03
+    jp shipdatFerDeLance
+    db 0x03
+    jp shipdatThargoid
+    db 0x03
+    jp SHIPDATPIRATE1
+    db 0x04
+    jp SHIPDATPIRATE2
+    db 0x04
+    jp shipdatThargon
+    db 0x04
+strChar32:
+    db " "
+tempString1:
+    db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+    db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+tempString1End:
+    db 0x00
+tempString2:
+    db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+    db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+Viewdirection:
+    db 0x00
+inputRoll:
+    db 0x00
+inputPitch:
+    db 0x00
+movementspeed:
+    db 0x01,0x00
+shipFrontShieldEnergy:
+    db 0x00,0x00
+shipRearShieldEnergy:
+    db 0x00,0x00
+FuelbarValue:
+    db 0xA0,0x00
+CockpitTemp:
+    db 0x00,0x00
+Lasertemp:
+    db 0x00,0x00
+Altitude:
+    db 0xA0,0x00
+Speed:
+    db 0x00,0xFF
+shipEnergyBank1:
+    db 0x00,0x00
+shipEnergyBank2:
+    db 0x00,0x00
+shipEnergyBank3:
+    db 0xA0,0x00
+shipEnergyBank4:
+    db 0xA0,0x00
+IndicatorRoll:
+    db 0x00,0x00
+IndicatorPitch:
+    db 0x00,0x00,0x00
+todoLaunchFlag:
+    db 0x00
+todoUnknownStatusFlags:
+    db 0x00
+todo_varEscapepod:
+    db "7J"
+posDataSun:
+    db 0x00,0x00
+todo_planet3dCoordX2:
+    db 0x00,0x00,0x80
+todo_planet3dCoordY:
+    db 0x01,0x00,0x10
+todo_planet3dCoordZ:
+    db 0x81
+posDataPlanet:
+    db 0x00,0x00
+dataSpaceStationPosXh:
+    db 0x00,0x00,0x00
+dataSpaceStationPosYh:
+    db 0x00,0x00
+dataSpaceStationPosZl:
+    db 0x80
+dataSpaceStationPosZh:
+    db 0x01
+FlagStationNear:
+    db 0x00
+StationEnergy:
+    db 0x00
+flagCanScoopFuel:
+    db 0x00
+GameOverFlag:
+    db 0x00
+BYTE_ram_1c3c:
+    db 0x00
+flagPausemode:
+    db 0x00
+flagDockingComputerOn:
+    db 0x00
+; Convert the stored roll and pitch inputs into the dashboard roll/pitch indicator positions (centre 0x13)
+SUB_ram_1c3f:
+    ld hl,initialRollnPitch
+    ld a,(hl)
+    ld (inputRoll),a
+    bit 7,a
+    jr nz,LAB_ram_1c4e
+    add a,0x13
+    jr LAB_ram_1c54
+LAB_ram_1c4e:
+    and 0x7F
+    ld c,a
+    ld a,0x13
+    sub c
+LAB_ram_1c54:
+    ld (IndicatorRoll),a
+    inc hl
+    inc hl
+    ld a,(hl)
+    ld (inputPitch),a
+    bit 7,a
+    jr nz,LAB_ram_1c65
+    add a,0x13
+    jr LAB_ram_1c6b
+LAB_ram_1c65:
+    and 0x7F
+    ld c,a
+    ld a,0x13
+    sub c
+LAB_ram_1c6b:
+    ld (IndicatorPitch),a
+    inc hl
+    inc hl
+    ld a,(hl)
+    ld (movementspeed),a
+    ld b,a
+    add a,a
+    add a,a
+    add a,b
+    add a,0x05
+    ld (Speed),a
+    ret
+loc_1C7E:
+    ret
+oldMainstack:
+    db 0x00,0x00
+FlagInkOnOff:
+    db 0x01
+Init_:
+    call bankInit                       ; 128K build: copy the fill module into RAM bank 6, then copyCharset as before
+    call installVBL
+    ld bc,0xBC07
+    out (c),c
+    ld bc,0xBD1D
+    out (c),c
+    ld bc,0xBC01
+    out (c),c
+    ld bc,0xBD20
+    out (c),c
+    ld bc,0xBC02
+    out (c),c
+    ld bc,0xBD2A
+    out (c),c
+    ld bc,0xBC06
+    out (c),c
+    ld bc,0xBD18
+    out (c),c
+    ld a,0x14
+    call setBorderColor
+    ld sp,MainStackNStrings
+    ld (oldMainstack),sp
+    call InitVariables
+    call ClearSaveGameRam
+loc_1CC2:
+    call loadMusicnIndicator
+    xor a
+    ld (FlagInkOnOff),a
+    ld (Viewdirection),a
+    call transferDashBoardToScreenMem
+loc_1CCF:
+    ld a,0x79
+    call spawnCommandParser
+    ld hl,sEntityRoll
+    set 7,(hl)
+loc_1CD9:
+    call setCommandsCPL
+    call ClearBitmap
+    call drawIntroShip                  ; 128K build: ship first, so that the filled hull does not cover the text (it is printed into the same bitmap)
+    call printSplashscreen1
+    call transferBuffertoScreen
+    call setCommandsNOP
+    call getTitleKey
+    inc a
+    jr z,loc_1CD9
+    cp 0x5A
+    jr nz,branchNewCommander
+    call loadNotMusique
+    xor a
+    ld (todoUnknownStatusFlags),a
+    call FileMenu
+CMDRLoadExtensions:
+    call loadMusicnIndicator
+    xor a
+    ld (Viewdirection),a
+    inc a
+    ld (todoUnknownStatusFlags),a
+    call drawFrame
+    call drawDashboard
+branchNewCommander:
+    IFDEF TITLESEL
+    call TITLE_NEXT                 ; musiquex.asm: next ship in its list, spawned
+tkStart:
+    jr getTitleKeyEnd
+titleKeyLatch:
+    db 0xFF
+titleSeen:                              ; nonzero once a title loop has asked for a key since the flip code last looked (fill_tt.asm: only title frames use the text cache)
+    db 0
+; Returns the latched title key once (the latch is emptied) or, with nothing latched, the live pressedKey (0xFF: none). Marks the frame as a title frame (the old latch value is
+; never 0).
+getTitleKey:
+    ld hl,titleKeyLatch
+    ld a,(hl)
+    ld (hl),0xFF
+    inc hl
+    ld (hl),a
+    cp 0xFF
+    ret nz
+    ld a,(pressedKey)
+    ret
+getTitleKeyEnd:
+    ds 20-($-tkStart)
+    ELSE
+    ld hl,splash2Shipnr
+    inc (hl)
+    ld a,(hl)
+    and 0x07
+    inc a
+    cp 0x06
+    jr nc,loc_1D1E
+    add a,0x0A
+loc_1D1E:
+    add a,a
+    add a,a
+    add a,a
+    add a,a
+    add a,0x09
+    call spawnCommandParser
+    ENDIF
+    call setCommandsCPL
+    call ClearBitmap
+    call drawIntroShip
+    call printPressSpace
+    call transferBuffertoScreen
+loc_1D36:
+    call getTitleKey
+    inc a
+    jr nz,loc_1D36
+loc_1D3C:
+    call ClearBitmap
+    call drawIntroShip
+    call printPressSpace
+    IFDEF TITLESEL
+    call TITLE_SCREEN2              ; musiquex.asm: cursor left/right change the ship, then transferBuffertoScreen
+    ELSE
+    call transferBuffertoScreen
+    ENDIF
+    call getTitleKey
+    cp 0x20
+    jr nz,loc_1D3C
+    call loadNotMusique
+    call setCommandsNOP
+    call setupNewGame
+    xor a
+    ld (todoLaunchFlag),a
+    ld (todoUnknownStatusFlags),a
+    ld (BYTE_ram_3933),a
+    ld (flagCanScoopFuel),a
+    ld (flagCloakingDeviceActive),a
+    ld (todoSunRadius),a
+    call CommanderStatus
+    call InitVariables
+    jr Mainloop
+; Print the ELITE title and the first splash-screen line, then clear the print-screen flag
+printSplashscreen1:
+    call printELITE
+    ld hl,0x0E01
+    ld a,0x06
+    jr subPrintSplash1
+; Print the ELITE title and the 'press space' splash line
+printPressSpace:
+    IFDEF TITLESEL
+    call TITLE_NAME                 ; musiquex.asm: the ship's name instead of the ELITE title
+    ELSE
+    call printELITE
+    ENDIF
+    ld hl,0x0E04
+    ld a,0x07
+subPrintSplash1:
+    ld (charXY),hl
+    ld hl,flagWhichScreenToPrint
+    set 7,(hl)
+    call printStringA
+    jr loc_1DA2
+; Print the ELITE title string at text position (1,5) while flagWhichScreenToPrint bit 7 is set
+printELITE:
+    ld hl,0x0105
+    ld (charXY),hl
+    ld a,0x1D
+    ld hl,flagWhichScreenToPrint
+    set 7,(hl)
+    call printString
+loc_1DA2:
+    ld hl,flagWhichScreenToPrint
+    res 7,(hl)
+    ret
+splash2Shipnr:
+    db 0x02
+Mainloop:
+    ld a,(flagPausemode)
+    and a
+    jr nz,LAB_ram_1db2
+    call SUB_ram_1c3f
+LAB_ram_1db2:
+    call SUB_ram_2a70
+    call parseInputkey
+    jr nc,LAB_ram_1dce
+    ld a,(todoUnknownStatusFlags)
+    and a
+    jp z,loc_1CC2
+    call loadExtensionsforDockingmode
+    xor a
+    ld (Viewdirection),a
+    call drawDashboard
+    jp loc_1CCF
+LAB_ram_1dce:
+    call SUB_ram_4bd2
+    ld a,(todoUnknownStatusFlags)
+    and a
+    jr nz,UNIV
+    call handle_chart_cursor_keys
+    ld a,(keybFlags2)
+    bit 6,a
+    jr z,Mainloop
+    call FileMenu
+    jp nz,CMDRLoadExtensions
+    call CommanderStatus
+    jr Mainloop
+UNIV:
+    ld a,(todoLaunchFlag)
+    and a
+    jr nz,LAB_ram_1dfe
+    call chkManualDocking
+    call chkLocalJump
+    call moveSunNPlanet
+    call moveSpaceStation
+LAB_ram_1dfe:
+    ld a,(Viewdirection)
+    cp 0x04
+    jr c,Spaceflight
+    call handleEntitys
+    call handleLaser
+    ld a,(todoUnknownStatusFlags)
+    and a
+    jr z,LAB_ram_1e17
+    call force_loading_busy_state
+    call todo_ShipTakingDamage
+LAB_ram_1e17:
+    call todoOverheating
+    call printViewPortLabel
+    ld b,0x08
+LAB_ram_1e1f:
+    push bc
+    call handle_chart_cursor_keys
+    halt
+    halt
+    halt
+    halt
+    halt
+    halt
+    pop bc
+    djnz LAB_ram_1e1f
+    jr LAB_ram_1e5c
+Spaceflight:
+    call drawDashboard
+    call ClearBitmap
+    ld a,(todoLaunchFlag)
+    and a
+    call z,drawPlanetnSun
+    call DrawSpaceDust
+    call printViewPortLabel
+    call handleEntitys
+    call handleLaser
+    call Witchspace
+    call todoDrawExplosions
+    IFDEF MISSIONS
+    call mxFlightDraw               ; missions_flight.asm: Trumble sprites into the bitmap, then transferBuffertoScreen
+    ELSE
+    call transferBuffertoScreen
+    ENDIF
+    call UpdateScanner
+    call UpdateIndicatorBars
+    call chkCloak
+    call dashboard_and_special_keys
+LAB_ram_1e5c:
+    call chkAltitude
+    ld a,(GameOverFlag)
+    and a
+    jp z,Mainloop
+    ld a,(sfxFlags2Bitmap)
+    or 0x51
+    ld (sfxFlags2Bitmap),a
+    xor a
+    ld (movementspeed),a
+    ld (BYTE_ram_1c3c),a
+    inc a
+    ld (flagPausemode),a
+    call cleanScannerUpdateECMIndicator
+    call SpawnMyRemains
+    call drawDashboard
+    call setCommandsCPL
+    ld hl,flagWhichScreenToPrint
+    push hl
+    set 7,(hl)
+    ld b,0x1E
+LAB_ram_1e8d:
+    push bc
+    call ClearBitmap
+    call DrawSpaceDust
+    call handleEntitys
+    call handleLaser
+    ld hl,0x070A
+    ld (charXY),hl
+    ld a,0x09
+    call printStringA
+    call transferBuffertoScreen
+    pop bc
+    djnz LAB_ram_1e8d
+    pop hl
+    res 7,(hl)
+    call setCommandsNOP
+    call ClearBitmap
+    call transferBuffertoScreen
+    call cleanShipSlots
+    xor a
+    ld (flagPausemode),a
+    ld (GameOverFlag),a
+    call loadExtensionsforDockingmode
+    jp loc_1CCF
+; Set the gate array border to the hardware colour in A (adds the 0x40 colour base)
+setBorderColor:
+    ld bc,0x7F10   ; gate array: select border
+    out (c),c
+    add a,0x40
+    out (c),a
+    ret
+; Draw the viewport frame, then copy the off-screen buffer at &A000 to screen memory, line by line
+transferBuffertoScreen:
+    call drawViewportFrame
+    push af
+    push bc
+    push de
+    push hl
+    ld hl,0xA000
+    ld de,SCREEN
+    ld a,0x10
+    ld (tbmLoopCounter),a
+tfloopNextLine:
+    inc hl
+    inc de
+    inc hl
+    inc de
+    DUP 60
+    ldi
+    EDUP
+    inc hl
+    inc de
+    inc hl
+    inc de
+    ld a,e
+    sub 0x40
+    ld e,a
+    jr nc,tfScrMemNextLine
+    dec d
+tfScrMemNextLine:
+    ld a,d
+    add a,0x08
+    ld d,a
+    bit 7,d                           ; 128K layout: loop while inside the screen page &4000-&7FFF (it was the carry out of D at &C000)
+    jp z,tfloopNextLine
+    push bc
+    ex de,hl
+    ld bc,0xC040   ; +0x40 and wrap: next character row of the 64-byte-wide view
+    add hl,bc
+    ex de,hl
+    pop bc
+    ld a,(tbmLoopCounter)
+    dec a
+    ld (tbmLoopCounter),a
+    jp nz,tfloopNextLine
+    pop hl
+    pop de
+    pop bc
+    jp dbFlipTail                       ; 128K build: pop af, then flip the screens (dbFlip6 in bank 6) and return
+tbmLoopCounter:
+    db "O"
+; Redraw the dashboard if the screen's first byte is not 0x0F, i.e. the dashboard is not yet on screen
+drawDashboard:
+    ld de,SCREEN
+    ld a,(de)
+    cp 0x0F
+    ret z
+    call todoclearCounter
+; Copy the stored dashboard image (&AE00 onwards) into the lower screen rows (&C400-&FFFF)
+transferDashBoardToScreenMem:
+    call sub_4622
+    ld hl,0xAE00
+    ld de,SCREEN+0x400
+    ld bc,0x0200
+    ldir
+    ld de,SCREEN+0xC00
+    call sub_1FCC
+    ld de,SCREEN+0x1400
+    call sub_1FCC
+    ld de,SCREEN+0x1C00
+    call sub_1FCC
+    ld de,SCREEN+0x2400
+    call sub_1FCC
+    ld de,SCREEN+0x2C00
+    call sub_1FCC
+    ld de,SCREEN+0x3400
+    call sub_1FCC
+    ld de,SCREEN+0x3C00
+    call sub_1FCC
+    ret
+; Block-copy 0x200 bytes with ldir (one dashboard chunk)
+sub_1FCC:
+    ld bc,0x0200
+    ldir
+    ret
+; Star occlusion: with STAR_OCCLUDE (on with -DENHANCED, off by default = the original bytes; check_src.sh compares both) the stars no longer
+; show through the planet or sun disc, ship lines and tunnel lines. The 31 dead bytes below hold dustPlotPixel, which the dust loop (dust70) calls.
+    IFNDEF STAR_OCCLUDE
+      IFDEF ENHANCED
+STAR_OCCLUDE equ 1
+      ELSE
+STAR_OCCLUDE equ 0
+      ENDIF
+    ENDIF
+    IFDEF ENHANCED
+    ASSERT STAR_OCCLUDE, "-DENHANCED needs STAR_OCCLUDE: cashHome (&1FEA, called by largeaxx.asm) lives in the dead block that STAR_OCCLUDE frees"
+    ENDIF
+    IFDEF MISSIONS
+MISSIONS_POD equ STAR_OCCLUDE       ; the escape-pod hook (mxPodHook) lives in the dead block, which only exists with STAR_OCCLUDE
+    ELSE
+MISSIONS_POD equ 0
+    ENDIF
+    IF STAR_OCCLUDE
+; Plots one star pixel into the off-screen bitmap: DE = byte address, C = pixel mask (hi plane bit + lo plane bit). The background is 0x0F, so
+; (byte XOR 0x0F) AND mask is zero only while the pixel is still background; anything drawn earlier (disc, lines) is left alone.
+dustPlotPixel:
+    ld a,(de)
+    xor 0x0F
+    and c
+    ret nz
+    ld a,(de)
+    cpl
+    or c
+    cpl
+    ld (de),a
+    ret
+    IF MISSIONS_POD
+; Escape pod: the Trumbles do not survive it, so the Trumbles quest ends there (the original leaves 1-7 of them aboard). Replaces `ld hl,Missionflag` in the pod launch code.
+mxPodHook:
+    ld hl,0x0000
+    ld (mxTrCount),hl
+    ld hl,Missionflag
+    ret
+    ENDIF
+    IFDEF ENHANCED
+    ASSERT $ <= 0x1FEA
+    DS 0x1FEA-$
+; Cash on the quantity line (-DENHANCED, clrLineCash in largeaxx.asm): back to the start of the prompt row after the balance is printed
+cashHome:
+    ASSERT cashHome == 0x1FEA            ; largeaxx.asm calls it by address
+    ld hl,0x1500
+    ld (charXY),hl
+    ret
+    ENDIF
+    DS 0x1FF1-$                      ; pad to ClearBitmap (unusedViewBorderFill's 31 bytes)
+    ELSE
+; Probably dead (nothing calls or jumps here): paints the two left and two right bytes of each of the 16 64-byte
+; character rows of the 256x128 view with 0x0F, for 8 scan lines.
+unusedViewBorderFill:
+    ld hl,SCREEN
+    ld de,0x003D
+    ld c,8
+unusedViewBorderRow:
+    ld a,0x0F
+    push hl
+    ld b,16
+unusedViewBorderCol:
+    ld (hl),a
+    inc hl
+    ld (hl),a
+    add hl,de
+    ld (hl),a
+    inc hl
+    ld (hl),a
+    inc hl
+    djnz unusedViewBorderCol
+    pop hl
+    ld a,h
+    add a,8
+    ld h,a
+    dec c
+    jr nz,unusedViewBorderRow
+    ENDIF
+; Clear the whole screen bitmap to 0x0F0F by pushing words down from &C000, keeping SP in clsSP
+ClearBitmap:
+    ld (clsSP),sp
+    ld sp,0xC000
+    ld de,0x0F0F
+    ld b,0x00
+LAB_ram_1ffd:
+    DUP 16
+    push de
+    EDUP
+    djnz LAB_ram_1ffd
+    ld sp,(clsSP)
+    ret
+clsSP:
+    db "O",0xDF
+cloakTick:
+    db 0x01
+; Per-frame cloaking-device tick: counts down, and drains energy or switches the cloak off
+chkCloak:
+    ld hl,cloakTick
+    dec (hl)
+    ld hl,keybFlags1
+    res 7,(hl)
+    ret nz
+    ld a,0x02
+    ld (cloakTick),a
+    ld hl,Missionflag
+    bit 6,(hl)
+    ret z
+    halt
+    halt
+    halt
+    halt
+    ld hl,keybFlags1
+    bit 7,(hl)
+    ret z
+    ld hl,flagCloakingDeviceActive
+    dec (hl)
+    ret z
+    ld a,(shipEnergyBank3)
+    cp 0x28
+    ret c
+    ld a,0x01
+    ld (hl),a
+    ld hl,sEntityRole
+    res 2,(hl)
+    xor a
+    ld (todoActiveSlots),a
+    ret
+; Probably dead (no caller): return FlightMode in A, with Z set if it is zero.
+unusedGetFlightMode:
+    ld a,(FlightMode)
+    and a
+    ret
+; Probably dead (no caller): return flagCloakingDeviceActive in A, with Z set if it is zero.
+unusedGetCloakFlag:
+    ld a,(flagCloakingDeviceActive)
+    and a
+    ret
+; Set the byte at &3933 to 1 unless FlightMode is zero (probably a redraw/state flag)
+SUB_ram_2058:
+    ld a,(FlightMode)
+    and a
+    ret z
+    ld a,0x01
+    ld (BYTE_ram_3933),a
+    ret
+; ZX Spectrum: resume_screen_after_load (&7278)
+; The arrival/briefing state machine (the Spectrum's arrival_state byte is this build's ThargonMissionVar, &3926): states 1 and 2 ask for the
+; invasion mission, 3 does nothing, 4 is the boarded-by-Thargons game over, 5 pays out the reward (ThargonMissionFinished). Called after every docking.
+chkMissions:
+    ld a,(ThargonMissionVar)
+    dec a
+    jr z,LAB_ram_206a
+    dec a
+LAB_ram_206a:
+    jp z,AskMissionThargonInvasion
+    sub 0x03
+    jp z,ThargonMissionFinished
+    inc a
+    ld a,0xD4
+    jr z,goBoardByMessage
+    ret
+; If the ship's roll byte has bit 7 clear, show a 'boarded by' message and force game over (anti-cheat)
+punishCheater:
+    ld hl,sEntityRoll
+    bit 7,(hl)
+    ret nz
+    ld a,0x0D
+goBoardByMessage:
+    call printBoardedByMessage
+    ld sp,(oldMainstack)
+    ld a,0x01
+    ld (todoUnknownStatusFlags),a
+    jp loc_1CC2
+; Draw the border of the 3D viewport: top and bottom lines filled, then the left and right edge pixels
+drawViewportFrame:
+    ld a,0xFF
+    ld de,0xA002
+    ld bc,0x003C
+    call FillmemoryRegionDEwithA
+    ld de,0xBFC2
+    call FillmemoryRegionDEwithA
+    ld de,0x003B
+    ld hl,0xA042
+    ld b,0x7E
+dvwpfloop:
+    ld a,(hl)
+    or 0x88
+    ld (hl),a
+    add hl,de
+    ld a,(hl)
+    or 0x11
+    ld (hl),a
+    inc hl
+    inc hl
+    inc hl
+    inc hl
+    inc hl
+    djnz dvwpfloop
+    ret
+; Fill BC bytes starting at DE with A, preserving all registers
+FillmemoryRegionDEwithA:
+    push bc
+    push de
+    push hl
+    ld (de),a
+    ld h,d
+    ld l,e
+    inc de
+    dec bc
+    ldir
+    pop hl
+    pop de
+    pop bc
+    ret
+circleOffsetY:
+    db 0x00
+circleOffsetXlo:
+    db 0x00
+circleOffsetXhi:
+    db 0x0F
+drawradius:
+    db "{"
+storeCircleOffsetY1:
+    db 0x00
+circleVar4:
+    db 0x00
+storeCalcedCircleOffsetYLo:
+    db 0x00
+storeCalcedCircleOffsetYHi:
+    db 0x00
+circleVar5:
+    db 0x00
+stack2:
+    db 0x00,0x00
+circlevar6:
+    db 0x00,0x00
+BYTE_ram_20d4:
+    db 0x00
+circlevar7:
+    db 0x00
+circlevar3:
+    db 0x00," "
+CircleParm0x13Mask:
+    db 0xF0
+CircleParm0x14Mask:
+    db 0xF0
+; ZX Spectrum: circle_run_up (&86B8)
+; One run of whole lines on one side of the centre line. circlevar3 = 0 (filled): ce2func43FillCompleteLinesinBM; non-zero (outline): ce2func86.
+; A is passed through unchanged. circle_run_down does the other side (ce2func50 / ce2func88).
+circle_run_up:
+    ld c,a
+    ld a,(circlevar3)
+    and a
+    ld a,c
+    jp nz,ce2func86
+    jp ce2func43FillCompleteLinesinBM
+; ZX Spectrum: circle_run_down (&86C4)
+; The other half of circle_run_up: filled -> ce2func50, outline -> ce2func88.
+circle_run_down:
+    ld c,a
+    ld a,(circlevar3)
+    and a
+    ld a,c
+    jp nz,ce2func88
+    jp ce2func50
+; ---- The planet/sun disc (also the chart's range circle) ----
+; todoDrawFilledCircle (&E787, in common2x) draws a filled disc and clearCircle (&E795) erases it, both into the off-screen bitmap (&A000-&BFFF,
+; 64 bytes per line); a non-zero CirclewheretoDrawFlag (&280E) draws into screen memory instead (charts). Entry1 sets circlevar3 (&20D6) to 1,
+; outline only (the range circle); the filled entry sets it to 0. Parameters, set by calcSunPlanetCoordinates: circleOffsetY (&20C7) and
+; circleOffsetXlo (&20C8) = the centre's offsets as magnitudes, circleOffsetXhi (&20C9) = flags (bit 0 x sign, 1 y sign, 2 x overflow, 3 y overflow),
+; drawradius (&20CA).
+; Entry2 sorts out where the centre lies against the view (x below &78 and y below &40 is inside, an overflow bit means far outside), returns
+; at once when the disc cannot touch the view and otherwise hands each case to a filler (ce2func..., circle_*). Whole lines are filled with SP as
+; the write pointer (ld sp,hl, then push de 32 times per 64-byte line); the line count is clamped at ce2func43FillCompleteLinesinBM
+; so it cannot run past the start of the bitmap: see docs/_architecture.md, "The disc-drawing routine".
+CircleEntrypoint1:
+    ld a,0x01
+    ld (circlevar3),a
+    xor a
+    ld (CirclewheretoDrawFlag),a
+CircleEntrypoint2:
+    ld bc,(circleOffsetY)
+    ld (storeCircleOffsetY1),bc
+    ld de,(circleOffsetXhi)
+    ld a,0x40
+    bit 1,e
+    jr nz,ce2func1
+    add a,c
+    add a,c
+ce2func1:
+    sub c
+    ld (storeCalcedCircleOffsetYLo),a
+    ld a,0x80
+    bit 0,e
+    jr z,ce2func2
+    add a,b
+    add a,b
+ce2func2:
+    sub b
+    ld (storeCalcedCircleOffsetYHi),a
+    ld a,c
+    cp 0x40
+    bit 3,e
+    ex af,af'
+    ld a,b
+    cp 0x78
+    bit 2,e
+    jr z,ce2func4
+    jr nc,ce2func5
+    ex af,af'
+    jr z,ce2func3
+    jr nc,ce2func11
+    jr ce2func7
+ce2func3:
+    ret nc
+    jr ce2func11
+ce2func4:
+    ret nc
+ce2func5:
+    ex af,af'
+    jr z,ce2func6
+    jr nc,ce2func12
+    jr ce2func10
+ce2func6:
+    ret nc
+    jr ce2func12
+ce2func7:
+    ld a,b
+    add a,d
+    jr c,ce2func8
+    cp 0x78
+    jp c,ce2func14
+ce2func8:
+    ld a,d
+    sub b
+    jr c,ce2func9
+    cp 0x78
+ce2func9:
+    jp c,ce2func24
+    jp ce2func17
+ce2func10:
+    ld a,b
+    sub 0x78
+    ld b,a
+    ld (circleVar4),a
+    ld a,d
+    sub b
+    ret c
+    ret z
+    sub 0xF0
+    jp nc,ce2func16
+    jp ce2func23
+ce2func11:
+    ld a,c
+    sub 0x40
+    ld c,a
+    ld (storeCircleOffsetY1),a
+    ld a,d
+    sub c
+    ret c
+    ld a,d
+    call GetSquareforAinDE
+    ld h,d
+    ld l,e
+    ld a,c
+    call GetSquareforAinDE
+    sbc hl,de
+    ld a,0x78
+    sub b
+    call GetSquareforAinDE
+    sbc hl,de
+    jp c,ce2func33
+    jp z,ce2func33
+    add hl,de
+    ld a,0x78
+    add a,b
+    call GetSquareforAinDE
+    sbc hl,de
+    jp nc,ce2func20
+    jp ce2func28
+ce2func12:
+    ld a,b
+    sub 0x78
+    ld b,a
+    ld a,c
+    sub 0x40
+    ld c,a
+    ld (storeCircleOffsetY1),bc
+    ld a,d
+    call GetSquareforAinDE
+    ld h,d
+    ld l,e
+    ld a,c
+    call GetSquareforAinDE
+    sbc hl,de
+    ret c
+    ld a,b
+    call GetSquareforAinDE
+    sbc hl,de
+    ret c
+    add hl,de
+    ld a,b
+    add a,0xF8
+    jr c,ce2func13
+    call GetSquareforAinDE
+    sbc hl,de
+    jp nc,ce2func19
+ce2func13:
+    jp ce2func27
+; ZX Spectrum: lookup_square (&87BF)
+; In: A. Out: DE = A*A, read from the table of 16-bit squares (low bytes at &C600, high bytes at &C700). HL is kept.
+; The circle code and the multiply routines below all work from this table: no multiply instruction is ever used.
+GetSquareforAinDE:
+    push hl
+    ld h,(SCREEN+0x600)>>8              ; quarter-square table in the screen gap
+    ld l,a
+    ld e,(hl)
+    inc h
+    ld d,(hl)
+    pop hl
+    ret
+ce2func14:
+    call ce2func15
+    call SUB_ram_e7f0
+    call ce2func15
+    call SUB_ram_e7e4
+    ret
+; ZX Spectrum: circle_arc_segment (&87D4)
+; One arc segment: seeds the alternate registers (C' = -radius, E' = 0) and turns the segment's two ends, centre - radius and centre + radius at the
+; chord's row, into bitmap addresses with ce2func39 and ce2func40.
+ce2func15:
+    ld bc,(storeCalcedCircleOffsetYLo)
+    ld de,(circleOffsetXhi)
+    ld a,d
+    neg
+    exx
+    ld c,a
+    ld e,0x00
+    exx
+    ld a,b
+    sub d
+    call ce2func39
+    ld a,(storeCalcedCircleOffsetYLo)
+    ld c,a
+    ld a,(storeCalcedCircleOffsetYHi)
+    add a,d
+    jp ce2func40
+ce2func16:
+    ld a,b
+    add a,0x78
+    ld b,a
+    ld (circleVar4),a
+    xor a
+    jr ce2func18
+; ZX Spectrum: circle_fill_vert (&87FE)
+; Fills the part of the disc where the outline runs nearly vertically (the left and right slivers): takes the half-chord width from circle_half_chord,
+; then draws one run upwards (circle_run_up) and one downwards (circle_run_down), each preceded by circle_run_setup_step and circle_run_setup_addr.
+ce2func17:
+    ld a,0x88
+    add a,b
+    inc a
+ce2func18:
+    ex af,af'
+    ld a,0x78
+    add a,b
+    call ce2func57stack
+    ld (circleVar5),a
+    ld b,a
+    ld a,(storeCalcedCircleOffsetYLo)
+    call circle_run_up
+    call ce2func41
+    call ce2func42
+    ld a,(circleOffsetXhi)
+    bit 0,a
+    call z,SUB_ram_e7d9
+    call nz,SUB_ram_e7c2
+    ld a,(circleVar5)
+    ld b,a
+    ld a,(storeCalcedCircleOffsetYLo)
+    call circle_run_down
+    call ce2func41
+    call ce2func42
+    ld a,(circleOffsetXhi)
+    bit 0,a
+    call z,SUB_ram_e7cd
+    call nz,SUB_ram_e7b6
+    ret
+ce2func19:
+    ld a,b
+    add a,0x78
+    ld b,a
+    ld (circleVar4),a
+    xor a
+    jr ce2func21
+ce2func20:
+    ld a,b
+    sub 0x77
+ce2func21:
+    ex af,af'
+    ld de,(circleOffsetXhi)
+    ld a,0x78
+    add a,b
+    call ce2func57stack
+    ld (circleVar5),a
+    sub c
+    ld b,a
+    bit 1,e
+    jr z,ce2func22
+    xor a
+    call circle_run_down
+    call ce2func41
+    call ce2func42
+    ld a,(circleOffsetXhi)
+    bit 0,a
+    call z,SUB_ram_e7cd
+    call nz,SUB_ram_e7b6
+    ret
+ce2func22:
+    ld a,0x7F
+    call circle_run_up
+    call ce2func41
+    call ce2func42
+    ld a,(circleOffsetXhi)
+    bit 0,a
+    call z,SUB_ram_e7d9
+    call nz,SUB_ram_e7c2
+    ret
+ce2func23:
+    ld a,b
+    add a,0x78
+    ld (circleVar4),a
+    ld b,a
+    xor a
+    jr ce2func25
+ce2func24:
+    ld a,b
+    sub 0x77
+ce2func25:
+    ex af,af'
+    bit 0,e
+    jr z,ce2func26
+    call ce2func35
+    call SUB_ram_e7b6
+    call ce2func35
+    jp SUB_ram_e7c2
+ce2func26:
+    call ce2func36
+    call SUB_ram_e7cd
+    call ce2func36
+    jp SUB_ram_e7d9
+ce2func27:
+    ld a,b
+    add a,0x78
+    ld (circleVar4),a
+    ld b,a
+    xor a
+    jr ce2func29
+ce2func28:
+    ld a,b
+    sub 0x77
+ce2func29:
+    ex af,af'
+    ld de,(circleOffsetXhi)
+    ld a,c
+    call ce2func57stack
+    ld (circleVar5),a
+    ld a,c
+    exx
+    ld e,a
+    ld a,(circleVar5)
+    neg
+    ld c,a
+    exx
+    bit 0,e
+    jr z,ce2func31
+    ld a,(circleVar5)
+    cpl
+    add a,0x81
+    add a,b
+    ld c,0x00
+    bit 1,e
+    jr nz,ce2func30
+    ld c,0x7F
+ce2func30:
+    call ce2func39
+    ld a,(circlevar3)
+    and a
+    jp nz,ce2func78
+    ld a,e
+    and 0x3F
+    cp 0x3F
+    ret z
+    ld a,e
+    and 0xC0
+    or 0x3E
+    ld l,a
+    ld c,0x01
+    ld a,(circleOffsetXhi)
+    bit 1,a
+    call nz,SUB_ram_e7b6
+    call z,SUB_ram_e7c2
+    ret
+ce2func31:
+    ld a,(circleVar5)
+    add a,0x80
+    sub b
+    cp 0x08
+    ret c
+    ld c,0x00
+    bit 1,e
+    jr nz,ce2func32
+    ld c,0x7F
+ce2func32:
+    call ce2func40
+    ld a,l
+    and 0xC0
+    or 0x01
+    ld e,a
+    ld a,(circlevar3)
+    and a
+    jp nz,ce2func79
+    ld b,0x01
+    ld a,(circleOffsetXhi)
+    bit 1,a
+    call nz,SUB_ram_e7cd
+    call z,SUB_ram_e7d9
+    ret
+; ZX Spectrum: circle_fill_steep_diag2 (&893F)
+; The same shape for the steep-diagonal region: half-chord from circle_half_chord, both ends of the chord stepped (ce2func39 for centre - half-chord,
+; ce2func40 for centre + half-chord), then the run is issued through realDrawFilledCircle.
+ce2func33:
+    ld de,(circleOffsetXhi)
+    ld a,c
+    call ce2func57stack
+    ld (circleVar5),a
+    ld a,c
+    exx
+    ld e,a
+    ld a,(circleVar5)
+    neg
+    ld c,a
+    exx
+    xor a
+    bit 1,e
+    jr nz,ce2func34
+    ld a,0x7F
+ce2func34:
+    ld (storeCalcedCircleOffsetYLo),a
+    ld c,a
+    ld a,(circleVar5)
+    ld l,a
+    ld a,(storeCalcedCircleOffsetYHi)
+    sub l
+    call ce2func39
+    ld a,(storeCalcedCircleOffsetYLo)
+    ld c,a
+    ld a,(circleVar5)
+    ld l,a
+    ld a,(storeCalcedCircleOffsetYHi)
+    add a,l
+    call ce2func40
+    ld a,(circleOffsetXhi)
+    bit 1,a
+    call nz,SUB_ram_e7e4
+    call z,SUB_ram_e7f0
+    ret
+; ZX Spectrum: circle_horiz_end (&8985)
+; One end of a horizontal fill run: seeds the registers (circle_seed_arc_regs), converts the end point (&80 + working column - radius, row from
+; storeCalcedCircleOffsetYLo) into a bitmap address, and in fill mode aligns L to the last bytes of the 64-byte line (offset &3E).
+ce2func35:
+    call ce2func38
+    ld a,(storeCalcedCircleOffsetYLo)
+    ld c,a
+    ld a,0x80
+    add a,b
+    sub d
+    call ce2func39
+    ld a,(circlevar3)
+    and a
+    jp nz,ce2func80
+    ld a,e
+    and 0xC0
+    or 0x3E
+    ld l,a
+    ld c,0x01
+    ret
+; ZX Spectrum: circle_horiz_end_mirror (&89A1)
+; The mirror image of circle_horiz_end for the other end: the column is reflected about &80 and L is aligned to the start of the line (offset 1).
+ce2func36:
+    call ce2func38
+    ld a,(storeCalcedCircleOffsetYLo)
+    ld c,a
+    ld a,0x80
+    add a,d
+    sub b
+    call ce2func40
+    ld a,l
+    and 0xC0
+    or 0x01
+    ld e,a
+    ld b,a
+    ld a,(circlevar3)
+    and a
+    ld a,b
+    jr nz,ce2func37
+    ld b,0x01
+    ret
+ce2func37:
+    ld b,0x88
+    ret
+; ZX Spectrum: circle_seed_arc_regs (&89C3)
+; Loads BC with the working centre (storeCircleOffsetY1), DE with flags and radius (circleOffsetXhi), and sets C' = -radius, E' = 0 for the point routines.
+ce2func38:
+    ld bc,(storeCircleOffsetY1)
+    ld de,(circleOffsetXhi)
+    ld a,d
+    neg
+    exx
+    ld c,a
+    ld e,0x00
+    exx
+    ret
+; Planet/circle drawing: get the left-hand bitmap address and pixel mask for a point (counterpart of ce2func40)
+ce2func39:
+    ld b,c
+    ld c,a
+    call cirGetBMAdress
+    ld e,l
+    ld b,a
+    ld a,(circlevar3)
+    and a
+    ld a,b
+    jp nz,ce2func81
+    inc b
+    ret
+; ZX Spectrum: circle_point_addr_right (&89EF)
+; The right-hand counterpart of ce2func39: converts a point to a bitmap address and a mask for the pixels to its left.
+ce2func40:
+    push af
+    ld a,b
+    ld (BYTE_ram_20d4),a
+    pop af
+    ld b,c
+    ld c,a
+    call cirGetBMAdress
+    push af
+    ld a,(BYTE_ram_20d4)
+    ld b,a
+    pop af
+    sub 0x04
+    neg
+    ld c,a
+    ld a,(circlevar3)
+    and a
+    ld a,c
+    jp nz,ce2func83
+    ret
+; ZX Spectrum: circle_run_setup_step (&8A16)
+; Sets the run's step registers: C' = &88 - centre X, E' = this row's half-chord (circleVar5). Called just before each run in the near-vertical fillers.
+ce2func41:
+    ld bc,(storeCircleOffsetY1)
+    ld a,0x88
+    sub b
+    exx
+    ld c,a
+    ld a,(circleVar5)
+    ld e,a
+    exx
+    ret
+; ZX Spectrum: circle_run_setup_addr (&8A25)
+; Finishes the run set-up: in outline mode defers to ce2func85; otherwise E = L aligned to the start of the line (offset 1) and C = B = 1.
+ce2func42:
+    ld a,(circlevar3)
+    and a
+    jp nz,ce2func85
+    ld a,l
+    and 0xC0
+    or 0x01
+    ld e,a
+    ld c,0x01
+    ld b,0x01
+    ret
+; Planet disc fill: fill the whole bytes between the two edge points of a scanline in the bitmap
+ce2func43FillCompleteLinesinBM:
+    push de
+    push af
+    ld a,(CirclewheretoDrawFlag)
+    and a
+    jr nz,ce2func46lineinScreenMem
+    pop af
+    push af
+    push bc
+    ld b,a
+    ld c,0xF8
+    push af
+    call cirGetBMAdress
+    pop af
+    pop bc
+    push bc
+    ld de,(CircleParm0x13Mask)
+    ld (stack2),sp
+    dec b
+    inc b
+    jr z,ce2func45
+    cp b
+    jr nc,ce2func44
+    ld b,a
+    inc b
+ce2func44:
+    inc hl
+    inc hl
+    ld sp,hl
+LineFillLoop:
+    DUP 32
+    push de
+    EDUP
+    djnz LineFillLoop
+ce2func45:
+    ld sp,(stack2)
+    pop bc
+    pop af
+    pop de
+    jp ce2func86
+ce2func46lineinScreenMem:
+    pop af
+    push af
+    push bc
+    ld b,a
+    ld c,0xF8
+    call cirGetScrAddr
+    pop bc
+    push bc
+    ld (stack2),sp
+    dec b
+    inc b
+    jr z,ce2func49
+    ld sp,hl
+ce2func47FillCompleteLinesScrMem:
+    ld sp,hl
+    ld de,0xFFFF
+    DUP 29
+    push de
+    EDUP
+    ld ix,0x0000
+    add ix,sp
+    ld sp,ce2func57stack
+    ld (ix-1),d
+    ld (ix-2),e
+    ld a,h
+    sub 0x08
+    ld h,a
+    bit 6,h
+    jr nz,ce2func48
+    ld de,0x3FC0   ; -0x40 and wrap: previous character row (64-byte rows)
+    add hl,de
+ce2func48:
+    ld d,h
+    ld e,l
+    add hl,hl
+    add hl,hl
+    ld a,(circleCutoffFromTop)
+    cp h
+    ld h,d
+    ld l,e
+    jr z,ce2func49
+    djnz ce2func47FillCompleteLinesScrMem
+ce2func49:
+    ld sp,(stack2)
+    pop bc
+    pop af
+    pop de
+    ret
+ce2func50:
+    push bc
+    push af
+    ld a,(CirclewheretoDrawFlag)
+    and a
+    jr nz,ce2func53
+    pop af
+    push af
+    add a,b
+    jr c,ce2func51
+    cp 0x81
+    jr c,ce2func52
+ce2func51:
+    pop af
+    push af
+    sub 0x80
+    neg
+    ld b,a
+    ld a,0x80
+ce2func52:
+    dec a
+    call ce2func43FillCompleteLinesinBM
+    pop af
+    pop bc
+    jp ce2func88
+ce2func53:
+    pop af
+    push af
+    push bc
+    ld b,a
+    ld c,0xF8
+    call cirGetScrAddr
+    pop bc
+    push bc
+    ld (stack2),sp
+    dec b
+    inc b
+    jr z,ce2func56
+ce2func54FillScreenLineWithFF:
+    ld sp,hl
+    ld de,0xFFFF
+    DUP 29
+    push de
+    EDUP
+    ld ix,0x0000
+    add ix,sp
+    ld sp,ce2func57stack
+    ld (ix-1),d
+    ld (ix-2),e
+    ld a,h
+    add a,0x08
+    ld h,a
+    bit 7,h                           ; 128K layout: loop while inside the screen page &4000-&7FFF (it was the carry out of H at &C000)
+    jr z,ce2func55
+    ld de,0xC040   ; +0x40 and wrap: next character row of the 64-byte-wide view
+    add hl,de
+ce2func55:
+    ld d,h
+    ld e,l
+    add hl,hl
+    add hl,hl
+    ld a,(todoCircleParHeight)
+    cp h
+    ld h,d
+    ld l,e
+    jp z,ce2func56
+    djnz ce2func54FillScreenLineWithFF
+ce2func56:
+    ld sp,(stack2)
+    pop bc
+    pop af
+    pop de
+    ret
+    db 0x00,0xDD
+; ZX Spectrum: circle_half_chord (&8ACD)
+; In: A = distance from the centre line, D = radius. Out: A' = floor(sqrt(radius^2 - A^2)), half the width of the disc at that row. The squares come from
+; GetSquareforAinDE; the root is a binary search over the bits &80 down, keeping each bit while its square still fits. BC, DE, HL are kept.
+; The label is also used as a stack address (ld sp,ce2func57stack): the bytes just below it serve as a small private stack.
+ce2func57stack:
+    push bc
+    push de
+    push hl
+    push af
+    ld a,d
+    call GetSquareforAinDE
+    ld h,d
+    ld l,e
+    pop af
+    call GetSquareforAinDE
+    sbc hl,de
+    ld b,0x80
+    xor a
+    ld (circlevar6),hl
+ce2func58:
+    ld hl,(circlevar6)
+    add a,b
+    call GetSquareforAinDE
+    sbc hl,de
+    jr nc,ce2func59
+    sub b
+ce2func59:
+    srl b
+    jr nc,ce2func58
+    pop hl
+    pop de
+    pop bc
+    ret
+ce2func60:
+    pop af
+    ret
+ce2func61:
+    ld a,e
+    sub l
+    jp nc,ce2func60
+    call circlecalcDetailsRightSide
+    ld (stack2),sp
+    ld sp,SCREEN+0x372E
+ce2func62:
+    push bc
+    dec c
+    ld b,(SCREEN>>8)+0x0E               ; mask table at page offset &E00 of the screen page (was 0xCE at &C000)
+    ld a,(bc)
+    or (hl)
+    ld d,a
+    set 2,c
+    ld a,(bc)
+    and d
+    ld (hl),a
+    pop bc
+    ld a,l
+    sub e
+    srl a
+    jr z,ce2func66
+    sub 0x21
+    cpl
+    ld (loc_25D5+1),a
+    pop af
+    push af
+    ld sp,hl
+loc_25D5:
+    jr loc_25D5
+    circlePushRun
+smc_ce2func64patchmask7:
+    ld (hl),0xF0
+    dec hl
+smc_ce2func65patchmask8:
+    ld (hl),0xF0
+    pop hl
+    ld sp,SCREEN+0x372E
+ce2func66:
+    call circlecalcDetailsLeftSide
+    exx
+    add hl,de
+    inc e
+    add hl,de
+    bit 7,h
+    exx
+    jr nz,ce2func68
+    dec c
+    jr nz,ce2func67
+    ld c,0x04
+    dec l
+    ld a,l
+    sub e
+    jr z,ce2func71
+ce2func67:
+    exx
+    add hl,bc
+    inc c
+    ex af,af'
+    cp c
+    jr z,ce2func69
+    ex af,af'
+    add hl,bc
+    bit 7,h
+    exx
+ce2func68:
+    jp nz,ce2func62
+    jr ce2func72
+ce2func69:
+    ex af,af'
+    exx
+    ld a,l
+    sub e
+    exx
+    jr z,ce2func71
+    jp LAB_ram_ceeb
+ce2func70:
+    ex af,af'
+    exx
+    ld a,l
+    sub e
+    exx
+    jr z,ce2func71
+    jp LAB_ram_cf13
+ce2func71:
+    ld sp,(stack2)
+    pop af
+    ret
+ce2func72:
+    dec c
+    jr nz,ce2func73
+    ld c,0x04
+    dec l
+    ld a,l
+    sub e
+    jr z,ce2func71
+ce2func73:
+    exx
+    add hl,bc
+    inc c
+    jr z,ce2func71
+    ex af,af'
+    cp c
+    jr z,ce2func70
+    ex af,af'
+    add hl,bc
+    bit 7,h
+    exx
+    jr z,ce2func72
+    exx
+    add hl,de
+    inc e
+    add hl,de
+    exx
+    push bc
+    dec c
+    ld b,(SCREEN>>8)+0x0E               ; mask table at page offset &E00 of the screen page (was 0xCE at &C000)
+    ld a,(bc)
+    or (hl)
+    ld d,a
+    set 2,c
+    ld a,(bc)
+    and d
+    ld (hl),a
+    pop bc
+    ld a,l
+    sub e
+    srl a
+    jr z,loc_26BD
+    sub 0x21
+    cpl
+    ld (loc_2687+1),a
+    pop af
+    push af
+    ld sp,hl
+loc_2687:
+    jr loc_2687
+    circlePushRun
+smc_ce2func75patchmask9:
+    ld (hl),0xF0
+    dec hl
+smc_ce2func76patchmask10:
+    ld (hl),0xF0
+    pop hl
+    ld sp,SCREEN+0x372E
+loc_26BD:
+    call circlecalcDetailsLeftSide
+    jr ce2func72
+    db 0xC3,"L&"
+; ZX Spectrum: circle_outline_edge_left (&8FB8)
+; Outline mode, steep diagonal edge: the counterpart of a fill run, starting at the line start with a single-pixel mask (C = 1).
+ce2func78:
+    ld a,e
+    and 0xC0
+    or 0x3D
+    ld l,a
+    ld c,0x11
+    ld a,(circleOffsetXhi)
+    bit 1,a
+    call nz,SUB_ram_e7b6
+    call z,SUB_ram_e7c2
+    ret
+ce2func79:
+    ld b,0x11
+    ld a,(circleOffsetXhi)
+    bit 1,a
+    call nz,SUB_ram_e7cd
+    call z,SUB_ram_e7d9
+    ret
+ce2func80:
+    ld a,e
+    and 0xC0
+    or 0x3D
+    ld l,a
+    ld c,0x11
+    ret
+ce2func81:
+    ld b,0x88
+    inc a
+ce2func82:
+    rlc b
+    dec a
+    jr nz,ce2func82
+    ld e,l
+    ret
+ce2func83:
+    ld c,0x11
+ce2func84:
+    rrc c
+    dec a
+    jr nz,ce2func84
+    ret
+ce2func85:
+    ld a,l
+    and 0xC0
+    or 0x01
+    ld e,a
+    ld c,0x11
+    ld b,0x88
+    ret
+ce2func86:
+    sub b
+    jr nc,ce2func87
+    ld h,0x9F
+    ret
+ce2func87:
+    ld c,0xF8
+    ld b,a
+    jp cirGetBMAdress
+ce2func88:
+    add a,b
+    cp 0x80
+    jr c,ce2func89
+    ld h,0xC0                            ; end of the off-screen bitmap (&A000-&BFFF), not the screen page
+    ret
+ce2func89:
+    ld c,0xF8
+    ld b,a
+    jp cirGetBMAdress
+ce2stack4:
+    db "I",0x01
+; Patch the byte in A into all 20 operand addresses listed in CircleParmTable (disc fill colour mask)
+prepareCircleFillMask:
+    ld b,0x14
+    ld hl,CircleParmTable
+smc_cpatchloop:
+    ld e,(hl)
+    inc hl
+    ld d,(hl)
+    inc hl
+    ld (de),a
+    djnz smc_cpatchloop
+    ret
+; 20 addresses of operand bytes that prepareCircleFillMask patches (inside the disc fill routines in the screen page, SCREEN+offset, and in code, so numeric).
+CircleParmTable:
+    dw SCREEN+0x0E84,SCREEN+0x0EBF,SCREEN+0x0EC2,SCREEN+0x0F43,SCREEN+0x0F7E
+    dw SCREEN+0x0F81,0x2605,0x2608,0x26B7,0x26BA
+    dw SCREEN+0x362A,SCREEN+0x3665,SCREEN+0x3668,SCREEN+0x36DC,SCREEN+0x3717
+    dw SCREEN+0x371A,SCREEN+0x372E,SCREEN+0x372F,0x20D8,0x20D9
+; Reset the disc-fill shadow registers, store A in circlevar7 and return with Z set if circlevar3 is 0
+SUB_ram_275e:
+    exx
+    ld hl,0x0000
+    ld d,h
+    ld b,0xFF
+    exx
+    ld (circlevar7),a
+    ld a,(circlevar3)
+    and a
+    ret
+; Clip check for the right edge of a disc scanline; pops two return levels when it is off screen
+circlecalcDetailsRightSide:
+    ld a,(CirclewheretoDrawFlag)
+    and a
+    jr nz,cdr3
+    ld a,(circlevar7)
+    and a
+    jr nz,cdr1
+    ld a,0x9F
+    cp h
+    ret c
+    jr cdr2
+cdr1:
+    ld a,0xBF
+    cp h
+    ret nc
+cdr2:
+    pop af
+    pop af
+    ret
+cdr3:
+    ASSERT SCREEN == 0x4000, "the bit tests below assume the screen page at &4000"
+    bit 7,h                           ; 128K layout: the screen is &4000-&7FFF (stock: both bits set, &C000-&FFFF); the shifts below drop both top bits, so the row maths is unchanged
+    jr nz,cdr2
+    bit 6,h
+    jr z,cdr2
+    push hl
+    add hl,hl
+    add hl,hl
+    ld a,h
+    pop hl
+    rlca
+    rlca
+    rlca
+    cp 0x7E
+    jr nc,cdr2
+    cp 0x02
+    jr c,cdr2
+    ret
+; Clip check for the left edge of a disc scanline: steps the address back one column and range-checks it
+circlecalcDetailsLeftSide:
+    ld a,(CirclewheretoDrawFlag)
+    and a
+    jr nz,cdl3
+    ld a,(circlevar7)
+    and a
+    jr nz,cdl1
+    ld a,l
+    sub 0x40
+    ld l,a
+    ld a,e
+    sub 0x40
+    ld e,a
+    ret nc
+    dec h
+    ld a,0x9F
+    cp h
+    ret c
+    jr cdl2
+cdl1:
+    ld a,l
+    add a,0x40
+    ld l,a
+    ld a,e
+    add a,0x40
+    ld e,a
+    ret nc
+    inc h
+    ld a,0xBF
+    cp h
+    ret nc
+cdl2:
+    ld sp,(stack2)
+    pop af
+    ret
+cdl3:
+    ld a,(circlevar7)
+    and a
+    jr nz,cdl5
+    ld a,h
+    sub 0x08
+    ld h,a
+    bit 6,h
+    jr nz,cdl4
+    push bc
+    ld bc,0x3FC0   ; -0x40 and wrap: previous character row (64-byte rows)
+    add hl,bc
+    pop bc
+    ld a,e
+    sub 0x40
+    ld e,a
+cdl4:
+    push hl
+    add hl,hl
+    add hl,hl
+    ld a,(circleCutoffFromTop)
+    cp h
+    pop hl
+    jr z,cdl2
+    ret
+cdl5:
+    ld a,h
+    add a,0x08
+    ld h,a
+    bit 7,h                           ; 128K layout: loop while inside the screen page &4000-&7FFF (it was the carry out of H at &C000)
+    jr z,cdl6
+    push bc
+    ld bc,0xC040   ; +0x40 and wrap: next character row of the 64-byte-wide view
+    add hl,bc
+    pop bc
+    ld a,e
+    add a,0x40
+    ld e,a
+cdl6:
+    push hl
+    add hl,hl
+    add hl,hl
+    ld a,(todoCircleParHeight)
+    cp h
+    pop hl
+    jr z,cdl2
+    ret
+CirclewheretoDrawFlag:
+    db 0x00
+circleCutoffFromTop:
+    db " "
+todoCircleParHeight:
+    db 0xEF
+myVBL:
+    di
+    ld (stack5),sp
+    ld sp,framecounterNStack
+    push af
+    push bc
+    push de
+    push hl
+    push ix
+    push iy
+    call doColorSplit
+    pop iy
+    pop ix
+    pop hl
+    pop de
+    pop bc
+    pop af
+    ld sp,(stack5)
+    ei
+    ret
+doColorSplit:
+    ld b,0xF5
+    in a,(c)
+    and 0x01
+    jr nz,setDashboardInks
+    ld a,(framecounterNStack)
+    inc a
+    ld (framecounterNStack),a
+    cp 0x02
+    jp c,splitcheckzoneless5
+    jp z,splitcheckzone4
+    cp 0x04
+    jp c,IRSound
+    jp z,setDashboardColor
+    jp IRSetInk1
+counter_colorsetting:
+    db 0x00
+flag_color0alternating:
+    db 0x00
+setDashboardInks:
+    xor a
+    ld (framecounterNStack),a
+    ld a,(Viewdirection)
+    cp 0x04
+    jr nc,changeAllInks
+    ld bc,0x7F02
+    out (c),c
+    ld c,0x54
+    out (c),c
+    ld a,(flagCloakingDeviceActive)
+    and a
+    jr z,setNormalDashboardinks
+    ld de,0x5840
+    ld a,0x5F
+    jr setSplitInks
+setNormalDashboardinks:
+    ld a,(FlightMode)
+    and a
+    jr z,setInks0_1_3
+    ld de,0x5C4C
+    ld a,0x4E
+setSplitInks:
+    ld bc,0x7F01   ; gate array: select pen 1
+    out (c),c
+    out (c),d
+    ld bc,0x7F00   ; gate array: select pen 0
+    out (c),c
+    out (c),e
+    ld bc,0x7F03   ; gate array: select pen 3
+    out (c),c
+    out (c),a
+    jr LAB_ram_28b4
+setInks0_1_3:
+    ld bc,0x7F01   ; gate array: select pen 1
+    out (c),c
+smc_patchViewPortInk1:
+    ld c,0x44
+    out (c),c
+    ld bc,0x7F00   ; gate array: select pen 0
+    out (c),c
+smc_patchViewPortInk0:
+    ld c,0x43
+    out (c),c
+    ld bc,0x7F03   ; gate array: select pen 3
+    out (c),c
+smc_patchviewPortInk3:
+    ld c,0x57
+    out (c),c
+LAB_ram_28b4:
+    ld a,(counter_colorsetting)
+    and a
+    ret z
+    dec a
+    ld (counter_colorsetting),a
+    ld a,(flag_color0alternating)
+    cpl
+    ld (flag_color0alternating),a
+    and a
+    ld bc,0x7F02
+    out (c),c
+    ld c,0x54
+    jr z,LAB_ram_28d0
+    ld c,0x4D
+LAB_ram_28d0:
+    out (c),c
+    ld a,c
+    sub 0x40
+    call setBorderColor
+    ret
+changeAllInks:
+    xor a
+    ld (counter_colorsetting),a
+    ld bc,0x7F00   ; gate array: select pen 0
+    out (c),c
+smc_patchInk0:
+    ld c,0x54
+    out (c),c
+    ld bc,0x7F01   ; gate array: select pen 1
+    out (c),c
+smc_patchInk1:
+    ld c,0x57
+    out (c),c
+    ld bc,0x7F03   ; gate array: select pen 3
+    out (c),c
+smc_patchInk3:
+    ld c,0x5E
+    out (c),c
+    ld bc,0x7F02
+    out (c),c
+smc_patchInk2:
+    ld c,0x54
+    out (c),c
+    ret
+splitcheckzoneless5:
+    ld a,(Viewdirection)
+    cp 0x05
+    ret c
+    call splitDelay
+changeInks2and3:
+    ld bc,0x7F03   ; gate array: select pen 3
+    out (c),c
+smc_patchSecondInk3:
+    ld c,0x4E
+    out (c),c
+    ld bc,0x7F02
+    out (c),c
+smc_patchSecondInk2:
+    ld c,0x47
+    out (c),c
+    ret
+; Busy-wait loop (250 passes) used to time the split-screen mode/ink changes
+splitDelay:
+    ld b,0xFA
+splitdelayloop:
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    djnz splitdelayloop
+    ret
+splitcheckzone4:
+    ld a,(Viewdirection)
+    cp 0x04
+    ret nz
+    jr changeInks2and3
+IRSound:
+    call IRKeyboardInput
+    call dbIsr                          ; 128K build: no music player is ever loaded, so the flag test and the branch to loc_293F were dead (4 bytes of them pay for the screen-wrap fixes above, so every label from here on stays at its stock address); dbIsr follows the displayed bank in the non-flight views
+    jp IRdrivenSound
+loc_293F:
+    ld a,(flagToggleMusic)
+    and a
+    ret z
+    jp loc_604A
+setDashboardColor:
+    ld a,(Viewdirection)
+    cp 0x04
+    ret nc
+    ld bc,0x7F01   ; gate array: select pen 1
+    out (c),c
+smc_patchAnotherInk1:
+    ld c,0x52
+    out (c),c
+    ld de,0x5B4C
+    ld a,(flagCloakingDeviceActive)
+    and a
+    jr nz,dashboardCloakingColors
+    ld a,(FlightMode)
+    and a
+    jr nz,dashboardNormalColors
+    ld a,(escapePod)
+    and a
+    jr z,setink3_0
+    ld de,0x5B4E
+setink3_0:
+    ld bc,0x7F03   ; gate array: select pen 3
+    out (c),c
+    out (c),e
+    ld bc,0x7F00   ; gate array: select pen 0
+    out (c),c
+    out (c),d
+    ret
+dashboardCloakingColors:
+    ld de,0x5F55  ; ink pair for the cloaking dashboard, not an address
+    jr setink3_0
+dashboardNormalColors:
+    ld de,0x4C47
+    jr setink3_0
+IRSetInk1:
+    ld a,(Viewdirection)
+    cp 0x04
+    ret nc
+    ld bc,0x7F01   ; gate array: select pen 1
+    out (c),c
+smc_patchAnotherInk1_2:
+    ld c,0x58
+    out (c),c
+    ret
+; Saved SP of myVBL (the word at stack5), then the private interrupt stack that grows down to framecounterNStack.
+; The bytes below are stale stack contents left in the file image (return addresses and register pairs), not code.
+stack5:
+    db 0x0B,0x0E,0x07,0x0E,0x07,0x0E,0x0E,0x0F,0x08,0x01,0x0F,0x0E,0x0F,0x0F,0x0F,0x0F
+    db 0x0F,0x0E,0x0F,0x0B,0x0F,0x0F,0x0F,0x0E,0x0F,0x0F,0x0F,0x0F,0x0F,0x0E,0xCD,0x9C
+    db ".",0xC3,0x1E,0x9D,0x00,0x00,0x00,0x00,0x00,0xCB,"8",0xCB,0x19,0xCB,"8",0xCB
+    db 0x19,0xCB,"8",0xCB,0x19,0xCB,"8",0xCB,0x19,0xC9,0xC3,0x09,"+",0xCD,"n+"
+    db 0xDF,"Tu",0xC8,0xCD,"[+>",0x08,"2",0xBE,")",0xDD,"!c",0x00
+    db 0xDD,"~",0x22,0xA7,"(",0xE4,0xDD,"~",0x01,0xFE,"@0",0xDD,0xDD,"~",0x04
+    db 0xFE,"@0",0xD6,0xDD,"~"
+framecounterNStack:
+    db 0x07
+; Clear the scanner area, then redraw the ECM indicator if ECM is active
+cleanScannerUpdateECMIndicator:
+    call cleanScanner
+    ld a,(ecmActiveFlag)
+    and a
+    ret z
+    call setCommandsCPL
+    call drawECMIndicatorEP2
+    jp setCommandsNOP
+; Clear the scanner area of the dashboard (when the clean counter reaches 0) and restore its frame graphics
+cleanScanner:
+    ld a,(todo_CleanScanCounter)
+    dec a
+    ret nz
+    ld (todo_CleanScanCounter),a
+    ld c,0x08
+    ld hl,SCREEN+0x454
+scnclsArealoop:
+    ld a,0x0F
+    ld b,0x16
+    push hl
+scnclslineloop:
+    ld (hl),a
+    inc l
+    djnz scnclslineloop
+    pop hl
+    ld a,h
+    add a,0x08
+    ld h,a
+    dec c
+    jr nz,scnclsArealoop
+    ld hl,SCREEN+0x492
+    ld de,gfxdataScanner
+    exx
+    ld c,0x08
+    exx
+scncls5:
+    exx
+    ld b,0x06
+    exx
+    push hl
+scnDrawScannerBGLoop:
+    exx
+    ld a,b
+    exx
+    cp 0x06
+    ld b,0x0D
+    push hl
+    jr nz,scncls7
+    dec b
+    inc hl
+    inc hl
+    inc de
+scncls7:
+    ld a,(de)
+    and 0xF0
+    rrca
+    rrca
+    rrca
+    rrca
+    ld (hl),a
+    inc hl
+    ld a,(de)
+    inc de
+    and 0x0F
+    ld (hl),a
+    inc hl
+    djnz scncls7
+    pop hl
+    ld bc,0x0040
+    add hl,bc
+    exx
+    dec b
+    exx
+    jr nz,scnDrawScannerBGLoop
+    pop hl
+    ld a,h
+    add a,0x08
+    ld h,a
+    exx
+    dec c
+    exx
+    jr nz,scncls5
+    ret
+; Per-frame view-key handler: reads the view keys (keybFlags3), switches view or departs from the station
+SUB_ram_2a70:
+    ld a,(tunnelFlag2)
+    and a
+    ret nz
+    ld a,(keybFlags3)
+    and 0x0F
+    jr z,LAB_ram_2ab6
+    ld c,0x00
+    srl a
+    jr c,BeginDepartFromStation
+    inc c
+    srl a
+    jr c,LAB_ram_2a8d
+    inc c
+    srl a
+    jr c,LAB_ram_2a8d
+    inc c
+LAB_ram_2a8d:
+    ld a,(todoUnknownStatusFlags)
+    and a
+    jr nz,exitWithTransferNCounterReset
+    ld a,0x03
+    add a,c
+    ld c,a
+    call transferDashboardFromScreenToBM
+    sub 0x04
+    call execSelectedKeyFunctions
+    jr resetKeybuffers
+exitWithTransferNCounterReset:
+    call transferDashboardFromScreenToBM
+    jr resetKeybuffers
+BeginDepartFromStation:
+    ld a,(todoUnknownStatusFlags)
+    and a
+    jr nz,LAB_ram_2ab1
+    call DockingSequence
+    jr resetKeybuffers
+LAB_ram_2ab1:
+    call transferDashboardFromScreenToBM
+    jr resetKeybuffers
+LAB_ram_2ab6:
+    ld a,(keybFlags1)
+    and 0x3F
+    add a,a
+    ret z
+    add a,a
+    ld bc,0x0607
+LAB_ram_2ac1:
+    add a,a
+    jr c,LAB_ram_2ac7
+    inc c
+    djnz LAB_ram_2ac1
+LAB_ram_2ac7:
+    call transferDashboardFromScreenToBM
+    cp 0x07
+    jr c,resetKeybuffers
+    sub 0x04
+    call execSelectedKeyFunctions
+resetKeybuffers:
+    xor a
+    ld (keybFlags3),a
+    ld (keybFlags1),a
+    ret
+; ZX Spectrum: call_d000_jump_table (&813E)
+; Calls entry A of the key-function jump table in the screen-RAM page (the docked and flight key actions).
+execSelectedKeyFunctions:
+    ld b,a
+    add a,a
+    add a,b
+    ld hl,DockedFuncJumptable
+    add a,l
+    ld l,a
+    jr nc,LAB_ram_2ae6
+    inc h
+LAB_ram_2ae6:
+    ld (0x2AEA),hl
+; Self-modified call: its operand is patched with the view routine address; then clears the dashboard counter
+CallHL:
+    call CallHL
+    jp todoclearCounter
+; On a view change, save the dashboard from the screen into the bitmap buffer at &AE00 (and restore it)
+transferDashboardFromScreenToBM:
+    ld a,(Viewdirection)
+    ld b,a
+    cp c
+    jr nz,TransferfromScreentoBMloop
+    ld a,c
+    cp 0x07
+    jr c,TransferfromScreentoBMloop
+    pop hl
+    jr resetKeybuffers
+TransferfromScreentoBMloop:
+    ld a,c
+    ld (Viewdirection),a
+    ld a,b
+    cp 0x04
+    ld a,c
+    ret nc
+    cp 0x04
+    ret c
+    ld de,0xAE00
+    ld hl,SCREEN+0x400
+    ld bc,0x0200
+    ldir
+    ld hl,SCREEN+0xC00
+    call tfsbmDoLDIR
+    ld hl,SCREEN+0x1400
+    call tfsbmDoLDIR
+    ld hl,SCREEN+0x1C00
+    call tfsbmDoLDIR
+    ld hl,SCREEN+0x2400
+    call tfsbmDoLDIR
+    ld hl,SCREEN+0x2C00
+    call tfsbmDoLDIR
+    ld hl,SCREEN+0x3400
+    call tfsbmDoLDIR
+    ld hl,SCREEN+0x3C00
+    call tfsbmDoLDIR
+    ret
+; Block-copy 0x200 bytes with ldir (one screen/buffer chunk)
+tfsbmDoLDIR:
+    ld bc,0x0200
+    ldir
+    ret
+    db 0x00
+; Pause-mode loop: wait for a key and toggle option flags (B/D/F/R/Y), music on/off, until resumed
+parseInputkey:
+    ld a,(keybFlags3)
+    and 0x80
+    ret z
+    ld hl,keybFlags0
+ikloop:
+    halt
+    ld a,(pressedKey)
+    inc a
+    jr nz,ikloop
+loopPausemode:
+    halt
+    ld a,(pressedKey)
+    cp 0xFF
+    jr z,loopPausemode
+    cp 0x42
+    call z,todoInputcharB
+    cp 0x44
+    call z,todoInputcharD
+    cp 0x46
+    call z,todoInputcharF
+    cp 0x51
+    call z,QuietMusicOff
+    cp 0x52
+    call z,todoInputcharR
+    cp 0x53
+    call z,MusicOn
+    cp 0x59
+    call z,todoInputcharY
+    cp 0x31
+    jr z,todoInputchar1
+    cp 0xFD
+    jp z,ClearsomeFlags
+    and a
+    call z,somethingForSFX
+    jr ikloop
+todoInputchar1:
+    call ClearsomeFlags
+    scf
+    ret
+; Pause mode, key B: toggle bit 4 of the option byte at (HL)
+todoInputcharB:
+    ld a,(hl)
+    xor 0x10
+    ld (hl),a
+    xor a
+    ret
+; Pause mode, key D: toggle bit 3 of the option byte at (HL)
+todoInputcharD:
+    ld a,(hl)
+    xor 0x08
+    ld (hl),a
+    xor a
+    ret
+; Pause mode, key F: toggle bit 6 of the option byte at (HL)
+todoInputcharF:
+    ld a,(hl)
+    xor 0x40
+    ld (hl),a
+    xor a
+    ret
+; Pause mode, key R: toggle bit 2 of the option byte at (HL)
+todoInputcharR:
+    ld a,(hl)
+    xor 0x04
+    ld (hl),a
+    xor a
+    ret
+; Pause mode, key Q: switch the music off (flagToggleMusic = 0)
+QuietMusicOff:
+    xor a
+    ld (flagToggleMusic),a
+    ret
+; Switch the music on (flagToggleMusic = 1)
+MusicOn:
+    ld a,0x01
+    ld (flagToggleMusic),a
+    ret
+flagToggleMusic:
+    db 0x01
+; Pause mode, key Y: toggle bit 5 of the option byte at (HL)
+todoInputcharY:
+    ld a,(hl)
+    xor 0x20
+    ld (hl),a
+    xor a
+    ret
+; Set bit 5 of sfxFlags2Bitmap (request a sound effect)
+somethingForSFX:
+    ld a,(sfxFlags2Bitmap)
+    or 0x20
+    ld (sfxFlags2Bitmap),a
+    ret
+IRdrivenSound:
+    ld hl,sfxTableOfFunctions
+    ld (soundTableAddress),hl
+    ld b,0x00
+    ld hl,sfxStoredByte
+irds1:
+    ld a,(hl)
+    inc a
+    jr z,irds2
+    dec a
+    ld (storeSndAdr),hl
+    push bc
+    call irds20
+    pop bc
+    ld hl,(storeSndAdr)
+irds2:
+    inc hl
+    inc b
+    ld a,b
+    cp 0x03
+    jr nz,irds1
+    ld a,(sfxFlags1Bitmap)
+    and a
+    ld b,0xFF
+    jr nz,irds3
+    ld a,(sfxFlags2Bitmap)
+    and a
+    ld b,0x07
+    jp z,irds16
+irds3:
+    inc b
+    rra
+    jr nc,irds3
+    ld a,b
+    ld (sfx1Number),a
+    call irdsGetSFXParamfromTable
+    ld (sfxWorkParam),a
+    and a
+    jr z,irds6
+    ld b,0x03
+    ld de,sfxStoredByte
+irds4:
+    ld a,(de)
+    inc a
+    jr z,irds5
+    dec a
+    call irdsGetSFXParamfromTable
+    and a
+    jr z,irds5
+    jr irds15
+irds5:
+    inc de
+    djnz irds4
+irds6:
+    ld a,(sfxStoredByte)
+    inc a
+    jr z,irds7
+    ld a,(irdsVar4)
+    inc a
+    jr z,irds8
+    ld a,(irdsVar5)
+    inc a
+    jr z,irds9
+    ret
+irds7:
+    ld c,0x00
+    ld hl,sfxStoredByte
+    jr irds10
+irds8:
+    ld c,0x01
+    ld hl,irdsVar4
+    jr irds10
+irds9:
+    ld c,0x02
+    ld hl,irdsVar5
+irds10:
+    ld a,(irdsVar6)
+    inc a
+    ld (irdsVar6),a
+    ld a,(sfx1Number)
+    ld (hl),a
+    ld hl,sfxFlags1Bitmap
+    cp 0x08
+    jr c,irds11
+    ld hl,sfxFlags2Bitmap
+irds11:
+    ld b,a
+    inc b
+    ld a,0x7F
+irds12:
+    rlca
+    djnz irds12
+    and (hl)
+    ld (hl),a
+    ld hl,sfxTableRegSettingFunctions
+    ld (soundTableAddress),hl
+    ld b,c
+    ld a,(sfx1Number)
+    push bc
+    call irds20
+    pop bc
+    ld a,(sfxWorkParam)
+    and a
+    ld a,0xFB
+    jr nz,irds13
+    ld a,0x7F
+irds13:
+    inc b
+irds14:
+    rlca
+    djnz irds14
+    ld c,a
+    ld a,(irds_dat7)
+    and c
+    jp irds18
+irds15:
+    ret
+irds16:
+    ld a,(irdsVar6)
+    and a
+    jp z,loc_1C7E
+    ret
+; Start one sound effect: look up its handler in the SFX table, patch the call, set up the PSG register block
+irds20:
+    ld (irds_dat8),bc
+    ld (irds_dat9),a
+    ld hl,(soundTableAddress)
+    add a,a
+    ld d,0x00
+    ld e,a
+    ld hl,(soundTableAddress)
+    add hl,de
+    ld e,(hl)
+    inc hl
+    ld d,(hl)
+    ex de,hl
+    ld (0x2CCD),hl
+    ld a,b
+    add a,a
+    add a,a
+    add a,a
+    ld (sfxStack2),sp
+    ld sp,tableofSNDRegValues
+    ld h,0x00
+    ld l,a
+    add hl,sp
+    ld sp,hl
+    pop af
+    pop bc
+    pop de
+    pop hl
+    ld (sfxStack1),sp
+    dec e
+    jr z,irds21
+todo_Inspectthis2:
+    ld sp,(sfxStack2)
+; Self-modified call to the current effect's handler; saves registers on the SFX stack around it
+irds22:
+    call irds22
+    ld sp,(sfxStack1)
+    push hl
+    push de
+    push bc
+    push af
+    ld sp,(sfxStack2)
+    ld bc,(irds_dat8)
+    ld a,(irds_dat9)
+    call irdsGetSFXParamfromTable
+    and a
+    jr nz,ppiReg6ValL
+    ld a,b
+    add a,a
+    ld c,l
+    call ppiRegAValC
+    inc a
+    ld c,h
+    call ppiRegAValC
+    jr ppiRegBplus8ValD
+ppiReg6ValL:
+    ld a,0x06
+    ld c,l
+    call ppiRegAValC
+ppiRegBplus8ValD:
+    ld a,b
+    add a,0x08
+    ld c,d
+    call ppiRegAValC
+    ret
+irds21:
+    ld hl,(soundTableAddress)
+    ld de,sfxTableRegSettingFunctions
+    and a
+    sbc hl,de
+    jr z,todo_Inspectthis2
+    ld sp,(sfxStack2)
+    ld a,(irdsVar6)
+    dec a
+    ld (irdsVar6),a
+    ld hl,(storeSndAdr)
+    ld (hl),0xFF
+    ld bc,(irds_dat8)
+    inc b
+    ld c,0x84
+irds21loop:
+    rlc c
+    djnz irds21loop
+    ld a,(irds_dat7)
+    or c
+irds18:
+    ld (irds_dat7),a
+SendToRegister7PSG:
+    ld c,a
+    ld a,0x07
+    call ppiRegAValC
+    ret
+; Silence all three PSG channels (mixer register 7 = 0x3F)
+mute:
+    ld a,0x3F
+    jr SendToRegister7PSG
+; Return in A the byte from tblSFXParameter indexed by A (registers preserved)
+irdsGetSFXParamfromTable:
+    push bc
+    push hl
+    ld c,a
+    ld b,0x00
+    ld hl,tblSFXParameter
+    add hl,bc
+    ld a,(hl)
+    pop hl
+    pop bc
+    ret
+; Write C to PSG register A through the PPI (latch register, then write data)
+ppiRegAValC:
+    push af
+    push bc
+    ld b,0xF4
+    out (c),a
+    ld b,0xF6
+    in a,(c)
+    or 0xC0
+    out (c),a
+    and 0x3F
+    out (c),a
+    ld b,0xF4
+    out (c),c
+    ld b,0xF6
+    ld c,a
+    or 0x80
+    out (c),a
+    out (c),c
+    pop bc
+    pop af
+    ret
+soundTableAddress:
+    db "2",0x1E
+sfxStoredByte:
+    db 0xFF
+irdsVar4:
+    db 0xFF
+irdsVar5:
+    db 0xFF
+irdsVar6:
+    db 0x00
+sfx1Number:
+    db 0x06
+; Sound effect function table: 16 words, one routine per effect number (indexed by A*2).
+sfxTableOfFunctions:
+    dw sfxFunc1
+    dw sfxFunc2
+    dw sfxFunc3
+    dw sfxFunc4
+    dw sfxFunc5
+    dw sfxFunc6
+    dw sfxFunc7
+    dw sfxFunc8
+    dw sfxFunc9
+    dw sfxFunc10
+    dw sfxFunc11
+    dw sfxFunc12
+    dw sfxFunc13
+    dw sfxFunc14
+    dw sfxFunc15
+    dw sfxFunc16
+; Sound register-setting function table: 16 words, parallel to sfxTableOfFunctions (soundTableAddress points at one of the two).
+sfxTableRegSettingFunctions:
+    dw sfxRegFunc1
+    dw sfxRegFunc2
+    dw sfxRegFunc3
+    dw sfxRegFunc4
+    dw sfxRegFunc5
+    dw sfxRegFunc6
+    dw sfxRegFunc7
+    dw sfxRegFunc8
+    dw sfxRegFunc9
+    dw sfxRegFunc10
+    dw sfxRegFunc11
+    dw sfxRegFunc12
+    dw sfxRegFunc13
+    dw sfxRegFunc14
+    dw sfxRegFunc15
+    dw sfxRegFunc16
+sfxFlags1Bitmap:
+    db 0x00
+sfxFlags2Bitmap:
+    db 0x00
+sfxWorkParam:
+    db 0xDB
+irds_dat7:
+    db "?"
+irds_dat8:
+    db "w!"
+irds_dat9:
+    db 0x1C
+sfxStack2:
+    db "/",0xFE
+tableofSNDRegValues:
+    db 0x08,"8",0x03,"!",0x1D,"/G",0x04,">",0x7F,0x07,0x10,0xFD,0xA6,"w!"
+    db 0xFC,".",0x22,0xD5,".A:",0xDB
+sfxStack1:
+    db ".",0xC5
+storeSndAdr:
+    db 0xCD,0xFB
+sfxRegFunc1:
+    ld e,0x13
+    ld d,0x0F
+    ld hl,0x012C
+    ret
+sfxFunc1:
+    ld a,i
+    rl a
+    ld h,a
+    sbc a,l
+    ld l,a
+    ret
+sfxRegFunc2:
+    ld e,0x01
+    ld d,0x0F
+    ld hl,0x000A
+    ret
+sfxFunc2:
+    ret
+sfxRegFunc3:
+    ld e,0x0C
+    ld d,0x0F
+    ld hl,0x0190
+    ret
+sfxFunc3:
+    dec hl
+    ret
+sfxRegFunc4:
+    ld e,0x02
+    ld d,0x09
+    ld hl,0x000A
+    ret
+sfxFunc4:
+    ret
+sfxRegFunc5:
+    ld e,0x19
+    ld d,0x07
+    ld hl,0x0064
+    ret
+sfxFunc5:
+    dec hl
+    ret
+sfxRegFunc6:
+    ld e,0x20
+    ld d,0x0A
+    ld hl,0x000F
+    ret
+sfxFunc6:
+    ld a,d
+    sub 0x2B
+    ld d,a
+    ret
+sfxRegFunc7:
+    ld e,0x01
+    ld d,0x0F
+    ld hl,0x0001
+    ret
+sfxFunc7:
+    dec hl
+    ret
+sfxRegFunc8:
+    ld e,0x0A
+    ld d,0x0F
+    ld hl,0x0028
+    ret
+sfxFunc8:
+    dec d
+    ret
+sfxRegFunc9:
+    ld e,0x28
+    ld d,0x0A
+    ld hl,0x019A
+    ret
+sfxFunc9:
+    ld a,i
+    srl a
+    ld h,a
+    ld a,r
+    add a,d
+    sub l
+    ld l,a
+    ld d,a
+    ret
+sfxRegFunc10:
+    ld e,0x3F
+    ld d,0x00
+    ld hl,0x000F
+    ret
+sfxFunc10:
+    ld a,e
+    cp 0x38
+    jr nc,LAB_ram_2e55
+    ld a,e
+    and 0x03
+    ret nz
+    dec d
+    dec hl
+    ret
+LAB_ram_2e55:
+    cp 0x27
+    ret c
+    inc d
+    inc d
+    ret
+sfxRegFunc11:
+    ld e,0x3F
+    ld d,0x0F
+    ld hl,0x0001
+    ret
+sfxFunc11:
+    ld a,e
+    cp 0x38
+    jr nc,LAB_ram_2e6f
+    ld a,e
+    and 0x03
+    ret nz
+    inc d
+    inc hl
+    ret
+LAB_ram_2e6f:
+    cp 0x27
+    ret c
+    dec d
+    dec d
+    ret
+sfxRegFunc12:
+    ld e,0xFF
+    ld d,0x00
+    ld hl,0x000F
+    ret
+sfxFunc12:
+    ld a,e
+    and 0x0F
+    ret nz
+    dec hl
+    inc d
+    ret
+sfxRegFunc13:
+    ld e,0xFF
+    ld d,0x0F
+    ld hl,0x0000
+    ret
+sfxFunc13:
+    ld a,e
+    and 0x0F
+    ret nz
+    inc hl
+    dec d
+    ret
+sfxRegFunc14:
+    ld e,0x0E
+    ld d,0x0F
+    ld hl,0x0064
+    ret
+sfxFunc14:
+    dec d
+    ret
+sfxRegFunc15:
+    ld e,0x3F
+    ld d,0x00
+    ld hl,0x000F
+    ret
+sfxFunc15:
+    ld a,e
+    cp 0x38
+    jr nc,LAB_ram_2eb1
+    ld a,e
+    and 0x03
+    ret nz
+    dec d
+    dec hl
+    ret
+LAB_ram_2eb1:
+    cp 0x27
+    ret c
+    inc d
+    inc d
+    ret
+sfxRegFunc16:
+    ld e,0x0A
+    ld d,0x0F
+    ld hl,0x000A
+    ret
+sfxFunc16:
+    dec d
+    ret
+tblSFXParameter:
+    db 0x01,0x01,0x01,0x01,0x00,0x00,0x01,0x00,0x00,0x00,0x00,0x01,0x01,0x00,0x01,0x00
+gfxSmallPlanets:
+    db 0x00,"8|||8",0x00,0x00,"|",0xFE,0xFE,0xFE,0xFE,0xFE,"|",0x00
+    db 0x00,"8|||8",0x00,0x00,"|",0xFE,0xFE,0xFE,0xFE,0xFE,"|",0x00
+dataStockItemsBaseParameter:
+    db 0x13,0x82,0x06,0x01,0x14,0x81,0x0A,0x03,"A",0x83,0x02,0x07,"(",0x85,0xE2,0x1F
+    db "S",0x85,0xFB,0x0F,0xC4,0x08,"6",0x03,0xEB,0x1D,0x08,"x",0x9A,0x0E,"8",0x03
+    db "u",0x06,"(",0x07,"N",0x01,0x11,0x1F,"|",0x0D,0x1D,0x07,0xB0,0x89,0xDC,"?"
+    db " ",0x81,"5",0x03,"a",0xA1,"B",0x07,0xAB,0xA2,"7",0x1F,"-",0xC1,0xFA,0x0F
+    db "5",0x0F,0xC0,0x07
+Equipmentprices:
+    db 0x00
+; Byte 1 of the 3-byte entry of equipment item 1 (fuel) in the table at &2F35: written at each jump (galaxy+1 after a galactic jump, otherwise (70 - fuel left) + 2 * economy), cleared after fuel is bought.
+fuelPriceByte:
+    db 0x00,0x00,0x00,",",0x01,0x00,0xA0,0x0F,0x00,"p",0x17,0x00,0xA0,0x0F,0x01,0x00
+    db 0x00,0x00,0x82,0x14,0x01,0x00,0x00,0x00,"(#",0x01,0x88,0x13,0x01,0x88,0x13
+    db 0x05,0x00,0x00,0x06,0x00,0x00,0x00,"@",0x1F
+; If the energy-bomb key is pressed and one is fitted: use it up, flag it activated, start the flash and sound
+chkUseEnergyBomb:
+    ld a,(keybFlags4CounterNstringNumber)
+    bit 5,a
+    ret z
+    ld hl,energyBomb
+    ld a,(hl)
+    and a
+    ret z
+    xor a
+    ld (hl),a
+    inc a
+    ld (flagEnergyBombActivated),a
+    ld hl,sfxFlags1Bitmap
+    set 0,(hl)
+    ld a,(counter_colorsetting)
+    and a
+    ret nz
+    ld a,0x18
+    ld (counter_colorsetting),a
+    ret
+; Reset flight state on launch: missiles, temperatures, shields, altitude, energy banks full, then set fuel
+sub_2F81:
+    call updateMissileIndicators
+    call resetInflightMessagesFlags
+    xor a
+    ld (missileLockState),a
+    ld (Lasertemp),a
+    ld (CockpitTemp),a
+    ld (flagDockingComputerOn),a
+    ld a,0xA0
+    ld (shipFrontShieldEnergy),a
+    ld (shipRearShieldEnergy),a
+    ld (Altitude),a
+    ld hl,shipEnergyBank1
+    ld b,0x04
+initEnergyBanksLoop:
+    ld (hl),a
+    inc hl
+    inc hl
+    djnz initEnergyBanksLoop
+    ld a,(fuel)
+    jp setFuel
+; Token strings, each ended by a zero byte. printString picks string N by counting zeros with cpir (todo_useStringtable): N is the token itself for 0x60-0x7F,
+; token + 0x72 for 0x0E-0x1F and token - 0xA0 for 0xA0 and up. Bytes 0x80-0x9F inside a string are two-letter tokens (print_two_letter_token), 0x0E-0x1F/0x60+ recurse.
+stringsTable:
+    db "o",0x10,0x00," CH",0x8A,"T",0x00,"GO",0x96,"RNM",0x92
+    db "T",0x00
+    db 0x06,"D",0x91,"A",0x10,0x03,0x08,0x00
+    db 0x06,0x8C,0x96,"NT",0x99,"Y",0x08,0x00
+    db "SYS",0x9C,"M",0x00
+    db "P",0x9E,0x85,0x00
+    db 0x02," ",0x8B,"RKET ",0xA6,"S",0x00
+    db 0x8C,"D",0x88,"T",0x9E,0x80,0x00
+    db "AG",0x9E,"CULTU",0x94,"L",0x00
+    db 0x9E,"CH ",0x00
+    db "A",0x96,0x94,0x83," ",0x00
+    db "PO",0x99," ",0x00
+    db 0x8B,0x8C,"LY ",0x00
+    db "UNIT",0x00
+    db " VIEW ",0x00
+    db 0x9A,0x9B,0x97,"TY",0x00
+    db 0x9B,0x8A,"CHY",0x00
+    db "FEUD",0x80,0x00
+    db "MUL",0x97,"-",0xA2,0x00
+    db 0x8D,"CT",0x91,0x99,0xB9,0x00
+    db 0xFB,"MUN",0x9D,"T",0x00
+    db "C",0x9F,"F",0x98,0x90,"ACY",0x00
+    db "DEMOC",0x94,"CY",0x00
+    db "C",0x99,"P",0x99,0x91,"E ",0xCB,0x91,"E",0x00
+    db "SHIP",0x00
+    db "P",0xFE,"DUCT",0x00
+    db " ",0x95,"S",0x90,0x00
+    db "HUM",0x9B," COL",0x9F,"I",0x80,0x00
+    db "HYP",0x90,"SPA",0x85,0x00
+    db 0x06,"SH",0x99,"T ",0xCA,0xA1,0x08,0x00
+    db 0x8D,0xCB,0x9B,0x85,0x00,0xBD," -- ",0x03,0x00,0xBD," ",0xCA," "
+    db "?",0x00
+; -DENHANCED: "MA" and "AN" as two-letter tokens (2 bytes shorter) pay for "BACK" below; the entries in between only move
+strBackSlot:
+    db 0x06,0x8B,"YDAY",0x08,"* C",0x99,"IOLI"
+    db "S ",0x8C," D",0x9B,0x83,"R*",0x00
+strBackMid:
+    db " LIGHT YE",0x8A,"S",0x00
+    db 0x9C,"CH.",0x81,0x96,"L",0x00
+    db "CASH",0x00
+    db " ",0x86,0x0E,"I",0x9F,0x00
+    db 0x06,"z",0xA1,0x08,0x01,0x00,"T",0x8A,0x83,"T LO",0xCB,0x00,"j"
+    db " JAMM",0x98,0x00
+    db "R",0x9B,0x83,0x00
+    db "ST",0x00
+    db 0xB0," OF ",0x00
+    db "SE",0x0E,0x00
+    db " C",0x8A,"GO",0x00
+    db "E",0x9A,"IP",0x00
+    db "FOOD",0x00
+    db 0x9C,"X",0x97,"L",0x89,0x00
+    db 0x94,0x8D,"OAC",0x97,0x96,"S",0x00
+    db "S",0x95,0x96,"S",0x00
+    db "LI",0x9A,0x99,"/W",0x8C,0x89,0x00
+    db "LUXU",0x9E,0x89,0x00
+    db "N",0x8A,"CO",0x97,"CS",0x00
+    db 0xFB,"PUT",0x90,"S",0x00
+    db 0x8B,"CH",0x8C,0x90,"Y",0x00
+    db "ALLOYS",0x00
+    db "FI",0x8E,0x8A,"MS",0x00
+    db "FURS",0x00
+    db "M",0x8C,0x90,0x80,"S",0x00
+    db "GOLD",0x00
+    db "PL",0x91,0x8C,"UM",0x00
+    db 0x83,"M-",0xCB,0x9F,0x89,0x00
+    db 0x80,"I",0x92," ",0x7F,"S",0x00
+    db " NOT FOUND",0x00
+    db " CR",0x00
+    db "L",0x8A,0x83,0x00
+    db "FI",0x90,0x85,0x00
+    db "S",0x8B,0x0E,0x00
+    db "G",0x8E,0x92,0x00
+    db "R",0x98,0x00
+    db "YE",0x0E,"OW",0x00
+    db "BLUE",0x00
+    db "B",0x95,"CK",0x00
+    db 0x15,0x00,"SLIMY",0x00,"BUG-EY",0x98,0x00
+    db "H",0x99,"N",0x98,0x00
+    db "B",0x9F,"Y",0x00
+    db "F",0x91,0x00
+    db "FURRY",0x00
+    db 0xFE,"D",0x92,"T",0x00
+    db "F",0xFE,"G",0x00
+    db "LI",0x84,"RD",0x00
+    db "LOB",0xCB,0x90,0x00
+    db 0x86,"RD",0x00
+    db "HUM",0x9B,"OID",0x00
+    db "FEL",0x8C,"E",0x00
+    db 0x8C,"SECT",0x00
+    db 0xAB,0x94,0x8D,0x88,0x00,"COM",0x00,0xFB,"M",0x9B,"D",0x90,0x00," "
+    db "D",0x89,"T",0xFE,"Y",0x98,0x00
+    db "RO",0x00
+    db 0x06,0xAE,"  ",0xB0,0x09,0xBA,"    ",0xAE," ",0xA6," F"
+    db 0x99," SA",0x81,0x08,0x09,0x00
+    db "FR",0x9F,"T",0x00
+strBackWord:
+    db "BACK",0x00                                   ; token &61, the view and laser position name ("Rear" is "RE" + "AR": 2 bytes)
+strBackSlotEnd:
+    db 0x81,"FT",0x00,0x9E,"GHT",0x00,"yLOW"
+    db 0x00,"c",0x10,0xFC,"*",0x00,"EXT",0x94," ",0x00,"PULS"
+    db "E",0xBB,0x00
+    db 0x93,"AM",0xBB,0x00
+    db "FUEL",0x00
+    db "M",0x9D,"SI",0x81,0x00
+    db 0xE3,0xCE," BAY",0x00
+    db "E.C.M.",0xA5,0x00
+    db "fgS",0x00
+    db "fhS",0x00
+    db "i SCOOPS",0x00
+    db 0x89,"CAPE POD",0x00
+    db "yBOMB",0x00
+    db "y",0xAE,0x00,"DOCK",0x8C,"G ",0xD7,0x00,"z ",0xBD,0x00
+    db "MILIT",0x8A,"Y",0xBB,0x00
+    db "M",0x8C,0x8C,"G",0xBB,0x00
+    db 0x09,0x09,0x09,0x00,0x8C,0xFB,0x8C,"G j",0x00,0x92,0x90,"GY "
+    db 0x00,"GA",0x95,"C",0x97,"C",0x00,"s ON",0x00,"A",0x0E,0x00
+    db "CLOAK",0x8C,"G DEVI",0x85,0x00
+    db 0x06,0x0D," ",0x04,0x08,0x09,0x09
+statusLabels:
+    IFDEF ENHANCED
+    db 0xA5,":   ",0x09,"T",0x8A,0x83,"T:",0x09      ; "System:" and "Target:" (were "Present System" and "Hyperspace System"), 12 bytes like the original
+    ELSE
+    db "P",0x8E,"S",0x92,"T ",0xA5,0x09,0xBD
+    db " ",0xA5,0x09
+    ENDIF
+    db 0x00,"I",0x9C,"M",0x00,"LL",0x00,0x06,"MAYD"
+    db "AY",0x08,"* ",0x0B," ",0x8C,"VAD",0x98,"*",0x00
+    db " ",0x9F," ",0x00,0x06,0xCF,"M",0x92,"T",0x08,":",0x00,"C",0x81,0x9B,0x00
+    db "OFF",0x92,"D",0x90,0x00
+    db "FUGI",0x97,0x96,0x00
+    db "H",0x8A,"M",0x81,"SS",0x00
+    db "MO",0xCB,"LY ",0x15,0x00
+    db 0xAC,0x00,0xAB,0x00,"ABO",0x96," ",0xAB,0x00,0xFB,"PET",0x92
+    db "T",0x00
+    db "D",0x9B,0x83,0xFE,0x88,0x00
+    db "DEADLY",0x00
+    db "---- E L I T E -"
+    db "---",0x00,"P",0x8E,"S",0x92,"T",0x00,"i ",0x81,"AK*"
+    db 0x00,0x00,0x00,0x00
+; Work out screen address and pixel mask for a dust particle from its coordinates and dust masks
+calcDustParticlePixel:
+    ld d,0x40
+    ld a,(dustPixelMask)
+    ld b,a
+    ld a,(dustVar9)
+    ld l,a
+    ld a,(dustVar10)
+    ld h,a
+    ld a,0x80
+    bit 7,b
+    jr nz,LAB_ram_339e
+    add a,l
+    jr LAB_ram_339f
+LAB_ram_339e:
+    sub l
+LAB_ram_339f:
+    ld l,a
+    ld a,0x3F
+    bit 6,b
+    jr nz,LAB_ram_33a9
+    sub h
+    jr LAB_ram_33ac
+LAB_ram_33a9:
+    add a,h
+    set 3,d
+LAB_ram_33ac:
+    ld h,a
+    ld b,h
+    ld c,l
+    call getByteAddressinBitmap
+    ex de,hl
+    inc a
+    ld c,0x88
+LAB_ram_33b6:
+    rlc c
+    dec a
+    jr nz,LAB_ram_33b6
+    ret
+LAB_ram_33bc:
+    ld hl,(todo_varEscapepod)
+    ld de,(adrOfCoordinatesTable)
+    ld a,(Viewdirection)
+    and a
+    jr nz,LAB_ram_3415
+    ld a,(dustPitch)
+    and a
+    jr nz,LAB_ram_33f6
+; Set up the dust-drawing code's self-modified masks and constants, then loop over the particles
+SUB_ram_33cf:
+    ld a,0xBF
+    ld (0x33E1),a
+smc_PatchA_1:
+    ld a,0x9F
+    ld (0x33E8),a
+    xor a
+    ld (0x33EA),a
+LAB_ram_33dd:
+    call SUB_ram_34ed
+smc_PatchAND_1:
+    and 0xBF
+    ld (de),a
+    inc de
+    call SUB_ram_34ed
+smc_PatchAND_2:
+    and 0x9F
+smc_PatchOR_1:
+    or 0x80
+    ld (de),a
+    inc de
+    call SUB_ram_34ed
+    and 0x7F
+    add a,0x80
+    jr LAB_ram_346a
+LAB_ram_33f6:
+    ld a,0x3F
+    ld (0x33E8),a
+    ld a,0xF8
+    ld (0x33E1),a
+    ld a,(dustPixelMask)
+    and 0x08
+    jr nz,LAB_ram_340e
+    ld a,0x80
+    ld (0x33EA),a
+    jr LAB_ram_3412
+LAB_ram_340e:
+    xor a
+    ld (0x33EA),a
+LAB_ram_3412:
+    jp LAB_ram_33dd
+LAB_ram_3415:
+    ld c,a
+    dec c
+    jp nz,LAB_ram_348a
+    ld a,(dustPitch)
+    and a
+    jr z,LAB_ram_343e
+    ld a,0x80
+    ld (0x3469),a
+    ld a,(dustPixelMask)
+    and 0x08
+    jr z,LAB_ram_3437
+    xor a
+    ld (0x3483),a
+    ld a,0x3F
+    ld (0x3485),a
+    jr LAB_ram_344c
+LAB_ram_3437:
+    ld a,0xBF
+    ld (0x3485),a
+    jr LAB_ram_344c
+LAB_ram_343e:
+    ld a,0x80
+    ld (0x3483),a
+    ld a,0x3F
+    ld (0x3485),a
+    xor a
+    ld (0x3469),a
+LAB_ram_344c:
+    ld a,(dustByte6BFD)
+    rlca
+    ld (dustByte6BFD),a
+    jr c,LAB_ram_3478
+    call SUB_ram_34ed
+    or 0x7F
+    and 0xF7
+    ld (de),a
+    inc de
+    call SUB_ram_34ed
+    and 0xBF
+    ld (de),a
+    inc de
+LAB_ram_3465:
+    call SUB_ram_34ed
+smc_PatchOR_2:
+    or 0x80
+LAB_ram_346a:
+    ld (de),a
+    inc de
+    inc de
+    inc de
+    ld (adrOfCoordinatesTable),de
+    ld (todo_varEscapepod),hl
+LAB_ram_3475:
+    jp dust54
+LAB_ram_3478:
+    call SUB_ram_34ed
+    and 0xF7
+    ld (de),a
+    inc de
+    call SUB_ram_34ed
+smc_PatchAND_3:
+    and 0x80
+smc_PatchOR_3:
+    or 0x3F
+    ld (de),a
+    inc de
+    jr LAB_ram_3465
+LAB_ram_348a:
+    ld a,(dustPitch)
+    and a
+    jr nz,LAB_ram_34b0
+    xor a
+    ld (0x34AD),a
+LAB_ram_3494:
+    dec c
+    jr nz,LAB_ram_349c
+    ld a,0x78
+    ld (de),a
+    jr LAB_ram_349f
+LAB_ram_349c:
+    ld a,0xF8
+    ld (de),a
+LAB_ram_349f:
+    inc de
+    call SUB_ram_34ed
+    and 0xBF
+LAB_ram_34a5:
+    ld (de),a
+    inc de
+    call SUB_ram_34ed
+    and 0x7F
+smc_PatchOR_4:
+    or 0x80
+    jr LAB_ram_346a
+LAB_ram_34b0:
+    ld a,0x80
+    ld (0x34AD),a
+    ld a,(dustByte6BFD)
+    rlca
+    ld (dustByte6BFD),a
+    jr nc,LAB_ram_3494
+    call SUB_ram_34ed
+    and 0xF7
+    ld (de),a
+    inc de
+    ld a,(dustPixelMask)
+    and 0x08
+    jr z,LAB_ram_34d0
+    ld a,0x3F
+    jr LAB_ram_34a5
+LAB_ram_34d0:
+    ld a,0xBF
+    jr LAB_ram_34a5
+; ZX Spectrum: shuffle_particle_table (&7E6D)
+; On a view change swaps the first two bytes (screen X and Y) of every particle record, so the star field is re-scattered.
+shuffle_particle_table:
+    ld a,(dustVar5)
+    ld b,a
+    ld hl,tblDustCoordinates
+LAB_ram_34db:
+    ld d,h
+    ld e,l
+    inc de
+    ld a,(de)
+    ld c,a
+    ld a,(hl)
+    ld (de),a
+    ld (hl),c
+    ld a,l
+    add a,0x05
+    jr nc,LAB_ram_34e9
+    inc h
+LAB_ram_34e9:
+    ld l,a
+    djnz LAB_ram_34db
+    ret
+; Step the dust pseudo-random generator held in H and L (adc-based shuffle); returns the new H/L
+SUB_ram_34ed:
+    ld a,h
+    adc a,a
+    ld b,a
+    adc a,l
+    ld h,a
+    ld l,b
+    ret
+tblDustCoordinates:
+    db 0x00,0x10,0xFF,"8K",0x90,0x10,0xC8,0x01,"A",0x90,0x00,0xB4,0x17,0x01,0x90
+    db 0x90,0xA0,0x02,0x03,0x00,0x90,0xD2,0x04,"9",0x10,0x90,0xDC,"Y",0x06,0x10,0x00
+    db "(",0x22,"x",0x10,0x10,"2d",0x15,0x02,0x12,"#cy",0x82,0x06,0x8C
+    db 0x03,"y",0x80,0x03,0x14,"{",0x15,"nx<",0x02,0x22,0x04,0x96,"Ld"
+    db 0x0C,0x05," ",0xEA,"+fd8",0x05,"i",0x17,0x04,"C8",0xF3,0xE7
+ConditionBlinkFlag:
+    db 0x00
+; Set the condition state (docked/green/yellow/red) from the status flag and shields, and blink the indicator
+chkConditionNSetIndicatorColors:
+    ld hl,todoUnknownStatusFlags
+    ld a,(hl)
+    and a
+    ret z
+    ld a,(shipFrontShieldEnergy)
+    and a
+    jr z,LAB_ram_3557
+    ld a,(shipRearShieldEnergy)
+    and a
+    jr nz,LAB_ram_355e
+LAB_ram_3557:
+    ld a,(hl)
+    cp 0x63
+    jr z,LAB_ram_355e
+    ld (hl),0x02
+LAB_ram_355e:
+    ld a,(hl)
+    cp 0x63
+    jr nz,ConditionState
+    ld hl,ConditionBlinkFlag
+    inc (hl)
+    bit 1,(hl)
+    jr nz,isConditionRed
+    ld a,0x54
+    jr issetIndicatorInks
+isConditionRed:
+    ld a,0x45
+issetIndicatorInks:
+    ld d,a
+    ld a,(Viewdirection)
+    cp 0x04
+    jr nc,condSetInk2toValinD
+    ld a,d
+    ld (0x2953),a
+    call SUB_ram_35a8
+    ld d,0x58
+    ld a,(missileLockState)
+    and a
+    jr z,setMIcolor
+    dec a
+    ld d,0x5A
+    jr z,setMIcolor
+    ld d,0x4D
+setMIcolor:
+    ld a,d
+    ld (0x2993),a
+    ret
+ConditionState:
+    cp 0x02
+    jr z,isConditionRed
+    cp 0x04
+    jr z,isStateGreen
+    ld a,0x4A
+    jr issetIndicatorInks
+isStateGreen:
+    ld a,0x52
+    jr issetIndicatorInks
+condSetInk2toValinD:
+    ld a,d
+    ld (0x2902),a
+; Set todoUnknownStatusFlags to 4 (a status/condition value)
+SUB_ram_35a8:
+    ld a,0x04
+    ld (todoUnknownStatusFlags),a
+    ret
+; ZX Spectrum: dashboard_and_special_keys (&9A40)
+; Once per frame in a flight view: redraws the tracking and ECM icons, runs the missile arm/fire key sequence and the escape pod key handler.
+dashboard_and_special_keys:
+    ld a,(Viewdirection)
+    cp 0x04
+    ret nc
+    call updateStatusIndicators
+    call chkLockNFireMissile
+    call chkReleaseEscapePod
+    call chkUseEnergyBomb
+    ld hl,keybFlags4CounterNstringNumber
+    ld a,(hl)
+    and 0x91
+    ld (hl),a
+; Per-frame damage/energy update: recharge energy, apply shield hits, and flag red alert when hit
+todo_ShipTakingDamage:
+    ld hl,todoUnknownStatusFlags
+    xor a
+    cp (hl)
+    ret z
+    ld a,(shipEnergyBank4)
+    cp 0xA0
+    jr z,LAB_ram_35d9
+    ld a,0x63
+    ld (todoUnknownStatusFlags),a
+LAB_ram_35d9:
+    call RechargeEnergy
+    ld hl,shipFrontShieldEnergy
+    ld a,(damageToFrontShield)
+    call ChkShieldsDown
+    ld hl,shipRearShieldEnergy
+    ld a,(damageToRearShield)
+    call ChkShieldsDown
+    ld a,(flagCloakingDeviceActive)
+    and a
+    ld a,(todoLaserVar3)
+    jr z,LAB_ram_35f8
+    inc a
+LAB_ram_35f8:
+    ld c,a
+    ld b,0x04
+; Subtract C from the energy banks in turn; if all banks run out, set GameOverFlag
+drainEnergy:
+    ld hl,shipEnergyBank1
+    ld d,0x04
+LAB_ram_3600:
+    ld a,(hl)
+    sub c
+    jr nc,LAB_ram_3611
+    ld (hl),0x00
+    inc hl
+    inc hl
+    dec d
+    jr nz,LAB_ram_3600
+    ld a,0x01
+    ld (GameOverFlag),a
+    ret
+LAB_ram_3611:
+    ld (hl),a
+    djnz LAB_ram_3600
+    ret
+; Apply damage in A to the shield at HL: just count down the damage timer if none, otherwise reduce the shield
+ChkShieldsDown:
+    ld c,a
+    and a
+    jr nz,applyDamageToShield
+    ld hl,todoSomethingwithDamageTaken
+    ld a,(hl)
+    and a
+    ret z
+    dec (hl)
+    ret
+applyDamageToShield:
+    push bc
+    push hl
+    cp 0x46
+    call nc,chkDamagingEquipmentnInventory
+    pop hl
+    pop bc
+    ld b,0x05
+reduceShieldLoop:
+    ld a,(hl)
+    sub c
+    jr c,shieldBankEmpty
+    ld (hl),a
+    djnz reduceShieldLoop
+    ret
+shieldBankEmpty:
+    ld (hl),0x00
+    dec b
+    ret z
+    call drainEnergy
+    ld hl,todoSomethingwithDamageTaken
+    ld a,(hl)
+    add a,0x05
+    ld (hl),a
+    cp 0x0D
+    ret c
+; When a hit is strong, probably destroy a piece of equipment or cargo unit chosen from the hit value
+chkDamagingEquipmentnInventory:
+    ld a,(tokenToPrint)
+    cp 0xFD
+    ret z
+    ld a,(todo_varEscapepod)
+    rrca
+    rrca
+    and 0x3F
+    jp z,removeFuel
+    cp 0x11
+    ret nc
+    dec a
+    cp 0x06
+    jr nc,destroy_cargo_unit
+    ld hl,ecmEquipped
+    and a
+    jr z,LAB_ram_3665
+    add a,0x02
+LAB_ram_3665:
+    call SetTableBegintoAofHL
+    ld a,(hl)
+    and a
+    ret z
+    ld (hl),d
+    ld a,e
+    add a,0x6C
+prMessageforDestroyedEquipment:
+    ld (destroyedEquipmentNumber),a
+    ld hl,msgEquipmentDestroyed
+    set 7,(hl)
+    ret
+; ZX Spectrum: destroy_cargo_unit (&D21F)
+; Destroys one unit of cargo (the dashboard flash and message are set up here).
+destroy_cargo_unit:
+    ld hl,creditsHighWordHi
+    call SetTableBegintoAofHL
+    ld a,(hl)
+    and a
+    ret z
+    dec (hl)
+    ld hl,cargoSpaceFree
+    inc (hl)
+    ld a,0xCC
+    add a,e
+    jr prMessageforDestroyedEquipment
+todoSomethingwithDamageTaken:
+    db 0x00
+; Recharge energy: runs the extra-energy-unit extra step if fitted, then the normal recharge
+RechargeEnergy:
+    ld a,(extraEnergyUnit)
+    and a
+    IFDEF MISSIONS
+    call nz,mxRecharge              ; missions_flight.asm: the Navy unit adds a further step
+    ELSE
+    call nz,SUB_ram_3693
+    ENDIF
+; One recharge step: add 1 to the first energy bank below 0xA0, else charge the front and rear shields
+SUB_ram_3693:
+    ld hl,shipEnergyBank4
+    ld b,0x04
+loopThroughBanks:
+    ld a,(hl)
+    cp 0xA0
+    jr z,nextEnergyBank
+    inc (hl)
+    ret
+nextEnergyBank:
+    dec hl
+    dec hl
+    djnz loopThroughBanks
+    ld hl,shipFrontShieldEnergy
+    call rechargeShieldenergy
+    ld hl,shipRearShieldEnergy
+; Add 1 to the shield at HL unless it is already full (0xA0)
+rechargeShieldenergy:
+    ld a,(hl)
+    cp 0xA0
+    ret z
+    inc (hl)
+    ret
+otherECMActive:
+    db 0x00
+; Redraw the alert, ECM and station-near indicators on the dashboard
+updateStatusIndicators:
+    call drawAlertStatusIndicator
+    call setCommandsCPL
+    call checkForActiveECM
+    call chkStationIndicator
+    jp setCommandsNOP
+; Clear and redraw the alert status indicator graphic at its two screen positions
+drawAlertStatusIndicator:
+    ld hl,SCREEN+0x452
+    call todoDrawitwithMask
+    ld hl,SCREEN+0x492
+    call todoDrawitwithMask
+    ld hl,gfxDashboardAlertStatusIndicator
+    ld de,SCREEN+0x452
+    call transferALStatGfxToScreen
+    ld de,SCREEN+0x492
+; Copy 8 two-byte rows of alert-indicator graphics from HL to the screen at DE (stepping down lines)
+transferALStatGfxToScreen:
+    ld b,0x08
+tfalstloop:
+    ld a,(hl)
+    ld (de),a
+    inc hl
+    inc de
+    ld a,(hl)
+    ld (de),a
+    inc hl
+    dec de
+    ld a,d
+    add a,0x08
+    ld d,a
+    djnz tfalstloop
+    ret
+gfxDashboardAlertStatusIndicator:
+    db 0x0F,0x0F,0xC3,0x0F,0xF0,0x0F,0xF0,0x87,0xF0,0xC3,0xF0,0xC3,0xF0,0xE1,0xF0,0xE1
+    db 0xF0,0xE1,0xF0,0xE1,0xF0,0xE1,0xF0,0xC3,0xF0,0xC3,0xF0,0x87,0xF0,0x0F,0xC3,0x0F
+; Compare ECM state with last frame and draw or erase the ECM indicator only when it changed
+checkForActiveECM:
+    ld hl,otherECMActive
+    ld a,(hl)
+    ld c,a
+    ld a,(ecmActiveFlag)
+    ld (hl),a
+    and a
+    jr nz,drawECMIndicatorEP1
+    ld b,a
+    ld a,c
+    or b
+    ret z
+    ld hl,SCREEN+0x590
+    call clearIndicatorArea
+    ld de,strUndrawEIndicator
+    jr locateECMIndicator
+drawECMIndicatorEP1:
+    ld a,c
+    and a
+    ret nz
+; Print the ECM indicator string at its dashboard location
+drawECMIndicatorEP2:
+    ld de,strECMIndicator
+locateECMIndicator:
+    ld hl,0x1607
+callPriIndicAtLocation:
+    call printIndicatorstringAtLocation
+; Set the text cursor to HL, print an indicator string, then step to the next column
+printIndicatorstringAtLocation:
+    ld (charXY),hl
+    push hl
+    call CallPrIndicatorString
+    pop hl
+    inc h
+    ret
+; Print an indicator string at DE, twice (via the fall-through into printIndicatorstring)
+CallPrIndicatorString:
+    call printIndicatorstring
+; Print one character of the indicator string at DE and advance DE
+printIndicatorstring:
+    ld a,(de)
+    push de
+    call printString
+    pop de
+    inc de
+    ret
+storeFlagStationNear:
+    db 0x00
+; Compare station-near state with last frame and draw or erase the 'S' indicator only on change
+chkStationIndicator:
+    ld hl,storeFlagStationNear
+    ld a,(hl)
+    ld c,a
+    ld a,(FlagStationNear)
+    ld (hl),a
+    and a
+    jr nz,drawStationIndicator
+    ld b,a
+    ld a,c
+    or b
+    ret z
+    ld hl,SCREEN+0x5AC
+    call clearIndicatorArea
+    ld de,strUndrawSIndicator
+    jr LAB_ram_3769
+drawStationIndicator:
+    ld a,c
+    and a
+    ret nz
+    ld de,strStationNearIndicator
+LAB_ram_3769:
+    ld hl,0x1615
+    jr callPriIndicAtLocation
+strECMIndicator:
+    db ";<=>"
+strUndrawEIndicator:
+    db "  @@"
+strStationNearIndicator:
+    db "[",0x5C,"]^"
+strUndrawSIndicator:
+    db " _@+"
+; Clear the four missile slots on the dashboard and redraw the missiles in the hold
+updateMissileIndicators:
+    ld b,0x04
+    ld hl,SCREEN+0x5C6
+micleanloop:
+    push bc
+    call CleanMissilePosition
+    pop bc
+    inc hl
+    inc hl
+    djnz micleanloop
+    ld hl,0x1702
+    ld (charXY),hl
+    call setCommandsCPL
+    ld a,(missileCount)
+    and a
+    jr z,mihaveNoMissiles
+    ld b,a
+drawMissilesinHoldloop:
+    push bc
+    ld a,0x25
+    call printString
+    pop bc
+    djnz drawMissilesinHoldloop
+mihaveNoMissiles:
+    ld a,(missileCount)
+    neg
+    add a,0x04
+    ret z
+    ld b,a
+miDrawEmptyPlaces:
+    push bc
+    ld a,0x40
+    call printString
+    pop bc
+    djnz miDrawEmptyPlaces
+    jp setCommandsNOP
+; Handle missile arming, target lock and firing keys
+chkLockNFireMissile:
+    ld a,(missileCount)
+    and a
+    ret z
+    ld a,(missileLockState)
+    cp 0x01
+    jr nz,LAB_ram_37dc
+    ld hl,missileTargetEntity
+    ld a,(hl)
+    and a
+    jr nz,LAB_ram_37dc
+    ld a,(shipInCrosshair)
+    and a
+    jr z,LAB_ram_37dc
+    ld (hl),a
+    ld hl,missileLockState
+    ld (hl),0x02
+    call playLockSFX
+LAB_ram_37dc:
+    ld hl,keybFlags4CounterNstringNumber
+    ld a,(hl)
+    ld hl,missileLockState
+    srl a
+    srl a
+    jr c,MissileTargetLost
+    srl a
+    jr c,FireMissile
+    srl a
+    jr c,unlockMissile
+    ret
+MissileTargetLost:
+    ld a,(hl)
+    cp 0x02
+    ret z
+    ld (hl),0x01
+    xor a
+    ld (missileTargetEntity),a
+    ret
+unlockMissile:
+    ld (hl),0x00
+    ret
+FireMissile:
+    ld a,(hl)
+    cp 0x02
+    ret nz
+    ld a,(missileTargetEntity)
+    add a,a
+    add a,a
+    add a,a
+    add a,a
+    or 0x02
+    push hl
+    call spawnCommandParser
+    pop hl
+    jr z,LaunchSuccessfull
+    ld hl,msgECMJammer
+    set 7,(hl)
+    ret
+; Set bit 7 of sfxFlags2Bitmap (play the missile-lock sound)
+playLockSFX:
+    ld a,(sfxFlags2Bitmap)
+    or 0x80
+    ld (sfxFlags2Bitmap),a
+    ret
+LaunchSuccessfull:
+    ld (hl),0x00
+    ld hl,sfxFlags1Bitmap
+    set 1,(hl)
+    ld hl,missileCount
+    dec (hl)
+    jp updateMissileIndicators
+todoCapsuleLoopCounter:
+    db 0x00
+; Escape-pod launch countdown: ticks it down each frame, starts the launch at 0, else checks the key
+chkReleaseEscapePod:
+    ld hl,todoCapsuleLoopCounter
+    ld a,(hl)
+    and a
+    jr z,meLaunchEscapePod
+    dec a
+    ld (hl),a
+    jp z,LAB_ram_6718
+    ret
+; ZX Spectrum: launch_escape_pod (&9C1C)
+; While the launch countdown runs it is decremented each frame; at 0 the finishing sequence starts. Otherwise the escape pod key starts it.
+meLaunchEscapePod:
+    ld a,(keybFlags4CounterNstringNumber)
+    bit 6,a
+    ret z
+    ld a,(escapePod)
+    and a
+    ret z
+    ld a,(todoLaunchFlag)
+    and a
+    ret nz
+    ld a,0x18
+    ld (todoCapsuleLoopCounter),a
+    ld hl,0x0010
+    ld (irki2_dat3),hl
+    xor a
+    ld (legalStatus),a
+    ld (escapePod),a
+    IFDEF ENHANCED
+    ld hl,cargoHold                 ; the 17 hold items start at cargoHold (&38E2); the original started one byte early and kept the alien items
+    ELSE
+    ld hl,dat_38E1
+    ENDIF
+podCleanOperand equ $ - 2
+    ld b,0x11
+mleCleanInvLoop:
+    ld (hl),a
+    inc hl
+    djnz mleCleanInvLoop
+    IF MISSIONS_POD
+    call mxPodHook                  ; zeroes the Trumble count, then loads HL = Missionflag
+    ELSE
+    ld hl,Missionflag
+    ENDIF
+    ld a,(hl)
+    and 0xDF
+    ld (hl),a
+    ld hl,cargoSpaceFree
+    ld a,(largeCargoBay)
+    and a
+    ld a,0x14
+    jr z,mleSetCapacity
+    ld a,0x23
+mleSetCapacity:
+    ld (hl),a
+    ld a,0x17
+    call spawnCommandParser
+    ld a,(presentSystemX)
+    ld (PresentPlanetX),a
+    ld a,(presentSystemY)
+    ld (PresentPlanetY),a
+    ret
+; Key-function jump table: 16 three-byte `jp` entries; execSelectedKeyFunctions calls entry A (A*3 offset). Entries outside this file are numeric with the target name in a comment.
+DockedFuncJumptable:
+    jp BuyGoods
+    jp 0x0A40  ; largeaxx: SellGoods
+    jp 0x0AFE  ; largeaxx: EquipShip
+    jp GalacticChart
+    jp LocalChart
+    jp DataonPlanet
+    jp MarketPrices
+    jp CommanderStatus
+    jp Inventory
+    jp MapCrossHairLeft
+    jp MapCrossHairRight
+    jp MapCrossHairDown
+    jp MapCrossHairUp
+    jp RecenteronDockedPlanet
+    jp DistanceToPlanet
+    jp FindPlanet
+tunnelFlag1:
+    db 0x00
+tunnelFlag2:
+    db 0x00
+flagCloakingDeviceActive:
+    db 0x00
+charXY:
+    db 0x00
+txtScreenOffset:
+    db 0x00
+missileLockState:
+    db 0x00,0x00,0x00,0x00
+fuelRadiusGalChart:
+    db 0x00
+saveGameRam:
+    db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+legalStatus:
+    db 0x00
+killScore:
+    db 0x00,0x00
+killScoreHigh:
+    db 0x00
+jumpCounter:
+    db 0x00,0x00
+currentGalaxy:
+    db 0x00
+creditsHighWord:
+    db 0x00
+creditsHighWordHi:
+    db 0x00
+creditsLowWord:
+    db 0x00,0x00
+dat_38E1:
+    db 0x00
+cargoHold:
+    db 0x00,0x00,0x00
+cargoSlaves:
+    db 0x00,0x00,0x00
+cargoNarcotics:
+    db 0x00,0x00,0x00,0x00
+cargoFirearms:
+    db 0x00,0x00,0x00,0x00,0x00,0x00,0x00
+cargoSpaceFree:
+    db 0x00
+laserTypes:
+    db 0x00,0x00,0x00,0x00
+FlightMode:
+    db 0x00
+fuel:
+    db 0x00
+missileCount:
+    db 0x00
+largeCargoBay:
+    db 0x00
+ecmEquipped:
+    db 0x00
+equipSlotPulseLaser:   ; unused: item 5, lasers live in laserTypes
+    db 0x00
+equipSlotBeamLaser:   ; unused: item 6
+    db 0x00
+fuelScoops:
+    db 0x00
+escapePod:
+    db 0x00
+energyBomb:
+    db 0x00
+extraEnergyUnit:
+    db 0x00
+dockingComputer:
+    db 0x00
+galacticHyperdrive:
+    db 0x00
+equipSlotMilitaryLaser:   ; unused: item 13
+    db 0x00
+equipSlotMiningLaser:   ; unused: item 14
+    db 0x00
+galaxySeed:
+    db 0x00,0x00,0x00,0x00,0x00,0x00
+presentSystemSeed:
+    db 0x00
+presentSystemY:
+    db 0x00,0x00
+presentSystemX:
+    db 0x00,0x00,0x00
+; Tech level of the system you are in, minus 1 (the data screen shows value+1); stored from techLevel at each arrival. EquipShip reads it
+; (+2) as the maximum equipment tech level. Measured 2026-11-07: Diso shows 8, byte holds 7. Not the market random byte (that is &38E1).
+presentTechLevel:
+    db 0x00
+marketStock:
+    db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+    db 0x00
+AlienItemsforSale:
+    db 0x00
+ThargonMissionVar:
+    db 0x00
+Missionflag:
+    db 0x00
+SGstoreSystem3DCoordinates:
+savedSunPosX:
+    db "-",0xC9,"6"
+savedSunPosY:
+    db 0x00,"!",0xB1
+savedSunPosZ:
+    db "-",0xCB,0xCE
+Checksum1:
+    db 0x00
+Checksum2:
+    db 0x00
+BYTE_ram_3933:
+    db 0x00
+PresentPlanetX:
+    db 0x00
+PresentPlanetY:
+    db 0x00
+msgECMJammer:
+    db 0x08,0xC9
+msgIncomingMissile:
+    db 0x07,"x"
+msgTargetLost:
+    db 0x09,0xC8
+msgEquipmentDestroyed:
+    db 0x02,0xFD
+msgBountyCredits:
+    db 0x0C,0xE2
+msgForScoopedGood:
+    db 0x0B,0x00
+msgRightOnCommander:
+    db 0x06,"e"
+msgSupernovaMission:
+    db 0x0A,0x1F
+singleDigit:
+    db 0x01
+numberOfDigits:
+    nop
+todoPrintFlag3948:
+    nop
+todoSomePrintFlag:
+    ld bc,0x0000
+    nop
+    nop
+    jp removeFuel
+missileTargetEntity:
+    db 0x00,0xC3,"n9",0xC3,0xB7,"9",0xC3,0xA5,"9!",0x10,0x00,0xC3,"E6"
+chkCloakingDeviceScooped:
+    ld hl,Missionflag
+    set 6,(hl)
+    ld hl,killScoreHigh
+    inc (hl)
+    ld a,0x7D
+    jr informAboutScoopedGood
+storeScoopedGood:
+    push af
+    cp 0xFF
+    jr z,chkCloakingDeviceScooped
+    ld hl,cargoSpaceFree
+    dec (hl)
+    ld e,a
+    ld d,0x00
+    ld hl,cargoHold
+    add hl,de
+    inc (hl)
+    add a,0xD0
+informAboutScoopedGood:
+    ld hl,msgForScoopedGood
+    set 7,(hl)
+    inc hl
+    ld (hl),a
+    pop af
+    ld b,0x01
+; Raises legal status when the scooped/bought good (A) is slaves, narcotics or firearms (B scales it)
+chkForIllegalGoods:
+    cp 0x0A
+    jr z,gotIllegalGood
+    cp 0x03
+    jr z,gotveryIllegalGood
+    cp 0x06
+    ret nz
+gotveryIllegalGood:
+    sla b
+gotIllegalGood:
+    sla b
+    ld hl,legalStatus
+    ld a,(hl)
+    add a,b
+    jr nc,LAB_ram_39a3
+    ld a,0xFF
+LAB_ram_39a3:
+    ld (hl),a
+    ret
+; Adds DE to the 24-bit kill score; a carry into the high byte flags the 'Right On Commander' message
+AddDEtoKillScore:
+    ld hl,killScore
+    ld a,(hl)
+    add a,e
+    ld (hl),a
+    inc hl
+    ld a,(hl)
+    adc a,d
+    ld (hl),a
+    ret nc
+    inc hl
+    inc (hl)
+    ld hl,msgRightOnCommander
+    jr activateFlightMessage
+; Pays the bounty DE (if non-zero): stores it, adds the credits and flags the bounty message
+getBounty:
+    ld a,d
+    or e
+    ret z
+    ld (bountyforShip),de
+    call getMoney
+    ld hl,msgBountyCredits
+activateFlightMessage:
+    set 7,(hl)
+    ret
+emptyDefaultsave:
+    db "JAMESON",0x00
+    db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xE8,0x03,0x00,0x00
+    db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+    db 0x14,0x01,0x00,0x00,0x00,0x00,"F",0x03,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+    db 0x00,0x00,0x00,0x00,"JZH",0x02,"S",0xB7,"8",0xAD,0x9C,0x14,0x1D,0x15
+    db 0x05,0x03,0x11,0x12,0x1A,0x0E,"'",0x08,0x00,0x00,0x0A,0x19,0x00,0x00,"=",0x0E
+    db 0x11,0x0C,0x00,0x00,0x00
+storedPlanet3dcoords:
+    db "'",0x08,0x01,"*M",0x8F,0xF2,0x88,0x05
+; Resets flags, save RAM and colours for a new game, then seeds the present system, prices and stock
+setupNewGame:
+    call resetInflightMessagesFlags
+    call ClearSaveGameRam
+    call setViewColors
+    ld a,(presentSystemX)
+    ld (PresentPlanetX),a
+    ld a,(presentSystemY)
+    ld (PresentPlanetY),a
+    call notOnAChartscreen
+    ld hl,SCREEN+0x2FEB
+    ld (hl),0x00
+    push hl
+    call GeneratePricesAndStock
+    pop hl
+    ld (hl),0x77
+    ld hl,strPLANETNAME2
+    ld de,strPLANETNAME1
+    ld bc,0x0008
+    ldir
+    ld hl,storedPlanet3dcoords
+    ld de,posDataSun
+    ld bc,0x0009
+    ldir
+    xor a
+    ld (CountDownNumberForHyperspace),a
+    ret
+buf_3A6C:
+    or 0x21
+    ret po
+    add hl,sp
+    inc (hl)
+    ld a,0x7D
+    jr 0x3A88
+    db 0xF5,0xFE,0xFF,"(",0xEE,"!",0xFA,"95_",0x16,0x00
+    db "!",0xE9,"9"
+; ZX Spectrum: draw_local_chart (&EC58)
+; The local (short-range) chart, key O: clears the row-occupied bitmap, then calls for_each_system_in_window with the circle callback and the name callback.
+LocalChart:
+    xor a
+    ld b,0x18
+    ld hl,buf_3A6C
+lcClearLoop:
+    ld (hl),a
+    inc hl
+    djnz lcClearLoop
+    call drawFrame
+    ld de,ColorsLocalChart
+    call setColors
+    ld a,0xBE
+    call printFlightToken
+    ld a,(presentSystemX)
+    sub 0x13
+    call c,LC_XoringA
+    ld (0x3B08),a
+    ld a,(presentSystemX)
+    add a,0x13
+    call c,LC_LDA255
+    ld (0x3B0C),a
+    ld a,(presentSystemY)
+    sub 0x22
+    call c,LC_XoringA
+    ld (0x3B13),a
+    ld a,(presentSystemY)
+    add a,0x22
+    call c,LC_LDA255
+    ld (0x3B17),a
+    ld a,0x18
+    ld (gcMinY),a
+    ld a,0xA7
+    ld (gcMaxY),a
+    ld a,0x61
+    ld (storePresPlanetX),a
+    ld a,0x60
+    ld (storePresPlanetY),a
+    call lcDrawRangeCircle
+    ld a,0x15
+    ld (txt_hpos),a
+    call drawReticule
+    ld hl,drawChartPlanets
+    call setCalltoHLnGenerate
+    ld hl,drawPlanetnames
+    call setCalltoHLnGenerate
+    ld a,0x0D
+    ld (txt_hpos),a
+    jp DrawTargetReticule
+; ZX Spectrum: for_each_system_in_window (&ECD2)
+; Patches the callback address HL into the self-modified call below, seeds the star generator from the galaxy seed and walks the 25 systems
+; that fall inside the chart window, calling the callback for each.
+setCalltoHLnGenerate:
+    ld (0x3B1B),hl
+    call todoGenerateGalaxy
+    ld b,0x00
+todo_lc_checkBoundarys:
+    push bc
+    ld a,(targetSystemX)
+LAB_ram_3b07:
+    cp 0x00
+    jr c,LAB_ram_3b1f
+LAB_ram_3b0b:
+    cp 0x00
+    jr nc,LAB_ram_3b1f
+    ld a,(targetSystemY)
+LAB_ram_3b12:
+    cp 0x00
+    jr c,LAB_ram_3b1f
+LAB_ram_3b16:
+    cp 0x00
+    jr nc,LAB_ram_3b1f
+; Target in the hyperspace-range check loop; probably a self-patched call (it calls itself as disassembled)
+SUB_ram_3b1a:
+    call SUB_ram_3b1a
+    jr LAB_ram_3b22
+LAB_ram_3b1f:
+    call waggleGalaxy4Times
+LAB_ram_3b22:
+    pop bc
+    djnz todo_lc_checkBoundarys
+    ret
+; Converts present-to-target system distance in X/Y into chart pixel coordinates in C/B
+SUB_ram_3b26:
+    ld a,(presentSystemX)
+    ld b,a
+    ld a,(targetSystemX)
+    sub b
+    add a,a
+    add a,a
+    add a,0x61
+    sub 0x03
+    ld c,a
+    ld a,(presentSystemY)
+    ld b,a
+    ld a,(targetSystemY)
+    sub b
+    add a,a
+    ret
+buf_3B3F:
+    db 0x00
+buf_3B40:
+    db 0x00
+buf_3B41:
+    db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+buf_3B49:
+    db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+buf_3B51:
+    db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+buf_3B61:
+    db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+buf_3B69:
+    db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+drawChartPlanets:
+    call SUB_ram_3b26
+    add a,0x60
+    sub 0x03
+    ld b,a
+    ld (buf_3B3F),bc
+    ld de,buf_3B41
+    xor a
+    ld bc,0x0030
+    call FillmemoryRegionDEwithA
+    ld hl,gfxSmallPlanets
+    ld a,(dat_3D2D)
+    and 0x18
+    ld d,0x00
+    ld e,a
+    add hl,de
+    ld de,buf_3B49
+    ld bc,0x0008
+    ldir
+    ld a,(buf_3B3F)
+    and 0x07
+    jr z,LAB_ram_3bbd
+    ld (0x3BAF),a
+    ld hl,buf_3B49
+    ld de,buf_3B61
+    ld b,0x08
+LAB_ram_3bad:
+    push bc
+LAB_ram_3bae:
+    ld b,0x01
+LAB_ram_3bb0:
+    srl (hl)
+    ex de,hl
+    rr (hl)
+    ex de,hl
+    djnz LAB_ram_3bb0
+    inc hl
+    inc de
+    pop bc
+    djnz LAB_ram_3bad
+LAB_ram_3bbd:
+    ld a,(buf_3B3F)
+    rrca
+    rrca
+    rrca
+    and 0x1F
+    ld (charXY),a
+    ld a,(buf_3B40)
+    rrca
+    rrca
+    rrca
+    and 0x1F
+    ld (txtScreenOffset),a
+    ld hl,buf_3B49
+    call SUB_ram_3bfd
+    ld hl,charXY
+    inc (hl)
+    ld hl,buf_3B61
+    call SUB_ram_3bfd
+    call GetYlocationofText
+    ld hl,charXY
+    dec (hl)
+    ld hl,buf_3B51
+    call SUB_ram_3bfd
+    ld hl,charXY
+    inc (hl)
+    ld hl,buf_3B69
+    call SUB_ram_3bfd
+    jp waggleGalaxy4Times
+; Chart helper: takes a chart text column from a buffer and subtracts a 0-7 offset, then draws the char
+SUB_ram_3bfd:
+    ld a,(buf_3B40)
+    and 0x07
+    ld d,0x00
+    ld e,a
+    and a
+    sbc hl,de
+    push hl
+    jp doDrawChar0xc000
+    db 0x00,0x00
+BYTE_ram_3c0e:
+    db 0x00
+; ZX Spectrum: draw_system_name (&ED78)
+; Chart callback: works out the system's screen position, builds its name from letter pairs and prints it (skipping rows that are already occupied).
+drawPlanetnames:
+    call SUB_ram_3b26
+    neg
+    add a,0x60
+    sub 0x0E
+    ld b,a
+    push bc
+    call name_planet
+    ld bc,0x0009
+    ld hl,strTEMPNAME
+    xor a
+    cpir
+    ld a,c
+    xor 0x07
+    inc a
+    ld (BYTE_ram_3c0e),a
+    pop bc
+    ld a,c
+    rra
+    rra
+    rra
+    and 0x1F
+    inc a
+    ld (charXY),a
+    ld a,b
+    srl a
+    srl a
+    srl a
+    jr nc,LAB_ram_3c42
+    inc a
+LAB_ram_3c42:
+    neg
+    add a,0x16
+    ld (txtScreenOffset),a
+    call SUB_ram_3c63
+    ret c
+    ld hl,txtScreenOffset
+    dec (hl)
+    ld a,(hl)
+    cp 0x03
+    jr c,LAB_ram_3c5a
+    call SUB_ram_3c63
+    ret c
+LAB_ram_3c5a:
+    ld hl,txtScreenOffset
+    inc (hl)
+    inc (hl)
+    ld a,(hl)
+    cp 0x17
+    ret nc
+; Prints the temporary name at the current text row once; returns carry set if the row was already used
+SUB_ram_3c63:
+    ld a,(txtScreenOffset)
+    ld hl,buf_3A6C
+    call SetTableBegintoAofHL
+    ld a,(hl)
+    and a
+    ret nz
+    ld a,0xFF
+    ld (hl),a
+    ld a,0x01
+    ld (todoSomePrintFlag),a
+    ld hl,strTEMPNAME
+    jp printCleartext
+GalacticChart:
+    call drawFrame
+    ld de,ColorsGalChart
+    call setColors
+    ld a,0x18
+    ld (gcMinY),a
+    ld a,0x98
+    ld (gcMaxY),a
+    ld a,0x0D
+    ld (txt_hpos),a
+    ld a,(presentSystemX)
+    ld (storePresPlanetX),a
+    ld a,(presentSystemY)
+    srl a
+    add a,0x18
+    ld (storePresPlanetY),a
+    ld a,(fuel)
+    srl a
+    srl a
+    ld (fuelRadiusGalChart),a
+    call drawRangeCircle
+    call drawReticule
+    call drawTitleBoxframe
+    ld de,SCREEN+0x3880
+    call drawHorLineofFrame
+    ld de,SCREEN+0x4C0
+    call drawHorLineofFrame
+    ld a,0x07
+    ld (txt_hpos),a
+    call DrawTargetReticule
+    ld a,0xC7
+    call printFlightToken
+    call todoGenerateGalaxy
+    ld b,0x00
+loc_3CD6:
+    push bc
+    call plotPlanetsOnChart
+    call waggleGalaxy4Times
+    pop bc
+    djnz loc_3CD6
+    ret
+    db 0xF3,0xED,"s",0x05,"=2",0x04,"=",0x0E,0x08,0x11,0x00
+    db 0x00,0xF9,":",0x04,"=",0x06,0x10,0xD5,0x10,0xFD,"= ",0xF8,"$",0x0D," "
+    db 0xF0,0xED,"{",0x05,"=",0xFB,0xC9,0x00
+    db 0x00,0x00
+; Converts the target system's X/Y to screen coordinates and plots it on the chart
+plotPlanetsOnChart:
+    ld a,(targetSystemY)
+    srl a
+    xor 0x7F
+    add a,0x18
+    ld b,a
+    ld a,(targetSystemX)
+    ld c,a
+    ld a,0xAF
+    sub b
+    ld b,a
+    call chkPlotOnChart
+    ret
+; Chart-compare result: returns A = 0
+LC_XoringA:
+    xor a
+    ret
+; Chart-compare result: returns A = 255
+LC_LDA255:
+    ld a,0xFF
+    ret
+qq3:
+    db 0x00,0x00
+qq4:
+    db 0x00,0x00
+qq5:
+    db 0x00,0x00,0x00
+targetSystemY:
+    db 0x00,0x00
+targetSystemX:
+    db 0x00,0x00
+dat_3D2D:
+    db 0x00,0x00,0x00,0x00,0x00,0x00,0x00
+seedvar1:
+    db 0x00,0x00
+seedvar2:
+    db 0x00,0x00
+strPilotname:
+    db "JAMESON",0x09,0x00
+strTEMPNAME:
+    db "TEMPNAME",0x00
+strPLANETNAME1:
+    db "LAVE",0x00
+    db 0x00,0x00,0x00,0x00
+strPLANETNAME2:
+    db "LAVE",0x00
+    db 0x00,0x00,0x00,0x00
+travelDistance:
+    db 0x00,0x00
+economy:
+    db 0x00
+government:
+    db 0x00
+techLevel:
+    db 0x00
+populationCount:
+    db 0x00
+productivityCredits:
+    db 0x00,0x00,0x00,0x00
+sgSearchCounter:
+    db 0x00,0x00,0x00,"!",0xDC,"8~<",0xE6,0x07,"w!",0x07,"9",0xCD,0x80
+    db "=!",0x09,"9",0xCD,0x80,"=!",0x0B,"9^",0xCB,0x03,"s#V"
+    db 0xCB,0x02,"r",0xC9
+; Walks the galaxy's systems comparing each generated name with the typed name (FindPlanet search)
+searchGalaxyforPlanetName:
+    call todoGenerateGalaxy
+    xor a
+    ld (sgSearchCounter),a
+LAB_ram_3d91:
+    call SUB_ram_ef69
+    call name_planet
+    ld hl,strPilotname
+    ld de,strTEMPNAME
+LAB_ram_3d9d:
+    ld b,(hl)
+    ld a,(de)
+    cp b
+    jr nz,LAB_ram_3da9
+    and a
+    jr z,markFoundPlanetonChart
+    inc hl
+    inc de
+    jr LAB_ram_3d9d
+LAB_ram_3da9:
+    ld hl,sgSearchCounter
+    inc (hl)
+    jp nz,LAB_ram_3d91
+    scf
+    ret
+markFoundPlanetonChart:
+    call SUB_ram_ef71
+    call DrawTargetReticule
+    call generatePlanetstats
+    call DrawTargetReticule
+    call finalizePlanetName
+    jp LAB_ram_3e1b
+BYTE_ram_3dc4:
+    db 0x00,0x00
+; On chart screens (7-8) redraws the target reticule around a recentre, otherwise just recentres the chart
+SUB_ram_3dc6:
+    ld a,(Viewdirection)
+    cp 0x07
+    jr c,notOnAChartscreen
+    cp 0x09
+    jr nc,notOnAChartscreen
+    call DrawTargetReticule
+    call notOnAChartscreen
+    jp DrawTargetReticule
+; ZX Spectrum: find_nearest_system (&DF60)
+; Finds the system nearest the chart cursor by walking all 256 systems, then generates its name and data and measures the real distance from the
+; current system.
+notOnAChartscreen:
+    call todoGenerateGalaxy
+    ld hl,0xFFFF
+    ld (BYTE_ram_3dc4),hl
+    ld b,0x00
+LAB_ram_3de5:
+    push bc
+    ld a,(targetSystemX)
+    ld b,a
+    ld a,(targetSystemY)
+    call squared_distance_to_cursor
+    jr c,LAB_ram_3e02
+    ex de,hl
+    ld hl,(BYTE_ram_3dc4)
+    and a
+    sbc hl,de
+    jr c,LAB_ram_3e02
+    ld (BYTE_ram_3dc4),de
+    call SUB_ram_ef69
+LAB_ram_3e02:
+    call waggleGalaxy4Times
+    pop bc
+    djnz LAB_ram_3de5
+    ld hl,(BYTE_ram_3dc4)
+    and a
+    call CalculateDistance
+    call SUB_ram_ef71
+    call generatePlanetstats
+    call name_planet
+    call finalizePlanetName
+LAB_ram_3e1b:
+    ld a,(presentSystemX)
+    ld b,a
+    ld a,(presentSystemY)
+    call squared_distance_to_cursor
+    call CalculateDistance
+    and a
+    ret
+pointerUnitMarketPrice:
+    db 0x00,0x00
+tableUnitMarketprices:
+    db 0x18,0x00,"8",0x00,0xDD,0x00,"^",0x00,0xF1,0x00,0xDE,0x03,0x09,0x03,0xD4,0x03
+    db "K",0x02,"|",0x01,"n",0x03,0xE8,0x02,"v",0x00
+    db 0xCC,0x01,0xB4,0x02,0xA8,0x00,"9",0x02
+storedByteVariable:
+    db 0x00
+; Sets the sound-effect trigger bit when the key-click flag is set
+sfxForKeyInput:
+    ld a,(keybFlags0)
+    bit 7,a
+    ret z
+    ld a,(sfxFlags1Bitmap)
+    or 0x80
+    ld (sfxFlags1Bitmap),a
+    ret
+; Waits for any key: short delay, clears the key buffer, then loops until a key is pressed
+WaitForKeypress:
+    call sub_403E
+    call clearKeyBuffer
+LAB_ram_3e64:
+    ld a,(pressedKey)
+    cp 0xFF
+    jr z,LAB_ram_3e64
+    ret
+; Clears the four keyboard flag bytes
+clearKeyBuffer:
+    ld hl,keybFlags1
+    ld b,0x04
+LAB_ram_3e71:
+    ld (hl),0x00
+    inc hl
+    djnz LAB_ram_3e71
+    ret
+; Prints the 'buy how many' prompt for the selected market good and its unit and price
+askBuyGood:
+    ld a,(storedByteVariable)
+    add a,0xD0
+    call printString
+    call printFollowingTokenWithSpace
+    db 0x0D
+    call parseStoredToken
+    call printFollowingTokenWithSpace
+    db 0x0F
+    ld hl,(SCREEN+0x2FF8)
+    inc hl
+    inc hl
+    ld (SCREEN+0x2FF8),hl
+    ld e,(hl)
+    inc hl
+    ld d,(hl)
+    ex de,hl
+    scf
+    ld a,0x04
+    ld (numberOfDigits),a
+    call todo_SomethingwithDigits
+    call printFollowingTokenWithSpace
+    db 0x17
+    ld hl,(SCREEN+0x2FFA)
+    inc hl
+    ld a,(hl)
+    ld (SCREEN+0x2FFA),hl
+    and a
+    jr nz,LAB_ram_3eb9
+    call printStringFollowingByte
+    db " "
+    ld a,0x2D
+    call CallprintString
+    scf
+    ret
+LAB_ram_3eb9:
+    ld a,0x02
+    ld (numberOfDigits),a
+    ld hl,(SCREEN+0x2FFA)
+    ld a,(hl)
+    call printNumber
+    call parseStoredToken
+    call placeCursor
+    and a
+    ret
+; Prints the quantity of the selected good in the hold (three digits), if any
+prQuantityofGoodinCargohold:
+    ld hl,(SCREEN+0x2FF6)
+    inc hl
+    ld (SCREEN+0x2FF6),hl
+    ld a,(hl)
+    and a
+    jr z,LAB_ram_3ef5
+    ld a,(storedByteVariable)
+    add a,0xD0
+    call printString
+    call printFollowingTokenWithSpace
+    db 0x0D
+    ld a,0x03
+    ld (numberOfDigits),a
+    ld hl,(SCREEN+0x2FF6)
+    ld a,(hl)
+    call printNumber
+    call parseStoredToken
+    and a
+    ret
+LAB_ram_3ef5:
+    scf
+    ret
+; Prints the token A through printStringA, then a ':' (0x3A)
+printwithToken3a:
+    call printStringA
+    jr jrPrintString3A
+; Prints the token A through printString, then a ':' (0x3A)
+anotherPrintWithToken3A:
+    call printString
+jrPrintString3A:
+    ld a,0x3A
+    jr jrjpPrintString
+; ZX Spectrum: print_token_space (&E29E)
+; Prints the character or token in A and then a space.
+printTokenAndToken0x20:
+    call printString
+    ld a,0x20
+jrjpPrintString:
+    jp printString
+; Prints A, then falls through to placeCursor
+CallprintString:
+    call printString
+; Sets the print flag and moves the cursor to column 0 of the next text row
+placeCursor:
+    ld a,0x01
+    ld (todoSomePrintFlag),a
+    call CursorHome
+; Moves the cursor to the next text row (row + 1), with wrap handled by VerticalPlacement
+GetYlocationofText:
+    ld a,(txtScreenOffset)
+    inc a
+    jr VerticalPlacement
+; Resets the text column (charXY) to 0
+CursorHome:
+    xor a
+    ld (charXY),a
+    ret
+; ZX Spectrum: tab_to_column (&E2BC)
+; The column to move to is an inline byte after the CALL (the return address is stepped over it); a column of &20 or more starts a new line.
+printFollowingTokenWithSpace:
+    pop hl
+    ld a,(hl)
+    inc hl
+    push hl
+; Sets the text column to A and moves to a new line if it is 32 or more; no callers found (probably unused)
+SUB_ram_3f25:
+    ld (charXY),a
+    cp 0x20
+    ret c
+    jr placeCursor
+; Sets the text row to A; at row 24 or more it wraps to row 1 and homes the cursor
+VerticalPlacement:
+    ld (txtScreenOffset),a
+    cp 0x18
+    ret c
+    ld a,0x01
+    ld (txtScreenOffset),a
+    jr CursorHome
+; Backs the cursor up one column and erases the character cell there (input backspace)
+ClearCharAtpos:
+    ld a,(txtScreenOffset)
+    ld b,0x42
+    cp 0x15
+    jr z,subClearCharAtpos
+    ld b,0x82
+subClearCharAtpos:
+    ld a,(charXY)
+    and a
+    ret z
+    dec a
+    ld (charXY),a
+    add a,a
+    add a,b
+    ld (0x3F54),a
+LAB_ram_3f53:
+    ld hl,SCREEN+0x500
+; Fills an 8-line, 2-byte-wide screen cell at HL with 0
+DrawBytesMask0:
+    ld c,0x00
+drawBytesWithMaskC:
+    ld b,0x08
+    push hl
+dbloop:
+    ld (hl),c
+    inc hl
+    ld (hl),c
+    dec hl
+    ld a,h
+    add a,0x08
+    ld h,a
+    djnz dbloop
+    pop hl
+    ret
+; Fills an 8-line, 2-byte-wide screen cell at HL with 0xFF (clears a missile slot)
+CleanMissilePosition:
+    ld c,0xFF
+    jr drawBytesWithMaskC
+; Clears two adjacent indicator cells, the second 0x40 bytes further along the line
+clearIndicatorArea:
+    push hl
+    call SUB_ram_3f74
+    pop hl
+    ld a,l
+    add a,0x40
+    ld l,a
+; Fills the cell at HL with mask 0x0F, then the next cell two bytes along
+SUB_ram_3f74:
+    call todoDrawitwithMask
+    inc hl
+    inc hl
+; Fills the 8-line cell at HL with mask 0x0F
+todoDrawitwithMask:
+    ld c,0x0F
+    jp drawBytesWithMaskC
+; Prints token A in the header style (byte 6 first) followed by token 8
+SUB_ram_3f7e:
+    push af
+    call printStringFollowingByte
+    db 0x06
+    pop af
+    call printString
+    ld a,0x08
+    jp printString
+; Prints the header title for the current screen with the alert-state icon and a closing 0x77 token
+printPlanetname:
+    call SUB_ram_3f7e
+    call displayAlertStateinHeader
+    ld a,0x77
+    jp printString
+; Draws the alert-state graphic in the header on non-flight views when the status flags are set
+displayAlertStateinHeader:
+    ld a,(todoUnknownStatusFlags)
+    and a
+    ret z
+    ld a,(Viewdirection)
+    cp 0x07
+    ret c
+    ld hl,gfxAlertStateinHeaders
+    ld de,SCREEN+0x07A
+    ld b,0x08
+LAB_ram_3faa:
+    push bc
+    push de
+    ld b,0x04
+LAB_ram_3fae:
+    ld a,(hl)
+    ld (de),a
+    inc de
+    inc hl
+    djnz LAB_ram_3fae
+    pop de
+    ld a,d
+    add a,0x08
+    ld d,a
+    pop bc
+    djnz LAB_ram_3faa
+    ret
+; Alert-state icon: displayAlertStateinHeader draws these bytes as 8 rows of 4 into the screen header at &C07A.
+; Part of it is decoded as instructions, so the listing shows a few ld/rrca lines inside the data.
+gfxAlertStateinHeaders:
+    db 0x07,0x0F,0x0F
+    ld c,0x07
+    rrca
+    rrca
+    ld c,0x07
+    rrca
+    rrca
+    ld c,0x03
+    rrca
+    rrca
+    inc c
+    inc bc
+    rrca
+    rrca
+    inc c
+    ld bc,0x0F0F
+    ex af,af'
+    nop
+    rrca
+    rrca
+    nop
+    nop
+    inc bc
+    inc c
+    nop
+; Prints the 0-terminated string at HL, uppercase-mapped; carry set at the terminator
+; --- the &4000 window page: screen pixels (blank) and the code, tables and variables that used to hide in the gaps of the screen page at &C000 (COMMON2X in the 64K layout) ---
+    ds 0x4000 - $                       ; &3FFE-&3FFF: the two bytes of the old replacewithminus (moved to the resident glue)
+    INCLUDE "gaps.asm"
+hullQ:                                  ; &8000-&8072 are free since the line drawing code moved to bank 7 with the block
+    ds 8 * 8                            ; per entry of the deferred hull list: IX, IY (words), B, key high byte (0xFF = drawn), key low byte, spare
+hullStack:
+    ds 32                               ; resident stack for the calls into RAM bank 6: the game stack (bank 7) is hidden by the window configurations
+hullStackTop:
+hullSaveSP:
+    dw 0
+hullBestLo:
+    db 0
+    ds 0x8073 - $
+shipEntityInitMatrixdata:
+    db 0x00,"2",0x00,0x00,"2",0x00,0x00,"2",0x00,0x00,0x00,0x00,0x00,0xFF,0xFF,0x00
+    db 0x00,0xFF,0x7F,0x00,0x00,0xFF,0xFF,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+MatrixInitData1:
+    db "XDA",0x98,"d",0xCB,"Z",0xA7,0xD1
+BYTE_ram_809b:
+    db 0x00
+; ZX Spectrum: ship_action (&B867)
+; Performs ship action A (lower nibble; the upper nibble goes to most handlers as a ship type or count): 0 weighs the local traffic and may launch a
+; ship (spawnCommand0), 1 launches Thargoids, 5 spawns a mining splinter, and so on.
+spawnCommandParser:
+    ld c,a
+    srl c
+    srl c
+    srl c
+    srl c
+    and 0x0F
+    jp z,spawnCommand0
+    dec a
+    jp z,spawnCommand1
+    dec a
+    jp z,spawnCommand2
+    dec a
+    ret z
+    dec a
+    jp z,loc_821C
+    dec a
+    jp z,spawnCommand5
+    dec a
+    jp z,spawnCommand6
+    dec a
+    jp z,spawnCommand7
+    dec a
+    jp z,spawnCommand8
+    dec a
+    jp z,loc_83AA
+    ret
+; Builds a ship in the slot at IX from blueprint A: copies its data and initial values
+spawnShip:
+    IFDEF MISSIONS
+    call mxShipTable                ; missions_flight.asm: also serves ship type 19 (Constrictor)
+    ELSE
+    ld hl,shipGFXdataTable
+    ENDIF
+    ld b,a
+    and 0x3F
+    add a,a
+    add a,a
+    add a,l
+    ld l,a
+    jr nc,loc_80DA
+    inc h
+loc_80DA:
+    inc hl
+    ld e,(hl)
+    inc hl
+    ld d,(hl)
+    push de
+    pop iy
+    ld (ix+36),d
+    ld (ix+35),e
+    db 0xDD,0xE5,0xD1,0x01,0x1F,0x00,"!s",0x80,0xED,0xB0,0xFD,"~",0x07,0xDD,"w"
+    db 0x22,0xFD,"~",0x12,"O",0xE6,"o",0xDD
+    ld (hl),a
+    ld hl,0x7EFD
+    ld a,(bc)
+    and 0x07
+    rla
+    rl c
+    rra
+    ld (ix+32),a
+    ld a,(iy+6)
+    srl a
+    ld (ix+27),a
+    ld a,0x7E
+    ld (ix+37),a
+    xor a
+    ld (ix+38),a
+    set 6,(ix+32)
+    bit 2,(ix+33)
+    jr nz,spwnIsNoPirate
+    call getRandomNumber
+    and 0x07
+    ld (ix+1),a
+    call getRandomNumber
+    and 0x07
+    ld (ix+4),a
+spwnIsNoPirate:
+    call getRandomNumber
+    ld (ix+0),a
+    call getRandomNumber
+    ld (ix+3),a
+    call getRandomNumber
+    rra
+    rr (ix+2)
+    rra
+    rr (ix+5)
+    IFDEF SPAWN_VARIANCE
+    call spawnVariance                  ; the hostile types: random distance, z sign and the rest of the direction (the overlay on bankInit)
+    ENDIF
+    xor a
+    ret
+; Looks for a free slot and spawns the ship there if one exists (mostly in a db run)
+TrySpawntoFreeSlot:
+    ld c,a
+    push ix
+    call lookforFreeSlot
+    pop hl
+    ret nz
+    push hl
+    ld a,c
+    call spawnShip
+    pop hl
+    push ix
+    pop de
+    ld bc,0x001B
+    ldir
+    xor a
+    ret
+; Scans ship slots 1-6 for a free one; returns Z with IX at it, NZ if none
+lookforFreeSlot:
+    ld ix,sEntityxlo
+    ld de,0x0027
+    ld b,0x06
+lfsLoop:
+    add ix,de
+    ld a,(ix+34)
+    and a
+    ret z
+    djnz lfsLoop
+    inc b
+    ret
+; ZX Spectrum: spawn_ship_at_origin (&B94A)
+; A = blueprint index: finds a free slot, creates the ship there and zeroes its position (origin). Callers that already have IX use the next entry.
+trySpawnAnotherEntity:
+    ld c,a
+    call lookforFreeSlot
+    ret nz
+    ld a,c
+; Spawns a ship and zeroes its position so it appears at the player
+spawnEntityAtMyPosition:
+    call spawnShip
+    res 7,(ix+14)
+    res 7,(ix+22)
+    ld (ix+0),a
+    ld (ix+1),a
+    ld (ix+4),a
+    ld (ix+6),a
+    ld (ix+7),a
+    ret
+; ZX Spectrum: create_ship_at_origin (&B96B)
+; Action 1: launches a group of 3 or 4 Thargoids (a random bit plus 3), each given a random z position and orientation byte.
+spawnCommand1:
+    call getRandomNumber
+    and 0x01
+    add a,0x03
+    ld c,a
+sc1loop:
+    call lookforFreeSlot
+    ret nz
+    ld a,0x0F
+    push bc
+    call spawnShip
+    IFDEF SPAWN_VARIANCE
+    inc (ix+37)                         ; spawnShip returns A = 0 and (ix+37) = &7E: this is `set 0,(ix+37)` in 3 bytes
+    ld (ix+4),a                         ; y_hi 0 and z sign 0 (spawnVariance made both random: a Thargoid group never starts behind the player)
+    ld (ix+8),a
+    call getRandomNumber
+    and 0x0F
+    or 0x04
+    ld (ix+7),a
+    cp 0x08                             ; x_hi = bit 3 of z_hi (z_hi is 4 to 15): 4 bytes instead of rra x3 / and 1
+    sbc a,a
+    inc a
+    ld (ix+1),a
+    ELSE
+    set 0,(ix+37)
+    call getRandomNumber
+    and 0x0F
+    or 0x04
+    ld (ix+7),a
+    rra
+    rra
+    rra
+    and 0x01
+    ld (ix+1),a
+    xor a
+    ld (ix+4),a
+    ENDIF
+    call setDirectionofEntity
+    pop bc
+    dec c
+    jr nz,sc1loop
+    ret
+spawnCommand2:
+    ld a,c
+    and a
+    jr z,enemyFiresMissile
+    ld ix,sEntityxlo
+    ld de,0x0111
+    add ix,de
+    ld a,(ix+34)
+    and a
+    jr z,LAB_ram_81eb
+    call lookforFreeSlot
+    ret nz
+LAB_ram_81eb:
+    ld a,0x01
+    push bc
+    call spawnEntityAtMyPosition
+    pop bc
+    ld a,0x6A
+    ld (ix+6),a
+    ld a,0x29
+    ld (ix+3),a
+    ld a,0x80
+    ld (ix+5),a
+    ld a,c
+    jr LAB_ram_8213
+enemyFiresMissile:
+    ld a,0x01
+    call TrySpawntoFreeSlot
+    ret nz
+    ld a,(movementspeed)
+    add a,(ix+27)
+    ld (ix+27),a
+LAB_ram_8213:
+    ld (ix+37),c
+    set 0,(ix+38)
+    xor a
+    ret
+loc_821C:
+    ld a,0x08
+    dec c
+    jr z,execSpawncmd4
+    call getRandomNumber
+    and 0x01
+    add a,0x09
+    dec c
+    jr z,execSpawncmd4
+    ld a,0x12
+    dec c
+    jr z,execSpawncmd4
+    ld a,0x0F
+    dec c
+    jr z,execSpawncmd4
+    dec c
+    ret nz
+    call getRandomNumber
+    bit 0,a
+    ld a,0x10
+    jr z,execSpawncmd4
+    ld a,0x11
+execSpawncmd4:
+    push ix
+    call TrySpawntoFreeSlot
+    pop iy
+    ret nz
+    bit 2,(iy+38)
+    call z,correctItsOrientation
+    bit 2,(iy+33)
+    ret z
+    set 2,(ix+33)
+    xor a
+    ret
+correctItsOrientation:
+    ld a,(BYTE_ram_809b)
+    xor 0x01
+    ld (BYTE_ram_809b),a
+    jr z,switchNNegVectors
+    push ix
+    call switchVectors
+    call switchVectors
+    call switchVectors
+    pop ix
+    ret
+switchVectors:
+    ld a,(ix+10)
+    ld b,(ix+16)
+    ld (ix+16),a
+    ld (ix+10),b
+    ld a,(ix+22)
+    xor 0x80
+    ld (ix+22),a
+    inc ix
+    inc ix
+    ret
+; ZX Spectrum: - (&BA58)
+switchNNegVectors:
+    ld a,(ix+16)
+    xor 0x80
+    ld b,(ix+10)
+    ld (ix+10),a
+    ld (ix+16),b
+    ld a,(ix+18)
+    xor 0x80
+    ld b,(ix+12)
+    ld (ix+12),a
+    ld (ix+18),b
+    ld a,(ix+20)
+    xor 0x80
+    ld b,(ix+14)
+    ld (ix+14),a
+    ld (ix+20),b
+    ret
+; ZX Spectrum: - (&BA83)
+; Sets two orientation bytes to random values masked with &87 (sign bit plus 3 low bits).
+setDirectionofEntity:
+    call getRandomNumber
+    and 0x87
+    ld (ix+10),a
+    call getRandomNumber
+    and 0x87
+    ld (ix+12),a
+    ret
+; ZX Spectrum: - (&BA94)
+; Action 5: a mining splinter: with bit 0 of C clear, two splinters at the parent's position; otherwise one at the origin with a random orientation.
+spawnCommand5:
+    bit 0,c
+    jr z,spawnAlloyPlates
+    call spSecondPlate
+    ret nz
+; Spawns blueprint 3 (a plate) drifting with random offsets, speed and spin
+spSecondPlate:
+    ld a,0x03
+spawnItDrifting:
+    call trySpawnAnotherEntity
+    ret nz
+    call setDirectionofEntity
+    res 6,(ix+32)
+    call getRandomNumber
+    and 0x3F
+    or 0x10
+    ld (ix+0),a
+    ld a,(ix+10)
+    and 0x80
+    xor 0x80
+    ld (ix+2),a
+    call getRandomNumber
+    and 0x3F
+    or 0x10
+    ld (ix+3),a
+    ld a,(ix+12)
+    and 0x80
+    xor 0x80
+    ld (ix+5),a
+    ld a,0x19
+    ld (ix+6),a
+    call getRandomNumber
+    ld (ix+29),a
+    call getRandomNumber
+    and 0x1F
+    or 0x08
+    ld (ix+27),a
+    xor a
+    ret
+spawnAlloyPlates:
+    ld a,0x03
+    call spSplinter
+    ret nz
+    ld a,0x03
+    jr spSplinter
+spawnCommand6:
+    bit 0,c
+    ld a,0x04
+    jr z,spawnAtEntityCoordinates
+    jr spawnItDrifting
+spawnCommand7:
+    bit 0,c
+    ld a,0x02
+    jr z,spawnAtEntityCoordinates
+    ld a,0x09
+    ld ix,buf_1B2A
+    call spawnEntityAtMyPosition
+    call setDirectionofEntity
+    ld a,0x80
+    ld (ix+5),a
+    ld a,0x1C
+    ld (ix+3),a
+    res 6,(ix+32)
+    ld a,0x4C
+    ld (ix+6),a
+    ld a,0xC0
+    ld (ix+30),a
+    ld a,(movementspeed)
+    add a,(ix+27)
+    ld (ix+27),a
+    xor a
+    ret
+spawnAtEntityCoordinates:
+    push ix
+    call TrySpawntoFreeSlot
+    ex (sp),ix
+    pop hl
+    ret nz
+    push hl
+    ex (sp),ix
+    res 6,(ix+32)
+    ld a,0x0A
+    ld (ix+38),a
+    ld a,0x80
+    ld (ix+29),a
+    xor a
+    pop ix
+    ret
+spawnCommand8:
+    ld a,0x05
+    call spSplinter
+    ret nz
+    ld a,0x05
+; Spawns a splinter/rock from a destroyed ship using the old one's data (mostly a db run)
+spSplinter:
+    push ix
+    call TrySpawntoFreeSlot
+    ex (sp),ix
+    pop hl
+    ret nz
+    push hl
+    ex (sp),ix
+    call correctItsOrientation
+    ld a,0x0A
+    ld (ix+38),a
+    res 6,(ix+32)
+    set 7,(ix+29)
+    pop ix
+    xor a
+    ret
+loc_83AA:
+    ld ix,buf_1B51
+    ld a,c
+    add a,0x02
+titleSpawnShip:                     ; the title ship viewer (titleSpawn in common2x.asm) enters here with IX = buf_1B51 and A = the ship type
+    call spawnShip
+    ld a,0xC0
+    ld (ix+29),a
+    ld (ix+30),a
+    xor a
+    ld (ix+6),a
+    ld (ix+0),a
+    ld (ix+1),a
+    ld (ix+3),a
+    ld (ix+4),a
+    ld (ix+8),a
+    ld (ix+27),a
+    res 6,(ix+32)
+    inc a
+    inc a
+    ld (ix+7),a
+    push ix
+    pop hl
+    ld de,0x0009
+    ld b,d
+    ld c,e
+    add hl,de
+    ex de,hl
+    ld hl,MatrixInitData1
+LAB_ram_83e8:
+    inc de
+    ldi
+    jp pe,LAB_ram_83e8
+    ret
+; ZX Spectrum: - (&BBBA)
+; Action 0: maybe launches a ship into the system. C = 2*slaves + 2*narcotics + firearms held (the contraband weight, used by the roll at
+; chkSpawnAsteroid: the more contraband, the more likely a hostile). If the gate byte is clear, a random byte is below 30 and Missionflag & &42 == 2, the
+; marked Asp of the cloaking-device mission is created (see docs/_missions.md).
+spawnCommand0:
+    IFDEF MISSIONS
+    call mxSpawnCheck               ; missions_flight.asm: Constrictor at Orarra; ends with ld a,(cargoSlaves)
+    ELSE
+    ld a,(cargoSlaves)
+    ENDIF
+    ld c,a
+    ld a,(cargoNarcotics)
+    add a,c
+    add a,a
+    ld c,a
+    ld a,(cargoFirearms)
+    add a,c
+    ld c,a
+    ld a,(aspMissionState)
+    and a
+    jr nz,chkSpawnAsteroid
+    call getRandomNumber
+    cp 0x1E
+    jr nc,chkSpawnAsteroid
+    ld a,(Missionflag)
+    and 0x42
+    cp 0x02
+    jr nz,chkSpawnAsteroid
+    dec a
+    ld (aspMissionState),a
+    ld a,0x0F
+    ld hl,dat_8427
+    push hl
+    push af
+    call lookforFreeSlot
+    ret nz
+    ld a,0x0D
+    jr jrEntrytoSpawnShip
+dat_8427:                               ; the return address of the marked Asp: was a db blob with the raw target jp &84E0 (right in the stock layout, stale here since the spawn variance call moved
+    set 6,(ix+38)                       ; everything after spawnShip: it jumped into the middle of the code in front of spawnEscortPack)
+    set 2,(ix+32)
+    jp spawnEscortPack
+; ZX Spectrum: finish_ship_and_escort (&BBF2)
+; Two entries: &8432 (this one) rolls a random byte against C: a low roll goes to the hostile pick, a middling one makes an asteroid, a high one
+; spawns nothing. The marked Asp's return address (dat_8427) enters at its own tail and spawns the 2-3 escort pack.
+chkSpawnAsteroid:
+    call getRandomNumber
+    sub c
+    jr c,cmd0ChkSendHostileAfterUs
+SPAWN_HOSTILE_LIMIT equ 0x5A       ; traffic like the C64 (src/elite -DTRAFFIC, docs/_ship_packs.md): a roll below this lets a hostile through, 90/256 = 35% (stock 0x50 = 31%)
+SPAWN_JUNK_WIDTH equ 35            ; the next 35 values make an asteroid, 13.7% (stock 10 = 3.9%)
+    cp SPAWN_HOSTILE_LIMIT + SPAWN_JUNK_WIDTH
+    ret nc
+    cp SPAWN_HOSTILE_LIMIT
+    jr c,cmd0ChkSendHostileAfterUs
+    call lookforFreeSlot
+    ret nz
+    ld a,0x06
+    call spawnShip
+    set 7,(ix+14)
+    res 6,(ix+32)
+    ld a,0xC0
+    ld (ix+29),a
+    IFDEF SPAWN_VARIANCE
+    jp spawnRock                        ; a random place around the player and a heading towards it (spawnmod.asm)
+    ELSE
+    ret
+    ENDIF
+; ZX Spectrum: pick_hostile_encounter (&BC21)
+; Picks a hostile encounter from the roll left in A: a fresh jump into a new system (ThargonMissionVar-style state 4) always picks a Thargoid,
+; a pending mission offer always picks a Python trader.
+cmd0ChkSendHostileAfterUs:
+    ld b,a
+    and 0x07
+    ld e,a
+    ld a,(ThargonMissionVar)
+    cp 0x04
+    ld d,a
+    ld c,0x0F
+    jr z,spawnShipEntrywithC
+    ld a,d
+    cp 0x01
+    ld c,0x0A
+    jr z,spawnShipEntrywithC
+    ld a,(marketStock)
+    and 0x07
+    jr z,spawnHostiles
+    inc e
+    cp e
+    ret nc
+spawnHostiles:
+    ld c,a
+    bit 3,b
+    jp z,chkSpawnEnemys
+    call lookforFreeSlot
+    ret nz
+    call getRandomNumber
+    and 0x3F
+    ld b,0x0F
+    jr z,spawnShipinB
+    dec b
+    sub 0x0C
+    jr c,spawnShipinB
+    dec b
+    sub 0x12
+    jr c,spawnShipinB
+    dec b
+    sub 0x10
+    jr c,spawnShipinB
+    dec b
+spawnShipinB:
+    ld a,b
+pushAFentrytoSpawnShip:
+    push af
+jrEntrytoSpawnShip:
+    call spawnShip
+    pop af
+    cp 0x0F
+    jr z,LAB_ram_84a8
+    call getRandomNumber
+    cp 0x33
+    ret nc
+LAB_ram_84a8:
+    set 0,(ix+37)
+    ret
+spawnShipEntrywithC:
+    call lookforFreeSlot
+    ret nz
+    ld a,c
+    jr pushAFentrytoSpawnShip
+chkSpawnEnemys:
+    call getRandomNumber
+    ld b,a
+    and 0x07
+    cp e
+    jr nc,spawnEscortPack
+    rlc b
+    rlc b
+    rlc b
+    ld c,b
+    call lookforFreeSlot
+    ret nz
+    ld a,c
+    and 0x07
+    cp 0x02
+    jr c,HermitOrViper
+    dec a
+    srl a
+    srl a
+    add a,0x09
+    jr pushAFentrytoSpawnShip
+HermitOrViper:
+    ld a,c
+    rlca
+    and 0x01
+    add a,0x07
+    jr pushAFentrytoSpawnShip
+; ZX Spectrum: &BCAB. Spawn a pack of 2-3 ships (random count: (rnd&3)>>1 + 2 + carry), each a Sidewinder (&10) or Krait (&11).
+; Entered by jr from the hostile/neutral pick and, for the marked Asp, by the jp in dat_8427. Stops early when no ship slot is free.
+spawnEscortPack:
+    call getRandomNumber
+    and 0x03
+    inc a                           ; 1 to 4 ships like the C64 ((rnd & 3) + 1); stock: rra / adc a,0x02 = 2 to 4, mean 3.0
+    IFNDEF SPAWN_VARIANCE
+    nop                             ; (the two bytes the asteroid branch of spawnCommand0 needs for its jp spawnRock)
+    nop
+    ENDIF
+    ld c,a
+spawnEscortLoop:
+    call lookforFreeSlot
+    ret nz
+    push bc
+    call getRandomNumber
+    and 0x01
+    add a,0x10
+    IFDEF SPAWN_VARIANCE
+    call spawnPackShip              ; the same, with C (the ships still to come) for the module: the pack stays together (spawnmod.asm)
+    ELSE
+    call spawnShip
+    ENDIF
+    pop bc
+    dec c
+    jr nz,spawnEscortLoop
+    ret
+listFilecatalog:
+    xor a
+    ld (BYTE_ram_8647),a
+    ld (BYTE_ram_8646),a
+    ld (BYTE_ram_8665),a
+    ld (BYTE_ram_8666),a
+    ld hl,catalogBuf
+    ld (BYTE_ram_8649),hl
+    call drawFrame
+    ld a,0x01
+    ld (BYTE_ram_85b2),a
+    ld (todoSomePrintFlag),a
+    ld a,0x9A
+    call printStringA
+    call printStringFollowingByte
+    db "S"
+    ld a,0x3A
+    call CallprintString
+    call setFilemenuColors
+    ld de,0x0040
+    call CAS_CATALOG
+    call veryLongDelay
+    call installVBL
+    call WaitForKeypress
+    xor a
+    ld (BYTE_ram_85b2),a
+    jp LAB_ram_0d38
+; Patches the firmware text-draw routines to our own text output handler
+smc_patchFWTextfunctions:
+    ld a,0xC9
+    ld (TXT_DRAW_CURSOR),a
+    ld (TXT_UNDRAW_CURSOR),a
+    ld a,0xC3
+    ld (TXT_OUT_ACTION),a
+    ld de,myTEXTOUTACTION
+    ld (myTEXTOUTACTIONadr),de
+    ret
+myTEXTOUTACTION:
+    rst 0x18
+    dw myTextOutDesc                    ; the far-call descriptor (the labels move with every size change: no raw stock addresses)
+    ret
+myTextOutDesc:
+    dw LAB_ram_855e
+    db 0xFF
+LAB_ram_855e:
+    push af
+    cp 0x3F
+    jr nz,LAB_ram_85b3
+    call clrLine0x15
+    ld hl,strNODISKPROTECTED
+    call printCleartext
+    call placeCursor
+    ld hl,strRETRYIGNORECANCEL
+    call printCleartext
+    ld a,0x3F
+    call printString
+    ld a,0x01
+    ld (FileOperationFlag),a
+    ret
+strNODISKPROTECTED:
+    db "NO DISK-PROTECTE"
+    db "D-UNFORMATTED",0x00
+strRETRYIGNORECANCEL:
+    db "RETRY-IGNORE-CAN"
+    db "CEL",0x00
+BYTE_ram_85b2:
+    db 0x00
+LAB_ram_85b3:
+    pop bc
+    ld a,(BYTE_ram_85b2)
+    and a
+    ret z
+    ld a,(FileOperationFlag)
+    and a
+    ret nz
+    ld a,b
+    ld (BYTE_ram_8648),a
+    ld a,(BYTE_ram_8646)
+    and a
+    ret nz
+    ld hl,BYTE_ram_8647
+    ld a,(hl)
+    cp 0x16
+    jr nc,LAB_ram_85d1
+    inc (hl)
+    ret
+LAB_ram_85d1:
+    ld a,(BYTE_ram_8648)
+    cp 0x0A
+    jr z,LAB_ram_85e5
+    cp 0x0D
+    jr nz,LAB_ram_85eb
+    ld a,(BYTE_ram_8665)
+    and a
+    ret z
+    ld (BYTE_ram_8646),a
+    ret
+LAB_ram_85e5:
+    ld a,0x01
+    ld (BYTE_ram_8665),a
+    ret
+LAB_ram_85eb:
+    ld b,a
+    xor a
+    ld (BYTE_ram_8665),a
+    ld a,b
+    cp 0x20
+    jr nz,LAB_ram_85ff
+    ld hl,(BYTE_ram_8649)
+    ld de,catalogBuf
+    and a
+    sbc hl,de
+    ret z
+LAB_ram_85ff:
+    ld a,(BYTE_ram_8648)
+    ld hl,(BYTE_ram_8649)
+    ld (hl),a
+    inc hl
+    ld (BYTE_ram_8649),hl
+    ld de,FileExtension
+    and a
+    sbc hl,de
+    ret nz
+    ld b,0x09
+    ld hl,charDot
+    ld de,FileExtension
+LAB_ram_8619:
+    ld a,(de)
+    cp (hl)
+    jr nz,LAB_ram_863f
+    inc hl
+    inc de
+    djnz LAB_ram_8619
+    ld hl,(BYTE_ram_8666)
+    inc (hl)
+    bit 0,(hl)
+    call nz,placeCursor
+    ld hl,catalogBuf
+    ld b,0x08
+LAB_ram_862f:
+    push bc
+    push hl
+    ld a,(hl)
+    call printCharAtLocationXY
+    pop hl
+    pop bc
+    inc hl
+    djnz LAB_ram_862f
+    ld a,0x0F
+    ld (charXY),a
+LAB_ram_863f:
+    ld hl,catalogBuf
+    ld (BYTE_ram_8649),hl
+    ret
+BYTE_ram_8646:
+    db 0x00
+BYTE_ram_8647:
+    db 0x00
+BYTE_ram_8648:
+    db 0x00
+BYTE_ram_8649:
+    db "K",0x86
+catalogBuf:
+    db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+charDot:
+    db ".",0x00,0x00,0x00," ",0x00,0x00,0x00,"K"
+FileExtension:
+    db ".BIN   1K"
+BYTE_ram_8665:
+    db 0x00
+BYTE_ram_8666:
+    db 0x00
+; Loads a file via the firmware: name, address and size follow the call; checks for disk errors
+loadFile:
+    call setFilemenuColors
+    pop hl
+    ld e,(hl)
+    inc hl
+    ld d,(hl)
+    inc hl
+    ld c,(hl)
+    inc hl
+    ld b,(hl)
+    inc hl
+    push hl
+    push de
+    ld h,b
+    ld l,c
+    ld de,0x0040
+    ld b,0x08
+    call CAS_IN_OPEN
+    call checkMedia
+    pop hl
+    call CAS_IN_DIRECT
+    call checkMedia
+    call CAS_IN_CLOSE
+    call checkMedia
+    call installVBL
+    ret
+; Saves a file via the firmware: size, name and address follow the call; checks for disk errors
+SaveSavegame:
+    call setFilemenuColors
+    pop hl
+    ld e,(hl)
+    inc hl
+    ld d,(hl)
+    inc hl
+    ld (SavegameFileSize),de
+    ld e,(hl)
+    inc hl
+    ld d,(hl)
+    inc hl
+    ld c,(hl)
+    inc hl
+    ld b,(hl)
+loc_86A6:
+    inc hl
+    push hl
+    push de
+    ld h,b
+    ld l,c
+    ld de,0x0040
+    ld b,0x08
+    call CAS_OUT_OPEN
+    call checkMedia
+    pop hl
+    ld a,0x02
+    ld de,(SavegameFileSize)
+    call CAS_OUT_DIRECT
+    call checkMedia
+    call CAS_OUT_CLOSE
+    call checkMedia
+    call veryLongDelay
+loc_86CC:
+    call installVBL
+    ret
+SavegameFileSize:
+    db "RO"
+FileOperationFlag:
+    db 0x00
+; Checks the file-operation flag after a disk call; on error shows DISK ERROR and returns to the file menu
+checkMedia:
+    push af
+loc_86D4:
+    pop bc
+    ld hl,FileOperationFlag
+    ld a,(hl)
+    ld (hl),0x00
+    and a
+    ret z
+    push bc
+    call clrLine0x15
+    pop af
+    ret c
+    ld hl,stringDiskerror
+    call printCleartext
+    call CAS_OUT_ABANDON
+    call CAS_IN_ABANDON
+    call CAS_STOP_MOTOR
+    call veryLongDelay
+    call installVBL
+    call sfxForKeyInput
+    call ClearSaveGameRam
+    jp Filemenuloop
+stringDiskerror:
+    db "DISK ERROR",0x00
+; Delay of about 1536 interrupts (256 loops of six halts)
+veryLongDelay:
+    ld b,0x00
+LAB_ram_870e:
+    halt
+    halt
+    halt
+    halt
+    halt
+    halt
+    djnz LAB_ram_870e
+    ret
+; Loads the progress-bar screen then swaps the 0x1A00 bytes of memory between 0x0040 and 0xA600
+loadIndicator:
+    call bankIndicator                  ; 128K build: INDICATO from RAM bank 5 instead of the disk
+    nop                                 ; the four inline argument bytes of the original `call loadFile`: same length, run as nops
+    nop
+    nop
+    nop
+    ld hl,0xA600
+    ld de,0x0040
+    ld bc,0x1A00
+switchMemoryContents:
+    ld a,(de)
+    ldi
+    dec hl
+    ld (hl),a
+    inc hl
+    ld a,b
+    or c
+    jr nz,switchMemoryContents
+    ret
+; Copies the code area to 0xA600 and loads LARGEAXX
+loadLARGEAXX:
+    ld hl,0x0040
+    ld de,0xA600
+    ld bc,0x1A00
+    ldir
+    call bankLargeaxx                   ; 128K build: copy LARGEAXX from RAM bank 4 (it was saved there at the start of Init_) instead of reading the disk
+    nop                                 ; the four inline argument bytes of the original `call loadFile` (dest, name pointer): same length, now executed as nops
+    nop
+    nop
+    nop
+    db 0xC9
+; Loads the music file, sets the music-loaded flag and patches the load indicator
+loadMusicnIndicator:
+    call loadIndicator                  ; 128K build: no music here (the music is loaded once by bankInit and plays on the title screen only, see musiquex.asm)
+    ret
+; Mutes the music and loads LARGEAXX and the non-music replacement file
+loadNotMusique:
+    xor a
+    ld (musicState),a                   ; first: the interrupt must stop calling the player before the slot gets its flight code back
+    call mute
+    call loadLARGEAXX                   ; before the disc read, as in the stock game: it puts the parked firmware RAM (jump block at &BB00) back, which the disc routines need
+    call loadFile                       ; NOTMUSIC.BIN (the 4096 bytes of COMMON2X that the player replaced; tools/build_dsk128.py writes them) back over the player
+    dw musicSlot
+    dw FilenameNOTMUSIC
+    ret
+; Loads LARGEAXX and the music for the docked screens
+loadExtensionsforDockingmode:
+    call loadLARGEAXX
+    call loadMusicnIndicator
+    ret
+flagMusicLoaded:
+    db 0x00
+IRSaveBC:
+    db "~",0xCD
+oldIRHandler:
+    db 0xB6,"E"
+; Saves the old interrupt vector and installs myVBL (frame interrupt handler)
+installVBL:
+    di
+    ex af,af'
+    exx
+    ld (IRSaveBC),bc
+    ld hl,(0x0039)
+    ld (oldIRHandler),hl
+    ld hl,myVBL
+    ld (0x0039),hl
+    exx
+    ex af,af'
+    ei
+    ret
+; Restores the old interrupt vector and sets the screen inks for the file menu or view
+setFilemenuColors:
+    di
+    ex af,af'
+    exx
+    ld hl,(oldIRHandler)
+    ld (0x0039),hl
+    ld bc,(IRSaveBC)
+    or a
+    exx
+    ex af,af'
+    ld a,(FlagInkOnOff)
+    and a
+    jr nz,allinks_0
+    ld a,(Viewdirection)
+    cp 0x04
+    jr c,inks2_1_0_13
+    ld a,0x00
+    ld bc,0x0000
+    call SCR_SETINK
+    ld a,0x01
+    ld bc,0x0202
+    call SCR_SETINK
+    ld a,0x02
+    ld bc,0x0101
+    call SCR_SETINK
+    ld a,0x03
+    ld bc,0x0D0D
+    jp SCR_SETINK
+inks2_1_0_13:
+    ld a,0x00
+    ld bc,0x0202
+    call SCR_SETINK
+    ld a,0x01
+    ld bc,0x0101
+    call SCR_SETINK
+    ld a,0x02
+    ld bc,0x0000
+    call SCR_SETINK
+    ld a,0x03
+    ld bc,0x0D0D
+    jp SCR_SETINK
+allinks_0:
+    ld a,0x00
+    ld bc,0x0000
+    call SCR_SETINK
+    ld a,0x01
+    ld bc,0x0000
+    call SCR_SETINK
+    ld a,0x02
+    ld bc,0x0000
+    call SCR_SETINK
+    ld a,0x03
+    ld bc,0x0000
+    jp SCR_SETINK
+FilenameIndicator:
+    db "INDICATO"
+FilenameLARGEAXX:
+    db "LARGEAXX"
+FilenameMUSIQUEX:
+    db "MUSIQUEX"
+FilenameNOTMUSIC:
+    db 0x4E,0x4F,0x54,0x4D,0x55,0x53,0x49,0x43
+dat_8830:
+    db 0x00
+    db 0x00
+todosomeypos:
+    db 0x00,0x00
+todosomezpos:
+    db 0x00,0x00
+BYTE_ram_8836:
+    db 0x00,0x00
+; Updates a ship's energy-dependent state and the Asp mission state from its hit points
+ActDeponEnergy:
+    ld a,(iy+7)
+    ld c,(ix+34)
+    inc c
+    cp 0xF0
+    jr c,loc_8846
+    inc c
+    inc c
+    inc c
+loc_8846:
+    cp c
+    jr c,loc_884A
+    ld a,c
+loc_884A:
+    ld b,a
+    ld a,(flagCloakingDeviceActive)
+    and a
+    ret nz
+    ld hl,aspMissionState
+    ld a,b
+    cp 0x50
+    ld a,(hl)
+    jr c,loc_885E
+    cp 0x02
+    jr nz,loc_885E
+    dec (hl)
+loc_885E:
+    cp 0x01
+    jr nz,LAB_ram_886f
+    ld a,b
+    cp 0x34
+    jr nc,actEnGreater52
+    ld a,0x02
+    ld (hl),a
+    jr LAB_ram_886f
+actEnGreater52:
+    sub 0x02
+    ld b,a
+LAB_ram_886f:
+    ld a,b
+    ld (ix+34),a
+    ld b,(iy+7)
+    add a,a
+    jr c,LAB_ram_88e4
+    cp b
+    jr nc,LAB_ram_88e4
+    add a,a
+    jr c,LAB_ram_8885
+    add a,a
+    jr c,LAB_ram_8885
+    cp b
+    jr c,entityReleaseCapsule
+LAB_ram_8885:
+    ld a,(ix+32)
+    and 0x07
+    jr z,LAB_ram_88e4
+    call getRandomNumber
+    cp 0x80
+    jr nc,LAB_ram_88e4
+    ld a,(ecmActiveFlag)
+    and a
+    jr nz,LAB_ram_88e4
+    ld a,(iy+10)
+    and 0xF0
+    jr nz,LAB_ram_88a2
+    or 0x06
+LAB_ram_88a2:
+    xor 0x04
+    ld b,a
+    push bc
+    call todo_SpawnCmdParserSaveIXIY
+    pop bc
+    jr nz,LAB_ram_88e4
+    dec (ix+32)
+    ld a,b
+    cp 0x02
+    jr nz,LAB_ram_88e4
+    ld hl,msgIncomingMissile
+    set 7,(hl)
+    jr LAB_ram_88e4
+entityReleaseCapsule:
+    call getRandomNumber
+    cp (ix+37)
+    jr c,stationOperations
+    bit 7,(ix+32)
+    jr z,entityDropsCargo
+    ld a,0x07
+    call todo_SpawnCmdParserSaveIXIY
+    jr nz,LAB_ram_88e4
+    res 7,(ix+32)
+    res 6,(ix+32)
+    ret
+entityDropsCargo:
+    ld a,(iy+0)
+    and a
+    jr z,LAB_ram_88e4
+    ld a,0x06
+    call todo_SpawnCmdParserSaveIXIY
+LAB_ram_88e4:
+    ld a,(iy+18)
+    cp 0x04
+    jr nz,stationOperations
+    push ix
+    ld ix,sEntityxlo
+    ld de,0x0027
+    ld b,0x06
+LAB_ram_88f6:
+    add ix,de
+    ld a,(ix+34)
+    and a
+    jr z,LAB_ram_8905
+    ld a,(ix+33)
+    sub 0x0C
+    jr z,LAB_ram_8908
+LAB_ram_8905:
+    djnz LAB_ram_88f6
+    inc a
+LAB_ram_8908:
+    pop ix
+    jp z,chkCopHuntergettingHostile
+    res 6,(ix+32)
+    set 1,(ix+38)
+    srl (ix+27)
+    ret
+stationOperations:
+    bit 0,(ix+37)
+    jr z,LAB_ram_894b
+    ld a,(ThargonMissionVar)
+    cp 0x04
+    jr nz,LAB_ram_892e
+    ld a,(Missionflag)
+    bit 7,a
+    jr nz,LAB_ram_894b
+LAB_ram_892e:
+    ld a,(ecmActiveFlag)
+    and a
+    jr nz,LAB_ram_894b
+    ld hl,buf_1B73
+    ld a,(hl)
+    and a
+    jr z,LAB_ram_894b
+    bit 2,(ix+38)
+    jr nz,LAB_ram_8946
+    call getRandomNumber
+    cp 0xA0
+LAB_ram_8946:
+    ld a,0x0A
+    ld (ecmActiveFlag),a
+LAB_ram_894b:
+    bit 2,(ix+38)
+    jr z,chkCopHuntergettingHostile
+    ld a,(countShipsLaunchedByStation)
+    cp 0x04
+    ret nc
+    call getRandomNumber
+    bit 2,(ix+33)
+    jr z,todoSelectShipx24
+    cp 0x24
+    ret nc
+    ld a,(ThargonMissionVar)
+    cp 0x04
+    ld a,0x14
+    jr nz,todo_SpawnCmdParserSaveIXIY
+    call getRandomNumber
+    cp 0x88
+    ret nc
+    ld a,0x44
+    jr todo_SpawnCmdParserSaveIXIY
+todoSelectShipx24:
+    cp 0x02
+    ret nc
+    ld a,0x24
+; Saves IX and IY around a call to the spawn command parser (in a db run)
+todo_SpawnCmdParserSaveIXIY:
+    push iy
+    push ix
+    call spawnCommandParser
+    pop ix
+    pop iy
+    ret
+; Checks whether a ship is closer than DE on each axis (carry set if within range)
+todoReduceDistancetome:
+    ld h,(ix+1)
+    ld l,(ix+0)
+    and a
+    sbc hl,de
+    ret nc
+    ld h,(ix+4)
+    ld l,(ix+3)
+    and a
+    sbc hl,de
+    ret nc
+    ld h,(ix+7)
+    ld l,(ix+6)
+    inc d
+    inc d
+    and a
+    sbc hl,de
+    ret
+chkCopHuntergettingHostile:
+    bit 1,(ix+33)
+    jr z,LAB_ram_89b8
+    ld a,(legalStatus)
+    cp 0x28
+    jr c,LAB_ram_89b8
+    set 2,(ix+33)
+LAB_ram_89b8:
+    ld de,0x0200
+    call todoReduceDistancetome
+    jr c,LAB_ram_89f4
+    bit 5,(ix+38)
+    jr z,LAB_ram_89cd
+    ld d,0x0A
+    call todoReduceDistancetome
+    jr c,LAB_ram_89f4
+LAB_ram_89cd:
+    bit 2,(ix+33)
+    ret z
+    ld a,(ThargonMissionVar)
+    cp 0x04
+    jr z,LAB_ram_89e7
+    ld a,(sEntityEnergy)
+    and a
+    jr z,LAB_ram_89e7
+    bit 3,(ix+33)
+    jr z,LAB_ram_8a10
+    jr LAB_ram_89f4
+LAB_ram_89e7:
+    ld a,(ix+37)
+    and 0x7F
+    cp 0x08
+    jr nc,LAB_ram_8a10
+    set 7,(ix+37)
+LAB_ram_89f4:
+    push ix
+    call SUB_ram_8ae7
+    ld (dat_8830),hl
+    call SUB_ram_8ae7
+    ld (todosomeypos),hl
+    call SUB_ram_8ae7
+    ld (todosomezpos),hl
+    pop ix
+    set 5,(ix+38)
+    jr LAB_ram_8a2a
+LAB_ram_8a10:
+    push ix
+    call SUB_ram_8ae0
+    ld (dat_8830),hl
+    call SUB_ram_8ae0
+    ld (todosomeypos),hl
+    call SUB_ram_8ae0
+    ld (todosomezpos),hl
+    pop ix
+    res 5,(ix+38)
+LAB_ram_8a2a:
+    jp LAB_ram_8aff
+; Handles a missile when ECM is active: destroys it, else tests its target and the ship's state
+MissileDestroyedbyECM:
+    ld a,(ecmActiveFlag)
+    and a
+    jr z,LAB_ram_8a3c
+    res 6,(ix+32)
+    set 4,(ix+32)
+    ret
+LAB_ram_8a3c:
+    ld a,(ix+37)
+    and a
+    jr z,LAB_ram_8a10
+    push iy
+    ld iy,0x1A19
+    ld de,0x0027
+    sub 0x0A
+    cpl
+    ld b,a
+LAB_ram_8a4f:
+    add iy,de
+    djnz LAB_ram_8a4f
+    push ix
+    push iy
+    call scaled_relative_pos_component
+    ld (dat_8830),hl
+    call scaled_relative_pos_component
+    ld (todosomeypos),hl
+    call scaled_relative_pos_component
+    ld (todosomezpos),hl
+    pop iy
+    pop ix
+    call SUB_ram_8aaf
+    jr nz,LAB_ram_8aaa
+    ld hl,(todosomeypos)
+    call SUB_ram_8aaf
+    jr nz,LAB_ram_8aaa
+    ld hl,(dat_8830)
+    call SUB_ram_8aaf
+    jr nz,LAB_ram_8aaa
+    bit 2,(iy+38)
+    jr z,LAB_ram_8a9f
+    ld hl,ThargonMissionVar
+    ld a,(hl)
+    cp 0x04
+    jr nz,LAB_ram_8aa3
+    set 3,(hl)
+    dec l
+    xor a
+    ld (hl),a
+    ld de,0xFFFF
+    call AddDEtoKillScore
+    set 7,(iy+38)
+LAB_ram_8a9f:
+    set 4,(iy+32)
+LAB_ram_8aa3:
+    pop iy
+    set 4,(ix+32)
+    ret
+LAB_ram_8aaa:
+    pop iy
+    jp LAB_ram_8a2a
+SUB_ram_8aaf:
+    add hl,hl
+    ld a,h
+    and a
+    ret nz
+    ld a,l
+    and 0xC0
+    ret
+; ZX Spectrum: scaled_relative_pos_component (&A53F)
+; Halves one coordinate of each of two ships and returns (other - this)/2 in HL: a quarter-scale difference of their positions on one axis.
+; In: IX = this ship's coordinate triple, IY = the other's. Advances both by 3. Used by the combat AI.
+scaled_relative_pos_component:
+    ld l,(iy+0)
+    ld h,(iy+1)
+    ld c,(iy+2)
+    ld e,(ix+0)
+    ld d,(ix+1)
+    ld b,(ix+2)
+    sla c
+    rr h
+    rr l
+    sla b
+    rr d
+    rr e
+    call minus_de_plus_hl_div_2
+    ld de,0x0003
+    add ix,de
+    add iy,de
+    ret
+SUB_ram_8ae0:
+    ld a,(ix+2)
+    xor 0x80
+    jr LAB_ram_8aea
+; ZX Spectrum: encode_ship_position_coord (&A568)
+; Encodes one coordinate of a ship's position: halves the 16-bit magnitude and folds the sign into bit 15 (the combat AI works on these).
+SUB_ram_8ae7:
+    ld a,(ix+2)
+LAB_ram_8aea:
+    ld l,(ix+0)
+    ld h,(ix+1)
+    srl h
+    rr l
+    rla
+    rr h
+    rr l
+    ld de,0x0003
+    add ix,de
+    ret
+LAB_ram_8aff:
+    push iy
+    ld iy,dat_8830
+    push ix
+    ld ix,dat_8830
+    call normalize_position_vector
+    pop ix
+    ld (BYTE_ram_8836),de
+    push ix
+    ld de,0x0009
+    add ix,de
+    call dot_product_scale_factor
+    ld de,0x0006
+    add ix,de
+    ld h,a
+    push hl
+    call dot_product_scale_factor
+    pop hl
+    ld l,a
+    push hl
+    ld de,0x0006
+    add ix,de
+    call dot_product_scale_factor
+    pop hl
+    pop ix
+    pop iy
+    ld d,a
+    and 0x7F
+    jr z,LAB_ram_8b5f
+    ld c,a
+    srl c
+    srl c
+    srl c
+    adc a,c
+    srl a
+    srl a
+    cp 0x0F
+    jr c,LAB_ram_8b4f
+    ld a,0x0F
+LAB_ram_8b4f:
+    ld b,a
+    ld a,d
+    xor l
+    and 0x80
+    rra
+    or b
+    ld (ix+29),a
+    and 0x3F
+    cp 0x04
+    jr nc,LAB_ram_8b7d
+LAB_ram_8b5f:
+    ld a,h
+    bit 7,a
+    jr z,LAB_ram_8b73
+    and 0x7F
+    add a,0x50
+    srl a
+    cpl
+    add a,0x68
+    srl a
+    cp 0x40
+    jr c,LAB_ram_8b75
+LAB_ram_8b73:
+    ld a,0x3F
+LAB_ram_8b75:
+    sla l
+    rra
+    srl a
+    ld (ix+30),a
+LAB_ram_8b7d:
+    xor a
+    bit 7,(ix+37)
+    jr z,LAB_ram_8b86
+    ld a,0x02
+LAB_ram_8b86:
+    ld (ix+28),a
+    ret nz
+    ld de,(BYTE_ram_8836)
+    ld a,d
+    sla h
+    jr nc,combat_ai_refine_dist_zone
+    ld b,0x0A
+    bit 0,(ix+38)
+    jr z,LAB_ram_8b9d
+    ld b,0x02
+LAB_ram_8b9d:
+    cp b
+    jr c,LAB_ram_8baa
+    ld b,0x01
+    cp 0x10
+    jr nc,LAB_ram_8ba7
+    inc b
+LAB_ram_8ba7:
+    ld (ix+28),b
+LAB_ram_8baa:
+    bit 2,(ix+33)
+    ret z
+    ld a,(ix+8)
+    xor (ix+14)
+    and 0x80
+    ret z
+    ld b,(iy+2)
+    ld a,(killScoreHigh)
+    and a
+    jr nz,LAB_ram_8bc3
+    srl b
+LAB_ram_8bc3:
+    call getRandomNumber
+    cp b
+    ret nc
+    ld a,(ix+38)
+    and 0x0F
+    ret nz
+    ld a,d
+    cp 0x0C
+    ret nc
+    sla h
+    ret nc
+    set 3,(ix+32)
+    ld a,d
+    cp 0x04
+    jr c,LAB_ram_8be1
+    sla h
+    ret nc
+LAB_ram_8be1:
+    ld hl,sfxFlags1Bitmap
+    set 6,(hl)
+    bit 7,(ix+8)
+    jr z,doDamagetoFrontshield
+    ld a,(damageToRearShield)
+    add a,0x07
+    ld (damageToRearShield),a
+    ret
+doDamagetoFrontshield:
+    ld a,(damageToFrontShield)
+    add a,0x07
+    ld (damageToFrontShield),a
+    ret
+; ZX Spectrum: combat_ai_refine_dist_zone (&A686)
+; Combat AI: when the other ship is behind, leaves the distance zone alone if it is close (within 11, or 3 once a missile or pod has been launched),
+; otherwise overwrites it with -1 or -2 by distance.
+combat_ai_refine_dist_zone:
+    ld b,0x0B
+    bit 0,(ix+38)
+    jr z,LAB_ram_8c08
+    ld b,0x03
+LAB_ram_8c08:
+    cp b
+    ret c
+    ld b,0xFF
+    cp 0x12
+    jr c,LAB_ram_8c11
+    dec b
+LAB_ram_8c11:
+    ld (ix+28),b
+    ret
+; ZX Spectrum: minus_4_a_b (&A69D)
+; In: A, B = sign-magnitude bytes. Out: H = sign of -(A*B), L = 4*|A|*|B|/256 (the magnitudes are doubled and run through mult_b_c_msb).
+; The minus sign is built in: dot_product_scale_factor adds three of these up.
+minus_4_a_b:
+    ld c,a
+    xor b
+    xor 0x80
+    sla b
+    sla c
+    push af
+    call mult_b_c_msb
+    pop hl
+    ld l,a
+    ret
+; ZX Spectrum: dot_product_scale_factor (&A6AC)
+; Sums -4*a*b/256 over the x, y and z high bytes of two vectors (IX and IY, bytes 1, 3, 5), saturating at &FF.
+; Out: A = sign-magnitude result. Used when rotating a position into a ship's frame and when orthogonalising the roof vector.
+dot_product_scale_factor:
+    ld b,(ix+1)
+    ld a,(iy+1)
+    call minus_4_a_b
+    push hl
+    ld b,(ix+3)
+    ld a,(iy+3)
+    call minus_4_a_b
+    push hl
+    ld b,(ix+5)
+    ld a,(iy+5)
+    call minus_4_a_b
+    pop de
+    call add_sign_mag_bytes
+    jr nc,LAB_ram_8c49
+    ld a,0xFF
+LAB_ram_8c49:
+    pop de
+    ld l,a
+    call add_sign_mag_bytes
+    jr nc,LAB_ram_8c52
+    ld a,0xFF
+LAB_ram_8c52:
+    rl h
+    rra
+    ret
+; Key code of ESC in the ASCII keyboard table below (row 8, bit 2). The stock game has 0xFF (= no key), so ESC does nothing; 0x7F is above every code the prompts accept, so
+; getInputForFunctionHL (buy, sell, equipment) leaves on it, and InputString ignores it. Active with -DENHANCED; the default build keeps 0xFF (the original bytes).
+    IFNDEF ESC_KEYCODE
+      IFDEF ENHANCED
+ESC_KEYCODE equ 0x7F                ; tools/check_src.sh compares the -DENHANCED build with the original
+      ELSE
+ESC_KEYCODE equ 0xFF                ; the original bytes
+      ENDIF
+    ENDIF
+    IFDEF TITLESEL
+    ENDIF
+tblKeyboardmatrix:
+    db 0xFF,0xFF,0xFF,"963",0x0D,".",0xFF,0xFF,"785120"
+    db 0xFD,"[",0x0D,"]4",0xFF,0x5C,0xFF,"^-@P;:/."
+    db "09OILKM,87UYHJN "
+    db "65RTGFBV43EWSDCX"
+    db "12",ESC_KEYCODE,"Q",0xFF,"A",0xFF,"Z",0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFE
+; Keyboard interrupt step: clears flags, reads the PPI keyboard, stores the key, updates controls
+IRKeyboardInput:
+    call ClearsomeFlags
+    call getPPI_Input
+    call ReadnStoreKey
+    call irki1
+    call irki2
+    ret
+; Clears the keyboard flag bytes at keybFlags1 onwards
+ClearsomeFlags:
+    ld hl,keybFlags1
+    xor a
+    ld (hl),a
+    inc hl
+    call csfSetData
+; Stores A twice at HL and advances HL by two
+csfSetData:
+    ld (hl),a
+    inc hl
+    ld (hl),a
+    inc hl
+    ret
+; Finds the first pressed key in the PPI rows and stores its key code in pressedKey (0xFF if none)
+ReadnStoreKey:
+    ld b,0x0A
+    ld hl,dataFromPPI
+    ld a,0xFF
+irki3:
+    cp (hl)
+    jr nz,irki4
+    inc hl
+    djnz irki3
+    ld (pressedKey),a
+    ret
+irki4:
+    ld a,0x0A
+    sub b
+    ld b,a
+    ld a,(hl)
+    ld c,0xFF
+irki5:
+    inc c
+    rra
+    jr c,irki5
+    ld a,b
+    add a,a
+    add a,a
+    add a,a
+    add a,c
+    ld h,0x00
+    ld l,a
+    ld de,tblKeyboardmatrix
+    add hl,de
+    ld a,(hl)
+    ld (pressedKey),a
+    ret
+flagDrawLaserline:
+    db 0x00
+; Walks all PPI keyboard rows and sets the matching key flag bits from tblKeyboardMatrix2
+irki1:
+    ld iy,dataFromPPI
+    ld ix,tblKeyboardMatrix2
+    ld d,0x0A
+irki1_1:
+    ld c,0x08
+    ld e,(iy+0)
+irki1_2:
+    rr e
+    jr c,irki1_5
+    ld a,(ix+0)
+    ld b,a
+    rra
+    rra
+    rra
+    and 0x07
+    ld hl,keybFlags1
+    add a,l
+    ld l,a
+    jr nc,irki1_3
+    inc h
+irki1_3:
+    ld a,b
+    and 0x07
+    ld b,a
+    inc b
+    ld a,0x01
+irki1_4loop:
+    rrca
+    djnz irki1_4loop
+    or (hl)
+    ld (hl),a
+irki1_5:
+    inc ix
+    dec c
+    jr nz,irki1_2
+    inc iy
+    dec d
+    jr nz,irki1_1
+    ret
+dataFromPPI:
+    db 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+tblKeyboardMatrix2:
+    db 0x0C,0x0E,0x0D,0x06,0x03,0x15,"''",0x0F,"#",0x04,0x05,0x02,0x17,0x16,0x07
+    db "''''",0x14,"'''''",0x09,"'''",0x0A,0x0E
+    db 0x07,0x06,"''''",0x1D,0x0F,0x05,0x04,0x1C,0x00,0x13,0x11,"'",0x0B
+    db 0x03,0x02,"'",0x1E,0x12,"!#'",0x14,0x15,0x1B,"'",0x0C,0x22,0x18,0x0D
+    db 0x17,0x16,0x19,"'",0x1A,0x1F,"''",0x0C,0x0D,0x0F,0x0E,0x1F,0x1F,"'",0x10
+keybFlags1:
+    db 0x00
+keybFlags2:
+    db 0x00
+keybFlags3:
+    db 0x00
+keybFlags4CounterNstringNumber:
+    db 0x00
+keybFlags5:
+    db 0x00
+; Reads all keyboard rows from the PPI into dataFromPPI (with the CPC+ fix)
+getPPI_Input:
+    ld hl,dataFromPPI
+    ld bc,0xF40E
+    out (c),c
+    ld b,0xF6
+    in a,(c)
+    and 0x30
+    ld c,a
+    or 0xC0
+    out (c),a
+    out (c),c                ; CPC+ fix: was out (c),a (see docs/_cpcplus.md)
+    inc b
+    ld a,0x92
+    out (c),a
+    push bc
+    set 6,c
+ppiLoop:
+    ld b,0xF6
+    out (c),c
+    ld b,0xF4
+    in a,(c)
+    ld (hl),a
+    inc hl
+    inc c
+    ld a,c
+    and 0x0F
+    cp 0x0A
+    jr nz,ppiLoop
+    pop bc
+    ld a,0x82
+    out (c),a
+    dec b
+    out (c),c
+tblLaserNumbers:
+    ret
+    db 0x05,0x06,0x0D,0x0E
+charsATAT:
+    db "@@"
+FlightDigrams:
+    db "ABOUSEITILETSTON"
+    db "LONUTHNO"
+DockedDigrams:
+    db "ALLEXEGEZACEBISO"
+    db "USESARMAINDIREA?"
+    db "ERATENBERALAVETI"
+    db "EDORQUANTEISRION"
+pressedKey:
+    db 0xFF
+; ZX Spectrum: handle_held_key (&FCBA)
+; Keyboard scan: combines the row (D) and bit position (E) into a key index, looks up its code and records the key.
+keybFlags0:
+    adc a,h
+    nop
+    push bc
+    push af
+    ld a,0x05
+    sub e
+    sla a
+    sla a
+    sla a
+    add a,d
+    dec a
+    ld b,a
+    sla b
+    ld hl,tblKeyboardmatrix
+    add a,l
+    jr nc,loc_8E3C
+    inc h
+loc_8E3C:
+    ld l,a
+    ld a,(hl)
+    ld (pressedKey),a
+    ld hl,tblKeyFlagOffsetMask
+    ld a,l
+    add a,b
+    ld l,a
+    ld a,(hl)
+    inc hl
+    ld b,(hl)
+    ld hl,keybFlags1
+    add a,l
+    ld l,a
+    ld a,(hl)
+    or b
+    ld (hl),a
+    pop af
+    pop bc
+    ret
+; Converts key flags to roll/pitch input values, with ramping, for the flight views
+irki2:
+    ld a,(Viewdirection)
+    cp 0x04
+    ret nc
+    ld a,(keybFlags2)
+    ld b,a
+    ld a,(keybFlags0)
+    ld c,a
+    ld hl,(irki2_dat1)
+    bit 0,b
+    jr nz,irki2_3
+    bit 1,b
+    jr nz,irki2_1
+    bit 3,c
+    jr z,irki2_8
+    ld de,0x003C
+    and a
+    sbc hl,de
+    bit 6,h
+    jr z,irki2_8
+    ld hl,0x0000
+    jp irki2_8
+irki2_1:
+    ld a,h
+    and 0x7F
+    or l
+    jr nz,irki2_2
+    ld hl,0x00FF
+    jp irki2_8
+irki2_2:
+    bit 7,h
+    jr z,irki2_5
+    jp irki2_6
+irki2_3:
+    bit 1,b
+    jr nz,irki2_8
+    ld a,h
+    and 0x7F
+    or l
+    jr nz,irki2_4
+    ld hl,0x80FF
+    jp irki2_8
+irki2_4:
+    bit 7,h
+    jr z,irki2_6
+irki2_5:
+    ld de,0x00FF
+    add hl,de
+    bit 4,h
+    jr z,irki2_8
+    and a
+    sbc hl,de
+    jp irki2_8
+irki2_6:
+    bit 2,c
+    jr z,irki2_7
+    ld hl,0x0000
+    jp irki2_8
+irki2_7:
+    ld de,0x00FF
+    and a
+    sbc hl,de
+    bit 6,h
+    jr z,irki2_8
+    ld hl,0x0000
+irki2_8:
+    ld (irki2_dat1),hl
+    ld hl,(irki2_dat2)
+    bit 2,b
+    jr nz,irki2_11
+    bit 3,b
+    jr nz,irki2_9
+    bit 3,c
+    jr z,irki2_16
+    ld de,0x0024
+    and a
+    sbc hl,de
+    bit 6,h
+    jr z,irki2_16
+    ld hl,0x0000
+    jp irki2_16
+irki2_9:
+    ld a,h
+    and 0x7F
+    or l
+    jr nz,irki2_10
+    ld hl,0x0066
+    jp irki2_16
+irki2_10:
+    bit 7,h
+    jr z,irki2_13
+    jp irki2_14
+irki2_11:
+    bit 3,b
+    jr nz,irki2_16
+    ld a,h
+    and 0x7F
+    or l
+    jr nz,irki2_12
+    ld hl,0x8066                        ; the pitch step; the disassembler had read it as the address of dh3nextPixelline (stock &8066), which moved
+    jp irki2_16
+irki2_12:
+    bit 7,h
+    jr z,irki2_14
+irki2_13:
+    ld de,0x0066
+    add hl,de
+    bit 4,h
+    jr z,irki2_16
+    and a
+    sbc hl,de
+    jp irki2_16
+irki2_14:
+    bit 2,c
+    jr z,irki2_15
+    ld hl,0x0000
+    jp irki2_16
+irki2_15:
+    ld de,0x0066
+    and a
+    sbc hl,de
+    bit 6,h
+    jr z,irki2_16
+    ld hl,0x0000
+irki2_16:
+    ld (irki2_dat2),hl
+    ld hl,(irki2_dat3)
+    ld de,0x00A0
+    bit 4,b
+    jr nz,irki2_17
+    bit 5,b
+    jr z,loc_8F6F
+    and a
+    sbc hl,de
+    jr irki2_18
+irki2_17:
+    bit 5,b
+    jr nz,loc_8F6F
+    add hl,de
+    jp irki2_19
+irki2_dat1:
+    db 0x00
+initialRollnPitch:
+    db 0x00
+irki2_dat2:
+    db 0x00,0x00
+irki2_dat3:
+    db 0x00,0x00
+irki2_18:
+    jr nc,loc_8F6F
+    ld hl,0x0000
+    jp loc_8F6F
+; ZX Spectrum: clamp_speed_rate_max (&FF16)
+; Clamps the speed rate at its maximum after increasing it: undoes the increase when bit 5 of H is set.
+irki2_19:
+    bit 5,h
+    jr z,loc_8F6F
+    and a
+    sbc hl,de
+loc_8F6F:
+    ld (irki2_dat3),hl
+    xor a
+    ld (keybFlags2),a
+    ret
+tblKeyFlagOffsetMask:
+    db 0x01,0x10,0x00,0x01,0x00,0x08,0x00,"@",0x02,0x01,0x03,"@",0x03,0x01,0x02,0x80
+    db 0x01," ",0x00,0x02,0x00,0x10,0x07,0x01,0x02,0x02,0x03," ",0x01,0x08,0x00,0x00
+    db 0x01,0x02,0x00,0x04,0x00," ",0x07,0x04,0x02,0x04,0x03,0x10,0x04," ",0x01,0x04
+    db 0x01,0x01,0x02,"@",0x03,0x08,0x07,0x10,0x02,0x08,0x04,"@",0x03,0x04,0x03,0x80
+    db 0x04,0x10,0x02,0x10,0x00,0x80,0x07,0x08,0x07,0x02,0x03,0x02,0x02," ",0x00,0x00
+; Ship blueprints, in memory order from here to shipdatViper (14 hulls; `shipGFXdataTable` indexes them). A blueprint is a 23-byte header followed by
+; the vertex, edge and face lists, which the header addresses by offset from the blueprint's first byte. Header (same layout as the ZX Spectrum build):
+;   +00 cargo: low nybble non-zero = drops a canister; high nybble = commodity index + 1 for the scooped wreck
+;   +01 size used to scale the on-screen size and to skip drawing at extreme range    +02 laser-fire weight for the AI roll
+;   +03 vertex count, +04 edge count, +05 face count    +06 max speed    +07 max energy    +08 bounty (word)
+;   +0A bit field (low 3 bits: missile count, copied into the ship's action byte)    +0B visibility distance
+;   +0C/+0E/+10 offsets (words) of the vertices, edges and faces    +12 behaviour flags (copied, masked, into the ship record; see the Viper's bits 5-6 for the legal-status rule)
+;   +13 normals scale    +14 gun vertex    +15 score value (word)
+; Vertex: x, y, z magnitudes, then sign bits (7-5) with visibility distance (4-0), then four face numbers as nybbles.
+; Edge: visibility distance, start vertex, end vertex, two face numbers as nybbles. Face: normal x, y, z magnitudes, then sign bits (7-5) with visibility distance (4-0).
+; Blueprint: Asp Mk II - 19 vertices, 28 edges, 12 faces, max speed 40, max energy 150, bounty 200
+; 128K build: the blueprints come from tools/ship128.py, from the stock blueprints (HULLS=stock, the default) or from ArcElite's hulls (HULLS=arcelite): vertices only,
+; edges and faces empty, stock headers; the alloy plate keeps its four stock vertices.
+; work/elite128/ is generated and not in the repository: run `python3 -I tools/ship128.py` first (tools/check_src128.sh does).
+; The blueprints fill a slot of a fixed size whichever source made them, so every address after it is the same for both and switching sources needs no sync_equs.
+HULL_REGION_SIZE equ 1781           ; the size of the ArcElite blueprints (ship128_report.txt: "blueprints replaced")
+hullRegion:
+    INCLUDE "../../work/elite128/shipdata128.asm"
+    ASSERT $ - hullRegion <= HULL_REGION_SIZE, "the hull blueprints do not fit their slot: fewer vertices (the designs in tools/hullfill.py cost 6 bytes each), or a larger HULL_REGION_SIZE (then every address after it moves: run tools/sync_equs.py)"
+    DS HULL_REGION_SIZE - ($ - hullRegion)
+
+; Filled hulls (128K build, docs: src/elite128/README.md). todo_parseEdges is replaced by hullDraw: hulls with a fill record are drawn by the module in RAM bank 6
+; (src/elite128/fill.asm, mapped at &4000 by config C6 for the call), all others fall back to the wireframe edge walk.
+; The projected vertices (buf_5860, hidden by the window) are copied to hullVertexBuf first; the music call of the ISR is switched off while the bank is mapped.
+; The stack lives at &7497 inside the window: pushes made while bank 6 is mapped land in bank 6, so nothing is pushed across the map and unmap.
+; --- moved here from &3FFE-&4139: small routines that LARGEAXX and the block call, now resident (the window is the screen) ---
+printCleartext:
+    ld a,(hl)
+    cp 0x00
+    scf
+    ret z
+    inc hl
+    push hl
+    cp 0x20
+    jr z,simplyprintit
+    cp 0x30
+    jr c,replacewithminus
+    cp 0x5B
+    jr nc,replacewithminus
+    cp 0x41
+    jr nc,simplyprintit
+    cp 0x3A
+    jr nc,replacewithminus
+simplyprintit:
+    call printString
+    pop hl
+    jr printCleartext
+replacewithminus:
+    ld a,0x2D
+    jr simplyprintit
+; Prints the token chosen by the stored byte, picking among a few fixed token ranges
+parseStoredToken:
+    ld a,0x00
+    ld (todoSomePrintFlag),a
+    ld a,(storedByteVariable)
+    cp 0x0D
+    jr c,printTokenx54
+    cp 0x0F
+    jr c,printTokenx4b
+    jr z,printTokenx47
+    cp 0x11
+    jr c,printTokenx54
+    jr printTokens4b4d
+printTokenx54:
+    ld a,0x54
+    jr directPrintstring
+printTokenx4b:
+    ld a,0x4B
+    call printString
+printTokenx47:
+    ld a,0x47
+    jr directPrintstring
+printTokens4b4d:
+    call printStringFollowingByte
+    db "K"
+    ld a,0x4D
+directPrintstring:
+    jp printString
+; ZX Spectrum: commodity_is_tonnes (&E34C)
+; Carry set when the current commodity is measured in tonnes (indices 0-12 and 16), clear for kilograms and grams.
+todoReturnPressed:
+    ld a,(storedByteVariable)
+    cp 0x0D
+    ret c
+    cp 0x10
+    jr nz,loc_403C
+    scf
+    ret
+loc_403C:
+    and a
+    ret
+; Short delay of 128 frames (halt loop); falls into longDelay's loop with B = 0x80
+sub_403E:
+    IFDEF ENHANCED
+    ld b,0x30                       ; halt resumes on every interrupt (6 per frame), so 0x80 was about 0.43 s before each key read; 0x30 is about 0.16 s
+    ELSE
+    ld b,0x80
+    ENDIF
+predelayOperand equ $ - 1
+    jr loopDelay
+; Waits 240 frames (halt loop)
+longDelay:
+    ld b,0xF0
+loopDelay:
+    halt
+    djnz loopDelay
+    ret
+; Saves the cursor position (charXY) to a buffer; no callers found (probably unused)
+bufferCharXY:
+    ld hl,(charXY)
+    ld (SCREEN+0x2FFC),hl
+    ret
+; Homes the cursor to row 0x15 and clears that text line and the one below
+clrLine0x15:
+    ld hl,0x1500
+    ld (charXY),hl
+    ld de,SCREEN+0x542
+    call SUB_ram_405e
+; Clears the screen bytes of text line 0x16 (and the following line via SUB_ram_405e)
+clrLine0x16:
+    ld de,SCREEN+0x582
+; Clears 60 bytes at DE with zero for each of the 8 scan lines of the text cell
+SUB_ram_405e:
+    ld bc,0x003C
+    xor a
+    call FillmemoryRegionDEwithA
+    ld a,d
+    add a,0x08
+    ld d,a
+    bit 7,d                           ; 128K layout: loop while inside the screen page &4000-&7FFF (it was the carry out of D at &C000)
+    jr z,SUB_ram_405e
+    ret
+; Restores the cursor position saved by bufferCharXY; no callers found (probably unused)
+restoreCharXY:
+    ld hl,(SCREEN+0x2FFC)
+    ld (charXY),hl
+    ret
+inputstrlen:
+    db 0x00
+pointerCharposInString:
+    db 0x00,0x00
+inputchar:
+    db 0x00
+FindPlanet:
+    ld a,0x0E
+    ld b,0x08
+    ld hl,strPilotname
+    call InputString
+    ld a,(inputstrlen)
+    and a
+    jp z,clrLine0x15
+    call searchGalaxyforPlanetName
+    jr nc,PlanetFound
+    ld hl,strPilotname
+    call printCleartext
+    call printStringFollowingByte
+    db 0x08
+    call printStringFollowingByte
+    db 0xE1
+    call sfxForKeyInput
+    jp clearKeyBuffer
+PlanetFound:
+    call printStringFollowingByte
+    db 0x08
+    jp placeCrossHairPrintDistance
+InputquestionToken:
+    db 0x00
+pointerInputStringAdr:
+    db 0x00,0x00
+; Prompts with token A and reads a typed string of up to B characters into the buffer at HL
+InputString:
+    ld (InputquestionToken),a
+    ld a,b
+    ld (smc_isPatchStrlen+1),a
+    ld (pointerInputStringAdr),hl
+    ld hl,(pointerInputStringAdr)
+    ld (pointerCharposInString),hl
+    xor a
+    ld (inputstrlen),a
+    call clrLine0x15
+    call printStringFollowingByte
+    db 0x06
+    ld a,(InputquestionToken)
+    call printStringA
+chkvalidinput:
+    call WaitForKeypress
+    ld (inputchar),a
+    cp 0x0D
+    jr z,inputend
+    cp 0xFE
+    jr z,inputbs
+    ld a,(inputchar)
+    cp 0x30
+    jr c,chkvalidinput
+    cp 0x5B
+    jr nc,chkvalidinput
+    cp 0x3A
+    jr c,LAB_ram_40ed
+    cp 0x41
+    jr c,chkvalidinput
+LAB_ram_40ed:
+    ld d,a
+    ld a,(inputstrlen)
+smc_isPatchStrlen:
+    cp 0x0A
+    jr nc,inputend
+    inc a
+    ld (inputstrlen),a
+    ld a,d
+    ld hl,(pointerCharposInString)
+    ld (hl),a
+    inc hl
+    ld (pointerCharposInString),hl
+    call printString
+    jr chkvalidinput
+inputbs:
+    ld a,(inputstrlen)
+    and a
+    jr z,chkvalidinput
+    dec a
+    ld (inputstrlen),a
+    ld hl,(pointerCharposInString)
+    dec hl
+    ld (pointerCharposInString),hl
+    call ClearCharAtpos
+    ld b,0x08
+bsDelayLoop:
+    halt
+    djnz bsDelayLoop
+    call clearKeyBuffer
+    jr chkvalidinput
+inputend:
+    ld hl,(pointerCharposInString)
+    ld (hl),0x00
+    call placeCursor
+    call sub_403E
+inputWaitForCR:
+    ld a,(pressedKey)
+    cp 0x0D
+    jr z,inputWaitForCR
+    jp clearKeyBuffer
+hullVertexBuf:
+    ds 84                               ; 28 vertices x 3 bytes
+; the fill module's entry points in the RAM bank 6 window (src/elite128/fill.asm); window addresses, not code of this file
+fillHullEntry equ 0x4000
+fillInitEntry equ 0x4003
+hullType:
+    db 0
+curCfg:
+    db 0xC1                             ; RAM configuration the CPU draws with (C1: screen A = bank 1 at &4000, C3: screen B = bank 3)
+hullDummy:
+    ds 8
+hullDraw:
+    call hullFindType                   ; A = ship type 0..18 from the blueprint pointer in IY, carry if none
+    jp c,todo_parseEdges
+    ld (hullType),a
+    ld a,(iy+3)                         ; copy 3 * vertex count bytes of buf_5860 to the resident buffer
+    ld c,a
+    add a,a
+    add a,c
+    ld c,a
+    ld b,0
+    ld hl,buf_5860
+    ld de,hullVertexBuf
+    ldir
+    ld a,(hullType)
+    push iy                             ; the fill reuses IY; the caller needs the blueprint pointer for the gun vertex
+    ld (hullSaveSP),sp                  ; the game stack is in bank 7, which RAM bank 6 at &4000 (config C6) hides: use the resident stack for the call
+    ld sp,hullStackTop
+    ld bc,0x7FC6                        ; RAM bank 6 at &4000
+    out (c),c
+    call fillHullEntry                              ; fillHull (src/elite128/fill.asm): carry set = no fill record for this type
+    mapMain                             ; back to the draw configuration (the carry of the fill survives mapMain, the stack switch and the pop)
+    ld sp,(hullSaveSP)
+    pop iy
+    ret nc
+    jp todo_parseEdges                  ; carry: no record, wireframe
+bankCopy equ bankInit                   ; the first 20 bytes of the overlay on bankInit (lasersights128.asm): A = count, HL = source (window address in bank 6), DE = destination (resident)
+laserSightsHome equ bankInit + 20       ; the laser sights follow it (see lasersights128.asm)
+    IFDEF SPAWN_VARIANCE
+laserSightsSize equ 0xF8
+    ELSE
+laserSightsSize equ 0xC0
+    ENDIF
+;               ; bytes the last step of bankInit copies over bankInit
+musicState equ bankInit + 0x80          ; the title music (lasersights128.asm, the hook rides in the same overlay): 0 = off, 1 = on, n > 1 = n - 1 ticks owed
+musicHook equ bankInit + 0x81
+spawnVariance equ bankInit + 0xB7       ; after the music hook in the same overlay (lasersights128.asm), only with SPAWN_VARIANCE
+spawnRock equ bankInit + 0xBC
+spawnPackShip equ bankInit + 0xDA
+musicSlot equ loc_604A - 0x4A           ; the 4 KB of the code block in RAM bank 7 (stock &6000-&6FFF, flight-only code) that the player overlays while the title runs (musiquex.asm)
+bankInitStageFill  equ STAGE+0x800
+bankInitStageData  equ STAGE+0x1000
+; Once, at the start of Init_: the loader put the fill module and its records into blank screen bytes of COMMON2X (tools/build_dsk128.py), which are still
+; visible at &C000 when bank 6 is mapped at &4000 (config C6 leaves bank 3 at &C000). Copy them to bank 6 and build the module's tables (fillInit, &4003).
+bankInit:
+    di
+    ld hl,0x4000                        ; is there a second 64 KB? write &A5 here, &5A with bank 4 mapped here, read here again with the normal map (a 464/664 ignores the port)
+    ld e,(hl)
+    ld (hl),0xA5
+    ld bc,0x7FC4
+    out (c),c
+    ld d,(hl)                           ; bank 4's own byte
+    ld (hl),0x5A
+    ld bc,0x7FC0
+    out (c),c
+    ld a,(hl)
+    ld (hl),e                           ; the normal byte back
+    cp 0xA5
+    jr nz,bankNoRam
+    ld bc,0x7FC4
+    out (c),c
+    ld (hl),d
+    ld bc,0x7FC0
+    out (c),c
+    jr bankInitGo
+bankNoRam:
+    ei
+    ld a,1                              ; the loader has set every ink to black: give pen 1 a colour (SCR SET INK)
+    ld bc,0x1818
+    call 0xBC32
+    call 0xBC14                         ; SCR CLEAR (the loading picture is still on the screen)
+    ld hl,bankNoRamMsg
+bankMsgLoop:
+    ld a,(hl)
+    and a
+    jr z,bankHalt
+    inc hl
+    call 0xBB5A                         ; TXT OUTPUT (the firmware still runs at this point)
+    jr bankMsgLoop
+bankHalt:
+    jr bankHalt
+bankNoRamMsg:
+    db "128K CPC REQUIRED",0
+bankInitGo:
+    ld bc,0x7FC7                        ; the code block (COMMON2X.BIN, loaded at &C000 = RAM bank 3) into RAM bank 7: config C7 shows bank 7 at &4000 and leaves bank 3 at &C000
+    out (c),c
+    ld hl,0xC000
+    ld de,0x4000
+    ld bc,0x4000
+    ldir
+    ld bc,0x7FC0                        ; the window page (COMMONXX.BIN &4000-&7FFF, RAM bank 1) as a copy in bank 3: the second screen, and the stage areas for the banks below
+    out (c),c
+    ld hl,0x4000
+    ld de,0xC000
+    ld bc,0x4000
+    ldir
+    ld bc,0x7FC6
+    out (c),c
+    ld hl,bankInitStageFill
+    ld de,0x4000
+    ld bc,0x0600
+    ldir
+    ld hl,bankInitStageData
+    ld de,0x6000
+    ld bc,0x0800
+    ldir
+    ld hl,STAGE+0x2800                  ; the records of the ship pack hulls (fill128_packs.bin, types 20-28) at &6800 (DE is there already: the data copy ended at &6800)
+    ld bc,0x0600
+    ldir
+    IFDEF SPAWN_VARIANCE
+    ld hl,STAGE+0x3000                  ; the spawn module (spawnmod.asm: code and table, 0x240 bytes at most) from a blank block to &4600
+    ld de,0x4600
+    ld bc,0x0240
+    ldir
+    ENDIF
+    call fillInitEntry                              ; fillInit
+    call installVBL                     ; loadFile's setFilemenuColors puts back the firmware interrupt vector from oldIRHandler, which holds garbage until installVBL has saved it
+    ld bc,0x7FC5                        ; INDICATO (bank 5 window &5000) is read from the disk once, with the bank mapped: the firmware loads into it
+    out (c),c
+    call loadFile
+    dw 0x5000
+    dw bankNameIndicator
+    ld bc,0x7FC7                        ; the title music (MUSIQUEX.BIN, 4096 bytes assembled for the slot) over the flight-only slot of the code block in RAM bank 7, seen at &4000 with C7
+    out (c),c
+    call loadFile
+    dw musicSlot - 0x8000
+    dw FilenameMUSIQUEX
+    ld bc,0x7FC0
+    out (c),c
+    di                                  ; loadFile ends with installVBL: put the firmware's interrupt vector back, so that the installVBL of Init_ saves the right one
+    ld hl,(oldIRHandler)
+    ld (0x0039),hl
+    ld bc,0x7FC4                        ; LARGEAXX is still where the BASIC loader put it (&0840): keep a copy in bank 4 at offset 0x900 for every later docking
+    out (c),c
+    ld hl,0x0840
+    ld de,0x4900
+    ld bc,0x1200
+    ldir
+    IFDEF MISSIONS
+    ld hl,STAGE+0x1800                  ; the overlays into bank 4 (still mapped by the copy of LARGEAXX above; slots 0 and 1 from stage &D800, 2 and 3 from &E000); the flight images come with INDICATO (bank 5 &6000, see mxBankFlightImpl)
+    ld de,0x4000
+    ld bc,0x0480
+    ldir
+    ld hl,STAGE+0x2000                  ; (DE is at &4480 already)
+    ld bc,0x0480
+    ldir
+    ENDIF
+    ld hl,bankInitStageData+0x700       ; the laser sights (lasersights128.asm, built at the address of bankInit): over the boot code above, which has run by now. Everything from
+    ld de,bankInit                      ; bankInit to here is dead after this point; this copy and the code after it sit beyond laserSightsSize
+    ld bc,laserSightsSize
+    ldir
+    ASSERT $ >= bankInit + laserSightsSize, "the copy of the laser sights would overwrite code that has not run yet"
+    ld bc,0x7FC1                        ; draw into screen A (bank 1 at &4000), bank 7 (the code block) at &C000
+    out (c),c
+    ld a,0xC1
+    ld (curCfg),a
+    ld bc,0xBC0C                        ; the screen is the page at &4000: CRTC R12 = &1C (the second page, bank 3 at &C000, is &3C), R13 = 0 (the firmware has &30 / 0)
+    out (c),c
+    ld bc,0xBD1C
+    out (c),c
+    ld bc,0xBC0D
+    out (c),c
+    ld bc,0xBD00
+    out (c),c
+    ei
+    call copyCharset                    ; writes the character set into the window page (bank 1)
+    jp pageSync                         ; ... which has to reach screen B (bank 3) as well
+; Copies the whole window page from RAM bank 1 to RAM bank 3 (C0 shows both) and returns to the draw configuration. Interrupts off, no stack use while C0 is on (the stack is in bank 7).
+pageSync:
+    di
+    ld bc,0x7FC0
+    out (c),c
+    ld hl,0x4000
+    ld de,0xC000
+    ld bc,0x4000
+    ldir
+    mapMain
+    ei
+    ret
+; Hull draw order (128K build): filled hulls overwrite each other, so ships must be drawn far to near, but the entity loop of handleEntitys draws in slot order. While the loop
+; runs (hullDefer = 1) the tail of the ship draw routine (parseFaces, vertices, hull, enemy laser) is queued instead of run: IX, IY, B and a depth key (high byte of the ship's
+; position along the view axis, larger = farther). hullFlush, called after the loop, runs the queue far to near; nothing is queued outside the loop (title screen, tunnels).
+hullDefer:
+    db 0
+hullQn:
+    db 0
+hullBegin:
+    ld a,1
+    ld (hullDefer),a
+    xor a
+    ld (hullQn),a
+    ld a,(ThargonMissionVar)
+    jp heResume
+hullEntryAddr:                          ; HL = hullQ + 8 * A
+    add a,a
+    add a,a
+    add a,a
+    ld e,a
+    ld d,0
+    ld hl,hullQ
+    add hl,de
+    ret
+hullDeferEntry:
+    ld a,(hullDefer)
+    and a
+    jr z,hullNow
+    ld a,(hullQn)
+    cp 8
+    jr nc,hullNow                       ; full (cannot happen: 8 slots)
+    call hullEntryAddr
+    push ix
+    pop de
+    ld (hl),e
+    inc hl
+    ld (hl),d
+    inc hl
+    push iy
+    pop de
+    ld (hl),e
+    inc hl
+    ld (hl),d
+    inc hl
+    ld a,b                              ; the laser flag (bit 3 of ix+32) is cleared by handleEntitys before the flush: carry it in bit 7 of B
+    bit 3,(ix+32)
+    jr z,hullNoLaser
+    or 0x80
+hullNoLaser:
+    ld (hl),a
+    inc hl
+    ld a,(Viewdirection)
+    bit 1,a
+    ld a,(ix+7)                         ; depth: z (high byte, then low byte) for front and rear views, x for left and right
+    ld e,(ix+6)
+    jr z,hullKey
+    ld a,(ix+1)
+    ld e,(ix+0)
+hullKey:
+    cp 0xFF
+    jr nz,hullKeyOk
+    dec a                               ; 0xFF marks an entry as drawn
+hullKeyOk:
+    ld (hl),a
+    inc hl
+    ld (hl),e
+    ld hl,hullQn
+    inc (hl)
+    ret
+hullNow:
+    ld a,b
+    sub 0x02
+    jp hullDrawResume
+hullFlush:
+    push ix
+    push iy
+    xor a
+    ld (hullDefer),a                    ; from here on the draw runs at once (hullNow)
+hullPick:
+    ld a,(hullQn)
+    and a
+    jr z,hullFlushEnd
+    ld b,a
+    ld hl,hullQ + 5
+    ld c,0xFF                           ; best entry (0xFF = none yet)
+    ld d,0                              ; its key
+    ld e,0                              ; index
+hullScan:
+    ld a,(hl)
+    cp 0xFF
+    jr z,hullNext                       ; already drawn
+    bit 7,c
+    jr nz,hullTake
+    cp d
+    jr c,hullNext
+    jr nz,hullTake
+    inc hl
+    ld a,(hullBestLo)                   ; same high byte: the low byte decides
+    cp (hl)
+    dec hl
+    jr nc,hullNext                      ; equal depth: the earlier slot stays first
+hullTake:
+    ld a,(hl)
+    ld d,a
+    inc hl
+    ld a,(hl)
+    ld (hullBestLo),a
+    dec hl
+    ld c,e
+hullNext:
+    ld a,l
+    add a,8
+    ld l,a
+    jr nc,hullNc
+    inc h
+hullNc:
+    inc e
+    djnz hullScan
+    bit 7,c
+    jr nz,hullFlushEnd                  ; nothing left
+    ld a,c
+    call hullEntryAddr
+    ld e,(hl)
+    inc hl
+    ld d,(hl)
+    inc hl
+    push de
+    pop ix
+    ld e,(hl)
+    inc hl
+    ld d,(hl)
+    inc hl
+    push de
+    pop iy
+    ld b,(hl)
+    inc hl
+    ld (hl),0xFF                        ; mark drawn
+    bit 7,b
+    jr z,hullNoLaser2
+    res 7,b
+    set 3,(ix+32)                       ; the tail draws the enemy laser when this bit is set
+hullNoLaser2:
+    call LAB_ram_57d0
+    res 3,(ix+32)
+    jr hullPick
+hullFlushEnd:
+    xor a
+    ld (hullQn),a
+    pop iy
+    pop ix
+    xor a
+    ld (flagEnergyBombActivated),a
+    ret
+bankNameIndicator:
+    db "INDICATO"
+bankIndicator:                          ; INDICATO, bank 5 window &5000 -> &0840 (loadIndicator swaps it into place); the destination is not remapped by C5, so no bounce buffer
+    di
+    ld bc,0x7FC5
+    out (c),c
+    ld hl,0x5000
+    ld de,0x0840
+    ld bc,0x1000
+    ldir
+    mapMain
+    ei
+    ret
+ IFDEF TITLESEL
+; --- title screen ship selection: in the 64K layout the zero tail of MUSIQUEX at &6E21, an overlay in the window; resident code here, its two tables at the end of the bank 7 block ---
+TITLE_SCREEN2:
+    jp titleScreen2                 ; +0  replaces call transferBuffertoScreen (press-space screen)
+TITLE_NEXT:
+    jp titleNext                    ; +3  replaces the automatic ship pick before the press-space screen
+TITLE_NAME:
+    jp titleName                    ; +6  replaces printELITE on the press-space screen
+titleScreen2:
+    call titleArrows
+    jp transferBuffertoScreen
+; The press-space screen opens with the Cobra Mk III, as the first screen does
+titleNext:
+    ld hl,splash2Shipnr
+    ld a,(hl)
+    and 0x80                        ; keep "key is down"
+    or 0x42                         ; always start on the Cobra Mk III (index 2); bit 6 marks the press-space screen, so that the title text cache (key = this byte) does not
+                                    ; put the first screen's heading and prompt back over it
+    ld (hl),a
+    jr titleShow
+; Step the ship on a fresh left or right press. The raw PPI rows are read because irki2 rewrites keybFlags2 into roll values.
+; Active low: row 0 bit 1 cursor right, row 1 bit 0 cursor left, row 9 bits 2 and 3 joystick left and right.
+titleArrows:
+    ld hl,dataFromPPI
+    ld a,(hl)
+    cpl
+    and 0x02
+    ld c,a
+    inc hl
+    ld a,(hl)
+    cpl
+    and 0x01
+    or c
+    ld c,a
+    ld a,(dataFromPPI + 9)
+    cpl
+    rra
+    rra
+    or c
+    and 0x03                        ; bit 0 left, bit 1 right
+    ld c,a
+    ld hl,splash2Shipnr
+    jr z,titleKeyUp
+    bit 7,(hl)
+    ret nz
+    set 7,(hl)
+    ld a,(hl)
+    srl c                           ; carry = left
+    jr c,titleLeft
+    inc a
+    jr titleStep
+titleLeft:
+    dec a
+titleStep:
+    and 0x1F                        ; the ship index is bits 0-4 (bit 6 = press-space screen marker, bit 7 = key down)
+    cp 0x1F
+    jr nz,titleNoUnder
+    ld a,TITLE_SHIPS - 1            ; a step left from 0 wraps to the last ship
+titleNoUnder:
+    cp TITLE_SHIPS
+    jr nz,titleNoOver
+    xor a                           ; a step right from the last ship wraps to 0
+titleNoOver:
+    or 0x80                         ; keep "key is down" (a wrap from 0 to the last ship would otherwise clear it)
+    ld (hl),a
+; Spawn the demo ship for the current index (the command patches go to NOP for the spawn and back to CPL after it)
+titleShow:
+    call setCommandsNOP
+    call titleSpawn                 ; common2x.asm: the table entry of the current ship (bank 6), its image into the flight tail, the ship spawned ahead
+    jp setCommandsCPL
+titleKeyUp:
+    res 7,(hl)
+    ret
+; Print the current ship's name centred on the title line (text row 1), where the ELITE title stood
+titleName:
+    ld a,(splash2Shipnr)
+    and 0x1F
+    ld l,a
+    ld h,0
+    add hl,hl
+    add hl,hl
+    add hl,hl
+    add hl,hl                       ; 16 bytes per name, in bank 6 (fill128_packs.bin, tools/ship128.py)
+    ld de,titleViewNames
+    add hl,de
+    ld de,hullVertexBuf             ; the drawing of the hull is over: its scratch buffer holds the name
+    ld a,16
+    call bankCopy
+    ld hl,hullVertexBuf
+    push hl
+    ld b,0
+titleNameLen:
+    ld a,(hl)
+    and a
+    jr z,titleNameCentre
+    inc hl
+    inc b
+    jr titleNameLen
+titleNameCentre:
+    ld a,30
+    sub b
+    srl a                           ; charXY is incremented before each character is drawn
+    ld l,a
+    ld h,1
+    ld (charXY),hl
+    ld hl,flagWhichScreenToPrint
+    set 7,(hl)
+    pop hl
+    ld a,(todoPrintFlag3948)
+    push af
+    ld a,1                          ; capitals only
+    ld (todoPrintFlag3948),a
+titleNamePrint:
+    ld a,(hl)
+    and a
+    jr z,titleNameEnd
+    push hl
+    call printString
+    pop hl
+    inc hl
+    jr titleNamePrint
+titleNameEnd:
+    ld hl,0xA000 + 2 * 0x0100 + 2   ; text row 1, column 1 of the bitmap buffer: 8 pixel lines, 0x40 bytes apart
+    ld c,8
+titleNameLine:
+    ld b,60                         ; columns 1-30
+titleNameBlue:
+    ld a,(hl)                       ; background is pen 1 (low nibble 1111), text pen 0 (both planes clear); ship lines (pen 3) must stay
+    ld e,a
+    rrca
+    rrca
+    rrca
+    rrca
+    or e
+    cpl
+    and 0x0F                        ; pixels with both planes clear = text
+    ld d,a
+    rlca
+    rlca
+    rlca
+    rlca
+    or d
+    or e                            ; text becomes pen 3, the pen of the ship lines and the frame; everything else is unchanged
+    ld (hl),a
+    inc hl
+    djnz titleNameBlue
+    ld de,0x40 - 60
+    add hl,de
+    dec c
+    jr nz,titleNameLine
+    pop af
+    ld (todoPrintFlag3948),a
+    ld a,1                          ; the next letter, 'Press', is a capital
+    ld (todoSomePrintFlag),a
+    ld hl,flagWhichScreenToPrint
+    res 7,(hl)
+    ret
+ ENDIF
+; Disc access without the game stack. The game stack (MainStackNStrings) is in bank 7 at &F39B, and the firmware's disc routines enable the upper ROM over &C000-&FFFF: their
+; pushes would still land in RAM but their pops read AMSDOS ROM, so Save, Load and Catalogue hung. Each firmware entry used by the file code goes through one of these
+; trampolines (the old names CAS_xxx), which run the firmware on discStack in the off-screen bitmap's first lines (unused while docked) and restore SP afterwards.
+; Registers and flags pass through unchanged (`ld sp` changes neither).
+; Invariant: disc access only happens docked (FileMenu), when the off-screen bitmap is not drawn into; discSP is a single slot (the trampolines never nest).
+discStackTop equ 0xA500
+    ASSERT discStackTop > 0xA000 && discStackTop <= 0xA600, "the disc stack must lie in the first bitmap lines, below the parked firmware data at &A600"
+discSP:
+    dw 0
+    MACRO discTrampoline name, fw
+name:
+    ld (discSP),sp
+    ld sp,discStackTop
+    call fw
+    jp discExit
+    ENDM
+discExit:
+    ld sp,(discSP)
+    ret
+    discTrampoline CAS_STOP_MOTOR, CAS_STOP_MOTOR_FW
+    discTrampoline CAS_IN_OPEN, CAS_IN_OPEN_FW
+    discTrampoline CAS_IN_CLOSE, CAS_IN_CLOSE_FW
+    discTrampoline CAS_IN_ABANDON, CAS_IN_ABANDON_FW
+    discTrampoline CAS_IN_DIRECT, CAS_IN_DIRECT_FW
+    discTrampoline CAS_OUT_OPEN, CAS_OUT_OPEN_FW
+    discTrampoline CAS_OUT_CLOSE, CAS_OUT_CLOSE_FW
+    discTrampoline CAS_OUT_ABANDON, CAS_OUT_ABANDON_FW
+    discTrampoline CAS_OUT_DIRECT, CAS_OUT_DIRECT_FW
+    discTrampoline CAS_CATALOG, CAS_CATALOG_FW
+; Title key latch (getTitleKey, in the padding behind TITLE_NEXT): the title frames take about 250 ms and the loops sample pressedKey once per frame, so a short tap on Y / N
+; / space fell between two samples. dbIsr (every interrupt) calls titleKeyIsr with A = the status flag; on the title (status 0) it keeps the last key seen in titleKeyLatch.
+titleKeyIsr:
+    and a
+    ret nz
+    ld a,(pressedKey)
+    inc a
+    ret z
+    dec a
+    ld (titleKeyLatch),a
+    ret
+; Kill count on the commander page (called from common2x.asm in place of `call anotherPrintwithTokeninA`, A = rank token): the rank name, " - 1234", then the new line.
+; The count is the word at killScore+1: the low byte of the 24-bit score is a fraction (getRank compares the middle byte).
+killHook:
+    push af                             ; the rank token
+    call printString                    ; no new line yet (CallprintString would add it)
+    pop af
+    sub 0x17                            ; Poor, Average and Above Average (tokens &17-&19) end in a space in the stock text: no second one (same as main's killSpace)
+    cp 0x03
+    jr c,killNoSpace
+    call printStringFollowingByte
+    db " "
+killNoSpace:
+    call printStringFollowingByte
+    db "-"
+    call printStringFollowingByte
+    db " "
+    ld hl,(killScore + 1)
+    and a                               ; carry clear: a plain number, no decimal point
+    call todo_SomethingwithDigits
+    call placeCursor                    ; the two new lines anotherPrintwithTokeninA gave the rank
+    jp placeCursor
+hullGlueEnd:
+    ASSERT $ <= 0x9C80, "the filled-hull glue does not fit in front of the mission bank routines"
+    DS 0x9C80-$
+; Mission code in RAM banks (128K build): the docked overlays sit in bank 4 (slots of 0x240 bytes, order C P T R), the flight images in bank 5 (slots of 0x260 bytes,
+; order 0 C P T S R). bankInit copies them there from blank screen bytes of COMMON2X; these routines copy one slot to where the code runs. Fixed addresses (jump table) because
+; LARGEAXX calls them. No stack use while a bank is mapped: the game stack lives at &7497, inside the window.
+mxBankTable:
+    ASSERT mxBankTable == 0x9C80, "LARGEAXX calls the bank routines at 0x9C80 / 0x9C83 (missions_docked_defs.asm)"
+    jp mxBankOverlayImpl                ; &9C80: A = "C"/"P"/"T"/"R", DE = destination -> the overlay
+    jp mxBankFlightImpl                 ; &9C83: A = slot number 0-12 -> flight image at mxFlightBase
+mxBankFlight equ mxBankTable + 3
+bankLargeaxx:                           ; LARGEAXX (4608 bytes) from bank 4 offset 0x900 to &0840; no stack use while the bank is mapped
+    di
+    ld bc,0x7FC4
+    out (c),c
+    ld hl,0x4900
+    ld de,0x0840
+    ld bc,0x1200
+    ldir
+    mapMain
+    ei
+    ret
+mxBankOverlayImpl:                      ; DE = destination (mxOverlayBase, a LARGEAXX label)
+    push de
+    ld hl,mxLettersOverlay
+    ld de,0x0240
+    call mxBankSlot                     ; HL = window address of the slot
+    pop de
+    di
+    ld bc,0x7FC4
+    out (c),c
+    ld bc,0x0240
+    ldir
+    mapMain
+    ei
+    ret
+mxBankFlightImpl:                       ; A = slot number (missions_flight.asm: 0 default, 1-7 ship packs, 8-12 C P T S R)
+    ld b,a
+    inc b
+    ld hl,0x6000                        ; the images follow INDICATO in the file that bankInit loads into bank 5 at &5000: slot 0 is at &6000 (tools/build_dsk128.py)
+    ld de,0x0260
+    call mxBankAdd
+    ld de,0x9D9E
+    di
+    ld bc,0x7FC5
+    out (c),c
+    ld bc,0x0260
+    ldir
+    mapMain
+    ei
+    ret
+mxBankSlot:                             ; A = letter, HL = letter string, DE = slot size -> HL = 0x4000 + index * size
+    ld b,0xFF
+mxBankScan:
+    inc b
+    cp (hl)
+    inc hl
+    jr nz,mxBankScan                    ; B = index of the letter
+    ld hl,0x4000
+    inc b
+mxBankAdd:
+    dec b
+    ret z
+    add hl,de
+    jr mxBankAdd
+mxLettersOverlay:
+    db "CPTR"
+; --- page flip (128K build), resident part: the flip body dbFlip6 is in bank 6 (fill.asm) ---
+; dbShown: config value (C1 or C3) of the bank the CRTC displays. In flight the game draws into the other one (curCfg), dbFlip6 swaps them after each transferBuffertoScreen.
+dbShown:
+    db 0xC1
+dbCnt:
+    db 0
+dbScanPrev:
+    db 0
+dbScanFlag:
+    db 0
+dbOn:
+    db 0                                ; 1 while flipping (flight views); the ISR clears it when a non-flight view is shown
+dbFlip6Entry equ 0x43D0                 ; fill.asm: dbFlip6
+dbFlipTail:
+    pop af
+    ld (hullSaveSP),sp                  ; like hullDraw: the game stack is in bank 7, which RAM bank 6 (config C6) hides
+    ld sp,hullStackTop
+    push af
+    push bc
+    push de
+    push hl
+    ld a,(todo_CleanScanCounter)        ; scanner busy: a ship was drawn this frame (the counter is 1 until the clean-up) or ECM runs
+    ld hl,ecmActiveFlag
+    or (hl)
+    ld hl,dbScanPrev
+    ld c,(hl)
+    ld (hl),a
+    or c                                ; one more frame for the clean-up
+    ld (dbScanFlag),a
+    ld bc,0x7FC6
+    out (c),c
+    call dbFlip6Entry
+    mapMain
+    pop hl
+    pop de
+    pop bc
+    pop af
+    ld sp,(hullSaveSP)
+    ret
+; Called by the ISR (IRSound). In the non-flight views (Viewdirection >= 4) the game draws straight to the curCfg bank, so that bank is the one to display.
+dbIsr:
+    ld a,(Viewdirection)
+    cp 4
+    jr nc,dbIsrFollow
+    and a
+    ret nz
+    ld a,(todoUnknownStatusFlags)       ; view 0: the title (status 0) latches its keys; the screens flip in dbFlip6, nothing to follow
+    call titleKeyIsr
+    jp musicHook                        ; the title music (overlay on bankInit, lasersights128.asm): returns to the ISR itself while it plays
+dbIsrFollow:
+    ld hl,curCfg
+    ld a,(dbShown)
+    cp (hl)
+    ret z
+    ld a,(hl)
+    ld (dbShown),a
+    xor a
+    ld (dbOn),a
+    ld a,(hl)
+    and 2
+    add a,a
+    add a,a
+    add a,a
+    add a,a
+    add a,0x1C                          ; R12: &1C = bank 1 at &4000, &3C = bank 3 at &C000
+    ld bc,0xBC0C
+    out (c),c
+    ld b,0xBD
+    out (c),a
+    ret
+; Copies BC bytes from HL to DE through the C0 configuration (bank 1 at &4000, bank 3 at &C000); the count in BC waits on the resident stack while BC carries the port.
+; Interrupts stay on while it runs: LDIR is interruptible, the handlers (myVBL, IRSound, IRKeyboardInput, dbIsr, the music hook) sit below &A000 in banks 0 and 2, which every
+; configuration of the flip maps, and use nothing in &4000-&7FFF or &C000+, so the raster-timed colour split stays on time (docs/_128k_speedup.md). The two nops are a former
+; di and ei, kept so that no address after them moves.
+dbCopy:
+    nop
+    push bc                             ; the stack is resident (hullStack), visible in C0 and C6
+    ld bc,0x7FC0
+    out (c),c
+    pop bc
+    ldir
+    ld bc,0x7FC6                        ; back to the flip code in bank 6
+    out (c),c
+    nop
+    ret
+hullFindType:
+    push iy
+    pop de                              ; DE = blueprint address
+    ld hl,shipGFXdataTable+1
+    ld bc,19 << 8                       ; B = 19 types, C = type counter
+hftLoop:
+    ld a,(hl)
+    cp e
+    jr nz,hftNext
+    inc hl
+    ld a,(hl)
+    dec hl
+    cp d
+    jr z,hftFound
+hftNext:
+    inc hl
+    inc hl
+    inc hl
+    inc hl
+    inc c
+    djnz hftLoop
+    jp mxHullType                       ; not in the stock table: the flight image knows its hulls (the Constrictor in image C, the ship pack hulls: types 19-28), A = type or carry
+hftFound:
+    ld a,c
+    or a
+    ret
+    ASSERT $ <= 0x9D9E, "the mission bank routines do not fit in front of the flight tail"
+    DS 0x9D9E-$
+; Free tail of COMMONXX (&9D9E-&9FFF, 610 bytes, flight time; the stack pushes at the top). Build with -DMISSIONS to add mission code
+; (docs/_missions_built.md); without it these are 610 zero bytes and the file is byte-exact.
+missionsFlightTail:
+    IFDEF MISSIONS
+    INCLUDE "missions_flight.asm"
+    ENDIF
+    ASSERT $ <= 0xA000
+    DS 0xA000-$
+ce2func63 equ 0x25D6   ; inside the instruction at 0x25D5 (patched or jumped into)
+ce2func74 equ 0x2688   ; inside the instruction at 0x2687 (patched or jumped into)
+loc_3A88 equ 0x3A88   ; inside the instruction at 0x3A87 (patched or jumped into)
+loc_86F7 equ 0x86F7   ; inside the instruction at 0x86F5 (patched or jumped into)

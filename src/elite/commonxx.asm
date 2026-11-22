@@ -3240,8 +3240,16 @@ stringsTable:
     db 0x06,"SH",0x99,"T ",0xCA,0xA1,0x08,0x00
     db 0x8D,0xCB,0x9B,0x85,0x00,0xBD," -- ",0x03,0x00,0xBD," ",0xCA," "
     db "?",0x00
+    IFDEF ENHANCED
+; -DENHANCED: "MA" and "AN" as two-letter tokens (2 bytes shorter) pay for "BACK" below; the entries in between only move
+strBackSlot:
+    db 0x06,0x8B,"YDAY",0x08,"* C",0x99,"IOLI"
+    db "S ",0x8C," D",0x9B,0x83,"R*",0x00
+strBackMid:
+    ELSE
     db 0x06,"MAYDAY",0x08,"* C",0x99,"IOLI"
     db "S ",0x8C," DAN",0x83,"R*",0x00
+    ENDIF
     db " LIGHT YE",0x8A,"S",0x00
     db 0x9C,"CH.",0x81,0x96,"L",0x00
     db "CASH",0x00
@@ -3300,7 +3308,14 @@ stringsTable:
     db 0x06,0xAE,"  ",0xB0,0x09,0xBA,"    ",0xAE," ",0xA6," F"
     db 0x99," SA",0x81,0x08,0x09,0x00
     db "FR",0x9F,"T",0x00
+    IFDEF ENHANCED
+strBackWord:
+    db "BACK",0x00                                   ; token &61, the view and laser position name ("Rear" is "RE" + "AR": 2 bytes)
+strBackSlotEnd:
+    db 0x81,"FT",0x00,0x9E,"GHT",0x00,"yLOW"
+    ELSE
     db 0x8E,0x8A,0x00,0x81,"FT",0x00,0x9E,"GHT",0x00,"yLOW"
+    ENDIF
     db 0x00,"c",0x10,0xFC,"*",0x00,"EXT",0x94," ",0x00,"PULS"
     db "E",0xBB,0x00
     db 0x93,"AM",0xBB,0x00
@@ -14212,7 +14227,7 @@ dvRotatePixmask:
 dvgetscrbyte:
     inc l
 dvscrgetnextline:
-    db "}"
+    ld a,l
 smc_dvpatchadr5:
     add a,0x40
     ld l,a
@@ -14337,6 +14352,11 @@ spawnCommandParser:
     ret
 ; Builds a ship in the slot at IX from blueprint A: copies its data and initial values
 spawnShip:
+    IFDEF SPAWN_VARIANCE
+    IFNDEF MISSIONS
+    ASSERT 0, "-DSPAWN_VARIANCE needs -DMISSIONS: the routine is in the flight tail (missions_flight.asm)"
+    ENDIF
+    ENDIF
     IFDEF MISSIONS
     call mxShipTable                ; missions_flight.asm: also serves ship type 19 (Constrictor)
     ELSE
@@ -14372,8 +14392,12 @@ loc_80DA:
     ld a,(iy+6)
     srl a
     ld (ix+27),a
+    IFDEF SPAWN_VARIANCE
+    ld (ix+37),0x7E                 ; one byte shorter than ld a,0x7E / ld (ix+37),a: pays for the jp at the end
+    ELSE
     ld a,0x7E
     ld (ix+37),a
+    ENDIF
     xor a
     ld (ix+38),a
     set 6,(ix+32)
@@ -14395,8 +14419,12 @@ spwnIsNoPirate:
     rr (ix+2)
     rra
     rr (ix+5)
+    IFDEF SPAWN_VARIANCE
+    jp mxSpawnVar                   ; missions_flight.asm: the hostile types start at a random distance and direction (docs/_ship_spawning.md); ends with xor a / ret
+    ELSE
     xor a
     ret
+    ENDIF
 ; Looks for a free slot and spawns the ship there if one exists (mostly in a db run)
 TrySpawntoFreeSlot:
     ld c,a
@@ -14458,6 +14486,19 @@ sc1loop:
     ld a,0x0F
     push bc
     call spawnShip
+    IFDEF SPAWN_VARIANCE
+    inc (ix+37)                     ; spawnShip returns A = 0 and (ix+37) = &7E: this is `set 0,(ix+37)` in 3 bytes
+    ld (ix+4),a                     ; y_hi 0 and z sign 0 (the spawn variance made both random: the group would start behind the player)
+    ld (ix+8),a
+    call getRandomNumber
+    and 0x0F
+    or 0x04
+    ld (ix+7),a
+    cp 0x08                         ; x_hi = bit 3 of z_hi (z_hi is 4 to 15): 4 bytes instead of rra x3 / and 1
+    sbc a,a
+    inc a
+    ld (ix+1),a
+    ELSE
     set 0,(ix+37)
     call getRandomNumber
     and 0x0F
@@ -14470,6 +14511,7 @@ sc1loop:
     ld (ix+1),a
     xor a
     ld (ix+4),a
+    ENDIF
     call setDirectionofEntity
     pop bc
     dec c
@@ -14923,6 +14965,9 @@ spawnEscortLoop:
     and 0x01
     add a,0x10
     call spawnShip
+    IFDEF SPAWN_VARIANCE
+spawnEscortRet:                         ; the return address mxSpawnVar looks for (missions_flight.asm: pack members start on the leader's point)
+    ENDIF
     pop bc
     dec c
     jr nz,spawnEscortLoop

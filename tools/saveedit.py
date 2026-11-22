@@ -163,7 +163,7 @@ def write_out(out_spec, data_with_header):
     if not extents:
         stem, _, ext = str(name).upper().partition(".")
         dskx.add_payload(d, secs, first, stem[:8], (ext or "BIN")[:3], data_with_header, -(-len(data_with_header) // 128))
-        disk.write_bytes(d)
+        dskx.write_atomic(disk, d)
         print("added", name, "to", disk)
         return
     records = -(-len(data_with_header) // 128)          # the directory keeps the size in 128-byte records, at most 128 per extent
@@ -176,7 +176,7 @@ def write_out(out_spec, data_with_header):
     payload = data_with_header.ljust(len(slots) * 512, b"\xE5")    # the disk's filler byte, as add_payload pads
     for k, off in enumerate(slots):
         d[off:off + 512] = payload[k * 512:(k + 1) * 512]
-    disk.write_bytes(d)
+    dskx.write_atomic(disk, d)
     print("replaced", name, "in", disk)
 
 

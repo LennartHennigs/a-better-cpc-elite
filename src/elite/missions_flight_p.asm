@@ -41,6 +41,7 @@ mxSpawnThargoidPair:
     ld (ix+1),a
     xor a
     ld (ix+4),a
+    ld (ix+8),a                       ; z sign 0 (the spawn variance makes it random: the pair would start behind the player)
     call setDirectionofEntity
     push ix
     pop hl                            ; the Thargoid's position

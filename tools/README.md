@@ -10,16 +10,27 @@ Helpers for building, checking and analysing the project. Each script has a head
 | `build_original.sh`, `build_expanded.sh` | the two `make` disks, written to `build/` |
 | `build_cheat.sh`, `build_showship.sh` | tokenise the BASIC programs of `src/cheats/` and build the trainer and viewer disks (in `work/`) |
 | `build_readme.md` | template for `build/README.md` |
-| `dskx.py`, `add_files.py`, `hide_files.py` | list/extract, add files to, and hide files on DSK images (never write to `disks/`) |
+| `symfile.py` | `read_sym(path, *wanted)`: a sjasmplus `--sym` file as `{label: address}` (used by `build_dsk.py`, `build_dsk128.py`, `cheat128.py`) |
+| `dskx.py`, `add_files.py`, `hide_files.py` | list/extract, add, delete and rename (`OLD.EXT>NEW`, header included) files on DSK images, hide files (never write to `disks/`) |
 | `cheat_tokenise.py`, `bastok.py` | tokenise CPC BASIC with the CPC's own BASIC (cpcxray), detokenise to text |
 | `size_report.py` | bytes used in the free tails against the stock files |
-| `rvmstate.py` | read an RVM `.rvmstate` file: registers, the 64 KB RAM image, the ship slots, and `--sna` to convert it to a snapshot cpcxray loads (`docs/_build.md` "RVM state files") |
+| `rvmstate.py` | read an RVM `.rvmstate` file: registers, the 64 KB RAM image, the ship slots, and `--sna` to convert it to a snapshot cpcxray loads (`--curcfg` for a 128K game state; `docs/_build.md` "RVM state files") |
+
+## 128K build (branch `elite128`; `src/elite128/README.md`)
+| File | Does |
+|---|---|
+| `check_src128.sh` | assembles the four 128K files, builds the fill and title-text modules, fails on a stale cross-file `equ` (`make disk6128`) |
+| `build_dsk128.py`, `build_show128.sh`, `listing6128.sh` | the 128K disk (`build/elite128.dsk`), the `SHOWSHPS` viewer programs, the readable listing (`make listing6128`) |
+| `ship128.py`, `hullfill.py`, `mk_viewer128.py` | filled hulls (stock blueprints or ArcElite), their fill records, the viewer's ship data (it follows the build's hull source: `--source` or `HULLS`); generated files go to `work/elite128/` and `work/viewer128/` |
+| `mk_spawntable.py` | `src/elite128/spawn_table.inc`: the 27 orientations of the asteroid spawn (`spawnmod.asm`) |
+| `gen_equs.py`, `sync_equs.py`, `check_moved_labels.py` | cross-file `equ` lines after any size change (`sync_equs.py --check` exits 1 when stale, no option only reports), raw numbers that still point at a stock address whose label moved |
 
 ## Saves and text
 | File | Does |
 |---|---|
-| `saveedit.py`, `savedec.py`, `elitekey.py`, `savekeys.py` | edit and decode commander saves, read the save key from a disk |
-| `mk_editsave.py`, `mk_listsave.py`, `mk_showship.py` | generate `EDITSAVE.ASC`, `LISTSAVE.ASC`, `SHOWSHPS.ASC` and the viewer data |
+| `saveedit.py`, `savedec.py`, `elitekey.py`, `savekeys.py` | edit and decode commander saves, read the save key from a disk (`saveedit.py --to-key-disk` converts a save between UK, French, German and 128K disks) |
+| `cheat128.py` | the 128K build's trainer poke addresses and save key, derived from `src/elite128`; `--check` fails when `src/cheats` is stale (run by `check_src128.sh` and `build_dsk128.py`) |
+| `mk_editsave.py`, `mk_listsave.py`, `mk_convsave.py`, `mk_showship.py` | generate `EDITSAVE.ASC`, `LISTSAVE.ASC`, `CONVSAVE.ASC` (UK, French, German and 128K keys), `SHOWSHPS.ASC` and the viewer data |
 | `elitetext.py`, `textenc.py`, `textcomp.py`, `sprite_enc.py` | Elite text tokens (decode, encode, measure) and sprite art to bytes |
 
 ## Source trees (disassembly)

@@ -10,7 +10,6 @@ The base disk is never modified. Each file keeps its 128-byte AMSDOS header and 
 same length as the old ones (the build is byte-exact apart from the CPC+ fix), otherwise the script stops.
 LARGEAXX is assembled with -DFIREBIRD, because the Firebird disk carries that one-byte variant (largeaxx.asm).
 """
-import struct
 import subprocess
 import sys
 import tempfile
@@ -18,8 +17,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import dskx  # noqa: E402
-from dskx import amsdos_header, sector_offsets  # noqa: E402
+from dskx import sector_offsets  # noqa: E402
 from hide_files import hide_entries  # noqa: E402
+from symfile import read_sym  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 DE = "--de" in sys.argv
@@ -40,14 +40,10 @@ if OUT.resolve() == BASE.resolve() or dskx.is_original(OUT):   # CLAUDE.md: neve
     sys.exit(f"{OUT}: refusing to write a disk into the project root or disks/ (the originals live there); use work/")
 SJASM = Path.home() / ".local/bin/sjasmplus"
 FILES = {"LARGEAXX": [] if DE or FR else ["-DFIREBIRD"], "COMMONXX": ["-DTITLESEL", "-DTRAFFIC"], "COMMON2X": [], "MUSIQUEX": ["-DTITLESEL"]}   # TITLESEL: cursor keys change the title ship; TRAFFIC: C64-like spawn odds (docs/_ship_packs.md)
+if MISSIONS:      # the hostile ships start at a random distance and direction (the routine is in the flight tail, src/elite/missions_flight.asm; docs/_ship_spawning.md)
+    FILES["COMMONXX"].append("-DSPAWN_VARIANCE")
 if STOCK:
     FILES = {"LARGEAXX": [], "COMMONXX": [], "COMMON2X": [], "MUSIQUEX": []}   # no -DFIREBIRD either: it drops the cargo-capacity test (LARGEAXX &0998)
-
-
-def add_file(d, secs, first, name, ext, data, load):
-    """Add a new AMSDOS file (header + data); files up to 16 KB (one extent)."""
-    payload = dskx.make_header(name, ext, load, len(data)) + data
-    return dskx.add_payload(d, secs, first, name, ext, payload, -(-len(payload) // 128))
 
 
 def flight_image(tag):
@@ -58,11 +54,7 @@ def flight_image(tag):
         r = subprocess.run([str(SJASM), *flags, f"--raw={out}", f"--sym={sym}", str(ROOT / "src/elite/commonxx.asm")], capture_output=True, text=True)
         if r.returncode:
             sys.exit(f"flight image {tag}: assemble failed\n{r.stdout[-400:]}")
-        labels = {}
-        for line in sym.read_text().splitlines():
-            parts = line.split()
-            if len(parts) >= 3 and parts[0] in ("mxFlightBase:", "mxFlightEnd:"):
-                labels[parts[0][:-1]] = int(parts[2], 16)
+        labels = read_sym(sym, "mxFlightBase", "mxFlightEnd")
         return labels["mxFlightBase"], out.read_bytes()[labels["mxFlightBase"] - 0x1A40:labels["mxFlightEnd"] - 0x1A40]
 
 
@@ -74,11 +66,7 @@ def overlay(tag):
                            capture_output=True, text=True)
         if r.returncode:
             sys.exit(f"overlay {tag}: assemble failed\n{r.stdout[-400:]}")
-        labels = {}
-        for line in sym.read_text().splitlines():
-            parts = line.split()
-            if len(parts) >= 3 and parts[0] in ("mxOverlayBase:", "mxOverlayEnd:"):
-                labels[parts[0][:-1]] = int(parts[2], 16)
+        labels = read_sym(sym, "mxOverlayBase", "mxOverlayEnd")
         return labels["mxOverlayBase"], out.read_bytes()[labels["mxOverlayBase"] - 0x840:labels["mxOverlayEnd"] - 0x840]
 
 
@@ -98,7 +86,7 @@ def add_showship(d, secs, first):
         return
     data = bas.read_bytes()   # AMSDOS header included
     dskx.add_padded(d, secs, first, "SHOWSHPS", "BAS", data)
-    add_file(d, secs, first, "SHIPS", "BIN", ships.read_bytes(), 0x4000)
+    dskx.add_file(d, secs, first, "SHIPS", "BIN", ships.read_bytes(), 0x4000)
     print(f"SHOWSHPS.BAS {len(data)} bytes, SHIPS.BIN {ships.stat().st_size} bytes")
 
 
@@ -118,26 +106,6 @@ def main():
     d = bytearray(BASE.read_bytes())
     secs = sector_offsets(d)
     first = min(r for (t, r) in secs if t == 0)
-    dirdata = b"".join(d[secs[(0, first + i)][0]:secs[(0, first + i)][0] + 512] for i in range(4))
-    ents = {}
-    for i in range(64):
-        e = dirdata[i * 32:(i + 1) * 32]
-        if e[0] == 0xE5:
-            continue
-        name = (bytes(b & 0x7F for b in e[1:9]).decode().strip() + "." + bytes(b & 0x7F for b in e[9:12]).decode().strip())
-        ents.setdefault(name, []).append((e[12], e[15], [b for b in e[16:32] if b]))
-
-    def file_slots(name):
-        """Disk offsets of every 512-byte half block of a file, in file order, plus its length in bytes."""
-        slots, total = [], 0
-        for _, rc, blocks in sorted(ents[name]):
-            total += rc * 128
-            for b in blocks:
-                for s in (0, 1):
-                    ls = b * 2 + s
-                    slots.append(secs[(ls // 9, first + ls % 9)][0])
-        return slots, total
-
     with tempfile.TemporaryDirectory() as tmp:
         for n, defs in FILES.items():
             out = Path(tmp) / f"{n}.bin"
@@ -147,27 +115,16 @@ def main():
             if r.returncode:
                 sys.exit(f"{n}: assemble failed\n{r.stdout[-400:]}{r.stderr[-400:]}")
             new = out.read_bytes()
-            slots, total = file_slots(f"{n}.BIN")
-            hdr = bytes(d[slots[0]:slots[0] + 128])
-            h = amsdos_header(hdr)
-            if h is None or h["length"] != len(new):
-                sys.exit(f"{n}: header length {h and h['length']} != built length {len(new)}")
-            data = hdr + new
-            data += b"\0" * (total - len(data))   # old file keeps its record padding
-            for k, off in enumerate(slots):
-                chunk = data[k * 512:(k + 1) * 512]
-                if len(chunk) == 0:
-                    break
-                d[off:off + len(chunk)] = chunk
+            h = dskx.overwrite_file(d, secs, first, f"{n}.BIN", new)
             print(f"{n}.BIN: {len(new)} bytes written, header kept (load {h['load']:04X})")
     if MISSIONS:
         for tag in ("C", "P", "T", "R"):
             base, data = overlay(tag)
-            blocks = add_file(d, secs, first, f"MISSION{tag}", "BIN", data, base)
+            blocks = dskx.add_file(d, secs, first, f"MISSION{tag}", "BIN", data, base)
             print(f"MISSION{tag}.BIN: {len(data)} bytes at &{base:04X}, blocks {blocks}")
         for tag in ("0", "C", "P", "T", "S", "R", "1", "2", "3", "4", "5", "6", "7"):   # 1-7: ship packs (docs/_ship_packs.md)
             base, data = flight_image(tag)
-            blocks = add_file(d, secs, first, f"MFLIGHT{tag}", "BIN", data, base)
+            blocks = dskx.add_file(d, secs, first, f"MFLIGHT{tag}", "BIN", data, base)
             print(f"MFLIGHT{tag}.BIN: {len(data)} bytes at &{base:04X}, blocks {blocks}")
     if MISSIONS:
         add_readme(d, secs, first)
@@ -175,7 +132,7 @@ def main():
         replace_trainer(d, secs, first)
     hidden, shown = hide_entries(d, secs, first)   # System attribute on everything but .BAS and .TXT (CLAUDE.md rule; code in tools/hide_files.py)
     print(f"{len(hidden)} directory entries hidden (System attribute), visible: {', '.join(sorted(shown))}")
-    OUT.write_bytes(d)
+    dskx.write_atomic(OUT, d)
     print("wrote", OUT)
 
 

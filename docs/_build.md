@@ -46,7 +46,7 @@ What each change does in the game: `_my_changes.md`.
 
 ```bash
 make original         # tools/build_original.sh: python3 -I tools/build_dsk.py --stock -> build/elite_original.dsk (LOC=de|fr: build/elite_original_de.dsk, _fr.dsk)
-make expanded         # tools/build_expanded.sh: build_showship.sh, then build_cheat.sh (which runs build_dsk.py --missions) -> build/elite_expanded.dsk; LOC=de|fr stops with a message (not ported yet)
+make expanded         # tools/build_expanded.sh: build_showship.sh, then build_cheat.sh (which runs build_dsk.py --missions) -> build/elite64.dsk; LOC=de|fr stops with a message (not ported yet)
 make stock            # build/stock/{en,de,fr}/      original bytes   (LOC=de or LOC=fr)
 make enhanced         # build/enhanced/{...}/        -DENHANCED, plus -DTITLESEL
 make missions         # python3 -I tools/build_dsk.py --missions build/elite_missions.dsk
@@ -79,7 +79,7 @@ All disk builders start from a **copy** of a base disk and refuse to modify the 
 | `... --missions` | same | `work/elite_missions.dsk` | adds the mission overlays and flight images (assembled per tag), `README.TXT` |
 | `... --de` | `Elite_DE_cracked.dsk` | `work/elite_de_rebuilt.dsk` | `--de --missions` is refused |
 | `... --fr` | `Elite (1985)(Firebird Software)(fr).dsk` | `work/elite_fr_rebuilt.dsk` | `--fr --missions` is refused; boot with `RUN"EL` |
-| `bash tools/build_cheat.sh` | Firebird disk, mission disk | `work/firebird_cheat.dsk`, `work/missions_cheat.dsk` | tokenises `src/cheats/*.ASC` with the CPC's own BASIC (headless cpcxray), adds `TRAINER` (and deletes Firebird's `CHEAT.BAS`), `EDITSAVE` (and `LISTSAVE` on `work/de_savegames.dsk`); `TRUMBLE.BAS` is built but not put on the disks |
+| `bash tools/build_cheat.sh` | Firebird disk, mission disk | `work/firebird_cheat.dsk`, `work/missions_cheat.dsk` | tokenises `src/cheats/*.ASC` with the CPC's own BASIC (headless cpcxray), adds `TRAINER` (and deletes Firebird's `CHEAT.BAS`), `EDITSAVE` (and `LISTSAVE` on `work/de_savegames.dsk`), `CONVSAVE` (Firebird and mission disks; the French disk has no room); the 128K disk gets the same programs from `tools/build_dsk128.py` (`docs/_cheats.md` "The 128K build"); `TRUMBLE.BAS` is built but not put on the disks |
 | `python3 -I tools/hide_files.py DISK` | | in place | refuses a disk in the project root or `disks/` |
 
 Every built disk shows only `.BAS` and `.TXT` files in `CAT`; all other files get the System attribute (`hide_entries` in `tools/hide_files.py`, called by `build_dsk.py`). iDSK adds files unhidden, so hide again after any
@@ -144,14 +144,14 @@ Test patterns that work: start from the in-flight snapshot, stop at `handleEntit
 
 ### RVM state files (`*.rvmstate`)
 
-Retro Virtual Machine's "save state" (menu or the disk icon in its emulator window) writes one file; `tools/rvmstate.py STATE [--regs] [--ram OUT.bin] [--slots] [--sna OUT.sna]` reads it. cpcxray cannot load the state itself, so `--sna` writes a standard snapshot (version 3, 128 KB) that it can:
+Retro Virtual Machine's "save state" (menu or the disk icon in its emulator window) writes one file; `tools/rvmstate.py STATE [--regs] [--ram OUT.bin] [--slots] [--sna OUT.sna [--curcfg [ADDR]]]` reads it. cpcxray cannot load the state itself, so `--sna` writes a standard snapshot (version 3, 128 KB) that it can:
 
 ```bash
 python3 -I tools/rvmstate.py ~/Desktop/Untitled.rvmstate --sna work/xray/output/user_state.sna
 # in cpcxray (from work/xray): sna_load {"path": "output/user_state.sna"}, then run 500000 us and screen_image
 ```
 
-  The game resumes where the state was saved (mid-frame if RVM was paused there; the first frames finish the interrupted one) and draws the same picture, colours included; edit RAM with `memory_write` and run again to try variants. The snapshot takes registers, Gate Array (pens, border, mode, ROM switches), CRTC, PPI, PSG and all eight RAM pages from the state. The RAM configuration is not in the state and is written as 0; disk, tape and timers are not carried over (load the disk yourself with `disk_insert` before `sna_load`).
+  The game resumes where the state was saved (mid-frame if RVM was paused there; the first frames finish the interrupted one) and draws the same picture, colours included; edit RAM with `memory_write` and run again to try variants. The snapshot takes registers, Gate Array (pens, border, mode, ROM switches), CRTC, PPI, PSG and all eight RAM pages from the state. The RAM configuration is not in the state and is written as 0, which is right for the 64K game; for a **128K game state** add `--curcfg`: it reads the game variable `curCfg` (`&C0`-`&C7`, the configuration the game last selected; RAM bank 2 sits at `&8000` in every configuration, so the byte can be read from the state) at ADDR or, without an address, at the label's address in `work/elite128/c128.sym` (`tools/check_src128.sh` rewrites it after each build, so it follows size changes). It refuses a byte that is not `&C0`-`&C7`. Disk, tape and timers are not carried over (load the disk yourself with `disk_insert` before `sna_load`).
 
 - **Container:** one zlib stream. Inside is text in a JavaScript-like notation, not JSON: keys carry no quotes, strings use `'`, and an array prints its elements 1 to n first and **element 0 last, as `0 : value`** (so the last RAM page in the file is page 0; the same holds for `palette`, `crtc` and `ay`).
 - **Layout** (`snap`): `chain` (a large base64 block, about 1 MB, not decoded), `ram` (eight 16 KB pages, each `<base64 of a zlib stream>`: pages 0 to 3 are the 64 KB the CPU sees, 4 to 7 are the 6128's extra banks, filled with a repeated pattern when unused), `cpu` (`pc`, `sp`, `af`, `bc`, `de`, `hl`, `ix`, `iy`, shadow registers as `afp`, `bcp`, `dep`, `hlp`), `crtc`, `palette`, `gateArray`, `romSelect`, `ay`, `upd765`, `time`. `media` is empty: the state does not remember the disk.

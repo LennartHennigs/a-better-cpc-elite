@@ -8,15 +8,15 @@ A **pack** is a flight image `MFLIGHT1..7.BIN` (the tail `&9D9E-&9FFD`, see `_mi
 
 | Pack | Hulls (bytes) | Replaces (stock type) | Image |
 |---|---|---|---|
-| 1 | Gecko 199, Cobra Mk I 201 | 16 Sidewinder, 17 Krait | 606 |
-| 2 | Worm 179, Moray 219 | 16 Sidewinder, 17 Krait | 604 |
-| 3 | Mamba 305 | 16 Sidewinder | 504 |
-| 4 | Adder 307 | 17 Krait | 506 |
-| 5 | Boa 249 | 10 Python trader | 448 |
-| 6 | Anaconda 261 | 10 Python trader | 460 |
-| 7 | Shuttle 309 | 9 Cobra Mk III trader | 508 |
+| 1 | Gecko 199 | 16 Sidewinder | 462 |
+| 2 | Moray 219 | 17 Krait | 482 |
+| 3 | Mamba 305 | 16 Sidewinder | 568 |
+| 4 | Adder 307 | 17 Krait | 570 |
+| 5 | Boa 249 | 10 Python trader | 512 |
+| 6 | Anaconda 261 | 10 Python trader | 524 |
+| 7 | Shuttle 309 | 9 Cobra Mk III trader | 572 |
 
-The image limit is 608 bytes (`ASSERT mxFlightEnd <= &9FFE`); the default image is 182 (sizes as of 2026-11-15, with the kill count routine every image carries). Never redirected: 8 (police Viper), 15 (Thargoid), 18 (Thargon): the Thargoid and plans missions need them. Not included: Boulder (165 bytes; with the Boa the image is 9 bytes over), Transporter (485) and the Dodecahedron (do not fit). Role flags, bounty, missiles and kill value come from Fessor's headers (a Gecko is worth 0.5 kills, a Mamba 0.75, an Anaconda 1.5; see `_gameplay.md`).
+The image limit is 608 bytes (`ASSERT mxFlightEnd <= &9FFE`); the default image is 246 (sizes as of 2026-11-21, with the kill count routine and the spawn variance routine every image but C and T carries). The Cobra Mk I and the Worm were dropped from the 64K packs on 2026-11-21 to make room for the spawn variance routine (about 62 bytes per image; packs 1 and 2 were at 606 and 604); the 128K build keeps both (`HULL_128` in `missions_flight_k.asm`). Never redirected: 8 (police Viper), 15 (Thargoid), 18 (Thargon): the Thargoid and plans missions need them. Not included: Boulder (165 bytes; with the Boa the image is 9 bytes over), Transporter (485) and the Dodecahedron (do not fit). Role flags, bounty, missiles and kill value come from Fessor's headers (a Gecko is worth 0.5 kills, a Mamba 0.75, an Anaconda 1.5; see `_gameplay.md`).
 
 ## Which pack, and when it loads
 
