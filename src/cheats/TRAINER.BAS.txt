@@ -7,6 +7,7 @@
 70 GOTO 50
 90 PRINT"Unlimited hold? ";:GOSUB 400:h=25*(1-a)
 100 PRINT"Own cloak? ";:GOSUB 400:m=64*a
+105 PRINT"Docking computer? ";:GOSUB 400:d=255*a
 110 INPUT"Cash Cr (100)";c$:c=VAL(c$):IF c<=0 THEN c=100
 120 INPUT"Mission 0-3 (0)";s$:s=INT(VAL(s$)):IF s<0 OR s>3 THEN s=0
 125 INPUT"Kills (<32768)";k$:INPUT"Jumps";w$:INPUT"Added mission 1-4";z$

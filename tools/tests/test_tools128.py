@@ -48,6 +48,9 @@ async def main():
     # a UK save on the disk: LEN from the German saves disk, re-keyed for the UK game
     subprocess.run(["python3", "-I", str(ROOT / "tools/saveedit.py"), "edit", str(ROOT / "disks/Elite_DE_savegames.dsk") + ":LEN.BIN", "--key-disk", str(ROOT / "disks/Elite_DE_cracked.dsk"),
                     "--to-key-disk", str(ROOT / "disks/Elite_UK_Firebird_cracked_trainer.dsk"), "-o", str(Path(DISK).resolve()) + ":UK.BIN"], check=True, capture_output=True)
+    # the disk carries no save (LEN is third-party): a 128K one for LISTSAVE and EDITSAVE
+    subprocess.run(["python3", "-I", str(ROOT / "tools/saveedit.py"), "edit", str(ROOT / "disks/Elite_DE_savegames.dsk") + ":LEN.BIN", "--key-disk", str(ROOT / "disks/Elite_DE_cracked.dsk"),
+                    "--to-key-disk", str(Path(DISK).resolve()), "-o", str(Path(DISK).resolve()) + ":LEN.BIN"], check=True, capture_output=True)
     uk_save, len_save = (saveedit.read_save(f"{DISK}:{n}")[0] for n in ("UK.BIN", "LEN.BIN"))
     ok = True
     async with stdio_client(StdioServerParameters(command="cpcxray", args=["mcp", "--config", "config/cpc6128.toml"])) as (r, w):
@@ -146,6 +149,7 @@ async def main():
             await typ("YYYYYYYYY", 300_000)      # nine cheats
             await typ("N", 300_000)              # unlimited hold: no -> POKE &998,25
             await typ("Y", 300_000)              # own cloak
+            await typ("Y", 300_000)              # docking computer
             for ans in ("5000", "0", "300", "40", "0"):      # cash, mission, kills, jumps, added mission
                 await typ(ans + "\r", 400_000)
             await c("breakpoint_add", {"kind": "pc", "address": 0x1C82})
@@ -167,6 +171,8 @@ async def main():
             blk = lambda off: bank_byte(snap, G + off)
             print("block: cash", blk(18), blk(19), blk(20), blk(21), "jumps", blk(15), blk(16), "kills", blk(13), blk(14), "cloak byte", blk(92))
             ok &= (blk(18), blk(19), blk(20), blk(21)) == (5, 0, 0, 0) and (blk(15), blk(16)) == (40, 0) and (blk(13), blk(14)) == (44, 1) and blk(92) & 64 == 64
+            print("docking computer byte:", blk(56))
+            ok &= blk(56) == 0xFF
             ok &= bank_byte(snap, row[11]) == 0       # the galaxy-gate byte (jumps were asked for)
             # the game runs on: after the title is up the pokes are still in place (bank 7 holds the code block)
             await c("run", {"max_us": 40_000_000, "timeout_s": 300})
