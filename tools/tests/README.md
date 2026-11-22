@@ -58,7 +58,7 @@ cd work/xray                      # the scripts use relative paths (output/, dis
 
 ## 128K tests (branch `elite128`)
 
-Run from `work/xray` with absolute script paths (in this worktree `work/xray` is a symlink to the main checkout). They need `build/elite128.dsk` copied to `work/xray/disk/elite128.dsk` (or `DISK128=...`); `python3 -I tools/tests/run_all.py --emu128` builds the disk and runs `packs`, `ship_packs`, `sellall`, `escdigit`, `filemenu`, `music`, `tools` and `spawnvar` (the ones with an `ALL OK` line); the rest are screenshots and probes, run by hand. Flight tests start from `output/flight128.sna` (`test_flight128.py 3`), launch and docking tests from `output/docked128.sna` (`snap_docked128.py`; regenerate it after any code change).
+Run from `work/xray` with absolute script paths (in this worktree `work/xray` is a symlink to the main checkout). They need `build/elite128.dsk` copied to `work/xray/disk/elite128.dsk` (or `DISK128=...`); `python3 -I tools/tests/run_all.py --emu128` builds the disk and runs `packs`, `ship_packs`, `sellall`, `escdigit`, `filemenu`, `music`, `tools`, `spawnvar` and `laserkeys` (the ones with an `ALL OK` line); the rest are screenshots and probes, run by hand. Flight tests start from `output/flight128.sna` (`test_flight128.py 3`), launch and docking tests from `output/docked128.sna` (`snap_docked128.py`; regenerate it after any code change).
 
 | Test | Checks |
 |---|---|
@@ -70,6 +70,7 @@ Run from `work/xray` with absolute script paths (in this worktree `work/xray` is
 | `test_launch128`, `test_mission128`, `test_packs128` | flight image copied from bank 5, mission overlays from RAM, the random ship pack per launch |
 | `test_titleships128`, `test_viewer128` | the title ship selector, `RUN"SHOWSHPS` |
 | `test_spawnvar128` | spawn variance (`spawnmod.asm`): 60 spawns per case of the hostile types (ranges, none in the rear cone, some behind), traders and the Viper unchanged, 120 asteroids (heading towards the player, orthonormal frame), packs stay together; `ALL OK` line, not in `run_all` yet |
+| `test_laserkeys` | laser position keys F, B, L, R (screen text, slot filled, refund on other keys); `64` (mission disk) or `128` (default) as argument; `test_laserkeys64` is the 64K run for `run_all.py --emu` |
 | `test_sellall128`, `test_escdigit128`, `test_killcount128`, `test_sights128`, `test_filemenu128` | A key of the sell menu, Esc at the second digit, kill count on the commander page, laser sights, catalogue (the `Commanders:` heading must be on the screen: it proves the firmware text hook `myTEXTOUTACTION`)/save/load |
 | `test_tools128` | the 128K disk's tools: `CONVSAVE` UK to 128K and 128K to UK compared byte for byte with the host, `LISTSAVE` names the builds, `EDITSAVE` edits a 128K save, `TRAINER` with every cheat on (the 13 poke targets, the commander block, still there after the title is up) |
 | `test_viewer128` | screenshots of the ship viewer (`RUN"SHOWSHPS`): first ships, the last one, Q back to BASIC; look at `output/viewer128_*.png` (no pass/fail) |
