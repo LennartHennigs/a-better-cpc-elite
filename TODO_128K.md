@@ -7,7 +7,7 @@ Open work for the 128K build, cleaned up 2026-11-21 (first written 2026-11-20 by
 ### Parity with `main`
 
 - [ ] **German and French:** the 128K build is English only (the biggest gap). Tied to "one codebase for all languages" under *Later*.
-- [ ] **Cheats in play:** the trainer's effects (shields, hyperjump, one-hit kills, ...) are untested on the 128K build, as on the 64K disks; French and German saves converted by `CONVSAVE` load in the game's menu but have not been played.
+- [ ] **Converted saves in play:** French and German saves converted by `CONVSAVE` load in the game's menu but have not been played. (The trainer's effects are checked in play, see *Done*.)
 
 ### Gameplay and content
 
@@ -17,7 +17,6 @@ Open work for the 128K build, cleaned up 2026-11-21 (first written 2026-11-20 by
 ### Speed
 
 - [ ] **`FLIP_NOWAIT` on a real CPC:** the page flip without the vsync wait is ON since 2026-11-21 (`config.inc`; frame 239.6 -> 226.5 ms in cpcxray, no glitch seen in RVM). Try it on a real 6128 and a 6128 Plus (gauges, scanner and compass in flight, the title); if it glitches, comment the switch out, if not, delete the dead wait code in `dbfFlip`. `docs/_128k_speedup.md` item 1.
-- [ ] **Docking from flight, with the page flip (checked in cpcxray 2026-11-21, not a real docking):** from `output/flight128.sna` a jump to `EnterStation` (`common2x.asm`, the game's own entry; `DockingSequence` alone gives the same) runs the tunnel frames, `dbOn` goes to 0, the view becomes 11, both screen banks end equal (`curCfg` = `dbShown`), the market page draws after a key press and F1 launches again with the flip back on (`dbOn` 1, `handleEntitys` hit). Not understood: the screen right after the docking is the flight frame with noise in the view (no status page), and after the next launch the two gauge panels beside the scanner show noise (view, scanner and crosshair are fine). The 64K game shows the same noise screen after the same jump, so it may be an artefact of jumping in (the 64K then fell back to BASIC on F1, so it is no reference for the launch). Needs a real docking in RVM: dock (docking computer or by hand), look at the first screen, launch, look at the gauge panels. `tools/tests/test_dock128.py` does not exist yet.
 - [ ] **Scanner cost, what is left:** the flip copy is 18 ms (was 47) and `UpdateScanner` itself takes about 23 ms before the first blip (three `div_hl_a_de`/`BCdiv` projections, the same in the 64K game): a cheaper projection or skipping it when nothing moved is the bigger target; the copy has only small options (unrolled `ldi`, less per-strip overhead, about 2 ms). Frame now 239.6 ms against 201 ms in the 64K game (226.5 ms with `FLIP_NOWAIT`).
 
 ### Verification
@@ -64,6 +63,8 @@ Wanted, but not now (the work-around holds).
 
 ## Done
 
+- [x] **Real docking checked (2026-11-22, by the user in play):** docked both with the docking computer and by hand on the 128K build; the screen after docking was fine (no flight frame with noise, no status-page problem). That closes the open item from the cpcxray jump into `EnterStation` (2026-11-21), whose noise screen was an artefact of jumping in. The gauge panels after the next launch were not reported separately; if they ever show noise, it is a new report (`tools/tests/test_dock128.py` was never written).
+- [x] **Trainer effects played on the 128K build (2026-11-22, by the user):** energy bomb, cargo (unlimited hold), one-hit kills and the other cheats work in flight, and docking with the docking computer works too. The trainer asks "Docking computer?" now (flag at save offset 56 of the default commander; `test_tools128.py` checks it, and the 64K disk gave the same bytes in a scratch run).
 - [x] **Laser sights 3.6 ms cheaper (2026-11-21):** two-line data for the pulse and military sights, `2 + (index & 1)` lines, offset `4 * (2 * index + index / 2)`; pixel-identical, `handleLaser` to the transfer 11.4 -> 7.8 ms (`lasersights128.asm`, see `CHANGELOG_128K.md`).
 - [x] **Speedups measured and dropped (2026-11-21):** the scanner busy flag (the planet's blip is drawn every frame in the launch scene: no gain, reverted) and the entity loop (6.9 ms against 7.6 ms in the 64K game: no gap, the old 14.7 ms was another scene). `docs/_128k_speedup.md` items 3 and 4.
 - [x] **Title music:** listen to it (Virtual Retro). While a far call hides bank 7 (the ship fill, most of each title frame) the ticks are owed and run in bursts afterwards (at most 24 at once), so the tempo holds but the notes come in clumps; if that sounds bad, shorten the fill windows or make the player independent of bank 7. Not checked: the docked screens after docking back from flight. The title exit reads `NOTMUSIC.BIN` from disk (about a second, as in the 64K game); a bank copy needs resident bytes that do not exist.
