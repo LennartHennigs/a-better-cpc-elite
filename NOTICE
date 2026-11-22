@@ -1,36 +1,36 @@
-Elite for the Amstrad CPC: what is not covered by the licences in LICENSE
+Elite for the Amstrad CPC: what is not covered by the licences in LICENSE.
 
 Elite is copyrighted by its authors and rights holders (David Braben and Ian Bell; the CPC version was published by Firebird in 1985). This project is not affiliated with them and holds no rights to the game.
 
-1. The disassembled game source (src/elite/, src/elite_de/, src/elite_fr/, apart from the files named in 3)
-   It is a disassembly of the original game's code. The names, labels and comments are mine, but they cannot be separated from the code, which stays under the original copyright. It is published for study and preservation: you may read it, learn from it and build it for your own use from your own copy of the game. No licence is granted beyond that: nothing here allows redistributing the game, the source, or disks built from it. Ask the rights holders, not me.
+1. The disassembled game source (src/elite/, src/elite_de/, src/elite_fr/, apart from the files named in 3).
+   It is a disassembly of the original game's code. The names, labels and comments are mine, but they cannot be separated from the code, which stays under the original copyright. It is published for study and preservation: you may read it, learn from it and build it for your own use from your own copy of the game. No licence is granted beyond that: nothing here allows redistributing the game, the source, or disks built from it. Please ask the rights holders, not me.
 
-2. The mission code (src/elite/missions_*.asm, src/disk/)
-   It is my own work, but it only runs inside the original binary and follows the logic of other versions of the game. It is treated like item 1: no licence is granted.
+2. The mission code (src/elite/missions_*.asm, src/disk/).
+   It is my own work, but it only runs inside the original binary and follows the logic of other versions of the game. It is treated like item 1: you may read it and build it for your own use from your own copy of the game, and no licence is granted beyond that.
 
-3. Material by Fessor (the ship hulls, including the Constrictor: src/elite/missions_hull.asm, src/elite/missions_ships.asm, tools/fessor_ships.py, the ship packs, docs/_ship_packs.md)
+3. Material by Fessor (the ship hulls, including the Constrictor: src/elite/missions_hull.asm, src/elite/missions_ships.asm, tools/fessor_ships.py, the ship packs, docs/_ship_packs.md).
    Used with his permission and credited in README.md. That permission does not extend to a licence. These files are excluded from the MIT licence of tools/ and from every other grant in LICENSE.
 
-4. Third-party material the tools use but the repository does not hold
-   - RASM (assembler, only for reading Fessor's source): built locally from its upstream source into `tools/bin/` (gitignored). It has its own licence and author.
+4. Third-party material the tools use but the repository does not hold.
+   - RASM (an assembler, used only with Fessor's source): built locally from its upstream source into `tools/bin/` (gitignored). It has its own licence and author.
    - `tools/proto_fill/` (a filled-ship prototype) is my code, but `gen.py` reads Ian Bell's ship table from the ArcElite sources (`work/arcelite/x_ships/B5052480.C`). The table and everything generated from it stay in `work/` and are not in the repository; they are not covered by the MIT licence.
 
-5. Not in this repository
-   Game disks, tape images, magazine scans, the sources and binaries of other versions (BBC, Atari ST, NES, MSX, Spectrum, ArcElite, PC Elite Plus) and Fessor's archives; the generated hull data, the 128K disk images and the listings of the 128K build (work/ and build/ are ignored). They stay on the author's machine (see .gitignore). Their authors and rights holders keep all rights. You need your own copy of the game to build anything (`HULLS=arcelite` also needs your own copy of the ArcElite files).
+5. Not in this repository.
+   Game disks, tape images, magazine scans, the sources and binaries of other versions (BBC, Atari ST, NES, MSX, Spectrum, ArcElite, PC Elite Plus) and Fessor's archives; the generated hull data, the 128K disk images and the listings of the 128K build (work/ and build/ are ignored). They stay on my machine (see .gitignore). Their authors and rights holders keep all rights. You need your own copy of the game to build anything (`HULLS=arcelite` also needs your own copy of the ArcElite files).
 
-6. The 128K game source (src/elite128/, apart from the files named in 7, 8 and 9)
-   It is the disassembly of item 1 laid out for a 6128: the code block moved to RAM bank 7, the screen page moved to &4000, the loaders changed. The names, labels and comments are mine, but they cannot be separated from the code, which stays under the original copyright. It is published for study and preservation: you may read it, learn from it and build it for your own use from your own copy of the game. No licence is granted beyond that: nothing here allows redistributing the game, the source, or disks built from it. Ask the rights holders, not me.
+6. The 128K game source (src/elite128/, apart from the files named in 7, 8 and 9).
+   It is the disassembly of item 1 laid out for a 6128: the code block moved to RAM bank 7, the screen page moved to &4000, the loaders changed. The names, labels and comments are mine, but they cannot be separated from the code, which stays under the original copyright. It is published for study and preservation: you may read it, learn from it and build it for your own use from your own copy of the game. No licence is granted beyond that: nothing here allows redistributing the game, the source, or disks built from it. Please ask the rights holders, not me.
 
-7. The code written for the 128K build (src/elite128/fill.asm, fill_tt.asm and the glue in src/elite128/commonxx.asm: hullDraw, bankInit, the page flip, the disc trampolines)
-   It is my own work, but it only runs inside the original binary. It is treated like item 1: no licence is granted. The scripts around it (tools/ship128.py, hullfill.py, cheat128.py, check_src128.sh, listing6128.sh, build_dsk128.py, test_*128.py and the other tools for this build) are code written by me and fall under the MIT licence of tools/ in LICENSE, with the exception in 8. The 128K ship viewer (src/viewer128/) is my code too (MIT); the ship data it loads are generated from the game's blueprints (item 8) and are not in the repository.
+7. The code written for the 128K build (src/elite128/fill.asm, fill_tt.asm and the glue in src/elite128/commonxx.asm: hullDraw, bankInit, the page flip, the disk trampolines).
+   It is my own work, but it only runs inside the original binary. It is treated like item 1: you may read it and build it for your own use from your own copy of the game, and no licence is granted beyond that. The scripts around it (tools/ship128.py, hullfill.py, cheat128.py, check_src128.sh, listing6128.sh, build_dsk128.py, test_*128.py and the other tools for this build) are code written by me and fall under the MIT licence of tools/ in LICENSE, with the exception in 8. The 128K ship viewer (src/viewer128/) is my code too (MIT); the ship data it loads are generated from the game's blueprints (item 8) and are not in the repository.
 
-8. The filled ships made from the game's own blueprints (the default build, `HULLS=stock`)
-   tools/hullfill.py is my code, but what it works on and what it produces are the game's: the vertices, edges and face normals of the stock blueprints (item 1) become triangles, dither patterns and a few details of my own (the Cobra's windscreen, the Sidewinder's canopy and wing trim, the Viper's canopy). The generated files (work/elite128/shipdata128.asm, fill128.bin, fill128_late.bin, hull_constrictor.asm), the disks and the listing made from them are treated like item 1: no licence is granted.
+8. The filled ships made from the game's own blueprints (the default build, `HULLS=stock`).
+   tools/hullfill.py is my code, but what it works on and what it produces are the game's: the vertices, edges and face normals of the stock blueprints (item 1) become triangles, dither patterns and a few details of my own (the Cobra's windscreen, the Sidewinder's canopy and wing trim, the Viper's canopy). The generated files (work/elite128/shipdata128.asm, fill128.bin, fill128_late.bin, hull_constrictor.asm), the disks and the listing made from them are treated like item 1: you may read them and build for your own use from your own copy of the game, and no licence is granted beyond that.
 
-9. The Constrictor and the ship packs in the 128K build (src/elite128/missions_hull.asm and the generated work/elite128/hull_constrictor.asm, hull_packs.asm, fill128_packs.bin)
-   They are based on Fessor's hulls (item 3, used with his permission): his header and, in the default build, his vertices, with triangles built from his edges and faces. It is not his file as it was: the edges and faces are dropped and the triangles are mine. No licence is granted beyond item 3.
+9. The Constrictor and the ship packs in the 128K build (src/elite128/missions_hull.asm and the generated work/elite128/hull_constrictor.asm, hull_packs.asm, fill128_packs.bin).
+   They are based on Fessor's hulls (item 3, used with his permission): his header and, in the default build, his vertices, with triangles built from his edges and faces. It is not his file unchanged: the edges and faces are dropped and the triangles are my own. No licence is granted beyond item 3.
 
-10. Material derived from ArcElite (only with `HULLS=arcelite`)
-   The original look of this build draws the filled hulls from the ship shapes in Ian Bell's ship table of ArcElite, the Archimedes version of Elite. With `HULLS=arcelite`, tools/ship128.py reads it (through tools/proto_fill/gen.py, from work/arcelite/x_ships/B5052480.C) instead of building from the stock blueprints. The table and everything generated from it stay in work/ and are not in the repository; they are not covered by the MIT licence. They end up inside every 128K disk and in the listing made with that switch: build those for your own use only, no licence is granted to redistribute them. The default build does not use ArcElite at all.
+10. Material derived from ArcElite (only with `HULLS=arcelite`).
+   The original look of the filled hulls comes from the ship shapes in Ian Bell's ship table in ArcElite, the Archimedes version of Elite. With `HULLS=arcelite`, tools/ship128.py reads it (through tools/proto_fill/gen.py, from work/arcelite/x_ships/B5052480.C) instead of building from the stock blueprints. The table and everything generated from it stay in work/ and are not in the repository; they are not covered by the MIT licence. They end up inside every 128K disk and in the listing made with that switch: build those for your own use only, no licence is granted to redistribute them. The default build does not use ArcElite at all.
 
 If you hold rights to anything here and want it removed or credited differently, please open an issue.

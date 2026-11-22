@@ -8,7 +8,7 @@ This repository mixes my own work with material that is not mine. Which licence 
    README.md, CHANGELOG.md, TODO.md, CLAUDE.md, CHANGELOG_128K.md, TODO_128K.md, src/elite128/README.md, src/elite128/CLAUDE.md, docs/ (text and the screenshots in docs/img/)
 
 3. Everything else (the disassembled game source in src/elite/, src/elite_de/ and src/elite_fr/, the 128K source in src/elite128/, the mission code in src/elite/missions_*.asm and src/disk/):
-   no licence is granted. See NOTICE.
+   you may read it and build it for your own use from your own copy of the game, and no licence is granted beyond that. See NOTICE.
 
 ---------------------------------------------------------------------------
 
