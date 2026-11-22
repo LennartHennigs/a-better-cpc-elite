@@ -20,6 +20,7 @@ equipment menus.
 A sells your whole hold.
 Cash shows while you buy.
 Kills show on the status page.
+Buy a laser: pick F, B, L or R.
 Planets and suns hide stars.
 Pirates come from more sides.
 New ships fly the lanes, and
