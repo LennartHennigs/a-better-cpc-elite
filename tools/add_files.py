@@ -47,7 +47,7 @@ def main(argv):
             sys.exit(f"{target or path}: not an AMSDOS 8.3 name (NAME.EXT=FILE sets one)")
         removed = dskx.add_padded(d, secs, first, name, ext, data, replace=True)
         print(f"{disk.name}: {name}.{ext} {len(data)} bytes" + (" (replaced)" if removed else ""))
-    disk.write_bytes(d)
+    dskx.write_atomic(disk, d)
 
 
 if __name__ == "__main__":

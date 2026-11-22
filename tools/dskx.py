@@ -5,6 +5,8 @@ usage: dskx.py IMAGE.dsk [OUTDIR]
 Prints one line per file with the AMSDOS header (load, exec, length); with OUTDIR also
 writes each file (header stripped) as NAME and the raw bytes as NAME.raw.
 """
+import os
+import shutil
 import struct
 import sys
 from pathlib import Path
@@ -13,9 +15,21 @@ ROOT = Path(__file__).resolve().parent.parent
 
 
 def is_original(path):
-    """True for a file in the project root or anywhere under disks/: the original disks, which no tool may write (CLAUDE.md)."""
+    """True for a file in the project root or anywhere under disks/: the original disks, which no tool may write (CLAUDE.md).
+    In a worktree `disks` is a symlink into the main checkout, so the guarded places are the resolved ones: the main checkout's root and its disks/ as well."""
     p = Path(path).resolve()
-    return p.parent == ROOT or (ROOT / "disks") in p.parents
+    disks = (ROOT / "disks").resolve()
+    return p.parent in (ROOT, disks.parent) or disks in p.parents
+
+
+def write_atomic(path, data):
+    """Write `data` to `path` through a temporary file and os.replace, so a kill or a sync in the middle leaves the old image, not a short one. Keeps the file mode."""
+    path = Path(path).resolve()
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.write_bytes(data)
+    if path.exists():
+        shutil.copymode(path, tmp)
+    os.replace(tmp, path)
 
 
 def load_sectors(path):

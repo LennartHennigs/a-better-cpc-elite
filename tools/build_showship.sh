@@ -4,6 +4,7 @@
 # System-hidden like every other non-BAS file). Run it with `RUN"SHOWSHPS`.
 set -e
 cd "$(dirname "$0")/.."
+ROOT="$PWD"   # absolute: in a worktree work/xray is a symlink into the main checkout, so ../../tools from there is the main checkout's
 export PATH="$HOME/.local/bin:$PATH"
 D=src/cheats
 P=SHOWSHPS
@@ -12,7 +13,7 @@ rm -f work/tmp_asc.dsk work/xray/disk/tmp_asc.dsk work/xray/disk/tmp_tok.dsk
 iDSK work/tmp_asc.dsk -n >/dev/null 2>&1
 iDSK work/tmp_asc.dsk -i $D/$P.ASC -t 0 >/dev/null 2>&1
 cp work/tmp_asc.dsk work/xray/disk/tmp_asc.dsk
-(cd work/xray && PROG=$P ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/cheat_tokenise.py)
+(cd work/xray && PROG=$P ~/.local/share/uv/tools/cpcxray/bin/python -I "$ROOT/tools/cheat_tokenise.py")
 rm -rf work/tmp_tok; mkdir work/tmp_tok
 python3 -I tools/dskx.py work/xray/disk/tmp_tok.dsk work/tmp_tok >/dev/null
 cp work/tmp_tok/$P.BAS.raw $D/$P.BAS

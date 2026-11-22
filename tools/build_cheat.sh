@@ -8,6 +8,7 @@
 # The CPC's own BASIC does the tokenising (cpcxray headless), so the result is a real tokenised file.
 set -e
 cd "$(dirname "$0")/.."
+ROOT="$PWD"   # absolute: in a worktree work/xray is a symlink into the main checkout, so ../../tools from there is the main checkout's
 export PATH="$HOME/.local/bin:$PATH"
 D=src/cheats
 # add FILES to DISK with dskx (tools/add_files.py): iDSK may fill the odd-sector tracks, which AMSDOS cannot read ("Drive A: read fail"); a file of the same name is replaced
@@ -19,7 +20,7 @@ for P in $PROGS; do
   iDSK work/tmp_asc.dsk -n >/dev/null 2>&1
   iDSK work/tmp_asc.dsk -i $D/$P.ASC -t 0 >/dev/null 2>&1
   cp work/tmp_asc.dsk work/xray/disk/tmp_asc.dsk
-  (cd work/xray && PROG=$P ~/.local/share/uv/tools/cpcxray/bin/python -I ../../tools/cheat_tokenise.py)
+  (cd work/xray && PROG=$P ~/.local/share/uv/tools/cpcxray/bin/python -I "$ROOT/tools/cheat_tokenise.py")
   rm -rf work/tmp_tok; mkdir work/tmp_tok
   python3 -I tools/dskx.py work/xray/disk/tmp_tok.dsk work/tmp_tok >/dev/null
   cp work/tmp_tok/$P.BAS.raw $D/$P.BAS

@@ -21,11 +21,11 @@ import cheat128  # noqa: E402
 import dskx  # noqa: E402
 from dskx import sector_offsets  # noqa: E402
 from hide_files import hide_entries  # noqa: E402
+from symfile import read_sym  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 BASE = ROOT / "disks" / "Elite_UK_Firebird_cracked_trainer.dsk"
-MISSIONS = True      # the 128K build has one variant (src/elite128/config.inc): missions, enhanced UI, title selection
-_args = [a for a in sys.argv[1:] if a != "--missions"]      # --missions is accepted and ignored (old command lines)
+_args = [a for a in sys.argv[1:] if a != "--missions"]      # --missions is accepted and ignored (docs and src/elite128/README.md still show it; the one variant, src/elite128/config.inc, always has the missions)
 OUT = Path(_args[0]) if _args else ROOT / "build/elite128.dsk"
 if OUT.resolve() == BASE.resolve() or dskx.is_original(OUT):      # CLAUDE.md: never modify the original disks (disks/)
     sys.exit(f"{OUT}: refusing to write a disk into the project root or disks/ (the originals live there); use build/ or work/")
@@ -43,11 +43,7 @@ def sliced(src, flags, lo_label, hi_label, base_addr):
         r = subprocess.run([str(SJASM), *flags, f"--raw={out}", f"--sym={sym}", str(SRC / src)], capture_output=True, text=True)
         if r.returncode:
             sys.exit(f"{src} {flags}: assemble failed\n{r.stdout[-400:]}")
-        labels = {}
-        for line in sym.read_text().splitlines():
-            parts = line.split()
-            if len(parts) >= 3 and parts[0] in (lo_label + ":", hi_label + ":"):
-                labels[parts[0][:-1]] = int(parts[2], 16)
+        labels = read_sym(sym, lo_label, hi_label)
         return labels[lo_label], out.read_bytes()[labels[lo_label] - base_addr:labels[hi_label] - base_addr]
 
 
@@ -58,12 +54,7 @@ def symbols(src, flags=()):
         r = subprocess.run([str(SJASM), *flags, f"--raw={Path(tmp) / 'x.bin'}", f"--sym={sym}", str(SRC / src)], capture_output=True, text=True)
         if r.returncode:
             sys.exit(f"{src}: assemble failed\n{r.stdout[-400:]}")
-        out = {}
-        for line in sym.read_text().splitlines():
-            parts = line.split()
-            if len(parts) >= 3 and parts[0].endswith(":"):
-                out[parts[0][:-1]] = int(parts[2], 16)
-        return out
+        return read_sym(sym)
 
 
 def spawn_module():
@@ -121,8 +112,7 @@ def main():
     with tempfile.TemporaryDirectory() as tmp:
         for n, defs in FILES.items():
             out = Path(tmp) / f"{n}.bin"
-            extra = []
-            r = subprocess.run([str(SJASM), *defs, *extra, f"--raw={out}", str(SRC / f"{n.lower()}.asm")], capture_output=True, text=True)
+            r = subprocess.run([str(SJASM), *defs, f"--raw={out}", str(SRC / f"{n.lower()}.asm")], capture_output=True, text=True)
             if r.returncode:
                 sys.exit(f"{n}: assemble failed\n{r.stdout[-400:]}{r.stderr[-400:]}")
             new = bytearray(out.read_bytes())
@@ -132,16 +122,16 @@ def main():
                 sm = spawn_module()
                 if sm:      # the module and its table: a blank block (bankInit copies 0x240 bytes of it to bank 6 &4600)
                     stage.append((0x3000, sm))
-                if MISSIONS:      # overlays (bank 4: slots of 0x240 at &D800, &DC80, &E000, &E480) and flight images (bank 5: 0x260 at &E800, &EC60, &F000, &F460, &F800, &FC60); bankInit copies them
-                    for i, tag in enumerate("CPTR"):
-                        base, blob = sliced("largeaxx.asm", [f"-DOVL_{tag}"], "mxOverlayBase", "mxOverlayEnd", 0x840)
-                        assert len(blob) <= 0x240, (tag, len(blob))
-                        stage.append((0x1800 + (i // 2) * 0x800 + (i % 2) * 0x240, blob))
-                    for tag in FLIGHT_TAGS:
-                        flags = ([f"-DFL_{tag}"] if tag != "0" else [])
-                        base, blob = sliced("commonxx.asm", flags, "mxFlightBase", "mxFlightEnd", 0x1A40)
-                        assert len(blob) <= 0x260, (tag, len(blob))
-                        flight_images.append(blob.ljust(0x260, b"\0"))
+                # overlays (bank 4: slots of 0x240 at &D800, &DC80, &E000, &E480) and flight images (bank 5: 0x260 at &E800, &EC60, &F000, &F460, &F800, &FC60); bankInit copies them
+                for i, tag in enumerate("CPTR"):
+                    base, blob = sliced("largeaxx.asm", [f"-DOVL_{tag}"], "mxOverlayBase", "mxOverlayEnd", 0x840)
+                    assert len(blob) <= 0x240, (tag, len(blob))
+                    stage.append((0x1800 + (i // 2) * 0x800 + (i % 2) * 0x240, blob))
+                for tag in FLIGHT_TAGS:
+                    flags = ([f"-DFL_{tag}"] if tag != "0" else [])
+                    base, blob = sliced("commonxx.asm", flags, "mxFlightBase", "mxFlightEnd", 0x1A40)
+                    assert len(blob) <= 0x260, (tag, len(blob))
+                    flight_images.append(blob.ljust(0x260, b"\0"))
                 for off, blob in stage:
                     assert not any(new[PAGE + off:PAGE + off + len(blob)]), f"the window page is not blank at +{off:04X}"
                     new[PAGE + off:PAGE + off + len(blob)] = blob
@@ -160,16 +150,15 @@ def main():
     dskx.remove_file(d, secs, first, "INDICATO", "BIN")
     dskx.add_file(d, secs, first, "INDICATO", "BIN", new_ind, 0x5000)
     print(f"INDICATO.BIN: {len(new_ind)} bytes (INDICATO + {len(flight_images)} flight images)")
-    if MISSIONS:
-        txt = (ROOT / "src/disk/README.TXT").read_bytes().replace(b'RUN"ELITE\r\n', b'RUN"ELITE128\r\n').replace(b'RUN"ELITE\n', b'RUN"ELITE128\n')
-        txt = txt.replace(b"Amstrad CPC 464 / 6128", b"Amstrad CPC 6128 only")
-        txt = txt.replace(b"every ship in 3D", b"the ships, filled")
-        recs = -(-len(txt) // 128)
-        dskx.add_payload(d, secs, first, "README", "TXT", txt.ljust(recs * 128, b"\x1a"), recs)
+    txt = (ROOT / "src/disk/README.TXT").read_bytes().replace(b'RUN"ELITE\r\n', b'RUN"ELITE128\r\n').replace(b'RUN"ELITE\n', b'RUN"ELITE128\n')
+    txt = txt.replace(b"Amstrad CPC 464 / 6128", b"Amstrad CPC 6128 only")
+    txt = txt.replace(b"every ship in 3D", b"the ships, filled")
+    recs = -(-len(txt) // 128)
+    dskx.add_payload(d, secs, first, "README", "TXT", txt.ljust(recs * 128, b"\x1a"), recs)
     # The ship viewer (RUN"SHOWSHPS): a stand-alone program like the 64K disk's, but with the filled hulls of the game. SHOWSHPS.BAS loads the ships into RAM banks 4-6 and the program
     # (src/viewer128/viewer.asm, the page flip prototype) at &8000; the data come from tools/mk_viewer128.py. The binaries are hidden like every other non-BASIC file.
     venv = {**os.environ, "HULLS": hulls} if hulls in ("stock", "arcelite") else None      # the viewer shows the hulls the game was built with (work/elite128/hulls_source.txt)
-    subprocess.run([sys.executable, "-I", str(ROOT / "tools/mk_viewer128.py")], check=True, capture_output=True, env=venv)
+    subprocess.run([sys.executable, "-I", str(ROOT / "tools/mk_viewer128.py")], check=True, stdout=subprocess.DEVNULL, env=venv)
     r = subprocess.run([str(SJASM), "--nologo", "--msg=err", "viewer.asm"], cwd=ROOT / "src/viewer128", capture_output=True, text=True)
     if r.returncode:
         sys.exit("viewer.asm: assemble failed\n" + r.stdout[-400:])
@@ -206,7 +195,7 @@ def main():
     print("wrote", OUT)
     # A ready commander like the 64K expanded disk's: LEN from the German saves disk, encrypted with this build's key; visible (added after the hiding), like every save.
     subprocess.run([sys.executable, "-I", str(ROOT / "tools/saveedit.py"), "edit", str(ROOT / "disks/Elite_DE_savegames.dsk") + ":LEN.BIN", "--key-disk", str(ROOT / "disks/Elite_DE_cracked.dsk"),
-                    "--to-key-disk", str(OUT), "-o", f"{OUT}:LEN.BIN"], check=True, capture_output=True)
+                    "--to-key-disk", str(OUT), "-o", f"{OUT}:LEN.BIN"], check=True, stdout=subprocess.DEVNULL)
     print("LEN.BIN: a commander save for this build, visible")
 
 

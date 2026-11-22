@@ -10,6 +10,7 @@ Helpers for building, checking and analysing the project. Each script has a head
 | `build_original.sh`, `build_expanded.sh` | the two `make` disks, written to `build/` |
 | `build_cheat.sh`, `build_showship.sh` | tokenise the BASIC programs of `src/cheats/` and build the trainer and viewer disks (in `work/`) |
 | `build_readme.md` | template for `build/README.md` |
+| `symfile.py` | `read_sym(path, *wanted)`: a sjasmplus `--sym` file as `{label: address}` (used by `build_dsk.py`, `build_dsk128.py`) |
 | `dskx.py`, `add_files.py`, `hide_files.py` | list/extract, add, delete and rename (`OLD.EXT>NEW`, header included) files on DSK images, hide files (never write to `disks/`) |
 | `cheat_tokenise.py`, `bastok.py` | tokenise CPC BASIC with the CPC's own BASIC (cpcxray), detokenise to text |
 | `size_report.py` | bytes used in the free tails against the stock files |

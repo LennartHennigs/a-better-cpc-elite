@@ -19,6 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import dskx  # noqa: E402
 from dskx import sector_offsets  # noqa: E402
 from hide_files import hide_entries  # noqa: E402
+from symfile import read_sym  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 DE = "--de" in sys.argv
@@ -53,11 +54,7 @@ def flight_image(tag):
         r = subprocess.run([str(SJASM), *flags, f"--raw={out}", f"--sym={sym}", str(ROOT / "src/elite/commonxx.asm")], capture_output=True, text=True)
         if r.returncode:
             sys.exit(f"flight image {tag}: assemble failed\n{r.stdout[-400:]}")
-        labels = {}
-        for line in sym.read_text().splitlines():
-            parts = line.split()
-            if len(parts) >= 3 and parts[0] in ("mxFlightBase:", "mxFlightEnd:"):
-                labels[parts[0][:-1]] = int(parts[2], 16)
+        labels = read_sym(sym, "mxFlightBase", "mxFlightEnd")
         return labels["mxFlightBase"], out.read_bytes()[labels["mxFlightBase"] - 0x1A40:labels["mxFlightEnd"] - 0x1A40]
 
 
@@ -69,11 +66,7 @@ def overlay(tag):
                            capture_output=True, text=True)
         if r.returncode:
             sys.exit(f"overlay {tag}: assemble failed\n{r.stdout[-400:]}")
-        labels = {}
-        for line in sym.read_text().splitlines():
-            parts = line.split()
-            if len(parts) >= 3 and parts[0] in ("mxOverlayBase:", "mxOverlayEnd:"):
-                labels[parts[0][:-1]] = int(parts[2], 16)
+        labels = read_sym(sym, "mxOverlayBase", "mxOverlayEnd")
         return labels["mxOverlayBase"], out.read_bytes()[labels["mxOverlayBase"] - 0x840:labels["mxOverlayEnd"] - 0x840]
 
 
