@@ -680,20 +680,30 @@ eqBuildLaserEQScreen:
     ld b,0x68
     add a,b
     call printString
-    ld a,0x10
+; Laser position by letter (ENHANCED): "F Front / B Back / L Left / R Right", keys F, B, L, R. The counter lives on the stack; the letters come from the
+; reversed table eqLaserKeys (cpir leaves the view number in C); the block is padded so that eqErrornotEnoughCash stays at &0CC4 (docs/_my_changes.md).
+eqLaserSlot:
+    ld a,0x0F
     call VerticalPlacement
+    call placeCursor                   ; row 0x10 as before, and it starts a word, so the first letter is a capital (the digit used to do that)
     xor a
 eqListEquipmentdirections:
-    ld (varEquipmentNumber),a
+    push af
     call printFollowingTokenWithSpace
     db 0x0A
-    ld a,(varEquipmentNumber)
-    add a,0x30
+    pop af
+    push af
+    ld hl,eqLaserKeys+4
+    cpl
+    add a,l
+    ld l,a
+    ld a,(hl)
     call printTokenAndToken0x20
-    ld a,(varEquipmentNumber)
+    pop af
+    push af
     add a,0x60
     call CallprintString
-    ld a,(varEquipmentNumber)
+    pop af
     inc a
     cp 0x04
     jr c,eqListEquipmentdirections
@@ -703,14 +713,14 @@ eqListEquipmentdirections:
     call printStringFollowingByte
     db "?"
     call WaitForKeypress
-    cp 0x30
-    jp c,LAB_ram_0cbf
-    cp 0x34
-    jp nc,LAB_ram_0cbf
-    push af
+    ld hl,eqLaserKeys
+    ld bc,0x0004
+    cpir
+    jr nz,eqLaserLeave
+    push bc
     call CallprintString
-    pop af
-    sub 0x30
+    pop bc
+    ld a,c
     ld hl,0x38F4
     call SetTableBegintoAofHL
     ld b,(hl)
@@ -736,10 +746,14 @@ eqListEquipmentdirections:
 eqLeaveNothingtoRefund:
     call printWithTokens03n07
     jp EquipShip
-LAB_ram_0cbf:
-    call restore_trade_state
-    jr LAB_ram_0cf7
+    ASSERT (eqLaserKeys & 0xFF) < 0xFC   ; the letter lookup adds to L only
+eqLaserKeys:
+    db "RLBF"                            ; Right Left Back Front: the reverse of the token order &60-&63, so cpir leaves the view number in C
+    ASSERT $ <= 0x0CC4
+    DS 0x0CC4-$                          ; eqErrornotEnoughCash and everything after it stay at their stock addresses
+eqLaserSlotEnd:
 eqErrornotEnoughCash:
+    ASSERT eqErrornotEnoughCash == 0x0CC4   ; the stock address the laser block pads to
     call errorforNotEnoughCash
     jp eqShoppingloop
 AndsAandReturns:
@@ -771,6 +785,7 @@ leaveEQScreen:
     call printStringFollowingByte
     db 0x1E
     call SUB_ram_09c4
+eqLaserLeave:                          ; a key that is not F, B, L or R (the old LAB_ram_0cbf)
     call restore_trade_state
 LAB_ram_0cf7:
     jp CommanderStatus
