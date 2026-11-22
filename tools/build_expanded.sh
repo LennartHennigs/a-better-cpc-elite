@@ -33,6 +33,4 @@ assert new != txt, 'README.TXT has no RUN"ELITE line'
 dskx.add_padded(d, secs, first, "README", "TXT", new, replace=True)
 p.write_bytes(d)
 PY
-# a ready commander: LEN from the German saves disk (Elite_DE_savegames.dsk), re-keyed for the English game; left visible (no hide_files after it), like the saves of work/de_savegames.dsk
-python3 -I tools/saveedit.py edit disks/Elite_DE_savegames.dsk:LEN.BIN --key-disk disks/Elite_DE_cracked.dsk --to-key-disk build/elite64.dsk -o build/elite64.dsk:LEN.BIN >/dev/null
 echo "built build/elite64.dsk (RUN\"ELITE64, RUN\"TRAINER, RUN\"SHOWSHPS, RUN\"EDITSAVE, RUN\"LISTSAVE)"

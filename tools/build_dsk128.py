@@ -193,10 +193,6 @@ def main():
     OUT.parent.mkdir(parents=True, exist_ok=True)
     dskx.write_atomic(OUT, d)
     print("wrote", OUT)
-    # A ready commander like the 64K expanded disk's: LEN from the German saves disk, encrypted with this build's key; visible (added after the hiding), like every save.
-    subprocess.run([sys.executable, "-I", str(ROOT / "tools/saveedit.py"), "edit", str(ROOT / "disks/Elite_DE_savegames.dsk") + ":LEN.BIN", "--key-disk", str(ROOT / "disks/Elite_DE_cracked.dsk"),
-                    "--to-key-disk", str(OUT), "-o", f"{OUT}:LEN.BIN"], check=True, stdout=subprocess.DEVNULL)
-    print("LEN.BIN: a commander save for this build, visible")
 
 
 if __name__ == "__main__":
