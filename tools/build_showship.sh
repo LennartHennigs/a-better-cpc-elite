@@ -4,7 +4,7 @@
 # System-hidden like every other non-BAS file). Run it with `RUN"SHOWSHPS`.
 set -e
 cd "$(dirname "$0")/.."
-ROOT="$PWD"   # absolute: in a worktree work/xray is a symlink into the main checkout, so ../../tools from there is the main checkout's
+ROOT="$PWD"   # absolute: work/xray is a symlink in a worktree (see build_cheat.sh)
 export PATH="$HOME/.local/bin:$PATH"
 D=src/cheats
 P=SHOWSHPS

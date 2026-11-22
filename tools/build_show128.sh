@@ -4,7 +4,7 @@
 # output src/viewer128/SHOWSHPS.BAS (AMSDOS header) and SHOWSHPS.BAS.txt (listing). tools/build_dsk128.py puts it on the disk with the ship data (tools/mk_viewer128.py, src/viewer128/viewer.asm).
 set -e
 cd "$(dirname "$0")/.."
-ROOT="$PWD"   # absolute: in a worktree work/xray is a symlink into the main checkout, so ../../tools from there is the main checkout's
+ROOT="$PWD"   # absolute: work/xray is a symlink in a worktree (see build_cheat.sh)
 export PATH="$HOME/.local/bin:$PATH"
 D=src/viewer128
 P=SHOWSHPS

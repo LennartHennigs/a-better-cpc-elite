@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Read a sjasmplus symbol file (`--sym=FILE`, lines `label: EQU 0x1234`) into {label: address}."""
 import sys
 from pathlib import Path

@@ -132,7 +132,7 @@ def main():
         replace_trainer(d, secs, first)
     hidden, shown = hide_entries(d, secs, first)   # System attribute on everything but .BAS and .TXT (CLAUDE.md rule; code in tools/hide_files.py)
     print(f"{len(hidden)} directory entries hidden (System attribute), visible: {', '.join(sorted(shown))}")
-    OUT.write_bytes(d)
+    dskx.write_atomic(OUT, d)
     print("wrote", OUT)
 
 

@@ -18,6 +18,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import elitekey  # noqa: E402
+from symfile import read_sym  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 SJASM = Path.home() / ".local/bin/sjasmplus"
@@ -32,12 +33,7 @@ def assemble(src, tmp, name, flags=()):
     r = subprocess.run([str(SJASM), "--nologo", *flags, f"--raw={out}", f"--sym={sym}", str(src)], capture_output=True, text=True)
     if r.returncode:
         sys.exit(f"{src}: assemble failed\n{r.stdout[-400:]}")
-    labels = {}
-    for line in sym.read_text().splitlines():
-        p = line.split()
-        if len(p) >= 3 and p[0].endswith(":"):
-            labels[p[0][:-1]] = int(p[2], 16)
-    return labels, out.read_bytes()
+    return read_sym(sym), out.read_bytes()
 
 
 def cheatb_line(number):

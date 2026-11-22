@@ -25,7 +25,7 @@ from symfile import read_sym  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 BASE = ROOT / "disks" / "Elite_UK_Firebird_cracked_trainer.dsk"
-_args = [a for a in sys.argv[1:] if a != "--missions"]      # --missions is accepted and ignored (docs and src/elite128/README.md still show it; the one variant, src/elite128/config.inc, always has the missions)
+_args = [a for a in sys.argv[1:] if a != "--missions"]      # --missions is accepted and ignored (the one variant always has the missions)
 OUT = Path(_args[0]) if _args else ROOT / "build/elite128.dsk"
 if OUT.resolve() == BASE.resolve() or dskx.is_original(OUT):      # CLAUDE.md: never modify the original disks (disks/)
     sys.exit(f"{OUT}: refusing to write a disk into the project root or disks/ (the originals live there); use build/ or work/")
@@ -124,12 +124,12 @@ def main():
                     stage.append((0x3000, sm))
                 # overlays (bank 4: slots of 0x240 at &D800, &DC80, &E000, &E480) and flight images (bank 5: 0x260 at &E800, &EC60, &F000, &F460, &F800, &FC60); bankInit copies them
                 for i, tag in enumerate("CPTR"):
-                    base, blob = sliced("largeaxx.asm", [f"-DOVL_{tag}"], "mxOverlayBase", "mxOverlayEnd", 0x840)
+                    _, blob = sliced("largeaxx.asm", [f"-DOVL_{tag}"], "mxOverlayBase", "mxOverlayEnd", 0x840)
                     assert len(blob) <= 0x240, (tag, len(blob))
                     stage.append((0x1800 + (i // 2) * 0x800 + (i % 2) * 0x240, blob))
                 for tag in FLIGHT_TAGS:
                     flags = ([f"-DFL_{tag}"] if tag != "0" else [])
-                    base, blob = sliced("commonxx.asm", flags, "mxFlightBase", "mxFlightEnd", 0x1A40)
+                    _, blob = sliced("commonxx.asm", flags, "mxFlightBase", "mxFlightEnd", 0x1A40)
                     assert len(blob) <= 0x260, (tag, len(blob))
                     flight_images.append(blob.ljust(0x260, b"\0"))
                 for off, blob in stage:
@@ -191,7 +191,7 @@ def main():
     hidden, shown = hide_entries(d, secs, first)
     print(f"{len(hidden)} directory entries hidden (System attribute), visible: {', '.join(sorted(shown))}")
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_bytes(d)
+    dskx.write_atomic(OUT, d)
     print("wrote", OUT)
     # A ready commander like the 64K expanded disk's: LEN from the German saves disk, encrypted with this build's key; visible (added after the hiding), like every save.
     subprocess.run([sys.executable, "-I", str(ROOT / "tools/saveedit.py"), "edit", str(ROOT / "disks/Elite_DE_savegames.dsk") + ":LEN.BIN", "--key-disk", str(ROOT / "disks/Elite_DE_cracked.dsk"),
