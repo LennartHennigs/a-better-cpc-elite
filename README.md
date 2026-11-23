@@ -6,7 +6,7 @@ This repo contains a disassembled, readable and commented version of the Amstrad
 
 I then used the source code to build two enhanced versions of *Elite*, with the goal of improving the Elite experience more than four decades after the game's release: a **64K build** that runs on any CPC and a **128K build** for the CPC 6128.
 
-The major difference is that the 128K version draws ships as filled polygons, not wireframes, like the Acorn Archimedes version (ArcElite), whose ship shapes it uses.
+The major difference is that the 128K version draws ships as filled polygons, not wireframes, as the Acorn Archimedes version (ArcElite) does. The shapes are our own, built from the CPC game's own ship data.
 
 <p>
 <img src="docs/img/elite128-02.png" alt="128K build: a filled, dithered ship in the rear view" width="49%">
