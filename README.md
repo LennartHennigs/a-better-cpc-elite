@@ -6,7 +6,7 @@ This repo contains a disassembled, readable and commented version of the Amstrad
 
 I then used the source code to build two enhanced versions of *Elite*, with the goal of improving the Elite experience more than four decades after the game's release: a **64K build** that runs on any CPC and a **128K build** for the CPC 6128.
 
-The major difference is that the 128K version draws ships as filled polygons, not wireframes, as the Acorn Archimedes version (ArcElite) does. The shapes are our own, built from the CPC game's own ship data.
+The major difference is that the 128K version draws ships as filled polygons, not wireframes, as the Acorn Archimedes version (ArcElite) does. The shapes are my own, built from the CPC game's own ship data.
 
 <p>
 <img src="docs/img/elite128-02.png" alt="128K build: a filled, dithered ship in the rear view" width="49%">
@@ -21,13 +21,24 @@ Both contain:
 - a different sight for each laser type, as on the C64 and Atari ST
 - quality-of-life improvements in the UI
 
+<p>
+<img src="docs/img/station04.png" alt="Commander Overview (showing # of kills)" width="49%">
+<img src="docs/img/station01.png" alt="Buying Cargo (with available money)" width="49%">
+</p>
+<p>
+<img src="docs/img/station02.png" alt="Buying Equipment (with available money)" width="49%">
+<img src="docs/img/station03.png" alt="Buying Equipment (with shortcut letters)" width="49%">
+</p>
+<p>
+<img src="docs/img/laser01.png" alt="Mining Laser Crosshair" width="49%">
+<img src="docs/img/laser02.png" alt="Military Laser Crosshair" width="49%">
+</p>
+
 The goal was a richer experience inside the existing game. It is deliberately not a rebuild like [Elite-A](https://elite.bbcelite.com/elite-a/), Angus Duggan's extended BBC version, which adds new mechanisms and components on top of the original. Here, I wanted to build the best 8-bit version available.
 
 **The challenge** is the (RAM) space. The 64K build has to run on a stock 64 KB CPC 464, and Elite was already a tight game: the added code lives in a few hundred free bytes, in overlays loaded from disk and in bytes saved elsewhere. The CPC also has no hardware sprites, so everything is drawn in software. Its code is about the size of the Spectrum version it was ported from (roughly 29 KB), with more graphics data, and the whole game is well over twice the size of the 6502 BBC Micro version. The 128K build has more room, but code can only live in a few places, so it is tight too (`docs/_128k_version.md`).
 
-**You need a legal copy of the original game.** Both the 64K build (`make expanded`, `make missions`) and the 128K build (`make disk6128`) are made from your own copy of the original Elite disk. The built disks contain the original game's code, so they are for your own use: do not share them.
-
-The assembly source is a disassembly of the original game's code and stays subject to its copyright; it is here for education, study and preservation. Build it for your own use from your own copy; do not redistribute built disks (`NOTICE` has the details).
+**You need your own copy of the original game.** The builds are made from it and contain its code, so they are for your own use: do not share the disks.
 
 ## Quick start
 
@@ -51,9 +62,8 @@ make disk6128    # the 128K build -> build/elite128.dsk, boot with RUN"ELITE128 
 | Ships | wireframe, as in the original | filled, dithered polygons |
 | Memory | the stock 64 KB: the added code lives in free bytes and in overlays and ship packs loaded from disk | the second 64 KB holds everything, loaded once at start: no loading pauses |
 | Options | switches in the source (`-D` flags) | always on |
-| Languages | English, German and French (the added missions: English only) | English only |
+| Languages | English; German and French only as source and `make original LOC=de` / `LOC=fr`, without the added missions | English only |
 | Build | `make expanded` | `make disk6128` |
-
 
 ## Feature Details
 
@@ -72,13 +82,11 @@ The added missions are for the **English build only**: the German and French bui
 
 What the missions are, where they start and what they pay is the point of finding out: **it is not written here**. Play it. (The research notes in `docs/` do spoil everything, so read those afterwards.)
 
-The repository contains no original game binaries, disk images or third-party source: the original disks, scans and reference sources are listed in `.gitignore` and stay on the author's machine. You need your own copy of the game to build and test anything. 
-
 ### Fuller Skies
 
 The stock game has few ship types and a quiet sky. This build fills it up, in three ways:
 
-- **More ships in space.** The stock game has 19 ship types. Eight more (Gecko, Moray, Mamba, Adder, Boa, Anaconda, Shuttle, hulls by Fessor) come in seven small "ship packs" on the disk. With no mission active, one pack is chosen for each system visit and loaded at the first launch (about 2 s, only when the pack changes); in it the new ships replace some Sidewinders, Kraits and traders at random, and the stock ships stay. Missions in progress use their own images, so no extras then (`-DMISSIONS`, English only, for the same lack of space in the German and French builds; `docs/_ship_packs.md`). **128K:** all nine pack hulls (the Cobra Mk I and the Worm too) are always there and drawn filled like the stock ships; the pack is drawn at random at every launch from RAM, so there is no loading pause.
+- **More ships in space.** The stock game has 19 ship types. Seven more (Gecko, Moray, Mamba, Adder, Boa, Anaconda and Shuttle, hulls by Fessor) come in seven small "ship packs" on the disk. With no mission active, one pack is chosen for each system visit and loaded at the first launch (about 2 s, only when the pack changes); in it the new ships replace some Sidewinders, Kraits and traders at random, and the stock ships stay. Missions in progress use their own images, so no extras then (`-DMISSIONS`, English only, for the same lack of space in the German and French builds; `docs/_ship_packs.md`). **128K:** all nine pack hulls (the Cobra Mk I and the Worm too) are always there and drawn filled like the stock ships; the pack is drawn at random at every launch from RAM, so there is no loading pause.
 - **Busier space, like the C64.** The spawn roll is named and tuned towards the C64 version: more hostiles per check, about 3.5 times the asteroids, escort packs of one to four (`-DTRAFFIC`, all three languages, on in the disks; the stock values stay in comments; `docs/_ship_packs.md`). **128K:** on.
 - **Hostile ships come from more directions.** In the original, pirates and Thargoids always start at one of four fixed spots in the corners ahead of you. Now they appear at a random distance and from anywhere in front of you and to the sides, but never from straight behind (`-DSPAWN_VARIANCE`, on in the English mission and expanded disks; `SPAWN_VARIANCE` in `src/elite128/config.inc` for the 128K build; `docs/_ship_spawning.md`). **128K only:** escort packs stay together and asteroids start anywhere around you, flying towards you with a small error; traders still start as before.
 
@@ -86,7 +94,7 @@ The stock game has few ship types and a quiet sky. This build fills it up, in th
 
 Besides the missions, the build has a few changes that make the game nicer to play. In the 64K build they are switches in the source (`docs/_build.md`, "Switches"), and `tools/check_src.sh` proves that without the switches the original bytes come back (apart from the CPC+ keyboard fix, which is always on). In the 128K build (`src/elite128`, `docs/_128k_version.md`) all of them are always on, there are no switches to set; a note marked **128K** says where it differs.
 
-- **Browse the ships on the "Press Space" screen.** "Cursor Left" and "Cursor Right", or the joystick, step the demo ship through eight hulls (Viper, Asp, Cobra Mk III, Fer-de-Lance, Sidewinder, Krait, Rock Hermit, Thargoid), so you can look at all of them (it only changes the demo ship, not the one you fly) (switch `TITLESEL`, English and German; the disks from `tools/build_dsk.py` include it). In the English build the press-space screen shows the ship's name, in the ship colour, where the ELITE title stood. **128K:** all 29 hulls, drawn filled, with their names.
+- **Browse the ships on the "Press Space" screen.** "Cursor Left" and "Cursor Right", or the joystick, step the demo ship through eight hulls (Viper, Asp, Cobra Mk III, Fer-de-Lance, Sidewinder, Krait, Rock Hermit, Thargoid), so you can look at all of them (it only changes the demo ship, not the one you fly) (switch `TITLESEL`, in all three languages, on in the disks). In the English build the press-space screen shows the ship's name, in the ship colour, where the ELITE title stood. **128K:** all 29 hulls, drawn filled, with their names.
 - **A sight for each laser.** The pulse laser keeps the cross; the beam, military and mining lasers get their own sights (two bracketed bars, four diagonals, bars with a dot), as on the C64 and Atari ST, and there is no sight without a laser (`-DENHANCED`, `lasersights.asm`, all three languages). Not on the mission disk: the missions fill the free flight memory it would need (English only without `-DMISSIONS`). **128K:** always, with the missions too (it is an overlay copied over the boot code, so it needs no free flight memory; `src/elite128/lasersights128.asm`).
 - **Stars stay behind the planet and sun.** The stars used to be drawn over the planet and sun discs, so they shone through them. Now they only appear against empty space (switch `STAR_OCCLUDE`, in all three languages). Ships are still wireframes, so you see stars between their edges, as in the original. **128K:** yes.
 
@@ -103,9 +111,9 @@ Besides the missions, the build has a few changes that make the game nicer to pl
 
 ### Tools
 
-- **A viewer for ships and objects.** `RUN"SHOWSHPS` shows all 30 models of the game as a rotating hidden-line wireframe with name, kills, bounty, speed and energy: 21 ships (the 11 stock ones, the 9 new ones and one more) and 9 objects that are not ships (the Coriolis station, missile, escape pod, cargo canister, alloy plate, splinter, asteroid, rock hermit and the new Boulder). The arrow keys step through them, "Q" quits. It runs on the mission disk and on its own blank disk (`tools/build_showship.sh`, about 8 frames a second). **128K:** `RUN"SHOWSHPS` on the 128K disk shows 29 ships as filled, rotating models with the same name line, frame and numbers (a different program, `src/viewer128/`; the Boulder is not a 128K hull); the title screen's ship selector (below) shows the same 29.
+- **A viewer for ships and objects.** `RUN"SHOWSHPS` shows all 30 models of the game as a rotating hidden-line wireframe with name, kills, bounty, speed and energy: the 19 types of the stock game (11 ships and 8 objects: the Coriolis station, missile, escape pod, cargo canister, alloy plate, splinter, asteroid and rock hermit) and 11 that I added (10 ships, among them Fessor's hulls, and the new Boulder). The arrow keys step through them, "Q" quits. It runs on the mission disk and on its own blank disk (`tools/build_showship.sh`, about 8 frames a second). **128K:** `RUN"SHOWSHPS` on the 128K disk shows 29 ships as filled, rotating models with the same name line, frame and numbers (a different program, `src/viewer128/`; the Boulder is not a 128K hull); the title screen's ship selector (below) shows the same 29.
 - **Additional BASIC tools.** On the expanded and 128K disks (the 128K ones use the 128K addresses and key):
-  - `RUN"TRAINER` is our trainer, which replaces Firebird's `CHEAT.BAS`: prompts for cheats, kills, jumps and mission presets, so the added missions can be reached without hours of play.
+  - `RUN"TRAINER` is my trainer, which replaces Firebird's `CHEAT.BAS`: prompts for cheats, kills, jumps and mission presets, so the added missions can be reached without hours of play.
   - `RUN"EDITSAVE` edits a save; `RUN"LISTSAVE` lists the saves on a disk with build, kills and cash.
   - `RUN"CONVSAVE` converts a save between the UK, French, German and 128K builds, either way, because every build encrypts its saves with its own key.
   - On the host, `tools/saveedit.py` edits a save and converts it between the builds (`--to-key-disk`).
@@ -120,7 +128,7 @@ Besides the missions, the build has a few changes that make the game nicer to pl
 | `src/*/lasersights.asm`, `src/elite/killcount.asm` | the per-laser sights (the same file in all three trees) and the kill count of the status page (English), included into the free tail of `COMMONXX` (`-DENHANCED`) |
 | `src/cheats/` | a trainer, a save viewer, a save editor and a save converter, all written in CPC BASIC, and `SHOWSHPS.BAS`, a viewer for all the ships (BASIC plus a small Z80 routine) |
 | `tools/` | Python helpers: disassembler and verifier, disk reader and writer, text compressor, sprite converter, savegame decoder and editor, emulator tests |
-| `docs/` | notes by topic: building and the switches, what we changed in the game, memory map, architecture, save format, cheats, disks, the other versions' missions (research), the implemented missions, and open questions |
+| `docs/` | notes by topic: building and the switches, what I changed in the game, memory map, architecture, save format, cheats, disks, the other versions' missions (research), the implemented missions, and open questions |
 
 ## Build and run
 
@@ -141,13 +149,13 @@ How the source was made, the switches (`-D` flags), the memory budget and every 
 
 ## Tests
 
-The missions are tested in an emulator driven from Python (`tools/tests/test_*.py`): the docked stub and overlays, the launch image picker (mission images and ship packs), the ship pack hooks, the spawn and kill hooks of every mission, the sprites of one mission and the save tools. The tests force game states and call routines directly. They do not replace playing through the whole game with save and load, which is still open.
+`make test` rebuilds the disks and runs the host checks in seconds: the source against the original bytes, the save tools and the disk rules. `make test-emu` runs the emulator tests of the 64K build (about 4 minutes) and `python3 -I tools/tests/run_all.py --emu128` those of the 128K build. They drive the game from Python (`tools/tests/test_*.py`, `test_*128.py`; index in `tools/tests/README.md`): the docked stub and overlays, the launch image picker, the ship packs, the spawn and kill hooks of every mission, the sprites of one mission, the save tools and, for the 128K build, the filled hulls, the page flip and the file menu. The tests force game states and call routines directly. They do not replace playing through the whole game with save and load, which is still open.
 
 ## More
 
 The notes live in `docs/`, one file per topic (`docs/_*.md`); the main ones:
 
-- `docs/_build.md` building, switches and what the checker proves, `docs/_my_changes.md` every change we made to the game, `docs/_memory_map.md` memory map, swapping and free space (the 128K build: `docs/_memory_map_128k.md`)
+- `docs/_build.md` building, switches and what the checker proves, `docs/_my_changes.md` every change I made to the game, `docs/_memory_map.md` memory map, swapping and free space (the 128K build: `docs/_memory_map_128k.md`)
 - `docs/_architecture.md` design, dead code and the dynamic labels
 - `docs/_ship_packs.md` the extra ships, the ship packs, the traffic constants and how they are tested
 - `docs/_missions_built.md` the implemented missions (spoilers), `docs/_missions.md` the research on the other versions (spoilers)
@@ -158,3 +166,7 @@ The notes live in `docs/`, one file per topic (`docs/_*.md`); the main ones:
 ## Credits and sources
 
 *Elite* is by David Braben and Ian Bell; the CPC version is the Firebird port. Mark Moxon's annotated BBC Micro, C64 and NES sources (elite.bbcelite.com) and Andy McFadden's Apple II disassembly were read for behaviour only; the Z80 here is written fresh. The Atari ST source, the MSX and ZX Spectrum (SkoolKit) disassemblies, the *Elite Plus* decompilation work by rembish and the CPC reconstruction by Fessor were used as references. **Fessor** (CPCWiki, thread "Expanding Elite") disassembled the CPC game first: the Constrictor hull in `src/elite/missions_hull.asm` and the extra ship hulls in `src/elite/missions_ships.asm` (Gecko, Cobra Mk I, Worm, Moray, Mamba, Adder, Boa, Anaconda, Shuttle, Boulder) are his, and many routine and variable names, the ship layout and the symbol list come from his work. The rest of his source, beta disk and forum pages are not part of this repository (he asked that they not be redistributed); they are in his thread, linked in `docs/_references.md`.
+
+## Legal
+
+The disassembly stays under the original copyright; it is here for education, study and preservation. What the licences cover, and what they do not: `NOTICE` and `LICENSE`.
