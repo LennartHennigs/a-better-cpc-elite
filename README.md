@@ -34,7 +34,7 @@ Both contain:
 <img src="docs/img/laser02.png" alt="Military Laser Crosshair" width="49%">
 </p>
 
-The goal was a richer experience inside the existing game. It is deliberately not a rebuild like [Elite-A](https://elite.bbcelite.com/elite-a/), Angus Duggan's extended BBC version, which adds new mechanisms and components on top of the original. Here, I wanted to build the best 8-bit version available.
+The goal was a richer experience inside the existing game. It is deliberately not a rebuild like [Elite-A](https://elite.bbcelite.com/elite-a/), Angus Duggan's extended BBC version, which adds new mechanisms and components on top of the original. Here, I wanted to build the best 8-bit version possible.
 
 The challenge is the (RAM) space. The 64K build has to run on a stock 64 KB CPC 464, and Elite was already a tight game: the added code lives in a few hundred free bytes, in overlays loaded from disk and in bytes saved elsewhere. The CPC also has no hardware sprites, so everything is drawn in software. Its code is about the size of the Spectrum version it was ported from (roughly 29 KB), with more graphics data, and the whole game is well over twice the size of the 6502 BBC Micro version. The 128K build has more room, but code can only live in a few places, so it is tight too (`docs/_128k_version.md`).
 
