@@ -16,7 +16,7 @@ The major difference is that the 128K version draws ships as filled polygons, no
 Both contain:
 
 - five additional secret missions (taken from the other versions of the game)
-- more ships (also taken from other versions)
+- eleven additional ships (also taken from other versions)
 - more encounters during travel, with better ship start positions
 - different crosshairs for the laser types, as on the C64 and Atari ST
 - quality-of-life improvements in the UI (see below)
