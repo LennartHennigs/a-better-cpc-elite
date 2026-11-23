@@ -31,6 +31,8 @@ txt = dskx.read_files(dskx.load_sectors(p))[(0, "README.TXT")].rstrip(b"\x1a")
 new = txt.replace(b'RUN"ELITE\r\n', b'RUN"ELITE64\r\n').replace(b'RUN"ELITE\n', b'RUN"ELITE64\n')
 assert new != txt, 'README.TXT has no RUN"ELITE line'
 dskx.add_padded(d, secs, first, "README", "TXT", new, replace=True)
+import loading_label
+loading_label.stamp(d, secs, first, p, "64")      # "64" next to the ELITE logo of the loading picture
 p.write_bytes(d)
 PY
 echo "built build/elite64.dsk (RUN\"ELITE64, RUN\"TRAINER, RUN\"SHOWSHPS, RUN\"EDITSAVE, RUN\"LISTSAVE)"

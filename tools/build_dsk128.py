@@ -19,6 +19,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import cheat128  # noqa: E402
 import dskx  # noqa: E402
+import loading_label  # noqa: E402
 from dskx import sector_offsets  # noqa: E402
 from hide_files import hide_entries  # noqa: E402
 from symfile import read_sym  # noqa: E402
@@ -155,6 +156,7 @@ def main():
     txt = txt.replace(b"every ship in 3D", b"the ships, filled")
     recs = -(-len(txt) // 128)
     dskx.add_payload(d, secs, first, "README", "TXT", txt.ljust(recs * 128, b"\x1a"), recs)
+    loading_label.stamp(d, secs, first, BASE, "128")      # "128" next to the ELITE logo of the loading picture
     # The ship viewer (RUN"SHOWSHPS): a stand-alone program like the 64K disk's, but with the filled hulls of the game. SHOWSHPS.BAS loads the ships into RAM banks 4-6 and the program
     # (src/viewer128/viewer.asm, the page flip prototype) at &8000; the data come from tools/mk_viewer128.py. The binaries are hidden like every other non-BASIC file.
     venv = {**os.environ, "HULLS": hulls} if hulls in ("stock", "arcelite") else None      # the viewer shows the hulls the game was built with (work/elite128/hulls_source.txt)
