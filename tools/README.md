@@ -12,6 +12,7 @@ Helpers for building, checking and analysing the project. Each script has a head
 | `build_readme.md` | template for `build/README.md` |
 | `symfile.py` | `read_sym(path, *wanted)`: a sjasmplus `--sym` file as `{label: address}` (used by `build_dsk.py`, `build_dsk128.py`, `cheat128.py`) |
 | `dskx.py`, `add_files.py`, `hide_files.py` | list/extract, add, delete and rename (`OLD.EXT>NEW`, header included) files on DSK images, hide files (never write to `disks/`) |
+| `loading_label.py` | write "64" or "128" next to the ELITE logo of `PICTURE.BIN` in the CPC ROM font (read from `work/xray/roms/os6128.rom` at build time); `build_expanded.sh` and `build_dsk128.py` call it |
 | `cheat_tokenise.py`, `bastok.py` | tokenise CPC BASIC with the CPC's own BASIC (cpcxray), detokenise to text |
 | `size_report.py` | bytes used in the free tails against the stock files |
 | `rvmstate.py` | read an RVM `.rvmstate` file: registers, the 64 KB RAM image, the ship slots, and `--sna` to convert it to a snapshot cpcxray loads (`--curcfg` for a 128K game state; `docs/_build.md` "RVM state files") |

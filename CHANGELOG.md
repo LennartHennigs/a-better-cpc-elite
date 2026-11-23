@@ -2,6 +2,8 @@
 
 Newest first. Entries up to 2026-11-11 are in `docs/changelog_archive.md`. The project root is a git repository from 2026-11-07; before that, the archive is the only history. Dates are ISO.
 
+- **Loading screen says 64 or 128 (2026-11-23).** The picture shown while the game loads gets "64" (`elite64.dsk`) or "128" (`elite128.dsk`) next to the ELITE logo, in the CPC ROM font and the signature's red; `tools/loading_label.py` patches the user's own `PICTURE.BIN` at build time, so no art is committed.
+
 - **Laser position by letter (2026-11-22, `-DENHANCED`, English).** Buying a laser asks "F Front / B Back / L Left / R Right" and takes F, B, L or R instead of 0 to 3; the rear view is called "Back" now, in flight too ("BACK" is two bytes longer than "REAR", paid by two two-letter tokens in the MAYDAY text). The block was rewritten in place and ends at the stock address, so the save key and every address after it stay (`eqLaserSlot` in `check_src.sh`); `tools/tests/test_laserkeys.py`.
 - **Trainer asks for the docking computer (2026-11-22).** `TRAINER` has a "Docking computer?" question that sets the equipment flag (save offset 56) in the default commander; same program on every disk and the 128K disk (`docs/_cheats.md`).
 - **Pirate packs stay together in the 64K disks (2026-11-22).** With the spawn variance every member of an escort pack had got its own random place; now the first member keeps its place and the others start on it, as in the stock game (`mxSpawnVar` recognises the pack loop by its return address, 63 bytes per image). The packs 3, 4 and 7 have no room for it and keep scattered members; the Constrictor and Trumbles images keep the stock start. `tools/tests/test_spawnvar.py` checks packs in images 0, 1 and 3.
