@@ -1,0 +1,21 @@
+#!/bin/bash
+# pre-commit: keep the original game's files and mass deletions out of commits (the repo is public).
+# Install once in every clone: git config core.hooksPath scripts/hooks
+# A deliberate exception: git commit --no-verify (say why in the message).
+cd "$(git rev-parse --show-toplevel)" || exit 1
+
+# game files, extracted binaries, snapshots with game memory (.sna, .rvmstate), third-party folders, local-only files
+bad=$(git diff --cached --name-only --diff-filter=ACMR | grep -i -E '\.(dsk|cdt|tap|rar|zip|7z|pdf|jpe?g|bin|sna|rvmstate|rom)$|^(disks|extended|work|build|docs_other|magazines|tools/bin)/|^\.claude/(settings\.local\.json|scheduled_tasks\.lock)$' | grep -v -x 'magazines/README.md')
+if [ -n "$bad" ]; then
+  echo "pre-commit: these staged files must not be committed (game files, third-party or local-only):" >&2
+  echo "$bad" | sed 's/^/  /' >&2
+  echo "Unstage them: git restore --staged FILE" >&2
+  exit 1
+fi
+
+# an emptied index shows every tracked file as a staged deletion
+deleted=$(git diff --cached --name-only --diff-filter=D | wc -l | tr -d ' ')
+if [ "$deleted" -gt 10 ]; then
+  echo "pre-commit: $deleted files are staged for deletion: the index may have been emptied. Check git status; git reset -q restores it." >&2
+  exit 1
+fi
