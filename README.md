@@ -15,11 +15,11 @@ The major difference is that the 128K version draws ships as filled polygons, no
 
 Both contain:
 
-- more secret missions (taken from the other versions of the game)
+- five additional secret missions (taken from the other versions of the game)
 - more ships (also taken from other versions)
-- more encounters, with ship start positions more randomised
-- a different sight for each laser type, as on the C64 and Atari ST
-- quality-of-life improvements in the UI
+- more encounters during travel, with better ship start positions
+- different crosshairs for the laser types, as on the C64 and Atari ST
+- quality-of-life improvements in the UI (see below)
 
 <p>
 <img src="docs/img/station04.png" alt="Commander Overview (showing # of kills)" width="49%">
@@ -51,8 +51,6 @@ make expanded    # the 64K build  -> build/elite64.dsk,  boot with RUN"ELITE64
 make disk6128    # the 128K build -> build/elite128.dsk, boot with RUN"ELITE128 (CPC 6128 only)
 ```
 
-`RUN"TRAINER` (see *Additional BASIC tools*) jumps ahead to the added missions.
-
 ### 64K vs. 128K
 
 | | 64K build | 128K build |
@@ -69,7 +67,7 @@ make disk6128    # the 128K build -> build/elite128.dsk, boot with RUN"ELITE128 
 
 ### Secret Missions
 
-The Amstrad CPC game came with three scripted missions, like most of the 8-bit ports. But all games had different missions - with some overlaps. I **extended them to eight**: five more, borrowed from other versions of the game.
+The Amstrad CPC game came with three scripted missions, like most of the 8-bit ports. But all games had different missions - with some overlaps. I **extended the CPC missions to eight**: five more, borrowed from other versions of the game.
 
 | Source | Missions |
 |---|---|
@@ -114,7 +112,8 @@ Besides the missions, the build has a few changes that make the game nicer to pl
 - **A viewer for ships and objects.** `RUN"SHOWSHPS` shows all 30 models of the game as a rotating hidden-line wireframe with name, kills, bounty, speed and energy: the 19 types of the stock game (11 ships and 8 objects: the Coriolis station, missile, escape pod, cargo canister, alloy plate, splinter, asteroid and rock hermit) and 11 that I added (10 ships, among them Fessor's hulls, and the new Boulder). The arrow keys step through them, "Q" quits. It runs on the mission disk and on its own blank disk (`tools/build_showship.sh`, about 8 frames a second). **128K:** `RUN"SHOWSHPS` on the 128K disk shows 29 ships as filled, rotating models with the same name line, frame and numbers (a different program, `src/viewer128/`; the Boulder is not a 128K hull); the title screen's ship selector (below) shows the same 29.
 - **Additional BASIC tools.** On the expanded and 128K disks (the 128K ones use the 128K addresses and key):
   - `RUN"TRAINER` is my trainer, which replaces Firebird's `CHEAT.BAS`: prompts for cheats, kills, jumps and mission presets, so the added missions can be reached without hours of play.
-  - `RUN"EDITSAVE` edits a save; `RUN"LISTSAVE` lists the saves on a disk with build, kills and cash.
+  - `RUN"EDITSAVE` edits a save.
+  -  `RUN"LISTSAVE` lists the saves on a disk with build, kills and cash.
   - `RUN"CONVSAVE` converts a save between the UK, French, German and 128K builds, either way, because every build encrypts its saves with its own key.
   - On the host, `tools/saveedit.py` edits a save and converts it between the builds (`--to-key-disk`).
 
@@ -143,7 +142,11 @@ make check       # the source assembles to the original bytes (English, German, 
 make test        # rebuild the disks and run the host tests (about a minute)
 ```
 
-Boot with `RUN"ELITE64` (the 64K expanded disk), `RUN"ELITE128` (the 128K disk) or `RUN"ELITE` (the original and mission disks).
+Boot with...
+
+  - `RUN"ELITE64` (the 64K expanded disk),
+ -  `RUN"ELITE128` (the 128K disk), or
+ -  `RUN"ELITE` (the original and mission disks).
 
 How the source was made, the switches (`-D` flags), the memory budget and every change to the game: `src/elite/README.md`, `docs/_build.md`, `docs/_memory_map.md`, `docs/_my_changes.md`.
 
@@ -165,7 +168,8 @@ The notes live in `docs/`, one file per topic (`docs/_*.md`); the main ones:
 
 ## Credits and sources
 
-*Elite* is by David Braben and Ian Bell; the CPC version is the Firebird port. Mark Moxon's annotated BBC Micro, C64 and NES sources (elite.bbcelite.com) and Andy McFadden's Apple II disassembly were read for behaviour only; the Z80 here is written fresh. The Atari ST source, the MSX and ZX Spectrum (SkoolKit) disassemblies, the *Elite Plus* decompilation work by rembish and the CPC reconstruction by Fessor were used as references. **Fessor** (CPCWiki, thread "Expanding Elite") disassembled the CPC game first: the Constrictor hull in `src/elite/missions_hull.asm` and the extra ship hulls in `src/elite/missions_ships.asm` (Gecko, Cobra Mk I, Worm, Moray, Mamba, Adder, Boa, Anaconda, Shuttle, Boulder) are his, and many routine and variable names, the ship layout and the symbol list come from his work. The rest of his source, beta disk and forum pages are not part of this repository (he asked that they not be redistributed); they are in his thread, linked in `docs/_references.md`.
+*Elite* is by David Braben and Ian Bell; the CPC version is the Firebird port. Mark Moxon's annotated BBC Micro, C64 and NES sources (elite.bbcelite.com) and Andy McFadden's Apple II disassembly were read for behavior only; the Z80 here is written fresh.
+The Atari ST source, the MSX and ZX Spectrum (SkoolKit) disassemblies, the *Elite Plus* decompilation work by rembish and the CPC reconstruction by Fessor were used as references. **Fessor** (CPCWiki, thread "Expanding Elite") disassembled the CPC game first: the Constrictor hull in `src/elite/missions_hull.asm` and the extra ship hulls in `src/elite/missions_ships.asm` (Gecko, Cobra Mk I, Worm, Moray, Mamba, Adder, Boa, Anaconda, Shuttle, Boulder) are his, and many routine and variable names, the ship layout and the symbol list come from his work. The rest of his source, beta disk and forum pages are not part of this repository (he asked that they not be redistributed); they are in his thread, linked in `docs/_references.md`.
 
 ## Legal
 
