@@ -40,6 +40,9 @@ The challenge is the (RAM) space. The 64K build has to run on a stock 64 KB CPC 
 
 **You need your own copy of the original game.** The builds are made from it and contain its code, so they are for your own use: do not share the disks.
 
+And yes, this was created with the help of an LLM. 
+it was way more fluent in assembly and better at code bumming. it allowed me to make my favorite childhood game even better.  
+
 ## Quick start
 
 1. Put your own copy of the original game's disks in `disks/` (`docs/_disks.md` lists them).
